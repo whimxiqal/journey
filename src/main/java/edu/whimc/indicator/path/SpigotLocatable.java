@@ -1,6 +1,6 @@
-package edu.whimc.indicator.search;
+package edu.whimc.indicator.path;
 
-import edu.whimc.indicator.api.search.Locatable;
+import edu.whimc.indicator.api.path.Locatable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.Location;
@@ -9,7 +9,7 @@ import org.bukkit.block.Block;
 
 import java.util.Objects;
 
-public class LocationLocatable implements Locatable<LocationLocatable, World> {
+public class SpigotLocatable implements Locatable<SpigotLocatable, World> {
 
   @Getter
   private final int blockX;
@@ -20,14 +20,14 @@ public class LocationLocatable implements Locatable<LocationLocatable, World> {
   @Getter @NonNull
   private final World world;
 
-  public LocationLocatable(Location location) {
+  public SpigotLocatable(Location location) {
     this.blockX = location.getBlockX();
     this.blockY = location.getBlockY();
     this.blockZ = location.getBlockZ();
     this.world = location.getWorld();
   }
 
-  public LocationLocatable(int blockX, int blockY, int blockZ, World world) {
+  public SpigotLocatable(int blockX, int blockY, int blockZ, World world) {
     this.blockX = blockX;
     this.blockY = blockY;
     this.blockZ = blockZ;
@@ -35,7 +35,7 @@ public class LocationLocatable implements Locatable<LocationLocatable, World> {
   }
 
   @Override
-  public double distanceTo(LocationLocatable other) {
+  public double distanceTo(SpigotLocatable other) {
     return vectorSizeSquared(this.getBlockX() - other.getBlockX(),
         this.getBlockY() - other.getBlockY(),
         this.getBlockZ() - other.getBlockZ());
@@ -45,8 +45,8 @@ public class LocationLocatable implements Locatable<LocationLocatable, World> {
     return this.world.getBlockAt(blockX + x, blockY + y, blockZ + z);
   }
 
-  public LocationLocatable createLocatableAtOffset(int x, int y, int z) {
-    return new LocationLocatable(this.blockX + x, this.blockY + y, this.blockZ + z, this.world);
+  public SpigotLocatable createLocatableAtOffset(int x, int y, int z) {
+    return new SpigotLocatable(this.blockX + x, this.blockY + y, this.blockZ + z, this.world);
   }
 
   private double vectorSizeSquared(int distX, int distY, int distZ) {
@@ -67,7 +67,7 @@ public class LocationLocatable implements Locatable<LocationLocatable, World> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    LocationLocatable that = (LocationLocatable) o;
+    SpigotLocatable that = (SpigotLocatable) o;
     return blockX == that.blockX && blockY == that.blockY && blockZ == that.blockZ && world.equals(that.world);
   }
 

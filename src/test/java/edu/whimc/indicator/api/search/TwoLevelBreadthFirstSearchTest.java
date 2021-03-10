@@ -1,6 +1,8 @@
 package edu.whimc.indicator.api.search;
 
 import com.google.common.collect.Lists;
+import edu.whimc.indicator.api.path.Link;
+import edu.whimc.indicator.api.path.Locatable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;

@@ -1,8 +1,9 @@
 package edu.whimc.indicator.api.search;
 
-import java.util.List;
+import edu.whimc.indicator.api.path.Locatable;
+import edu.whimc.indicator.api.path.Path;
 
-public interface Search<T> {
+public interface Search<T extends Locatable<T, D>, D> {
 
   /**
    * Find a path from an original location to a destination location.
@@ -11,6 +12,6 @@ public interface Search<T> {
    * @param destination the ending location of a path
    * @return
    */
-  List<T> findPath(T origin, T destination);
+  Path<T, D> findPath(T origin, T destination);
 
 }

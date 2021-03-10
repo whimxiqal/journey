@@ -1,16 +1,16 @@
 package edu.whimc.indicator.search.mode;
 
 import edu.whimc.indicator.api.search.Mode;
-import edu.whimc.indicator.search.LocationLocatable;
+import edu.whimc.indicator.path.SpigotLocatable;
 import org.bukkit.World;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class JumpMode implements Mode<LocationLocatable, World> {
+public class JumpMode implements Mode<SpigotLocatable, World> {
   @Override
-  public Set<LocationLocatable> getDestinations(LocationLocatable origin) {
-    Set<LocationLocatable> locations = new HashSet<>();
+  public Set<SpigotLocatable> getDestinations(SpigotLocatable origin) {
+    Set<SpigotLocatable> locations = new HashSet<>();
     if (origin.getBlockAtOffset(0, -1, 0).isPassable()) {
       return locations;
     }
@@ -29,12 +29,12 @@ public class JumpMode implements Mode<LocationLocatable, World> {
       for (int offZ = -1; offZ <= 1; offZ++) {
         if (offX == 0 && offZ == 0) continue;
         pathCheck:
-        for (int offXFull = offX * offX; offXFull <= 1; offXFull++) {
-          for (int offZFull = offZ * offZ; offZFull <= 1; offZFull++) {
-            if (!origin.getBlockAtOffset(offXFull*offX, 1, offZFull*offZ).isPassable()) {
+        for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
+          for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
+            if (!origin.getBlockAtOffset(offXIn*offX, 1, offZIn*offZ).isPassable()) {
               break pathCheck;
             }
-            if (!origin.getBlockAtOffset(offXFull*offX, 2, offZFull*offZ).isPassable()) {
+            if (!origin.getBlockAtOffset(offXIn*offX, 2, offZIn*offZ).isPassable()) {
               break pathCheck;
             }
           }

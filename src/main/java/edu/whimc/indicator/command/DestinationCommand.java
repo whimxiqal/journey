@@ -6,7 +6,7 @@ import edu.whimc.indicator.command.common.CommandNode;
 import edu.whimc.indicator.command.common.Parameter;
 import edu.whimc.indicator.command.common.ParameterSuppliers;
 import edu.whimc.indicator.destination.IndicatorDestination;
-import edu.whimc.indicator.search.LocationLocatable;
+import edu.whimc.indicator.path.SpigotLocatable;
 import edu.whimc.indicator.util.Format;
 import edu.whimc.indicator.util.Permissions;
 import org.bukkit.Bukkit;
@@ -73,7 +73,7 @@ public class DestinationCommand extends CommandNode {
 
       IndicatorDestination destination = new IndicatorDestination(
           Indicator.getInstance(),
-          new LocationLocatable(x, y, z, world));
+          new SpigotLocatable(x, y, z, world));
 
       Indicator.getInstance().getDestinationManager().put(player.getUniqueId(), destination);
       sender.sendMessage(Format.success("Set " + player.getName() + "'s destination to: "));

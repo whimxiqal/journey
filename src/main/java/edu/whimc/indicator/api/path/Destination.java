@@ -1,6 +1,5 @@
-package edu.whimc.indicator.api.destination;
+package edu.whimc.indicator.api.path;
 
-import edu.whimc.indicator.api.search.Locatable;
 import lombok.Data;
 
 @Data

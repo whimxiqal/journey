@@ -1,5 +1,6 @@
 package edu.whimc.indicator.api.search;
 
+import edu.whimc.indicator.api.path.Locatable;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,7 +9,7 @@ import java.util.function.Consumer;
 
 public class LocalBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
-  public static final int MAX_SIZE = 1000;
+  public static final int MAX_SIZE = 100000;
 
   @Setter
   private Consumer<T> visitationCallback = loc -> {};

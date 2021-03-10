@@ -4,13 +4,16 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.api.path.Link;
+import edu.whimc.indicator.api.path.Locatable;
+import edu.whimc.indicator.api.path.Path;
 import lombok.Setter;
 
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements Search<T> {
+public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements Search<T, D> {
 
   private final List<Link<T, D>> links = Lists.newLinkedList();
   private final List<Mode<T, D>> modes = Lists.newLinkedList();
@@ -61,7 +64,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     return path;
   }
 
-  private List<List<T>> findMinimumPath(T origin, T destination, List<Link<T, D>> links) {
+  private Path<T, D> findMinimumPath(T origin, T destination, List<Link<T, D>> links) {
     // organize filtered links into entry and exit points in every domain
     Map<D, Set<Link<T, D>>> domainEntries = new HashMap<>();
     Map<D, Set<Link<T, D>>> domainExits = new HashMap<>();
@@ -138,14 +141,11 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     PathEdgeGraph<T, D> graph = new PathEdgeGraph<>();
 
     // Nodes
-    PathEdgeGraph.Node originNode = new PathEdgeGraph.Node();
-    PathEdgeGraph.Node destinationNode = new PathEdgeGraph.Node();
+    PathEdgeGraph.Node originNode = graph.generateLocatableNode(origin);
+    PathEdgeGraph.Node destinationNode = graph.generateLocatableNode(destination);
 
     Map<Link<T, D>, PathEdgeGraph.Node> linkNodeMap = new HashMap<>();
-    links.forEach(link -> {
-      PathEdgeGraph.Node linkNode = new PathEdgeGraph.Node();
-      linkNodeMap.put(link, linkNode);
-    });
+    links.forEach(link -> linkNodeMap.put(link, graph.generateLinkNode(link)));
 
     // Edges
     originPaths.forEach((link, p) -> graph.addEdge(originNode, linkNodeMap.get(link), p));
@@ -176,23 +176,13 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
 
 
   @Override
-  public List<T> findPath(T origin, T destination) {
+  public Path<T, D> findPath(T origin, T destination) {
 
     // Stage 1 - Only keep the links that may be helpful for finding this path
-    Indicator.getInstance().getLogger().info("Pathfinding Stage 1...");
     List<Link<T, D>> filteredLinks = filterLinks(origin, destination, links);
 
     // Stage 2 & 3- Create graph based on paths made from local breadth first searches
-    Indicator.getInstance().getLogger().info("Pathfinding Stage 2 + 3...");
-    List<List<T>> paths = findMinimumPath(origin, destination, filteredLinks);
-    List<T> minimumPath = Lists.newLinkedList();
-    if (paths == null) {
-      return null;
-    }
-
-    // Finalize output
-    paths.forEach(minimumPath::addAll);
-    return minimumPath;
+    return findMinimumPath(origin, destination, filteredLinks);
 
   }
 
