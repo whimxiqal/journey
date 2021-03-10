@@ -7,3 +7,17 @@ description: A path indication plugin
 website: https://whimcproject.web.illinois.edu/
 softdepend:
   - WHIMC-Portals
+permissions:
+  indicator.trail:
+    default: true
+    description: Allows the use of the trail command
+  indicator.destination:
+    default: false
+    description: Allows the use of the description sub command
+commands:
+  trail:
+    description: Shows a player a trail to their destination
+  destination:
+    description: Sets a destination for a player's trail
+
+

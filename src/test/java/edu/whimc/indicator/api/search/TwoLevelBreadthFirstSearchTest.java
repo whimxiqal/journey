@@ -214,8 +214,9 @@ class TwoLevelBreadthFirstSearchTest {
       return this.domain;
     }
 
-    public void print() {
-      System.out.printf("(%d, %d, %s)", x, y, domain.getName());
+    @Override
+    public String print() {
+      return String.format("(%d, %d, %s)", x, y, domain.getName());
     }
 
     @Override

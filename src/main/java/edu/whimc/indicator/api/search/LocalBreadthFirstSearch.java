@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 public class LocalBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
-  public static final int MAX_SIZE = 1000000;
+  public static final int MAX_SIZE = 1000;
 
   @Setter
   private Consumer<T> visitationCallback = loc -> {};
@@ -21,7 +21,7 @@ public class LocalBreadthFirstSearch<T extends Locatable<T, D>, D> {
     if (!origin.getDomain().equals(destination.getDomain())) {
       return null;  // These must have the same domain!
     }
-    Queue<Node> nexts = new PriorityQueue<>((Comparator.comparingInt(Node::getScore)));
+    Queue<Node> nexts = new PriorityQueue<>(Comparator.comparingDouble(Node::getScore));
     Set<T> visited = new HashSet<>();
 
     Node start = new Node(origin, null, destination);
@@ -68,7 +68,7 @@ public class LocalBreadthFirstSearch<T extends Locatable<T, D>, D> {
   class Node {
     private final T data;
     private final Node previous;
-    private final int score;
+    private final double score;
 
     public Node(@NotNull T data, Node previous, @NotNull T destination) {
       this.data = data;
@@ -84,7 +84,7 @@ public class LocalBreadthFirstSearch<T extends Locatable<T, D>, D> {
       return previous;
     }
 
-    public int getScore() {
+    public double getScore() {
       return score;
     }
   }

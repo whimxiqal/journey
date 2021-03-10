@@ -1,5 +1,6 @@
 package edu.whimc.indicator.search.mode;
 
+import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.api.search.Mode;
 import edu.whimc.indicator.search.LocationLocatable;
 import org.bukkit.World;
@@ -44,7 +45,6 @@ public class WalkMode implements Mode<LocationLocatable, World> {
         }
       }
     }
-
     return locations;
   }
 }

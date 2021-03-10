@@ -3,6 +3,7 @@ package edu.whimc.indicator.api.search;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
+import edu.whimc.indicator.Indicator;
 import lombok.Setter;
 
 import java.util.*;
@@ -11,17 +12,21 @@ import java.util.stream.Collectors;
 
 public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements Search<T> {
 
-  private List<Link<T, D>> links = Lists.newLinkedList();
-  private List<Mode<T, D>> modes = Lists.newLinkedList();
+  private final List<Link<T, D>> links = Lists.newLinkedList();
+  private final List<Mode<T, D>> modes = Lists.newLinkedList();
 
   @Setter
-  private Consumer<T> localSearchVisitationCallback = loc -> {};
+  private Consumer<T> localSearchVisitationCallback = loc -> {
+  };
   @Setter
-  private Consumer<T> localSearchStepCallback = loc -> {};
+  private Consumer<T> localSearchStepCallback = loc -> {
+  };
   @Setter
-  private Runnable finishLocalSearchCallback = () -> {};
+  private Runnable finishLocalSearchCallback = () -> {
+  };
   @Setter
-  private Runnable memoryErrorCallback = () -> {};
+  private Runnable memoryErrorCallback = () -> {
+  };
 
   public void registerLink(Link<T, D> link) {
     this.links.add(link);
@@ -150,10 +155,18 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
         linkNodeMap.get(cell.getColumnKey()),
         cell.getValue()));
     // Origin to Destination edge if they are in the same domain
+    Indicator.getInstance().getLogger().info("Checking same-domain endpoints...");
     if (origin.getDomain().equals(destination.getDomain())) {
-      List<T> foundPath = bfs.findShortestPath(origin, destination, modes);
-      if (foundPath != null) {
-        graph.addEdge(originNode, destinationNode, foundPath);
+      Indicator.getInstance().getLogger().info(String.format(
+          "Finding path between %s and %s",
+          origin.print(), destination.print()));
+      try {
+        List<T> foundPath = findLocalShortestPath(bfs, origin, destination, modes);
+        if (foundPath != null) {
+          graph.addEdge(originNode, destinationNode, foundPath);
+        }
+      } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
+        memoryErrorCallback.run();
       }
     }
 
@@ -166,12 +179,11 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
   public List<T> findPath(T origin, T destination) {
 
     // Stage 1 - Only keep the links that may be helpful for finding this path
+    Indicator.getInstance().getLogger().info("Pathfinding Stage 1...");
     List<Link<T, D>> filteredLinks = filterLinks(origin, destination, links);
-    if (filteredLinks.size() == 0) {
-      return null;
-    }
 
     // Stage 2 & 3- Create graph based on paths made from local breadth first searches
+    Indicator.getInstance().getLogger().info("Pathfinding Stage 2 + 3...");
     List<List<T>> paths = findMinimumPath(origin, destination, filteredLinks);
     List<T> minimumPath = Lists.newLinkedList();
     if (paths == null) {

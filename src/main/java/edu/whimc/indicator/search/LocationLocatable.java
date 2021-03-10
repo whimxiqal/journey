@@ -2,9 +2,12 @@ package edu.whimc.indicator.search;
 
 import edu.whimc.indicator.api.search.Locatable;
 import lombok.Getter;
+import lombok.NonNull;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+
+import java.util.Objects;
 
 public class LocationLocatable implements Locatable<LocationLocatable, World> {
 
@@ -14,7 +17,7 @@ public class LocationLocatable implements Locatable<LocationLocatable, World> {
   private final int blockY;
   @Getter
   private final int blockZ;
-  @Getter
+  @Getter @NonNull
   private final World world;
 
   public LocationLocatable(Location location) {
@@ -53,5 +56,23 @@ public class LocationLocatable implements Locatable<LocationLocatable, World> {
   @Override
   public World getDomain() {
     return this.getWorld();
+  }
+
+  @Override
+  public String print() {
+    return String.format("(%d, %d, %d) in %s", blockX, blockY, blockZ, world.getName());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    LocationLocatable that = (LocationLocatable) o;
+    return blockX == that.blockX && blockY == that.blockY && blockZ == that.blockZ && world.equals(that.world);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(blockX, blockY, blockZ, world);
   }
 }
