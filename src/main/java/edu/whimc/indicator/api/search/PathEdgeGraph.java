@@ -29,28 +29,19 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
       Queue<Node> toVisit = new PriorityQueue<>(Comparator.comparingInt(Node::getDistance));
       Set<Node> visited = new HashSet<>();
 
-      System.out.printf("Number of edges: %d\n", edges.size());
-
       origin.setDistance(0);
       origin.setPrevious(null);
       visited.add(origin);
-      System.out.printf("origin node: %s\n", origin.toString());
-      edges.rowKeySet().forEach(key -> System.out.printf("row key: %s\n", key.toString()));
-      System.out.printf("destination node: %s\n", destination.toString());
-      edges.columnKeySet().forEach(key -> System.out.printf("column key: %s\n", key.toString()));
       edges.row(origin).forEach((node, path) -> {
         node.setDistance(path.size());
         node.setPrevious(origin);
         toVisit.add(node);
-        System.out.println("Added a node");
       });
 
       Node current;
       while (!toVisit.isEmpty()) {
-        System.out.println("Still things to visit");
         current = toVisit.poll();
         if (current.equals(destination)) {
-          System.out.println("Matches!");
           LinkedList<List<T>> paths = new LinkedList<>();
           while (current.getPrevious() != null) {
             paths.addFirst(edges.get(current.getPrevious(), current));
@@ -61,7 +52,6 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
 
         // Not yet done
         for (Map.Entry<Node, List<T>> outlet : edges.row(current).entrySet()) {
-          System.out.println("Getting outlet");
           if (visited.contains(outlet.getKey())) {
             continue;
           }

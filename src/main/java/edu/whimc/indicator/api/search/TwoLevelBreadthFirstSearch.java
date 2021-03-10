@@ -3,15 +3,25 @@ package edu.whimc.indicator.api.search;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
-import edu.whimc.indicator.util.Printable;
+import lombok.Setter;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements Search<T> {
 
-  List<Link<T, D>> links = Lists.newLinkedList();
-  List<Mode<T, D>> modes = Lists.newLinkedList();
+  private List<Link<T, D>> links = Lists.newLinkedList();
+  private List<Mode<T, D>> modes = Lists.newLinkedList();
+
+  @Setter
+  private Consumer<T> localSearchVisitationCallback = loc -> {};
+  @Setter
+  private Consumer<T> localSearchStepCallback = loc -> {};
+  @Setter
+  private Runnable finishLocalSearchCallback = () -> {};
+  @Setter
+  private Runnable memoryErrorCallback = () -> {};
 
   public void registerLink(Link<T, D> link) {
     this.links.add(link);
@@ -40,6 +50,12 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
         .collect(Collectors.toList());
   }
 
+  private List<T> findLocalShortestPath(LocalBreadthFirstSearch<T, D> bfs, T origin, T destination, List<Mode<T, D>> modes) {
+    List<T> path = bfs.findShortestPath(origin, destination, modes);
+    finishLocalSearchCallback.run();
+    return path;
+  }
+
   private List<List<T>> findMinimumPath(T origin, T destination, List<Link<T, D>> links) {
     // organize filtered links into entry and exit points in every domain
     Map<D, Set<Link<T, D>>> domainEntries = new HashMap<>();
@@ -57,12 +73,24 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     domains.addAll(domainEntries.keySet());
     domains.addAll(domainExits.keySet());
 
+    // Initialize local-domain search class
     LocalBreadthFirstSearch<T, D> bfs = new LocalBreadthFirstSearch<>();
+    bfs.setStepCallback(localSearchStepCallback);
+    bfs.setVisitationCallback(localSearchVisitationCallback);
+
+    List<T> path;
     // Map of paths: origin -> link
     Map<Link<T, D>, List<T>> originPaths = new HashMap<>();
     if (domainExits.containsKey(origin.getDomain())) {
       for (Link<T, D> exit : domainExits.get(origin.getDomain())) {
-        originPaths.put(exit, bfs.findShortestPath(origin, exit.getOrigin(), modes));
+        try {
+          path = findLocalShortestPath(bfs, origin, exit.getOrigin(), modes);
+          if (path != null) {
+            originPaths.put(exit, path);
+          }
+        } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
+          memoryErrorCallback.run();
+        }
       }
     }
 
@@ -70,7 +98,14 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     Map<Link<T, D>, List<T>> destinationPaths = new HashMap<>();
     if (domainEntries.containsKey(destination.getDomain())) {
       for (Link<T, D> entry : domainEntries.get(destination.getDomain())) {
-        destinationPaths.put(entry, bfs.findShortestPath(entry.getDestination(), destination, modes));
+        try {
+          path = findLocalShortestPath(bfs, entry.getDestination(), destination, modes);
+          if (path != null) {
+            destinationPaths.put(entry, path);
+          }
+        } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
+          memoryErrorCallback.run();
+        }
       }
     }
 
@@ -81,7 +116,14 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
         for (Link<T, D> entry : domainEntries.get(domain)) {
           if (domainExits.containsKey(domain)) {
             for (Link<T, D> exit : domainExits.get(domain)) {
-              linkPaths.put(entry, exit, bfs.findShortestPath(entry.getDestination(), exit.getOrigin(), modes));
+              try {
+                path = findLocalShortestPath(bfs, entry.getDestination(), exit.getOrigin(), modes);
+                if (path != null) {
+                  linkPaths.put(entry, exit, path);
+                }
+              } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
+                memoryErrorCallback.run();
+              }
             }
           }
         }
@@ -101,33 +143,14 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     });
 
     // Edges
-    originPaths.forEach((link, path) -> {
-      if (path != null) {
-        graph.addEdge(
-            originNode,
-            linkNodeMap.get(link),
-            path);
-      }
-    });
-    destinationPaths.forEach((link, path) -> {
-      if (path != null) {
-        graph.addEdge(
-            linkNodeMap.get(link),
-            destinationNode,
-            path);
-      }
-    });
-    linkPaths.cellSet().forEach((cell) -> {
-      if (cell.getValue() != null) {
-        graph.addEdge(
-            linkNodeMap.get(cell.getRowKey()),
-            linkNodeMap.get(cell.getColumnKey()),
-            cell.getValue());
-      }
-    });
+    originPaths.forEach((link, p) -> graph.addEdge(originNode, linkNodeMap.get(link), p));
+    destinationPaths.forEach((link, p) -> graph.addEdge(linkNodeMap.get(link), destinationNode, p));
+    linkPaths.cellSet().forEach((cell) -> graph.addEdge(
+        linkNodeMap.get(cell.getRowKey()),
+        linkNodeMap.get(cell.getColumnKey()),
+        cell.getValue()));
     // Origin to Destination edge if they are in the same domain
     if (origin.getDomain().equals(destination.getDomain())) {
-      System.out.println("Domains are the same for origin and destination.");
       List<T> foundPath = bfs.findShortestPath(origin, destination, modes);
       if (foundPath != null) {
         graph.addEdge(originNode, destinationNode, foundPath);
