@@ -23,16 +23,16 @@ public class WalkMode implements Mode<SpigotLocatable, World> {
 
     // 1 block away
     for (int offX = -1; offX <= 1; offX++) {
+      outerZ:
       for (int offZ = -1; offZ <= 1; offZ++) {
-        if (offX == 0 && offZ == 0) continue;
         // For the diagonal points, check that the path is clear in both
         //  lateral directions as well as diagonally
-        pathCheck:
-        for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
-          for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
+        for (int offXIn = Math.abs(offX) /* normalize sign */; offXIn >= 0; offXIn--) {
+          for (int offZIn = Math.abs(offX) /* normalize sign */; offZIn >= 0; offZIn--) {
+            if (offXIn == 0 && offZIn == 0) continue;
             for (int offY = 0; offY <= 1; offY++) { // Check two blocks tall
               if (!origin.getBlockAtOffset(offXIn * offX /* get sign back */, 1, offZIn * offZ).isPassable()) {
-                break pathCheck;
+                continue outerZ;
               }
             }
           }

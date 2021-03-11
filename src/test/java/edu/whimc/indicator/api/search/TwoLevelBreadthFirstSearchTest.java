@@ -3,6 +3,7 @@ package edu.whimc.indicator.api.search;
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.api.path.Link;
 import edu.whimc.indicator.api.path.Locatable;
+import edu.whimc.indicator.api.path.Path;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,8 +17,8 @@ class TwoLevelBreadthFirstSearchTest {
   Domain domain2 = new Domain("d2");
 
   static int boardSize = 12;
-  static Cell[][] board1 = new Cell[boardSize][boardSize];
-  static Cell[][] board2 = new Cell[boardSize][boardSize];
+  static Cell2D[][] board1 = new Cell2D[boardSize][boardSize];
+  static Cell2D[][] board2 = new Cell2D[boardSize][boardSize];
 
 
   @Test
@@ -26,8 +27,8 @@ class TwoLevelBreadthFirstSearchTest {
     // Initialize domains to be completely free
     for (int i = 0; i < boardSize; i++) {
       for (int j = 0; j < boardSize; j++) {
-        board1[i][j] = new Cell(i, j, domain1);
-        board2[i][j] = new Cell(i, j, domain2);
+        board1[i][j] = new Cell2D(i, j, domain1);
+        board2[i][j] = new Cell2D(i, j, domain2);
       }
     }
 
@@ -65,12 +66,12 @@ class TwoLevelBreadthFirstSearchTest {
     char[][] printer2 = new char[boardSize][boardSize];
 
     // Set up parameters for search
-    TwoLevelBreadthFirstSearch<Cell, Domain> bfs = new TwoLevelBreadthFirstSearch<>();
-    Cell origin = board1[4][4];
-    Cell destination = board1[4][8];
-    List<Link<Cell, Domain>> links = Lists.newLinkedList();
-    links.add(new Link<>(board1[8][4], board2[3][6]));
-    links.add(new Link<>(board2[7][7], board1[8][8]));
+    TwoLevelBreadthFirstSearch<Cell2D, Domain> bfs = new TwoLevelBreadthFirstSearch<>();
+    Cell2D origin = board1[4][4];
+    Cell2D destination = board1[4][8];
+    List<Link<Cell2D, Domain>> links = Lists.newLinkedList();
+    links.add(new TestLink(board1[8][4], board2[3][6]));
+    links.add(new TestLink(board2[7][7], board1[8][8]));
     links.forEach(bfs::registerLink);
 
     // Clear printer board
@@ -112,14 +113,14 @@ class TwoLevelBreadthFirstSearchTest {
 //    bfs.setMemoryErrorCallback(() -> System.out.println("Memory error"));
 
     // Solve path
-    List<Cell> path = bfs.findPath(origin, destination);
+    Path<Cell2D, Domain> path = bfs.findPath(origin, destination);
 
     // Put in path
     if (path == null) {
 //      System.out.println("Path not found!");
     } else {
 //      System.out.println("Path found!");
-      for (Cell cell : path) {
+      for (Cell2D cell : path.getAllSteps()) {
         if (cell.domain.equals(domain1)) {
           printer1[cell.x][cell.y] = 'O';
         }
@@ -136,10 +137,10 @@ class TwoLevelBreadthFirstSearchTest {
     printPrinter(printer2, boardSize);
   }
 
-  private void clearPrinters(Cell[][] board1, Cell[][] board2,
+  private void clearPrinters(Cell2D[][] board1, Cell2D[][] board2,
                              char[][] printer1, char[][] printer2,
-                             Cell origin, Cell destination,
-                             List<Link<Cell, Domain>> links,
+                             Cell2D origin, Cell2D destination,
+                             List<Link<Cell2D, Domain>> links,
                              int boardSize) {
     for (int i = 0; i < boardSize; i++) {
       for (int j = 0; j < boardSize; j++) {
@@ -194,20 +195,20 @@ class TwoLevelBreadthFirstSearchTest {
     }
   }
 
-  public static class Cell implements Locatable<Cell, Domain> {
+  public static class Cell2D implements Locatable<Cell2D, Domain> {
 
     private final int x;
     private final int y;
     private final Domain domain;
 
-    Cell(int x, int y, Domain domain) {
+    Cell2D(int x, int y, Domain domain) {
       this.x = x;
       this.y = y;
       this.domain = domain;
     }
 
     @Override
-    public double distanceTo(Cell other) {
+    public double distanceTo(Cell2D other) {
       return (this.x - other.x)*(this.x - other.x) + (this.y - other.y)*(this.y - other.y);
     }
 
@@ -225,13 +226,34 @@ class TwoLevelBreadthFirstSearchTest {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      Cell cell = (Cell) o;
+      Cell2D cell = (Cell2D) o;
       return x == cell.x && y == cell.y && Objects.equals(domain, cell.domain);
     }
 
     @Override
     public int hashCode() {
       return Objects.hash(x, y, domain);
+    }
+  }
+
+  public static class TestLink implements Link<Cell2D, Domain> {
+
+    private final Cell2D origin;
+    private final Cell2D destination;
+
+    public TestLink(Cell2D origin, Cell2D destination) {
+      this.origin = origin;
+      this.destination = destination;
+    }
+
+    @Override
+    public Cell2D getOrigin() {
+      return origin;
+    }
+
+    @Override
+    public Cell2D getDestination() {
+      return destination;
     }
   }
 
@@ -254,11 +276,11 @@ class TwoLevelBreadthFirstSearchTest {
     }
   }
 
-  public class StepMode implements Mode<Cell, Domain> {
+  public class StepMode implements Mode<Cell2D, Domain> {
 
     @Override
-    public Set<Cell> getDestinations(Cell origin) {
-      Set<Cell> set = new HashSet<>();
+    public Set<Cell2D> getDestinations(Cell2D origin) {
+      Set<Cell2D> set = new HashSet<>();
       for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
           if (i == 0 && j == 0) continue;
@@ -266,7 +288,7 @@ class TwoLevelBreadthFirstSearchTest {
           if (origin.x + i >= boardSize) continue;
           if (origin.y + j < 0) continue;
           if (origin.y + j >= boardSize) continue;
-          Cell adding = null;
+          Cell2D adding = null;
           if (origin.getDomain().equals(domain1)) {
             // Make sure we can't go diagonally if adjacent borders won't allow such a move
             if (i*i*j*j == 1 && board1[origin.x + i][origin.y] == null && board1[origin.x][origin.y + j] == null) continue;

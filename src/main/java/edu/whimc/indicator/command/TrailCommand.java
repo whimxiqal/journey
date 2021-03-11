@@ -50,7 +50,7 @@ public class TrailCommand extends CommandNode {
     }
 
     Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
-      IndicatorSearch search = new IndicatorSearch();
+      IndicatorSearch search = new IndicatorSearch(player);
 //      search.setLocalSearchVisitationCallback(loc -> Indicator.getInstance().getLogger().info("Pathfinding - Visited: " + loc.print()));
 
       // Set up a "Working..." message if it takes too long
@@ -76,10 +76,10 @@ public class TrailCommand extends CommandNode {
       BukkitTask illumination = Bukkit.getScheduler().runTaskTimer(Indicator.getInstance(), () -> {
         for (SpigotLocatable location : path.getAllSteps()) {
           for (int i = 0; i < 6; i++) {
-            location.getWorld().spawnParticle(Particle.FLAME,
-                location.getBlockX() + rand.nextDouble(),
-                location.getBlockY() + 0.2f,
-                location.getBlockZ() + rand.nextDouble(),
+            location.getDomain().spawnParticle(Particle.FLAME,
+                location.getX() + rand.nextDouble(),
+                location.getY() + 0.2f,
+                location.getZ() + rand.nextDouble(),
                 1,
                 0, 0, 0,
                 0);

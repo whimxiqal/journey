@@ -1,52 +1,35 @@
 package edu.whimc.indicator.path;
 
-import edu.whimc.indicator.api.path.Locatable;
-import lombok.Getter;
-import lombok.NonNull;
+import edu.whimc.indicator.api.path.Cell;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.util.Objects;
 
-public class SpigotLocatable implements Locatable<SpigotLocatable, World> {
+public class SpigotLocatable extends Cell<SpigotLocatable, World> {
 
-  @Getter
-  private final int blockX;
-  @Getter
-  private final int blockY;
-  @Getter
-  private final int blockZ;
-  @Getter @NonNull
-  private final World world;
-
-  public SpigotLocatable(Location location) {
-    this.blockX = location.getBlockX();
-    this.blockY = location.getBlockY();
-    this.blockZ = location.getBlockZ();
-    this.world = location.getWorld();
+  public SpigotLocatable(int x, int y, int z, World world) {
+    super(x, y, z, world);
   }
 
-  public SpigotLocatable(int blockX, int blockY, int blockZ, World world) {
-    this.blockX = blockX;
-    this.blockY = blockY;
-    this.blockZ = blockZ;
-    this.world = world;
+  public SpigotLocatable(Location location) {
+    super(location.getBlockX(), location.getBlockY(), location.getBlockZ(), location.getWorld());
   }
 
   @Override
   public double distanceTo(SpigotLocatable other) {
-    return vectorSizeSquared(this.getBlockX() - other.getBlockX(),
-        this.getBlockY() - other.getBlockY(),
-        this.getBlockZ() - other.getBlockZ());
+    return vectorSizeSquared(this.x - other.x,
+        this.y - other.y,
+        this.z - other.z);
   }
 
   public Block getBlockAtOffset(int x, int y, int z) {
-    return this.world.getBlockAt(blockX + x, blockY + y, blockZ + z);
+    return this.domain.getBlockAt(this.x + x, this.y + y, this.z + z);
   }
 
   public SpigotLocatable createLocatableAtOffset(int x, int y, int z) {
-    return new SpigotLocatable(this.blockX + x, this.blockY + y, this.blockZ + z, this.world);
+    return new SpigotLocatable(this.x + x, this.y + y, this.z + z, this.domain);
   }
 
   private double vectorSizeSquared(int distX, int distY, int distZ) {
@@ -54,13 +37,8 @@ public class SpigotLocatable implements Locatable<SpigotLocatable, World> {
   }
 
   @Override
-  public World getDomain() {
-    return this.getWorld();
-  }
-
-  @Override
   public String print() {
-    return String.format("(%d, %d, %d) in %s", blockX, blockY, blockZ, world.getName());
+    return String.format("(%d, %d, %d) in %s", this.x, this.y, this.z, this.domain.getName());
   }
 
   @Override
@@ -68,11 +46,11 @@ public class SpigotLocatable implements Locatable<SpigotLocatable, World> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     SpigotLocatable that = (SpigotLocatable) o;
-    return blockX == that.blockX && blockY == that.blockY && blockZ == that.blockZ && world.equals(that.world);
+    return this.x == that.x && this.y == that.y && this.z == that.z && this.domain.equals(that.domain);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(blockX, blockY, blockZ, world);
+    return Objects.hash(this.x, this.y, this.z, this.domain);
   }
 }
