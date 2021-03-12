@@ -2,16 +2,18 @@ package edu.whimc.indicator.spigot.search.mode;
 
 import edu.whimc.indicator.api.path.Mode;
 import edu.whimc.indicator.api.path.ModeType;
-import edu.whimc.indicator.spigot.path.CellImpl;
+import edu.whimc.indicator.spigot.path.LocationCell;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class WalkMode implements Mode<CellImpl, World> {
+public class WalkMode implements Mode<LocationCell, World> {
   @Override
-  public Map<CellImpl, Float> getDestinations(CellImpl origin) {
-    Map<CellImpl, Float> locations = new HashMap<>();
+  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
+    Map<LocationCell, Double> locations = new HashMap<>();
     if (origin.getBlockAtOffset(0, -1, 0).isPassable()) {
       return locations;
     }
@@ -32,15 +34,23 @@ public class WalkMode implements Mode<CellImpl, World> {
           for (int offZIn = Math.abs(offX) /* normalize sign */; offZIn >= 0; offZIn--) {
             if (offXIn == 0 && offZIn == 0) continue;
             for (int offY = 0; offY <= 1; offY++) { // Check two blocks tall
-              if (!origin.getBlockAtOffset(offXIn * offX /* get sign back */, offY, offZIn * offZ).isPassable()) {
-                continue outerZ;
+              Block offsetBlock = origin.getBlockAtOffset(offXIn * offX /* get sign back */, offY, offZIn * offZ);
+              if (!offsetBlock.isPassable()) {
+                continue outerZ;  // Barrier - invalid move
+              }
+              if (offsetBlock.getType().equals(Material.LAVA)) {
+                continue outerZ;  // Lava - invalid move
               }
             }
           }
         }
         for (int offY = -1; offY >= -4; offY--) {  // Check for floor anywhere up to a 3 block fall
           if (!origin.getBlockAtOffset(offX, offY, offZ).isPassable()) {
-            locations.put(origin.createLocatableAtOffset(offX, offY+1, offZ), 0f + offX*offX + (offY+1)*(offY+1) + offZ*offZ);
+            if (origin.getBlockAtOffset(offX, offY + 2, offZ).getType().equals(Material.WATER)) {
+              break;  // Water (drowning) - invalid destination
+            }
+            LocationCell other = origin.createLocatableAtOffset(offX, offY+1, offZ);
+            locations.put(other, origin.distanceTo(other));
             break;
           }
         }

@@ -1,12 +1,12 @@
 package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.api.path.Endpoint;
 import edu.whimc.indicator.api.path.Path;
 import edu.whimc.indicator.api.path.Step;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
-import edu.whimc.indicator.spigot.destination.EndpointImpl;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
-import edu.whimc.indicator.spigot.path.CellImpl;
+import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.search.mode.ModeTypes;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
@@ -16,6 +16,7 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,7 @@ public class TrailCommand extends CommandNode {
       return false;
     }
     Player player = (Player) sender;
-    EndpointImpl destination;
+    Endpoint<JavaPlugin, LocationCell, World> destination;
     if (Indicator.getInstance()
         .getEndpointManager()
         .containsKey(player.getUniqueId())) {
@@ -48,23 +49,22 @@ public class TrailCommand extends CommandNode {
     } else {
       sender.sendMessage(Format.warn("You don't have a destination set!"));
       sender.sendMessage(Format.warn("Defaulting to your world's spawn."));
-      destination = new EndpointImpl(Indicator.getInstance(), new CellImpl(player.getWorld().getSpawnLocation()));
+      destination = new Endpoint<>(Indicator.getInstance(), new LocationCell(player.getWorld().getSpawnLocation()));
       Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), destination);
     }
 
     Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
       IndicatorSearch search = new IndicatorSearch(player);
-//      search.setLocalSearchVisitationCallback(loc -> Indicator.getInstance().getLogger().info("Pathfinding - Visited: " + loc.print()));
 
       // Set up a "Working..." message if it takes too long
       BukkitTask workingNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () ->
           sender.sendMessage(Format.info("Finding a path to your destination...")), 10);
 
-      Path<CellImpl, World> path = search.findPath(
-          new CellImpl(player.getLocation()),
+      Path<LocationCell, World> path = search.findPath(
+          new LocationCell(player.getLocation()),
           destination.getLocation());
 
-      // Cancel working... message if it hasn't happened yet
+      // Cancel "Working..." message if it hasn't happened yet
       workingNotification.cancel();
 
       if (path == null) {
@@ -76,7 +76,7 @@ public class TrailCommand extends CommandNode {
 
       Random rand = new Random();
       BukkitTask illumination = Bukkit.getScheduler().runTaskTimer(Indicator.getInstance(), () -> {
-        List<Step<CellImpl, World>> allSteps = path.getAllSteps();
+        List<Step<LocationCell, World>> allSteps = path.getAllSteps();
         for (int i = 0; i < allSteps.size() - 1; i++) {
           for (int p = 0; p < 6; p++) {
             Particle particle;

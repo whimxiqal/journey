@@ -7,7 +7,7 @@ import java.util.Map;
 
 public interface Mode<T extends Locatable<T, D>, D> {
 
-  Map<T, Float> getDestinations(T origin);
+  Map<T, Double> getDestinations(T origin);
 
   ModeType getType();
 

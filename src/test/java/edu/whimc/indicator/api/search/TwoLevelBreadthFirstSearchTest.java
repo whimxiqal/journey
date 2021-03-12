@@ -1,10 +1,7 @@
 package edu.whimc.indicator.api.search;
 
 import com.google.common.collect.Lists;
-import edu.whimc.indicator.api.path.Link;
-import edu.whimc.indicator.api.path.Locatable;
-import edu.whimc.indicator.api.path.Mode;
-import edu.whimc.indicator.api.path.Path;
+import edu.whimc.indicator.api.path.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -79,8 +76,9 @@ class TwoLevelBreadthFirstSearchTest {
     clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
 
     bfs.registerMode(new StepMode());
-    bfs.setTrialSearchVisitationCallback(cell -> {
-      System.out.printf("Distance to destination: %d\n", cell.distanceTo(links.get(1).getOrigin()));
+    bfs.setTrialSearchVisitationCallback(step -> {
+      Cell2D cell = step.getLocatable();
+      System.out.printf("Distance to destination: %f\n", cell.distanceTo(links.get(1).getOrigin()));
       if (cell.getDomain().equals(domain1)) {
         printer1[cell.x][cell.y] = '+';
       }
@@ -94,7 +92,8 @@ class TwoLevelBreadthFirstSearchTest {
       printPrinter(printer2, boardSize);
     });
 //    bfs.setLocalSearchVisitationCallback(x -> {});  // Reset
-    bfs.setTrailSearchStepCallback(cell -> {
+    bfs.setTrailSearchStepCallback(step -> {
+      Cell2D cell = step.getLocatable();
       if (cell.getDomain().equals(domain1)) {
         printer1[cell.x][cell.y] = '.';
       }
@@ -121,14 +120,14 @@ class TwoLevelBreadthFirstSearchTest {
 //      System.out.println("Path not found!");
     } else {
 //      System.out.println("Path found!");
-      for (Cell2D cell : path.getAllSteps()) {
+      path.getAllSteps().stream().map(Step::getLocatable).forEach(cell -> {
         if (cell.domain.equals(domain1)) {
           printer1[cell.x][cell.y] = 'O';
         }
         if (cell.domain.equals(domain2)) {
           printer2[cell.x][cell.y] = 'O';
         }
-      }
+      });
     }
 
     // Print boards
@@ -209,8 +208,8 @@ class TwoLevelBreadthFirstSearchTest {
     }
 
     @Override
-    public double distanceTo(Cell2D other) {
-      return (this.x - other.x)*(this.x - other.x) + (this.y - other.y)*(this.y - other.y);
+    public double distanceToSquared(Cell2D other) {
+      return (this.x - other.x) * (this.x - other.x) + (this.y - other.y) * (this.y - other.y);
     }
 
     @Override
@@ -260,7 +259,8 @@ class TwoLevelBreadthFirstSearchTest {
 
   @AllArgsConstructor
   public static class Domain {
-    @NonNull @Getter
+    @NonNull
+    @Getter
     private final String name;
 
     @Override
@@ -280,8 +280,8 @@ class TwoLevelBreadthFirstSearchTest {
   public class StepMode implements Mode<Cell2D, Domain> {
 
     @Override
-    public Set<Cell2D> getDestinations(Cell2D origin) {
-      Set<Cell2D> set = new HashSet<>();
+    public Map<Cell2D, Double> getDestinations(Cell2D origin) {
+      Map<Cell2D, Double> map = new HashMap<>();
       for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
           if (i == 0 && j == 0) continue;
@@ -292,20 +292,27 @@ class TwoLevelBreadthFirstSearchTest {
           Cell2D adding = null;
           if (origin.getDomain().equals(domain1)) {
             // Make sure we can't go diagonally if adjacent borders won't allow such a move
-            if (i*i*j*j == 1 && board1[origin.x + i][origin.y] == null && board1[origin.x][origin.y + j] == null) continue;
+            if (i * i * j * j == 1 && board1[origin.x + i][origin.y] == null && board1[origin.x][origin.y + j] == null)
+              continue;
             adding = board1[origin.x + i][origin.y + j];
           }
           if (origin.getDomain().equals(domain2)) {
             // Make sure we can't go diagonally if adjacent borders won't allow such a move
-            if (i*i*j*j == 1 && board2[origin.x + i][origin.y] == null && board2[origin.x][origin.y + j] == null) continue;
+            if (i * i * j * j == 1 && board2[origin.x + i][origin.y] == null && board2[origin.x][origin.y + j] == null)
+              continue;
             adding = board2[origin.x + i][origin.y + j];
           }
           if (adding != null) {
-            set.add(adding);
+            map.put(adding, origin.distanceTo(adding));
           }
         }
       }
-      return set;
+      return map;
+    }
+
+    @Override
+    public ModeType getType() {
+      return null;
     }
   }
 }

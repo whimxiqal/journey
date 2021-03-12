@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Path<T extends Locatable<T, D>, D> {
+public final class Path<T extends Locatable<T, D>, D> {
 
   private final LinkedList<Trail<T, D>> localTrails = Lists.newLinkedList();
   private final LinkedList<Link<T, D>> domainLinks = Lists.newLinkedList();

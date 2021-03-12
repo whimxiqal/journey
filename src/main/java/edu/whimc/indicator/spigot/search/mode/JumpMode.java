@@ -2,16 +2,16 @@ package edu.whimc.indicator.spigot.search.mode;
 
 import edu.whimc.indicator.api.path.Mode;
 import edu.whimc.indicator.api.path.ModeType;
-import edu.whimc.indicator.spigot.path.CellImpl;
+import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.World;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class JumpMode implements Mode<CellImpl, World> {
+public class JumpMode implements Mode<LocationCell, World> {
   @Override
-  public Map<CellImpl, Float> getDestinations(CellImpl origin) {
-    Map<CellImpl, Float> locations = new HashMap<>();
+  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
+    Map<LocationCell, Double> locations = new HashMap<>();
     if (origin.getBlockAtOffset(0, -1, 0).isPassable()) {
       return locations;
     }
@@ -40,7 +40,8 @@ public class JumpMode implements Mode<CellImpl, World> {
           }
         }
         if (!origin.getBlockAtOffset(offX, 0, offZ).isPassable()) {
-          locations.put(origin.createLocatableAtOffset(offX, 1, offZ), 0f + offX*offX + 1 + offZ*offZ);
+          LocationCell other = origin.createLocatableAtOffset(offX, 1, offZ);
+          locations.put(other, origin.distanceTo(other));
           break;
         }
       }

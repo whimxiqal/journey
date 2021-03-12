@@ -2,11 +2,11 @@ package edu.whimc.indicator.spigot.command;
 
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.api.path.Endpoint;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.command.common.Parameter;
 import edu.whimc.indicator.spigot.command.common.ParameterSuppliers;
-import edu.whimc.indicator.spigot.destination.EndpointImpl;
-import edu.whimc.indicator.spigot.path.CellImpl;
+import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
 import org.bukkit.Bukkit;
@@ -14,6 +14,7 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public class EndpointCommand extends CommandNode {
@@ -59,8 +60,8 @@ public class EndpointCommand extends CommandNode {
       return false;
     }
 
-    String subCommand = args[1].toLowerCase();
-    switch (subCommand) {
+    Endpoint<JavaPlugin, LocationCell, World> endpoint;
+    switch (args[1].toLowerCase()) {
       case "location":
         if (args.length < 6) {
           sender.sendMessage(Format.error("Too few arguments!"));
@@ -83,14 +84,11 @@ public class EndpointCommand extends CommandNode {
             return false;
           }
 
-          EndpointImpl endpoint = new EndpointImpl(
+          endpoint = new Endpoint<>(
               Indicator.getInstance(),
-              new CellImpl(x, y, z, world));
+              new LocationCell(x, y, z, world));
+          break;
 
-          Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), endpoint);
-          sender.sendMessage(Format.success("Set " + player.getName() + "'s endpoint to: "));
-          sender.sendMessage(Format.success(x + ", " + y + ", " + z + " in " + world.getName()));
-          return true;
         } catch (NumberFormatException e) {
           sender.sendMessage(Format.error("Your numbers could not be read"));
           return false;
@@ -108,27 +106,28 @@ public class EndpointCommand extends CommandNode {
           return false;
         }
 
-        EndpointImpl endpoint = new EndpointImpl(
+        endpoint = new Endpoint<>(
             Indicator.getInstance(),
-            new CellImpl(x, y, z, world));
-
-        Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), endpoint);
-        sender.sendMessage(Format.success("Set " + player.getName() + "'s endpoint to: "));
-        sender.sendMessage(Format.success("  ["
-            + Format.INFO + x
-            + Format.SUCCESS + ", "
-            + Format.INFO + y
-            + Format.SUCCESS + ", "
-            + Format.INFO + z
-            + Format.SUCCESS + " in "
-            + Format.INFO + world.getName()
-            + Format.SUCCESS + "]"));
-        return true;
+            new LocationCell(x, y, z, world));
+        break;
 
       default:
         player.sendMessage(Format.error("Unexpected parameter."));
         return false;
 
     }
+
+    Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), endpoint);
+    sender.sendMessage(Format.success("Set " + player.getName() + "'s endpoint to: "));
+    sender.sendMessage(Format.success("  ["
+        + Format.INFO + endpoint.getLocation().getX()
+        + Format.SUCCESS + ", "
+        + Format.INFO + endpoint.getLocation().getY()
+        + Format.SUCCESS + ", "
+        + Format.INFO + endpoint.getLocation().getZ()
+        + Format.SUCCESS + " in "
+        + Format.INFO + endpoint.getLocation().getDomain().getName()
+        + Format.SUCCESS + "]"));
+    return true;
   }
 }

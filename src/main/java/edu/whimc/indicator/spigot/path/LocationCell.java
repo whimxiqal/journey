@@ -7,18 +7,18 @@ import org.bukkit.block.Block;
 
 import java.util.Objects;
 
-public class CellImpl extends Cell<CellImpl, World> {
+public class LocationCell extends Cell<LocationCell, World> {
 
-  public CellImpl(int x, int y, int z, World world) {
+  public LocationCell(int x, int y, int z, World world) {
     super(x, y, z, world);
   }
 
-  public CellImpl(Location location) {
+  public LocationCell(Location location) {
     super(location.getBlockX(), location.getBlockY(), location.getBlockZ(), location.getWorld());
   }
 
   @Override
-  public double distanceTo(CellImpl other) {
+  public double distanceToSquared(LocationCell other) {
     return vectorSizeSquared(this.x - other.x,
         this.y - other.y,
         this.z - other.z);
@@ -28,8 +28,8 @@ public class CellImpl extends Cell<CellImpl, World> {
     return this.domain.getBlockAt(this.x + x, this.y + y, this.z + z);
   }
 
-  public CellImpl createLocatableAtOffset(int x, int y, int z) {
-    return new CellImpl(this.x + x, this.y + y, this.z + z, this.domain);
+  public LocationCell createLocatableAtOffset(int x, int y, int z) {
+    return new LocationCell(this.x + x, this.y + y, this.z + z, this.domain);
   }
 
   private double vectorSizeSquared(int distX, int distY, int distZ) {
@@ -45,7 +45,7 @@ public class CellImpl extends Cell<CellImpl, World> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    CellImpl that = (CellImpl) o;
+    LocationCell that = (LocationCell) o;
     return this.x == that.x && this.y == that.y && this.z == that.z && this.domain.equals(that.domain);
   }
 

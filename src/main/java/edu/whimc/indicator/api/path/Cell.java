@@ -17,7 +17,7 @@ public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
   }
 
   @Override
-  abstract public double distanceTo(T other);
+  abstract public double distanceToSquared(T other);
 
   @Override
   public D getDomain() {

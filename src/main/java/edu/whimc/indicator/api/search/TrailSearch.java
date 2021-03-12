@@ -22,25 +22,28 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
   public Trail<T, D> findShortestTrail(T origin, T destination, Collection<Mode<T, D>> modes)
       throws MemoryCapacityException {
     if (!origin.getDomain().equals(destination.getDomain())) {
-      return null;  // These must have the same domain!
+      throw new IllegalArgumentException("The input locatables ["
+          + origin.print() + " and "
+          + destination.print()
+          + "] must have the same domain to search for a trail");
     }
-    Queue<Node> nexts = new PriorityQueue<>(Comparator.comparingDouble(Node::getProximity));
+    Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(Node::getProximity));
     Map<T, Node> visited = new HashMap<>();
 
     Node originNode = new Node(new Step<>(origin, ModeType.NONE), null, origin.distanceTo(destination));
-    nexts.add(originNode);
+    upcoming.add(originNode);
     visited.put(origin, originNode);
     visitationCallback.accept(originNode.getData());
 
     Node current;
-    while (!nexts.isEmpty()) {
+    while (!upcoming.isEmpty()) {
       if (visited.size() > MAX_SIZE) {
         throw new MemoryCapacityException(String.format(
             "The path finding algorithm used too much memory: %d elements",
             visited.size()));  // Too large, couldn't find a solution
       }
 
-      current = nexts.poll();
+      current = upcoming.poll();
       stepCallback.accept(current.getData());
 
       // We found it!
@@ -56,7 +59,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
 
       // Need to keep going
       for (Mode<T, D> mode : modes) {
-        for (Map.Entry<T, Float> next : mode.getDestinations(current.getData().getLocatable()).entrySet()) {
+        for (Map.Entry<T, Double> next : mode.getDestinations(current.getData().getLocatable()).entrySet()) {
           if (visited.containsKey(next.getKey())) {
             // Already visited, but see if it is better to come from this new direction
             if (current.getScore() + next.getValue() < visited.get(next.getKey()).getScore()) {
@@ -69,7 +72,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
             // Not visited. Set up node, give it a score, and add it to the system
             Node nextNode = new Node(new Step<>(next.getKey(), mode.getType()), current, next.getKey().distanceTo(destination));
             nextNode.setScore(current.getScore() + next.getValue());
-            nexts.add(nextNode);
+            upcoming.add(nextNode);
             visited.put(next.getKey(), nextNode);
             visitationCallback.accept(nextNode.getData());
           }
