@@ -17,7 +17,7 @@ permissions:
 commands:
   trail:
     description: Shows a player a trail to their destination
-  destination:
-    description: Sets a destination for a player's trail
+  endpoint:
+    description: Sets an endpoint for a player's trail
 
 

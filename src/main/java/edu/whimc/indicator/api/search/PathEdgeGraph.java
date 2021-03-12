@@ -2,36 +2,22 @@ package edu.whimc.indicator.api.search;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import edu.whimc.indicator.api.path.Link;
-import edu.whimc.indicator.api.path.Locatable;
-import edu.whimc.indicator.api.path.Path;
-import edu.whimc.indicator.api.path.Trail;
+import edu.whimc.indicator.api.path.*;
 
 import java.util.*;
 
 public class PathEdgeGraph<T extends Locatable<T, D>, D> {
 
-    private final Table<Node, Node, List<T>> edges = HashBasedTable.create();
+    private final Table<Node, Node, Trail<T, D>> edges = HashBasedTable.create();
 
-    public void addEdge(Node origin, Node destination, List<T> path) {
-      this.edges.put(origin, destination, path);
+    public void addEdge(Node origin, Node destination, Trail<T, D> trail) {
+      this.edges.put(origin, destination, trail);
     }
 
     public static class Node {
-      private int distance = Integer.MAX_VALUE;
+      private double distance = Double.MAX_VALUE;
       private Node previous;
       private Node() {
-      }
-    }
-
-    private class LocatableNode extends Node {
-      private final T place;
-      public LocatableNode(T place) {
-        this.place = place;
-      }
-
-      public T getPlace() {
-        return place;
       }
     }
 
@@ -46,8 +32,8 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
       }
     }
 
-    public Node generateLocatableNode(T locatable) {
-      return new LocatableNode(locatable);
+    public Node generateNode() {
+      return new Node();
     }
 
     public Node generateLinkNode(Link<T, D> link) {
@@ -56,14 +42,14 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
 
     @SuppressWarnings("unchecked")
     public Path<T, D> findMinimumPath(Node origin, Node destination) {
-      Queue<Node> toVisit = new PriorityQueue<>(Comparator.comparingInt(n -> n.distance));
+      Queue<Node> toVisit = new PriorityQueue<>(Comparator.comparingDouble(n -> n.distance));
       Set<Node> visited = new HashSet<>();
 
       origin.distance = 0;
       origin.previous = null;
       visited.add(origin);
       edges.row(origin).forEach((node, path) -> {
-        node.distance = path.size();
+        node.distance = path.getLength();
         node.previous = origin;
         toVisit.add(node);
       });
@@ -78,7 +64,7 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
           Stack<Trail<T, D>> trails = new Stack<>();
           Stack<Link<T, D>> links = new Stack<>();
           while (current.previous != null) {
-            trails.add(new Trail<>(new LinkedList<>(edges.get(current.previous, current))));
+            trails.add(edges.get(current.previous, current));
             if (current instanceof PathEdgeGraph.LinkNode) {
               links.add(((PathEdgeGraph<T, D>.LinkNode) current).getLink());
             }
@@ -95,16 +81,16 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
         }
 
         // Not yet done
-        for (Map.Entry<Node, List<T>> outlet : edges.row(current).entrySet()) {
+        for (Map.Entry<Node, Trail<T, D>> outlet : edges.row(current).entrySet()) {
           if (visited.contains(outlet.getKey())) {
             continue;
           }
-          if (outlet.getKey().distance > current.distance + outlet.getValue().size()) {
+          if (outlet.getKey().distance > current.distance + outlet.getValue().getLength()) {
             // A better path for this node would be to come from current.
             // We can assume that is already queued. Remove from waiting queue to update.
             toVisit.remove(outlet.getKey());
           }
-          outlet.getKey().distance = current.distance + outlet.getValue().size();
+          outlet.getKey().distance = current.distance + outlet.getValue().getLength();
           outlet.getKey().previous = current;
           toVisit.add(outlet.getKey());
         }

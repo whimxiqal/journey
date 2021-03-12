@@ -4,9 +4,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.api.path.Link;
-import edu.whimc.indicator.api.path.Locatable;
-import edu.whimc.indicator.api.path.Path;
+import edu.whimc.indicator.api.path.*;
 import lombok.Setter;
 
 import java.util.*;
@@ -18,17 +16,18 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
   private final List<Link<T, D>> links = Lists.newLinkedList();
   private final List<Mode<T, D>> modes = Lists.newLinkedList();
 
+  // Callbacks
   @Setter
-  private Consumer<T> localSearchVisitationCallback = loc -> {
+  private Consumer<Step<T, D>> trialSearchVisitationCallback = loc -> {
   };
   @Setter
-  private Consumer<T> localSearchStepCallback = loc -> {
+  private Consumer<Step<T, D>> trailSearchStepCallback = loc -> {
   };
   @Setter
-  private Runnable finishLocalSearchCallback = () -> {
+  private Runnable finishTrailSearchCallback = () -> {
   };
   @Setter
-  private Runnable memoryErrorCallback = () -> {
+  private Runnable memoryCapacityErrorCallback = () -> {
   };
 
   public void registerLink(Link<T, D> link) {
@@ -58,10 +57,10 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
         .collect(Collectors.toList());
   }
 
-  private List<T> findLocalShortestPath(LocalBreadthFirstSearch<T, D> bfs, T origin, T destination, List<Mode<T, D>> modes) {
-    List<T> path = bfs.findShortestPath(origin, destination, modes);
-    finishLocalSearchCallback.run();
-    return path;
+  private Trail<T, D> findShortestTrail(TrailSearch<T, D> bfs, T origin, T destination, List<Mode<T, D>> modes) {
+    Trail<T, D> trail = bfs.findShortestTrail(origin, destination, modes);
+    finishTrailSearchCallback.run();
+    return trail;
   }
 
   private Path<T, D> findMinimumPath(T origin, T destination, List<Link<T, D>> links) {
@@ -82,55 +81,55 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     domains.addAll(domainExits.keySet());
 
     // Initialize local-domain search class
-    LocalBreadthFirstSearch<T, D> bfs = new LocalBreadthFirstSearch<>();
-    bfs.setStepCallback(localSearchStepCallback);
-    bfs.setVisitationCallback(localSearchVisitationCallback);
+    TrailSearch<T, D> trailSearch = new TrailSearch<>();
+    trailSearch.setStepCallback(trailSearchStepCallback);
+    trailSearch.setVisitationCallback(trialSearchVisitationCallback);
 
-    List<T> path;
+    Trail<T, D> trail;
     // Map of paths: origin -> link
-    Map<Link<T, D>, List<T>> originPaths = new HashMap<>();
+    Map<Link<T, D>, Trail<T, D>> originTrails = new HashMap<>();
     if (domainExits.containsKey(origin.getDomain())) {
       for (Link<T, D> exit : domainExits.get(origin.getDomain())) {
         try {
-          path = findLocalShortestPath(bfs, origin, exit.getOrigin(), modes);
-          if (path != null) {
-            originPaths.put(exit, path);
+          trail = findShortestTrail(trailSearch, origin, exit.getOrigin(), modes);
+          if (trail != null) {
+            originTrails.put(exit, trail);
           }
-        } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
-          memoryErrorCallback.run();
+        } catch (TrailSearch.MemoryCapacityException e) {
+          memoryCapacityErrorCallback.run();
         }
       }
     }
 
     // Map of paths: link -> destination
-    Map<Link<T, D>, List<T>> destinationPaths = new HashMap<>();
+    Map<Link<T, D>, Trail<T, D>> destinationTrails = new HashMap<>();
     if (domainEntries.containsKey(destination.getDomain())) {
       for (Link<T, D> entry : domainEntries.get(destination.getDomain())) {
         try {
-          path = findLocalShortestPath(bfs, entry.getDestination(), destination, modes);
-          if (path != null) {
-            destinationPaths.put(entry, path);
+          trail = findShortestTrail(trailSearch, entry.getDestination(), destination, modes);
+          if (trail != null) {
+            destinationTrails.put(entry, trail);
           }
-        } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
-          memoryErrorCallback.run();
+        } catch (TrailSearch.MemoryCapacityException e) {
+          memoryCapacityErrorCallback.run();
         }
       }
     }
 
     // Table of paths: link -> link
-    Table<Link<T, D>, Link<T, D>, List<T>> linkPaths = HashBasedTable.create();
+    Table<Link<T, D>, Link<T, D>, Trail<T, D>> linkTrails = HashBasedTable.create();
     for (D domain : domains) {
       if (domainEntries.containsKey(domain)) {
         for (Link<T, D> entry : domainEntries.get(domain)) {
           if (domainExits.containsKey(domain)) {
             for (Link<T, D> exit : domainExits.get(domain)) {
               try {
-                path = findLocalShortestPath(bfs, entry.getDestination(), exit.getOrigin(), modes);
-                if (path != null) {
-                  linkPaths.put(entry, exit, path);
+                trail = findShortestTrail(trailSearch, entry.getDestination(), exit.getOrigin(), modes);
+                if (trail != null) {
+                  linkTrails.put(entry, exit, trail);
                 }
-              } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
-                memoryErrorCallback.run();
+              } catch (TrailSearch.MemoryCapacityException e) {
+                memoryCapacityErrorCallback.run();
               }
             }
           }
@@ -141,32 +140,32 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     PathEdgeGraph<T, D> graph = new PathEdgeGraph<>();
 
     // Nodes
-    PathEdgeGraph.Node originNode = graph.generateLocatableNode(origin);
-    PathEdgeGraph.Node destinationNode = graph.generateLocatableNode(destination);
+    PathEdgeGraph.Node originNode = graph.generateNode();
+    PathEdgeGraph.Node destinationNode = graph.generateNode();
 
     Map<Link<T, D>, PathEdgeGraph.Node> linkNodeMap = new HashMap<>();
     links.forEach(link -> linkNodeMap.put(link, graph.generateLinkNode(link)));
 
     // Edges
-    originPaths.forEach((link, p) -> graph.addEdge(originNode, linkNodeMap.get(link), p));
-    destinationPaths.forEach((link, p) -> graph.addEdge(linkNodeMap.get(link), destinationNode, p));
-    linkPaths.cellSet().forEach((cell) -> graph.addEdge(
+    originTrails.forEach((link, p) -> graph.addEdge(originNode, linkNodeMap.get(link), p));
+    destinationTrails.forEach((link, p) -> graph.addEdge(linkNodeMap.get(link), destinationNode, p));
+    linkTrails.cellSet().forEach((cell) -> graph.addEdge(
         linkNodeMap.get(cell.getRowKey()),
         linkNodeMap.get(cell.getColumnKey()),
         cell.getValue()));
-    // Origin to Destination edge if they are in the same domain
+    // Origin to Endpoint edge if they are in the same domain
     Indicator.getInstance().getLogger().info("Checking same-domain endpoints...");
     if (origin.getDomain().equals(destination.getDomain())) {
       Indicator.getInstance().getLogger().info(String.format(
           "Finding path between %s and %s",
           origin.print(), destination.print()));
       try {
-        List<T> foundPath = findLocalShortestPath(bfs, origin, destination, modes);
+        Trail<T, D> foundPath = findShortestTrail(trailSearch, origin, destination, modes);
         if (foundPath != null) {
           graph.addEdge(originNode, destinationNode, foundPath);
         }
-      } catch (LocalBreadthFirstSearch.MemoryCapacityException e) {
-        memoryErrorCallback.run();
+      } catch (TrailSearch.MemoryCapacityException e) {
+        memoryCapacityErrorCallback.run();
       }
     }
 

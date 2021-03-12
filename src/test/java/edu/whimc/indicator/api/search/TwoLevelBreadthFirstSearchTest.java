@@ -3,6 +3,7 @@ package edu.whimc.indicator.api.search;
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.api.path.Link;
 import edu.whimc.indicator.api.path.Locatable;
+import edu.whimc.indicator.api.path.Mode;
 import edu.whimc.indicator.api.path.Path;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -78,7 +79,7 @@ class TwoLevelBreadthFirstSearchTest {
     clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
 
     bfs.registerMode(new StepMode());
-    bfs.setLocalSearchVisitationCallback(cell -> {
+    bfs.setTrialSearchVisitationCallback(cell -> {
       System.out.printf("Distance to destination: %d\n", cell.distanceTo(links.get(1).getOrigin()));
       if (cell.getDomain().equals(domain1)) {
         printer1[cell.x][cell.y] = '+';
@@ -93,7 +94,7 @@ class TwoLevelBreadthFirstSearchTest {
       printPrinter(printer2, boardSize);
     });
 //    bfs.setLocalSearchVisitationCallback(x -> {});  // Reset
-    bfs.setLocalSearchStepCallback(cell -> {
+    bfs.setTrailSearchStepCallback(cell -> {
       if (cell.getDomain().equals(domain1)) {
         printer1[cell.x][cell.y] = '.';
       }
@@ -107,7 +108,7 @@ class TwoLevelBreadthFirstSearchTest {
       printPrinter(printer2, boardSize);
     });
 //    bfs.setLocalSearchStepCallback(x -> {});  // Reset
-    bfs.setFinishLocalSearchCallback(() ->
+    bfs.setFinishTrailSearchCallback(() ->
         clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize));
 //    bfs.setFinishLocalSearchCallback(() -> {});  // Reset
 //    bfs.setMemoryErrorCallback(() -> System.out.println("Memory error"));
