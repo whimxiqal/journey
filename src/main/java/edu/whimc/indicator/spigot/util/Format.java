@@ -44,7 +44,7 @@ public final class Format {
   public static final ChatColor INFO = ChatColor.GOLD;
   public static final ChatColor WARN = ChatColor.YELLOW;
   public static final ChatColor ERROR = ChatColor.RED;
-  public static final ChatColor STAFF = ChatColor.AQUA;
+  public static final ChatColor DEBUG = ChatColor.AQUA;
   public static final ChatColor ACCENT_1 = ChatColor.GOLD;
   public static final ChatColor ACCENT_2 = ChatColor.BLUE;
   public static final ChatColor DEFAULT = ChatColor.WHITE;
@@ -64,6 +64,10 @@ public final class Format {
 
   public static String error(String message) {
     return PREFIX + ERROR + message;
+  }
+
+  public static String debug(String message) {
+    return PREFIX + DEBUG + message;
   }
 
   public static String formatInstantVerbose(Instant instant) {

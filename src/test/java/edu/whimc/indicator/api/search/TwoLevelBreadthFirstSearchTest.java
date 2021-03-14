@@ -255,6 +255,11 @@ class TwoLevelBreadthFirstSearchTest {
     public Cell2D getDestination() {
       return destination;
     }
+
+    @Override
+    public Completion<Cell2D, Domain> getCompletion() {
+      return loc -> loc.equals(destination);
+    }
   }
 
   @AllArgsConstructor

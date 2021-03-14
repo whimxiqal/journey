@@ -49,12 +49,23 @@ public class TrailCommand extends CommandNode {
     } else {
       sender.sendMessage(Format.warn("You don't have a destination set!"));
       sender.sendMessage(Format.warn("Defaulting to your world's spawn."));
-      destination = new Endpoint<>(Indicator.getInstance(), new LocationCell(player.getWorld().getSpawnLocation()));
+
+      LocationCell spawnLocation = new LocationCell(player.getWorld().getSpawnLocation());
+      destination = new Endpoint<>(Indicator.getInstance(),
+          spawnLocation,
+          loc -> loc.distanceToSquared(spawnLocation) < 9);  // Finish within 3 blocks
+
       Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), destination);
     }
 
     Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
       IndicatorSearch search = new IndicatorSearch(player);
+
+      // Set up a search cancellation in case it takes too long
+      Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> {
+        search.setCancelled(true);
+        Indicator.getInstance().getDebugManager().broadcastDebugMessage(Format.debug("Search cancelled due to timeout."));
+      }, 200 /* 10 seconds */);
 
       // Set up a "Working..." message if it takes too long
       BukkitTask workingNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () ->

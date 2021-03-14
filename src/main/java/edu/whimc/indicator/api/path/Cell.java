@@ -24,6 +24,4 @@ public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
     return this.domain;
   }
 
-  @Override
-  abstract public String print();
 }

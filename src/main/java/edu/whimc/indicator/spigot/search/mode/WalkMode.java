@@ -8,9 +8,20 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class WalkMode implements Mode<LocationCell, World> {
+
+  private static final Set<Material> IMPASSABLE_MATERIALS = new HashSet<>();
+
+  public WalkMode() {
+    IMPASSABLE_MATERIALS.add(Material.LAVA);
+    IMPASSABLE_MATERIALS.add(Material.NETHER_PORTAL);
+    IMPASSABLE_MATERIALS.add(Material.END_PORTAL);
+  }
+
   @Override
   public Map<LocationCell, Double> getDestinations(LocationCell origin) {
     Map<LocationCell, Double> locations = new HashMap<>();
@@ -38,8 +49,8 @@ public class WalkMode implements Mode<LocationCell, World> {
               if (!offsetBlock.isPassable()) {
                 continue outerZ;  // Barrier - invalid move
               }
-              if (offsetBlock.getType().equals(Material.LAVA)) {
-                continue outerZ;  // Lava - invalid move
+              if (IMPASSABLE_MATERIALS.contains(offsetBlock.getType())) {
+                continue outerZ;  // Impassable - invalid move
               }
             }
           }

@@ -8,23 +8,29 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class TrailSearch<T extends Locatable<T, D>, D> {
 
-  public static final int MAX_SIZE = 100000;
+  public static final int MAX_SIZE = 10000;
 
   @Setter
-  private Consumer<Step<T, D>> visitationCallback = loc -> {};
+  private Consumer<Step<T, D>> visitationCallback = loc -> {
+  };
 
   @Setter
-  private Consumer<Step<T, D>> stepCallback = loc -> {};
+  private Consumer<Step<T, D>> stepCallback = loc -> {
+  };
 
-  public Trail<T, D> findShortestTrail(T origin, T destination, Collection<Mode<T, D>> modes)
+  public Trail<T, D> findShortestTrail(T origin,
+                                       T destination,
+                                       Collection<Mode<T, D>> modes,
+                                       Supplier<Boolean> cancellation)
       throws MemoryCapacityException {
     if (!origin.getDomain().equals(destination.getDomain())) {
       throw new IllegalArgumentException("The input locatables ["
-          + origin.print() + " and "
-          + destination.print()
+          + origin + " and "
+          + destination
           + "] must have the same domain to search for a trail");
     }
     Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(Node::getProximity));
@@ -37,6 +43,9 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
 
     Node current;
     while (!upcoming.isEmpty()) {
+      if (cancellation.get()) {
+        return null;  // cancelled
+      }
       if (visited.size() > MAX_SIZE) {
         throw new MemoryCapacityException(String.format(
             "The path finding algorithm used too much memory: %d elements",
@@ -54,7 +63,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        return new Trail<>(steps, length);
+        return new Trail<>(new ArrayList<>(steps), length);
       }
 
       // Need to keep going
@@ -63,7 +72,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
           if (visited.containsKey(next.getKey())) {
             // Already visited, but see if it is better to come from this new direction
             if (current.getScore() + next.getValue() < visited.get(next.getKey()).getScore()) {
-              Indicator.getInstance().getLogger().info("Score was updated at " + next.getKey().print());
+              Indicator.getInstance().getLogger().info("Score was updated at " + next.getKey());
               visited.get(next.getKey()).setPrevious(current);
               visited.get(next.getKey()).setScore(current.getScore() + next.getValue());
               visited.get(next.getKey()).getData().setModeType(mode.getType());
@@ -84,10 +93,16 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
   }
 
   class Node {
-    @Getter private final Step<T, D> data;
-    @Getter private final double proximity;
-    @Getter @Setter private Node previous;
-    @Getter @Setter private double score = Double.MAX_VALUE;
+    @Getter
+    private final Step<T, D> data;
+    @Getter
+    private final double proximity;
+    @Getter
+    @Setter
+    private Node previous;
+    @Getter
+    @Setter
+    private double score = Double.MAX_VALUE;
 
     public Node(@NotNull Step<T, D> data, Node previous, double proximity) {
       this.data = data;

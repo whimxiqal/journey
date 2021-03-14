@@ -72,9 +72,13 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
           }
           Path<T, D> path = new Path<>();
           while (!links.isEmpty()) {
-            path.addLinkedTrail(trails.pop(), links.pop());
+            if (!path.addLinkedTrail(trails.pop(), links.pop())) {
+              throw new RuntimeException("Could not add linked trail to path");
+            }
           }
-          path.addFinalTrail(trails.pop());
+          if (!path.addFinalTrail(trails.pop())) {
+            throw new RuntimeException("Could not add final trail");
+          }
           assert trails.isEmpty();
           assert links.isEmpty();
           return path;

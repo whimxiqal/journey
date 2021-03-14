@@ -24,6 +24,10 @@ public class LocationCell extends Cell<LocationCell, World> {
         this.z - other.z);
   }
 
+  public Block getBlock() {
+    return this.domain.getBlockAt(this.x, this.y, this.z);
+  }
+
   public Block getBlockAtOffset(int x, int y, int z) {
     return this.domain.getBlockAt(this.x + x, this.y + y, this.z + z);
   }
@@ -37,7 +41,7 @@ public class LocationCell extends Cell<LocationCell, World> {
   }
 
   @Override
-  public String print() {
+  public String toString() {
     return String.format("(%d, %d, %d) in %s", this.x, this.y, this.z, this.domain.getName());
   }
 

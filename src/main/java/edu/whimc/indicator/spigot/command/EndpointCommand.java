@@ -61,6 +61,10 @@ public class EndpointCommand extends CommandNode {
     }
 
     Endpoint<JavaPlugin, LocationCell, World> endpoint;
+    World world;
+    int x;
+    int y;
+    int z;
     switch (args[1].toLowerCase()) {
       case "location":
         if (args.length < 6) {
@@ -69,10 +73,10 @@ public class EndpointCommand extends CommandNode {
         }
 
         try {
-          World world = Bukkit.getWorld(args[2]);
-          int x = Integer.parseInt(args[3]);
-          int y = Integer.parseInt(args[4]);
-          int z = Integer.parseInt(args[5]);
+          world = Bukkit.getWorld(args[2]);
+          x = Integer.parseInt(args[3]);
+          y = Integer.parseInt(args[4]);
+          z = Integer.parseInt(args[5]);
 
           if (world == null) {
             sender.sendMessage(Format.error("That's not a valid world"));
@@ -84,9 +88,6 @@ public class EndpointCommand extends CommandNode {
             return false;
           }
 
-          endpoint = new Endpoint<>(
-              Indicator.getInstance(),
-              new LocationCell(x, y, z, world));
           break;
 
         } catch (NumberFormatException e) {
@@ -96,19 +97,16 @@ public class EndpointCommand extends CommandNode {
 
       case "here":
 
-        World world = player.getLocation().getWorld();
-        int x = player.getLocation().getBlockX();
-        int y = player.getLocation().getBlockY();
-        int z = player.getLocation().getBlockZ();
+        world = player.getLocation().getWorld();
+        x = player.getLocation().getBlockX();
+        y = player.getLocation().getBlockY();
+        z = player.getLocation().getBlockZ();
 
         if (world == null) {
           player.sendMessage(Format.error("Your world could not be found."));
           return false;
         }
 
-        endpoint = new Endpoint<>(
-            Indicator.getInstance(),
-            new LocationCell(x, y, z, world));
         break;
 
       default:
@@ -116,6 +114,12 @@ public class EndpointCommand extends CommandNode {
         return false;
 
     }
+
+    LocationCell endLocation = new LocationCell(x, y, z, world);
+    endpoint = new Endpoint<>(
+        Indicator.getInstance(),
+        endLocation,
+        loc -> loc.distanceToSquared(endLocation) < 9);  // Finish within 3 blocks
 
     Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), endpoint);
     sender.sendMessage(Format.success("Set " + player.getName() + "'s endpoint to: "));

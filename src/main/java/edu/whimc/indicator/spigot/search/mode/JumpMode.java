@@ -31,7 +31,7 @@ public class JumpMode implements Mode<LocationCell, World> {
       for (int offZ = -1; offZ <= 1; offZ++) {
         for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
           for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
-            if (offX == 0 && offZ == 0) continue;
+            if (offXIn == 0 && offZIn == 0) continue;
             for (int offY = 1; offY <= 2; offY++) { // Check two blocks tall
               if (!origin.getBlockAtOffset(offXIn * offX /* get sign back */, offY, offZIn * offZ).isPassable()) {
                 continue outerZ;

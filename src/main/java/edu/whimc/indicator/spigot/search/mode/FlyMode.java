@@ -27,7 +27,7 @@ public class FlyMode implements Mode<LocationCell, World> {
           for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
             for (int offYIn = offY * offY /* normalize sign */; offYIn >= 0; offYIn--) {
               for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
-                if (offX == 0 && offY == 0 && offZ == 0) continue;
+                if (offXIn == 0 && offYIn == 0 && offZIn == 0) continue;
                 for (int h = 0; h <= offYIn + 1; h++) {
                   if (!origin.getBlockAtOffset(offXIn * offX /* get sign back */, offYIn * offY + h, offZIn * offZ).isPassable()) {
                     continue outerZ;

@@ -1,4 +1,4 @@
-package edu.whimc.indicator.spigot.destination;
+package edu.whimc.indicator.spigot.cache;
 
 import edu.whimc.indicator.api.path.Endpoint;
 import edu.whimc.indicator.spigot.path.LocationCell;

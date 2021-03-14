@@ -8,6 +8,12 @@ website: https://whimcproject.web.illinois.edu/
 softdepend:
   - WHIMC-Portals
 permissions:
+  indicator.indicator:
+    default: true
+    description: Root command for indicator subcommands
+  indicator.debug:
+    default: false
+    description: Turn on debug mode
   indicator.trail:
     default: true
     description: Allows the use of the trail command
@@ -15,6 +21,8 @@ permissions:
     default: false
     description: Allows the use of the description sub command
 commands:
+  indicator:
+    description: Root indicator command
   trail:
     description: Shows a player a trail to their destination
   endpoint:
