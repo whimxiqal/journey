@@ -1,33 +1,28 @@
 /*
- * MIT License
- *
- * Copyright (c) 2020 Pieter Svenson
+ * Copyright 2021 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 package edu.whimc.indicator.spigot.command.common;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import edu.whimc.indicator.spigot.util.Format;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -45,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
@@ -122,6 +116,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
   }
 
   @NotNull
+  @SuppressWarnings("unused")
   public final List<String> getAliases() {
     return aliases;
   }
@@ -140,6 +135,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
     return parameters.get(parameter);
   }
 
+  @SuppressWarnings("SameParameterValue")
   protected final void addSubcommand(@NotNull Parameter parameter, @NotNull String description) {
     this.parameters.put(parameter, description);
   }
@@ -157,15 +153,6 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
   protected final void addChildren(CommandNode... nodes) {
     this.children.addAll(Arrays.asList(nodes));
-    Set<String> childrenAliases = Sets.newHashSet();
-    for (CommandNode child : children) {
-      for (String alias : child.getAliases()) {
-        if (childrenAliases.contains(alias.toLowerCase())) {
-          throw new IllegalStateException("There may not be two of the same alias in the children of a Command Node: "
-              + alias);
-        }
-      }
-    }
   }
 
   @NotNull
@@ -239,7 +226,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
    * @param command the originally executed command
    * @param label   the alias of the command or subcommand used
    * @param args    the arguments of this command or subcommand
-   * @return
+   * @return true if the command succeeded, false if failed
    */
   public abstract boolean onWrappedCommand(@NotNull CommandSender sender,
                                            @NotNull Command command,
