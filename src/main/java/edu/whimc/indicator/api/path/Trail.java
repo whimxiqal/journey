@@ -3,8 +3,6 @@ package edu.whimc.indicator.api.path;
 import lombok.Data;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 @Data
 public final class Trail<T extends Locatable<T, D>, D> {

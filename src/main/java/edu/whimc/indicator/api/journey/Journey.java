@@ -1,5 +1,6 @@
 package edu.whimc.indicator.api.journey;
 
+import edu.whimc.indicator.api.path.Completion;
 import edu.whimc.indicator.api.path.Locatable;
 import edu.whimc.indicator.api.path.Path;
 import edu.whimc.indicator.api.path.Step;
@@ -41,5 +42,7 @@ public interface Journey<T extends Locatable<T, D>, D> {
    * @return the closest locatable
    */
   T closest(T other);
+
+  boolean isCompleted();
 
 }

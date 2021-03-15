@@ -3,7 +3,6 @@ package edu.whimc.indicator.api.search;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
-import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.api.path.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,9 +18,11 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
   private final List<Link<T, D>> links = Lists.newLinkedList();
   private final List<Mode<T, D>> modes = Lists.newLinkedList();
 
-  @Setter
   @Getter
   private boolean cancelled = false;
+
+  @Getter
+  private boolean done = false;
 
   // Callbacks
   @Setter
@@ -187,16 +188,25 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     return graph.findMinimumPath(originNode, destinationNode);
   }
 
+  public void setCancelled(boolean cancelled) {
+    if (cancelled) {
+      this.cancelled = true;
+      this.done = true;
+    } else {
+      this.cancelled = false;
+    }
+  }
 
   @Override
   public Path<T, D> findPath(T origin, T destination) {
-
+    done = false;
     // Stage 1 - Only keep the links that may be helpful for finding this path
     List<Link<T, D>> filteredLinks = filterLinks(origin, destination, links);
 
     // Stage 2 & 3- Create graph based on paths made from local breadth first searches
-    return findMinimumPath(origin, destination, filteredLinks);
-
+    Path<T, D> path = findMinimumPath(origin, destination, filteredLinks);
+    done = true;
+    return path;
   }
 
 }

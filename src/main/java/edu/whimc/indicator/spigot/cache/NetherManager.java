@@ -29,9 +29,19 @@ public class NetherManager implements Listener {
   }
 
   public Collection<Link<LocationCell, World>> makeLinks() {
-    return links.entrySet().stream()
+    List<LocationCell> broken = new LinkedList<>();
+    List<Link<LocationCell, World>> linksUnverified = links.entrySet().stream()
         .map(entry -> new NetherLink(entry.getKey(), entry.getValue()))
         .collect(Collectors.toList());
+    List<Link<LocationCell, World>> linksVerified = new LinkedList<>();
+    for (Link<LocationCell, World> link : linksUnverified) {
+      if (link.verify()) {
+        linksVerified.add(link);
+      } else {
+        links.remove(link.getOrigin(), link.getDestination());
+      }
+    }
+    return linksVerified;
   }
 
   @EventHandler(priority = EventPriority.LOW)

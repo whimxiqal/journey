@@ -2,6 +2,7 @@ package edu.whimc.indicator;
 
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.spigot.cache.DebugManager;
+import edu.whimc.indicator.spigot.cache.JourneyManager;
 import edu.whimc.indicator.spigot.cache.NetherManager;
 import edu.whimc.indicator.spigot.command.EndpointCommand;
 import edu.whimc.indicator.spigot.command.IndicatorCommand;
@@ -23,6 +24,8 @@ public final class Indicator extends JavaPlugin {
   private NetherManager netherManager;
   @Getter
   private DebugManager debugManager;
+  @Getter
+  private JourneyManager journeyManager;
 
   public static Indicator getInstance() {
     return instance;
@@ -39,6 +42,7 @@ public final class Indicator extends JavaPlugin {
     this.endpointManager = new EndpointManager();
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();
+    this.journeyManager = new JourneyManager();
 
     // Register commands
     Lists.newArrayList(new IndicatorCommand(),
@@ -55,6 +59,7 @@ public final class Indicator extends JavaPlugin {
 
     // Register listeners
     netherManager.registerListeners(this);
+    journeyManager.registerListeners(this);
   }
 
   @Override

@@ -64,16 +64,7 @@ public final class NetherUtil {
   }
 
   public static Collection<PortalGroup> locateAll(LocationCell cell, int radius) {
-    World world = cell.getDomain();
-    int maxHeight;
-    if (world.getEnvironment().equals(World.Environment.NORMAL)) {
-      maxHeight = world.getMaxHeight() - 1;
-    } else if (world.getEnvironment().equals(World.Environment.NETHER)) {
-      maxHeight = 127;
-    } else {
-      throw new IllegalArgumentException("The world environment must either be Normal or Nether");
-    }
-    return locateAll(cell, radius, 1, maxHeight);
+    return locateAll(cell, radius, cell.getY() - radius, cell.getY() + radius);
   }
 
   public static Optional<PortalGroup> locateMatch(LocationCell cell) {

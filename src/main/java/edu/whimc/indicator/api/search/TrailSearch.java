@@ -36,7 +36,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
     Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(Node::getProximity));
     Map<T, Node> visited = new HashMap<>();
 
-    Node originNode = new Node(new Step<>(origin, ModeType.NONE), null, origin.distanceTo(destination));
+    Node originNode = new Node(new Step<>(origin, ModeType.NONE), null, origin.distanceTo(destination), 0);
     upcoming.add(originNode);
     visited.put(origin, originNode);
     visitationCallback.accept(originNode.getData());
@@ -53,6 +53,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
       }
 
       current = upcoming.poll();
+      assert current != null;
       stepCallback.accept(current.getData());
 
       // We found it!
@@ -63,6 +64,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
+        Indicator.getInstance().getLogger().info("Finished finding a trail: " + origin + " -> " + destination + ": " + length);
         return new Trail<>(new ArrayList<>(steps), length);
       }
 
@@ -79,8 +81,10 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
             }
           } else {
             // Not visited. Set up node, give it a score, and add it to the system
-            Node nextNode = new Node(new Step<>(next.getKey(), mode.getType()), current, next.getKey().distanceTo(destination));
-            nextNode.setScore(current.getScore() + next.getValue());
+            Node nextNode = new Node(new Step<>(next.getKey(), mode.getType()),
+                current,
+                next.getKey().distanceTo(destination),
+                current.getScore() + next.getValue());
             upcoming.add(nextNode);
             visited.put(next.getKey(), nextNode);
             visitationCallback.accept(nextNode.getData());
@@ -102,12 +106,13 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
     private Node previous;
     @Getter
     @Setter
-    private double score = Double.MAX_VALUE;
+    private double score;
 
-    public Node(@NotNull Step<T, D> data, Node previous, double proximity) {
+    public Node(@NotNull Step<T, D> data, Node previous, double proximity, double score) {
       this.data = data;
       this.previous = previous;
       this.proximity = proximity;
+      this.score = score;
     }
 
   }

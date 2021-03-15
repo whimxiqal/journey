@@ -2,9 +2,11 @@ package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.api.path.Endpoint;
+import edu.whimc.indicator.api.path.ModeType;
 import edu.whimc.indicator.api.path.Path;
 import edu.whimc.indicator.api.path.Step;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
+import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.search.mode.ModeTypes;
@@ -20,10 +22,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class TrailCommand extends CommandNode {
+
+  private static final int ILLUMINATED_COUNT = 16;
+  private static final int TICKS_PER_PARTICLE = 3;
+  private static final double CHANCE_OF_PARTICLE = 0.4;
+
   public TrailCommand() {
     super(null,
         Permissions.TRAIL_PERMISSION,
@@ -42,10 +48,11 @@ public class TrailCommand extends CommandNode {
     }
     Player player = (Player) sender;
     Endpoint<JavaPlugin, LocationCell, World> destination;
+    UUID playerUuid = player.getUniqueId();
     if (Indicator.getInstance()
         .getEndpointManager()
-        .containsKey(player.getUniqueId())) {
-      destination = Indicator.getInstance().getEndpointManager().get(player.getUniqueId());
+        .containsKey(playerUuid)) {
+      destination = Indicator.getInstance().getEndpointManager().get(playerUuid);
     } else {
       sender.sendMessage(Format.warn("You don't have a destination set!"));
       sender.sendMessage(Format.warn("Defaulting to your world's spawn."));
@@ -55,7 +62,7 @@ public class TrailCommand extends CommandNode {
           spawnLocation,
           loc -> loc.distanceToSquared(spawnLocation) < 9);  // Finish within 3 blocks
 
-      Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), destination);
+      Indicator.getInstance().getEndpointManager().put(playerUuid, destination);
     }
 
     Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
@@ -83,33 +90,58 @@ public class TrailCommand extends CommandNode {
         return;
       }
 
-      sender.sendMessage(Format.success("Showing a trail to your destination"));
-
+      // Set up illumination scheduled task for showing the trails
       Random rand = new Random();
-      BukkitTask illumination = Bukkit.getScheduler().runTaskTimer(Indicator.getInstance(), () -> {
-        List<Step<LocationCell, World>> allSteps = path.getAllSteps();
-        for (int i = 0; i < allSteps.size() - 1; i++) {
-          for (int p = 0; p < 6; p++) {
+      int illuminationTaskId = Bukkit.getScheduler().runTaskTimer(Indicator.getInstance(), () -> {
+        Optional<PlayerJourney> journeyOptional = Indicator.getInstance()
+            .getJourneyManager()
+            .getPlayerJourney(playerUuid);
+        if (!journeyOptional.isPresent()) return;
+        PlayerJourney journey = journeyOptional.get();
+
+        List<Step<LocationCell, World>> steps = journey.next(ILLUMINATED_COUNT);  // Show 16 steps ahead
+        for (int i = 0; i < steps.size() - 1; i++) {
+          if (rand.nextDouble() < CHANCE_OF_PARTICLE) {  // make shimmering effect
             Particle particle;
-            if (allSteps.get(i+1).getModeType().equals(ModeTypes.WALK)) {
+            ModeType modeType = steps.get(i + 1).getModeType();
+            if (modeType.equals(ModeTypes.WALK)) {
               particle = Particle.FLAME;
-            } else {
+            } else if (modeType.equals(ModeTypes.JUMP)) {
               particle = Particle.HEART;
+            } else {
+              particle = Particle.CLOUD;
             }
-            allSteps.get(i).getLocatable().getDomain().spawnParticle(particle,
-                allSteps.get(i).getLocatable().getX() + rand.nextDouble(),
-                allSteps.get(i).getLocatable().getY() + 0.2f,
-                allSteps.get(i).getLocatable().getZ() + rand.nextDouble(),
+            steps.get(i).getLocatable().getDomain().spawnParticle(particle,
+                steps.get(i).getLocatable().getX() + rand.nextDouble(),
+                steps.get(i).getLocatable().getY() + 0.2f,
+                steps.get(i).getLocatable().getZ() + rand.nextDouble(),
                 1,
                 0, 0, 0,
                 0);
           }
         }
-      }, 0, 20);
+      }, 0, TICKS_PER_PARTICLE).getTaskId();
 
-      Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), illumination::cancel, 100);
+      // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
+      PlayerJourney journey = new PlayerJourney(playerUuid, path, cell -> {
+        boolean completed = cell.distanceToSquared(destination.getLocation()) < 9;
+        if (completed) {
+          Bukkit.getScheduler().cancelTask(illuminationTaskId);
+        }
+        return completed;
+      });
+      journey.setIlluminationTaskId(illuminationTaskId);
+
+      // Save the journey and stop the illumination from the other one
+      Indicator.getInstance().getJourneyManager()
+          .putPlayerJourney(playerUuid, journey)
+          .ifPresent(previousJourney ->
+              Bukkit.getScheduler().cancelTask(previousJourney.getIlluminationTaskId()));
+
+      sender.sendMessage(Format.success("Showing a trail to your destination"));
 
     });
+
     return true;
 
   }
