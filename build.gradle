@@ -44,8 +44,9 @@ dependencies {
     // Annotations
     compile 'org.jetbrains:annotations:16.0.2'
 
-    // Quests
+    // Other plugins
     compileOnly 'me.blackvein.quests:quests:3.6.2'
+    implementation 'edu.whimc:WHIMC-Portals:2.8.3'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.16'

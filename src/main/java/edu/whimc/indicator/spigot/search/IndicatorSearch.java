@@ -25,13 +25,18 @@ import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.api.search.TwoLevelBreadthFirstSearch;
 import edu.whimc.indicator.spigot.cache.DebugManager;
 import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.path.PortalLink;
 import edu.whimc.indicator.spigot.search.mode.FlyMode;
 import edu.whimc.indicator.spigot.search.mode.JumpMode;
 import edu.whimc.indicator.spigot.search.mode.WalkMode;
 import edu.whimc.indicator.spigot.util.Format;
+import edu.whimc.portals.Main;
+import edu.whimc.portals.Portal;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, World> {
 
@@ -45,6 +50,11 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
 
     // Links
     Indicator.getInstance().getNetherManager().makeLinks().forEach(this::registerLink);
+    // Links - Portals
+    Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
+    if (plugin instanceof Main) {
+      Portal.getPortals().stream().map(PortalLink::new).forEach(this::registerLink);
+    }
 
     // Callbacks
     DebugManager debugManager = Indicator.getInstance().getDebugManager();

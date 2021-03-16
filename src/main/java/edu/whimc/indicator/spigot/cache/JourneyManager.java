@@ -50,7 +50,8 @@ public class JourneyManager implements Listener {
 
   @EventHandler
   public void onPlayerMove(PlayerMoveEvent event) {
-    LocationCell cell = new LocationCell(event.getPlayer().getLocation());
+    if (event.getTo() == null) return;
+    LocationCell cell = new LocationCell(event.getTo());
     UUID playerUuid = event.getPlayer().getUniqueId();
     if (!playerJourneys.containsKey(playerUuid)) {
       return;

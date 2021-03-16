@@ -44,6 +44,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public class EndpointCommand extends CommandNode {
   public EndpointCommand() {
@@ -56,7 +57,13 @@ public class EndpointCommand extends CommandNode {
         .next(Parameter.builder()
             .supplier(Parameter.ParameterSupplier.builder()
                 .strict(false)
-                .allowedEntries(prev -> Lists.newArrayList("location", "here"))
+                .allowedEntries(prev -> {
+                  List<String> allowed = Lists.newArrayList("location", "here");
+                  if (Bukkit.getPluginManager().isPluginEnabled("Quests")) {
+                    allowed.add("quests");
+                  }
+                  return allowed;
+                })
                 .usage("location")
                 .build())
             .next(Parameter.builder()
@@ -152,9 +159,15 @@ public class EndpointCommand extends CommandNode {
 
       case "quest":
 
-        Plugin plugin = Bukkit.getPluginManager().getPlugin("quests");
-        if (!(plugin instanceof Quests)) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("Quests");
+        if (plugin == null) {
           sendCommandError(sender, "Quests is not loaded");
+          return false;
+        }
+
+        if (!(plugin instanceof Quests)) {
+          sendCommandError(sender, "An internal error occurred");
+          Indicator.getInstance().getLogger().warning("Plugin Quests could be found but could not be cast to Quests");
           return false;
         }
         Quests quests = (Quests) plugin;

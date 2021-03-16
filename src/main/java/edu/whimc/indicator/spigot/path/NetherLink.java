@@ -33,11 +33,13 @@ public final class NetherLink implements Link<LocationCell, World> {
 
   private final LocationCell origin;
   private final LocationCell destination;
+  private final Completion<LocationCell, World> completion;
 
   public NetherLink(@NotNull final LocationCell origin, @NotNull final LocationCell destination) {
     // TODO verify input
     this.origin = origin;
     this.destination = destination;
+    this.completion = loc -> loc.distanceToSquared(origin) < 9;
   }
 
   @Override
@@ -52,7 +54,7 @@ public final class NetherLink implements Link<LocationCell, World> {
 
   @Override
   public Completion<LocationCell, World> getCompletion() {
-    return loc -> loc.distanceToSquared(origin) < 9;
+    return completion;
   }
 
   @Override
