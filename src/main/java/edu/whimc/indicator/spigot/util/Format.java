@@ -1,26 +1,22 @@
 /*
- * MIT License
- *
- * Copyright (c) 2020 Pieter Svenson
+ * Copyright 2021 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 package edu.whimc.indicator.spigot.util;
@@ -28,10 +24,6 @@ package edu.whimc.indicator.spigot.util;
 import com.google.common.collect.Lists;
 import org.bukkit.ChatColor;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.Date;
 import java.util.LinkedList;
 
 public final class Format {
@@ -45,8 +37,7 @@ public final class Format {
   public static final ChatColor WARN = ChatColor.YELLOW;
   public static final ChatColor ERROR = ChatColor.RED;
   public static final ChatColor DEBUG = ChatColor.AQUA;
-  public static final ChatColor ACCENT_1 = ChatColor.GOLD;
-  public static final ChatColor ACCENT_2 = ChatColor.BLUE;
+  public static final ChatColor ACCENT = ChatColor.BLUE;
   public static final ChatColor DEFAULT = ChatColor.WHITE;
   public static final String PREFIX = THEME + "Indicator % " + ChatColor.RESET;
 
@@ -68,14 +59,6 @@ public final class Format {
 
   public static String debug(String message) {
     return PREFIX + DEBUG + message;
-  }
-
-  public static String formatInstantVerbose(Instant instant) {
-    return new SimpleDateFormat("E, MMM dd yyyy, hh:mm aa zz").format(Date.from(instant));
-  }
-
-  public static Instant parseInstantVerbose(String source) throws ParseException {
-    return new SimpleDateFormat("E, MMM dd yyyy, hh:mm aa zz").parse(source).toInstant();
   }
 
   public static String[] combineQuotedArguments(String[] input) {

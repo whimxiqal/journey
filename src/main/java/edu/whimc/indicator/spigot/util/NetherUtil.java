@@ -1,7 +1,27 @@
+/*
+ * Copyright 2021 Pieter Svenson
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package edu.whimc.indicator.spigot.util;
 
 import edu.whimc.indicator.spigot.path.LocationCell;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -53,7 +73,6 @@ public final class NetherUtil {
               //If the PortalGroup was added, store the Portal blocks in the Collection
               if (portals.add(pg)) {
                 stored.addAll(pg.getBlocks());
-
               }
             }
           }
@@ -65,32 +84,6 @@ public final class NetherUtil {
 
   public static Collection<PortalGroup> locateAll(LocationCell cell, int radius) {
     return locateAll(cell, radius, cell.getY() - radius, cell.getY() + radius);
-  }
-
-  public static Optional<PortalGroup> locateMatch(LocationCell cell) {
-    World overworld = Bukkit.getWorlds().stream()
-        .filter(w -> w.getEnvironment().equals(World.Environment.NORMAL))
-        .findFirst()
-        .orElseThrow(() -> new IllegalStateException("Could not find an overworld"));
-    World nether = Bukkit.getWorlds().stream()
-        .filter(w -> w.getEnvironment().equals(World.Environment.NETHER))
-        .findFirst()
-        .orElseThrow(() -> new IllegalStateException("Could not find a nether world"));
-    World world = cell.getDomain();
-    LocationCell corresponding;
-    int radius;
-    if (world.getEnvironment().equals(World.Environment.NORMAL)) {
-      corresponding = new LocationCell(cell.getX() / 8, cell.getY(), cell.getZ() / 8, nether);
-      radius = 1024;
-    } else if (world.getEnvironment().equals(World.Environment.NETHER)) {
-      corresponding = new LocationCell(cell.getX() * 8, cell.getY(), cell.getZ() * 8, overworld);
-      radius = 128;
-    } else {
-      throw new IllegalArgumentException("The world environment must either be Normal or Nether");
-    }
-    return locateAll(corresponding, radius)
-        .stream()
-        .min(Comparator.comparingDouble(group -> group.port().distanceToSquared(corresponding)));
   }
 
   /**

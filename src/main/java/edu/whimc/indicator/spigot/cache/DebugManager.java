@@ -11,10 +11,12 @@ public class DebugManager {
 
   private final Set<UUID> debugging = new HashSet<>();
 
+  @SuppressWarnings("UnusedReturnValue")
   public boolean startDebugging(UUID playerUuid) {
     return debugging.add(playerUuid);
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   public boolean stopDebugging(UUID playerUuid) {
     return debugging.remove(playerUuid);
   }
