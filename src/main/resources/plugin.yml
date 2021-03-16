@@ -2,11 +2,13 @@ name: Indicator
 version: @version@
 main: edu.whimc.indicator.Indicator
 api-version: 1.16
-authors: [ pietelite ]
+authors:
+  - pietelite
 description: A path indication plugin
 website: https://whimcproject.web.illinois.edu/
 softdepend:
   - WHIMC-Portals
+  - Quests
 permissions:
   indicator.indicator:
     default: true

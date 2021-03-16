@@ -9,13 +9,19 @@ import edu.whimc.indicator.spigot.command.common.ParameterSuppliers;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
+import me.blackvein.quests.Quest;
+import me.blackvein.quests.Quests;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedList;
 
 public class EndpointCommand extends CommandNode {
   public EndpointCommand() {
@@ -60,6 +66,7 @@ public class EndpointCommand extends CommandNode {
       return false;
     }
 
+    LocationCell endLocation;
     Endpoint<JavaPlugin, LocationCell, World> endpoint;
     World world;
     int x;
@@ -88,6 +95,12 @@ public class EndpointCommand extends CommandNode {
             return false;
           }
 
+          endLocation = new LocationCell(x, y, z, world);
+          endpoint = new Endpoint<>(
+              Indicator.getInstance(),
+              endLocation,
+              loc -> loc.distanceToSquared(endLocation) < 9);  // Finish within 3 blocks
+
           break;
 
         } catch (NumberFormatException e) {
@@ -103,23 +116,57 @@ public class EndpointCommand extends CommandNode {
         z = player.getLocation().getBlockZ();
 
         if (world == null) {
-          player.sendMessage(Format.error("Your world could not be found."));
+          sender.sendMessage(Format.error("Your world could not be found."));
           return false;
         }
+
+        endLocation = new LocationCell(x, y, z, world);
+        endpoint = new Endpoint<>(
+            Indicator.getInstance(),
+            endLocation,
+            loc -> loc.distanceToSquared(endLocation) < 9);  // Finish within 3 blocks
+
+        break;
+
+      case "quest":
+
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("quests");
+        if (!(plugin instanceof Quests)) {
+          sendCommandError(sender, "Quests is not loaded");
+          return false;
+        }
+        Quests quests = (Quests) plugin;
+
+        Quest quest = quests.getQuest(args[2]);
+        if (quest == null) {
+          sendCommandError(sender, "That quest doesn't exist");
+          return false;
+        }
+
+        if (!quests.getQuester(player.getUniqueId()).getCurrentQuests().containsKey(quest)) {
+          sendCommandError(sender, "That player is not doing that quest");
+          return false;
+        }
+
+        LinkedList<Location> locationsToReach = quests.getQuester(player.getUniqueId()).getCurrentStage(quest).getLocationsToReach();
+        if (locationsToReach.isEmpty()) {
+          sendCommandError(sender, "That quest has no destination");
+          return false;
+        }
+
+        endLocation = new LocationCell(locationsToReach.getFirst());
+        endpoint = new Endpoint<>(
+            Indicator.getInstance(),
+            endLocation,
+            loc -> loc.distanceToSquared(endLocation) < 9);  // Finish within 3 blocks
 
         break;
 
       default:
-        player.sendMessage(Format.error("Unexpected parameter."));
+        sender.sendMessage(Format.error("Unexpected parameter."));
         return false;
 
     }
-
-    LocationCell endLocation = new LocationCell(x, y, z, world);
-    endpoint = new Endpoint<>(
-        Indicator.getInstance(),
-        endLocation,
-        loc -> loc.distanceToSquared(endLocation) < 9);  // Finish within 3 blocks
 
     Indicator.getInstance().getEndpointManager().put(player.getUniqueId(), endpoint);
     sender.sendMessage(Format.success("Set " + player.getName() + "'s endpoint to: "));

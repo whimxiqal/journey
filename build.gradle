@@ -23,6 +23,10 @@ repositories {
     flatDir {
         dirs 'libs'
     }
+    maven {
+        name = 'elmakers-repo'
+        url = 'https://maven.elmakers.com/repository/'
+    }
 }
 
 test {
@@ -30,11 +34,18 @@ test {
 }
 
 dependencies {
-    implementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+    // Spigot
     compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+
+    // Tests
+    testCompile 'org.junit.jupiter:junit-jupiter:5.4.2'
+    testCompile 'com.google.guava:guava:16+'
+
+    // Annotations
     compile 'org.jetbrains:annotations:16.0.2'
 
-    testCompile 'com.google.guava:guava:16+'
+    // Quests
+    compileOnly 'me.blackvein.quests:quests:3.6.2'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.16'
