@@ -19,7 +19,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.path;
+package edu.whimc.indicator.common.path;
 
 import com.google.common.collect.Lists;
 

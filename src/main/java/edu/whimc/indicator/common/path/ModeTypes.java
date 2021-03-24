@@ -19,39 +19,19 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.journey;
+package edu.whimc.indicator.common.path;
 
-import edu.whimc.indicator.api.path.Locatable;
-import edu.whimc.indicator.api.path.Step;
+public final class ModeTypes {
 
-import java.util.Collection;
+  private ModeTypes() {
+  }
 
-/**
- * Manage information about the traversal of locatables
- * within the game.
- *
- * @param <T> the type of locatable
- * @param <D> the type of domain
- */
-public interface Journey<T extends Locatable<T, D>, D> {
-
-  /**
-   * Notify this {@link Journey} that the given {@link Locatable}
-   * has been visited. This may be called very often, so efficiency
-   * is important here.
-   *
-   * @param locatable the visited locatable
-   */
-  void visit(T locatable);
-
-  /**
-   * Give the next locatables to traverse along the journey.
-   *
-   * @param count the number of locatables to get
-   * @return a collection of locatables of size {@code count}
-   */
-  Collection<Step<T, D>> next(int count);
-
-  boolean isCompleted();
+  public static final ModeType WALK = ModeType.of("walk", true);
+  public static final ModeType JUMP = ModeType.of("jump", true);
+  public static final ModeType SWIM = ModeType.of("swim", true);
+  public static final ModeType FLY = ModeType.of("fly", true);
+  public static final ModeType BOAT = ModeType.of("boat", false);
+  public static final ModeType RAIL = ModeType.of("rail", false);
+  public static final ModeType BUILD = ModeType.of("build", false);
 
 }

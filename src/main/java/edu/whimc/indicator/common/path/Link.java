@@ -19,26 +19,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.path;
+package edu.whimc.indicator.common.path;
 
-import lombok.Data;
+import edu.whimc.indicator.spigot.path.NetherLink;
 
-import java.util.ArrayList;
+public interface Link<T extends Locatable<T, D>, D> {
 
-@Data
-public final class Trail<T extends Locatable<T, D>, D> {
+  T getOrigin();
 
-  private final ArrayList<Step<T, D>> steps;
-  private final double length;
+  T getDestination();
 
-  public T getOrigin() {
-    if (steps.isEmpty()) return null;
-    return steps.get(0).getLocatable();
-  }
+  Completion<T, D> getCompletion();
 
-  public T getDestination() {
-    if (steps.isEmpty()) return null;
-    return steps.get(steps.size() - 1).getLocatable();
+  double weight();
+
+  /**
+   * Verify that this link is correct.
+   *
+   * @return true if this link still exists
+   */
+  boolean verify();
+
+  default boolean isReverse(Object o) {
+    if (this == o) return false;
+    if (o == null || getClass() != o.getClass()) return false;
+    NetherLink that = (NetherLink) o;
+    return getOrigin().equals(that.getDestination()) && getDestination().equals(that.getOrigin());
   }
 
 }

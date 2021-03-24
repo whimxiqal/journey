@@ -1,7 +1,9 @@
-package edu.whimc.indicator.api.search;
+package edu.whimc.indicator.common.search;
 
 import com.google.common.collect.Lists;
-import edu.whimc.indicator.api.path.*;
+import edu.whimc.indicator.common.cache.TrailCache;
+import edu.whimc.indicator.common.path.*;
+import edu.whimc.indicator.common.path.ModeType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -64,7 +66,8 @@ class TwoLevelBreadthFirstSearchTest {
     char[][] printer2 = new char[boardSize][boardSize];
 
     // Set up parameters for search
-    TwoLevelBreadthFirstSearch<Cell2D, Domain> bfs = new TwoLevelBreadthFirstSearch<>();
+    TrailCache<Cell2D, Domain> trailCache = new TrailCache<>();
+    TwoLevelBreadthFirstSearch<Cell2D, Domain> bfs = new TwoLevelBreadthFirstSearch<>(trailCache);
     Cell2D origin = board1[4][4];
     Cell2D destination = board1[4][8];
     List<Link<Cell2D, Domain>> links = Lists.newLinkedList();
@@ -107,7 +110,7 @@ class TwoLevelBreadthFirstSearchTest {
       printPrinter(printer2, boardSize);
     });
 //    bfs.setLocalSearchStepCallback(x -> {});  // Reset
-    bfs.setFinishTrailSearchCallback(() ->
+    bfs.setFinishTrailSearchCallback((o, d) ->
         clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize));
 //    bfs.setFinishLocalSearchCallback(() -> {});  // Reset
 //    bfs.setMemoryErrorCallback(() -> System.out.println("Memory error"));
@@ -116,10 +119,7 @@ class TwoLevelBreadthFirstSearchTest {
     Path<Cell2D, Domain> path = bfs.findPath(origin, destination);
 
     // Put in path
-    if (path == null) {
-//      System.out.println("Path not found!");
-    } else {
-//      System.out.println("Path found!");
+    if (path != null) {
       path.getAllSteps().stream().map(Step::getLocatable).forEach(cell -> {
         if (cell.domain.equals(domain1)) {
           printer1[cell.x][cell.y] = 'O';
@@ -217,7 +217,6 @@ class TwoLevelBreadthFirstSearchTest {
       return this.domain;
     }
 
-    @Override
     public String print() {
       return String.format("(%d, %d, %s)", x, y, domain.getName());
     }
@@ -259,6 +258,16 @@ class TwoLevelBreadthFirstSearchTest {
     @Override
     public Completion<Cell2D, Domain> getCompletion() {
       return loc -> loc.equals(destination);
+    }
+
+    @Override
+    public double weight() {
+      return 0;
+    }
+
+    @Override
+    public boolean verify() {
+      return true;
     }
   }
 

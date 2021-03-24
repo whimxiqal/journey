@@ -19,30 +19,39 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.path;
+package edu.whimc.indicator.common.journey;
 
-import lombok.Getter;
+import edu.whimc.indicator.common.path.Locatable;
+import edu.whimc.indicator.common.path.Step;
 
-public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
+import java.util.Collection;
 
-  @Getter protected final int x;
-  @Getter protected final int y;
-  @Getter protected final int z;
-  protected final D domain;
+/**
+ * Manage information about the traversal of locatables
+ * within the game.
+ *
+ * @param <T> the type of locatable
+ * @param <D> the type of domain
+ */
+public interface Journey<T extends Locatable<T, D>, D> {
 
-  public Cell(int x, int y, int z, D domain) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.domain = domain;
-  }
+  /**
+   * Notify this {@link Journey} that the given {@link Locatable}
+   * has been visited. This may be called very often, so efficiency
+   * is important here.
+   *
+   * @param locatable the visited locatable
+   */
+  void visit(T locatable);
 
-  @Override
-  abstract public double distanceToSquared(T other);
+  /**
+   * Give the next locatables to traverse along the journey.
+   *
+   * @param count the number of locatables to get
+   * @return a collection of locatables of size {@code count}
+   */
+  Collection<Step<T, D>> next(int count);
 
-  @Override
-  public D getDomain() {
-    return this.domain;
-  }
+  boolean isCompleted();
 
 }

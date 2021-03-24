@@ -23,6 +23,7 @@ package edu.whimc.indicator.spigot.command.common;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.spigot.util.Format;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -178,6 +179,11 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                  @NotNull Command command,
                                  @NotNull String label,
                                  @NotNull String[] args) {
+
+    if (!Indicator.getInstance().isValid()) {
+      sender.sendMessage(Format.warn("The Indicator plugin is still initializing..."));
+      return false;
+    }
 
     // Adds support for quotations around space-delimited arguments
     String[] actualArgs;

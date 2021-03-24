@@ -22,7 +22,7 @@
 package edu.whimc.indicator.spigot.cache;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.api.path.Link;
+import edu.whimc.indicator.common.path.Link;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.NetherLink;
 import edu.whimc.indicator.spigot.util.Format;
@@ -39,11 +39,12 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.world.PortalCreateEvent;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class NetherManager implements Listener {
 
-  private final Map<LocationCell, LocationCell> links = new HashMap<>();
+  private final Map<LocationCell, LocationCell> links = new ConcurrentHashMap<>();
 
   public void registerListeners(Indicator plugin) {
     Bukkit.getPluginManager().registerEvents(this, plugin);

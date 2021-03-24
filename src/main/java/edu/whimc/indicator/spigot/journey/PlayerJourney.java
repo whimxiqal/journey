@@ -22,8 +22,8 @@
 package edu.whimc.indicator.spigot.journey;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.api.journey.Journey;
-import edu.whimc.indicator.api.path.*;
+import edu.whimc.indicator.common.journey.Journey;
+import edu.whimc.indicator.common.path.*;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import lombok.Getter;

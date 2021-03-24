@@ -19,10 +19,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.search;
+package edu.whimc.indicator.common.search;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.api.path.*;
+import edu.whimc.indicator.common.path.*;
+import edu.whimc.indicator.common.path.ModeType;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,6 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        Indicator.getInstance().getLogger().info("Finished finding a trail: " + origin + " -> " + destination + ": " + length);
         return new Trail<>(new ArrayList<>(steps), length);
       }
 
@@ -95,7 +95,6 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
           if (visited.containsKey(next.getKey())) {
             // Already visited, but see if it is better to come from this new direction
             if (current.getScore() + next.getValue() < visited.get(next.getKey()).getScore()) {
-              Indicator.getInstance().getLogger().info("Score was updated at " + next.getKey());
               visited.get(next.getKey()).setPrevious(current);
               visited.get(next.getKey()).setScore(current.getScore() + next.getValue());
               visited.get(next.getKey()).getData().setModeType(mode.getType());

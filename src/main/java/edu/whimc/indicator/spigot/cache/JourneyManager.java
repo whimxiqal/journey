@@ -30,15 +30,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JourneyManager implements Listener {
 
-  private final Map<UUID, PlayerJourney> playerJourneys = new HashMap<>();
-  private final Map<UUID, LocationCell> playerLocations = new HashMap<>();
+  private final Map<UUID, PlayerJourney> playerJourneys = new ConcurrentHashMap<>();
+  private final Map<UUID, LocationCell> playerLocations = new ConcurrentHashMap<>();
 
   public Optional<PlayerJourney> putPlayerJourney(@NotNull UUID playerUuid, PlayerJourney journey) {
     return Optional.ofNullable(this.playerJourneys.put(playerUuid, journey));

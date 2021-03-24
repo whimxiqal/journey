@@ -21,7 +21,7 @@
 
 package edu.whimc.indicator.spigot.util;
 
-import edu.whimc.indicator.api.path.Cell;
+import edu.whimc.indicator.common.path.Cell;
 import org.bukkit.World;
 
 public final class LocationUtil {

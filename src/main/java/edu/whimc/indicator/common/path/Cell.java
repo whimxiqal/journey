@@ -19,15 +19,30 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.path;
+package edu.whimc.indicator.common.path;
 
-import lombok.Data;
+import lombok.Getter;
 
-@Data(staticConstructor = "of")
-public final class ModeType {
+public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
 
-  public static final ModeType NONE = ModeType.of("none");  // Origin, for example
+  @Getter protected final int x;
+  @Getter protected final int y;
+  @Getter protected final int z;
+  protected final D domain;
 
-  private final String id;
+  public Cell(int x, int y, int z, D domain) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.domain = domain;
+  }
+
+  @Override
+  abstract public double distanceToSquared(T other);
+
+  @Override
+  public D getDomain() {
+    return this.domain;
+  }
 
 }

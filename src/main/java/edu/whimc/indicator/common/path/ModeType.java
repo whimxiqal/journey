@@ -19,72 +19,57 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.spigot.path;
+package edu.whimc.indicator.common.path;
 
-import edu.whimc.indicator.common.path.Completion;
-import edu.whimc.indicator.common.path.Link;
-import edu.whimc.indicator.spigot.util.NetherUtil;
-import org.bukkit.World;
+import edu.whimc.indicator.common.util.PrimeUtil;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public final class NetherLink implements Link<LocationCell, World> {
+public final class ModeType {
 
-  private final LocationCell origin;
-  private final LocationCell destination;
-  private final Completion<LocationCell, World> completion;
+  public static final ModeType NONE = ModeType.of("none", false);  // Origin, for example
+  private static PrimeUtil primeUtil = null;
 
-  public NetherLink(@NotNull final LocationCell origin, @NotNull final LocationCell destination) {
-    // TODO verify input
-    this.origin = origin;
-    this.destination = destination;
-    this.completion = loc -> loc.distanceToSquared(origin) < 9;
+  @Getter
+  private final String id;
+
+  @Getter
+  private final int primeIdentifier;
+
+  @Getter
+  private final boolean common;
+
+  private ModeType(@NotNull String id, boolean common, int primeIdentifier) {
+    this.id = id;
+    this.common = common;
+    this.primeIdentifier = primeIdentifier;
   }
 
-  @Override
-  public LocationCell getOrigin() {
-    return origin;
-  }
-
-  @Override
-  public LocationCell getDestination() {
-    return destination;
-  }
-
-  @Override
-  public Completion<LocationCell, World> getCompletion() {
-    return completion;
-  }
-
-  @Override
-  public double weight() {
-    return 16;
-  }
-
-  @Override
-  public boolean verify() {
-    return NetherUtil.locateAll(origin, 1).size() > 0
-        && NetherUtil.locateAll(destination, 1).size() > 0;
+  public static ModeType of(String id, boolean common) {
+    if (primeUtil == null) {
+      primeUtil = new PrimeUtil();
+    }
+    return new ModeType(id, common, primeUtil.getNextPrime());
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    NetherLink that = (NetherLink) o;
-    return getOrigin().equals(that.getOrigin()) && getDestination().equals(that.getDestination());
+    ModeType modeType = (ModeType) o;
+    return id.equals(modeType.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getOrigin(), getDestination());
+    return Objects.hash(id);
   }
 
   @Override
   public String toString() {
-    return "NetherLink: "
-        + origin + " -> "
-        + destination;
+    return "ModeType{" + "id='"
+        + id + '\'' + '}';
   }
 }

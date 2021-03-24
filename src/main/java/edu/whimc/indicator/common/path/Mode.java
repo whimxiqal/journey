@@ -19,27 +19,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.path;
+package edu.whimc.indicator.common.path;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import java.util.Map;
 
-/**
- * A representation of a movement step between {@link Locatable}s on a {@link Trail}.
- *
- * @param <T> The locatable type
- * @param <D> The domain type
- */
-@Data
-@AllArgsConstructor
-public final class Step<T extends Locatable<T, D>, D> {
-  /**
-   * An object to identify location.
-   */
-  private final T locatable;
+public interface Mode<T extends Locatable<T, D>, D> {
 
-  /**
-   * The type of {@link Mode} that was used to get to the stored locatable.
-   */
-  private ModeType modeType;
+  Map<T, Double> getDestinations(T origin);
+
+  ModeType getType();
+
 }

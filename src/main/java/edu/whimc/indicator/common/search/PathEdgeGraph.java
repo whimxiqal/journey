@@ -19,11 +19,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.search;
+package edu.whimc.indicator.common.search;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import edu.whimc.indicator.api.path.*;
+import edu.whimc.indicator.common.path.*;
 import lombok.Getter;
 import lombok.Setter;
 

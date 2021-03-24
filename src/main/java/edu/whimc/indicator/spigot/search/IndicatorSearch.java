@@ -22,13 +22,16 @@
 package edu.whimc.indicator.spigot.search;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.api.search.TwoLevelBreadthFirstSearch;
+import edu.whimc.indicator.common.cache.TrailCache;
+import edu.whimc.indicator.common.path.Mode;
+import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
 import edu.whimc.indicator.spigot.cache.DebugManager;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.PortalLink;
-import edu.whimc.indicator.spigot.search.mode.FlyMode;
-import edu.whimc.indicator.spigot.search.mode.JumpMode;
-import edu.whimc.indicator.spigot.search.mode.WalkMode;
+import edu.whimc.indicator.spigot.path.mode.FlyMode;
+import edu.whimc.indicator.spigot.path.mode.JumpMode;
+import edu.whimc.indicator.spigot.path.mode.SwimMode;
+import edu.whimc.indicator.spigot.path.mode.WalkMode;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.portals.Main;
 import edu.whimc.portals.Portal;
@@ -38,25 +41,55 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+
 public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, World> {
 
   public IndicatorSearch(Player player) {
+    super(Indicator.getInstance().getTrailCache());
     // Modes
     registerMode(new WalkMode());
     registerMode(new JumpMode());
+    registerMode(new SwimMode());
     if (player.getGameMode().equals(GameMode.CREATIVE)) {
       registerMode(new FlyMode());
     }
 
     // Links
-    Indicator.getInstance().getNetherManager().makeLinks().forEach(this::registerLink);
-    // Links - Portals
-    Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
-    if (plugin instanceof Main) {
-      Portal.getPortals().stream().map(PortalLink::new).forEach(this::registerLink);
-    }
+    registerLinks(player::hasPermission);
 
     // Callbacks
+    setCallbacks();
+  }
+
+  public IndicatorSearch(List<Mode<LocationCell, World>> modes, Predicate<String> permissionPredicate) {
+    super(Indicator.getInstance().getTrailCache());
+    modes.forEach(this::registerMode);
+    registerLinks(permissionPredicate);
+
+    // Callbacks
+    setCallbacks();
+  }
+
+  private void registerLinks(Predicate<String> permissionSupplier) {
+    // Links - Nether
+    Indicator.getInstance().getNetherManager().makeLinks().forEach(this::registerLink);
+
+    // Links - Portals plugin
+    Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
+    if (plugin instanceof Main) {
+      Portal.getPortals().stream()
+          .filter(portal ->
+              Optional.ofNullable(portal.getPermission()).map(perm ->
+                  permissionSupplier.test(perm.getName())).orElse(true))
+          .map(PortalLink::new)
+          .forEach(this::registerLink);
+    }
+  }
+
+  private void setCallbacks() {
     DebugManager debugManager = Indicator.getInstance().getDebugManager();
     setStartTrailSearchCallback((origin, destination) -> {
       debugManager.broadcastDebugMessage(Format.debug("Began a trail search: "));
@@ -73,7 +106,7 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
       debugManager.broadcastDebugMessage(Format.debug(destination.toString()));
     });
     setMemoryCapacityErrorCallback((origin, destination) -> {
-      debugManager.broadcastDebugMessage(Format.debug("Began a trail search: "));
+      debugManager.broadcastDebugMessage(Format.debug("Ran out of allocated memory for a local trail search: "));
       debugManager.broadcastDebugMessage(Format.debug(
           origin.toString()
               + " -> "));

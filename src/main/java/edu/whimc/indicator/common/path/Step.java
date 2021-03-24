@@ -19,32 +19,30 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.path;
+package edu.whimc.indicator.common.path;
 
-import edu.whimc.indicator.spigot.path.NetherLink;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 
-public interface Link<T extends Locatable<T, D>, D> {
-
-  T getOrigin();
-
-  T getDestination();
-
-  Completion<T, D> getCompletion();
-
-  double weight();
+/**
+ * A representation of a movement step between {@link Locatable}s on a {@link Trail}.
+ *
+ * @param <T> The locatable type
+ * @param <D> The domain type
+ */
+@Data
+@AllArgsConstructor
+public final class Step<T extends Locatable<T, D>, D> {
+  /**
+   * An object to identify location.
+   */
+  @NonNull
+  private final T locatable;
 
   /**
-   * Verify that this link is correct.
-   *
-   * @return true if this link still exists
+   * The type of {@link Mode} that was used to get to the stored locatable.
    */
-  boolean verify();
-
-  default boolean isReverse(Object o) {
-    if (this == o) return false;
-    if (o == null || getClass() != o.getClass()) return false;
-    NetherLink that = (NetherLink) o;
-    return getOrigin().equals(that.getDestination()) && getDestination().equals(that.getOrigin());
-  }
-
+  @NonNull
+  private ModeType modeType;
 }

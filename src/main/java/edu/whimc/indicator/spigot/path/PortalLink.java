@@ -1,7 +1,7 @@
 package edu.whimc.indicator.spigot.path;
 
-import edu.whimc.indicator.api.path.Completion;
-import edu.whimc.indicator.api.path.Link;
+import edu.whimc.indicator.common.path.Completion;
+import edu.whimc.indicator.common.path.Link;
 import edu.whimc.portals.Portal;
 import org.bukkit.World;
 

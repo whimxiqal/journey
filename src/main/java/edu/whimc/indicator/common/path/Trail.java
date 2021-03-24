@@ -19,21 +19,26 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.spigot.search.mode;
+package edu.whimc.indicator.common.path;
 
-import edu.whimc.indicator.api.path.ModeType;
+import lombok.Data;
 
-public final class ModeTypes {
+import java.util.ArrayList;
 
-  private ModeTypes() {
+@Data
+public final class Trail<T extends Locatable<T, D>, D> {
+
+  private final ArrayList<Step<T, D>> steps;
+  private final double length;
+
+  public T getOrigin() {
+    if (steps.isEmpty()) return null;
+    return steps.get(0).getLocatable();
   }
 
-  public static final ModeType WALK = ModeType.of("walk");
-  public static final ModeType JUMP = ModeType.of("jump");
-  public static final ModeType FLY = ModeType.of("fly");
-  public static final ModeType SWIM = ModeType.of("swim");
-  public static final ModeType BOAT = ModeType.of("boat");
-  public static final ModeType RAIL = ModeType.of("rail");
-  public static final ModeType BUILD = ModeType.of("build");
+  public T getDestination() {
+    if (steps.isEmpty()) return null;
+    return steps.get(steps.size() - 1).getLocatable();
+  }
 
 }

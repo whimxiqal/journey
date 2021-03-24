@@ -19,14 +19,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.api.path;
+package edu.whimc.indicator.common.path;
 
-import java.util.Map;
+import lombok.Data;
 
-public interface Mode<T extends Locatable<T, D>, D> {
+@Data
+public final class Endpoint<P, T extends Locatable<T, D>, D> {
 
-  Map<T, Double> getDestinations(T origin);
-
-  ModeType getType();
+  private final P purpose;
+  private final T location;
+  private final Completion<T, D> completion;
 
 }

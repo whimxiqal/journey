@@ -23,7 +23,7 @@ package edu.whimc.indicator.spigot.command;
 
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.api.path.Endpoint;
+import edu.whimc.indicator.common.path.Endpoint;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.command.common.Parameter;

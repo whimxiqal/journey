@@ -19,10 +19,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.spigot.search.mode;
+package edu.whimc.indicator.spigot.path.mode;
 
-import edu.whimc.indicator.api.path.Mode;
-import edu.whimc.indicator.api.path.ModeType;
+import edu.whimc.indicator.common.path.Mode;
+import edu.whimc.indicator.common.path.ModeType;
+import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.Material;
 import org.bukkit.World;

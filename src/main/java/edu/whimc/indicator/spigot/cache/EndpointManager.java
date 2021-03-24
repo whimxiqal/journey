@@ -21,7 +21,7 @@
 
 package edu.whimc.indicator.spigot.cache;
 
-import edu.whimc.indicator.api.path.Endpoint;
+import edu.whimc.indicator.common.path.Endpoint;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -29,10 +29,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EndpointManager {
 
-  private final Map<UUID, Endpoint<JavaPlugin, LocationCell, World>> endpoints = new HashMap<>();
+  private final Map<UUID, Endpoint<JavaPlugin, LocationCell, World>> endpoints = new ConcurrentHashMap<>();
 
   public Endpoint<JavaPlugin, LocationCell, World> get(UUID playerUuid) {
     return endpoints.get(playerUuid);

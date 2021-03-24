@@ -3,13 +3,13 @@ package edu.whimc.indicator.spigot.cache;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DebugManager {
 
-  private final Set<UUID> debugging = new HashSet<>();
+  private final Set<UUID> debugging = ConcurrentHashMap.newKeySet();
 
   @SuppressWarnings("UnusedReturnValue")
   public boolean startDebugging(UUID playerUuid) {

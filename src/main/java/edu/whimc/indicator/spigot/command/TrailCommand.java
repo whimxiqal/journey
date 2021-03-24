@@ -22,16 +22,16 @@
 package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.api.path.Endpoint;
-import edu.whimc.indicator.api.path.ModeType;
-import edu.whimc.indicator.api.path.Path;
-import edu.whimc.indicator.api.path.Step;
+import edu.whimc.indicator.common.path.Endpoint;
+import edu.whimc.indicator.common.path.ModeType;
+import edu.whimc.indicator.common.path.Path;
+import edu.whimc.indicator.common.path.Step;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.path.LocationCell;
-import edu.whimc.indicator.spigot.search.mode.ModeTypes;
+import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
 import org.bukkit.Bukkit;
@@ -91,7 +91,7 @@ public class TrailCommand extends CommandNode {
       IndicatorSearch search = new IndicatorSearch(player);
 
       // Set up a search cancellation in case it takes too long
-      Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> {
+      BukkitTask timeoutNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> {
         search.setCancelled(true);
         Indicator.getInstance().getDebugManager().broadcastDebugMessage(Format.debug("Search cancelled due to timeout."));
       }, 200 /* 10 seconds */);
@@ -104,6 +104,8 @@ public class TrailCommand extends CommandNode {
           new LocationCell(player.getLocation()),
           destination.getLocation());
 
+      // We didn't timeout, so cancel the timeout message
+      timeoutNotification.cancel();
       // Cancel "Working..." message if it hasn't happened yet
       workingNotification.cancel();
 
