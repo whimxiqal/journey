@@ -21,8 +21,6 @@
 
 package edu.whimc.indicator.common.path;
 
-import edu.whimc.indicator.spigot.path.NetherLink;
-
 public interface Link<T extends Locatable<T, D>, D> {
 
   T getOrigin();
@@ -40,10 +38,7 @@ public interface Link<T extends Locatable<T, D>, D> {
    */
   boolean verify();
 
-  default boolean isReverse(Object o) {
-    if (this == o) return false;
-    if (o == null || getClass() != o.getClass()) return false;
-    NetherLink that = (NetherLink) o;
+  default boolean isReverse(Link<T, D> that) {
     return getOrigin().equals(that.getDestination()) && getDestination().equals(that.getOrigin());
   }
 

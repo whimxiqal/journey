@@ -7,10 +7,11 @@ import edu.whimc.indicator.common.path.ModeTypeGroup;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TrailCache<T extends Locatable<T, D>, D> {
 
-  private final Map<T, Map<T, Map<ModeTypeGroup, Trail<T, D>>>> cache = Maps.newHashMap();
+  private final Map<T, Map<T, Map<ModeTypeGroup, Trail<T, D>>>> cache = new ConcurrentHashMap<>();
 
   @Nullable
   public Trail<T, D> put(T origin, T destination, ModeTypeGroup modeTypes, Trail<T, D> trail) {
@@ -66,7 +67,11 @@ public class TrailCache<T extends Locatable<T, D>, D> {
   }
 
   public boolean contains(T origin, T destination, ModeTypeGroup modeTypes) {
-    return get(origin, destination, modeTypes) != null;
+    Map<ModeTypeGroup, Trail<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
+    if (modeTypeMap == null) {
+      return false;
+    }
+    return modeTypeMap.containsKey(modeTypes);
   }
 
 }

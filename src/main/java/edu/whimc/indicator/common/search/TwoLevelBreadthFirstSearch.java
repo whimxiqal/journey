@@ -27,6 +27,7 @@ import com.google.common.collect.Table;
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.cache.TrailCache;
 import edu.whimc.indicator.common.path.*;
+import edu.whimc.indicator.common.util.TriConsumer;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -60,7 +61,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
   private Consumer<Step<T, D>> trailSearchStepCallback = loc -> {
   };
   @Setter
-  private BiConsumer<T, T> finishTrailSearchCallback = (l1, l2) -> {
+  private TriConsumer<T, T, Double> finishTrailSearchCallback = (l1, l2, integer) -> {
   };
   @Setter
   private BiConsumer<T, T> memoryCapacityErrorCallback = (l1, l2) -> {
@@ -109,11 +110,14 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
                                         T destination,
                                         Supplier<Boolean> cancellation,
                                         boolean shouldCache) {
-    // Check if this trail is cached
-    Trail<T, D> trail = trailCache.get(origin, destination, modeTypes);
-
-    // It is cached
-    if (trail != null) {
+    Trail<T, D> trail;
+    // Check if the trail is cached
+    if (trailCache.contains(origin, destination, modeTypes)) {
+      trail = trailCache.get(origin, destination, modeTypes);
+      if (trail == null) {
+        // Don't bother to verify in the off chance that something changed between these spots
+        return null;
+      }
       // Verify this trail still works
       Step<T, D> prev = trail.getSteps().get(0);
       Step<T, D> curr;
@@ -144,7 +148,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     // Start a new search
     startTrailSearchCallback.accept(origin, destination);
     trail = bfs.findShortestTrail(origin, destination, modes, cancellation);
-    finishTrailSearchCallback.accept(origin, destination);
+    finishTrailSearchCallback.accept(origin, destination, trail == null ? -1 : trail.getLength());
 
     if (shouldCache) {
       trailCache.put(origin, destination, modeTypes, trail);
@@ -154,36 +158,19 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
 
   private Path<T, D> findMinimumPath(T origin, T destination, List<Link<T, D>> links) {
     // Step 1 - organize filtered links into entry and exit points in every domain
-    Map<D, Set<Link<T, D>>> entryDomains = collectEntryDomains();
-    Map<D, Set<Link<T, D>>> exitDomains = collectExitDomains();
+    Map<D, Set<Link<T, D>>> entryDomains = collectEntryDomains(links);
+    Map<D, Set<Link<T, D>>> exitDomains = collectExitDomains(links);
 
     // Step 2 - Initialize local-domain search class
     TrailSearch<T, D> trailSearch = new TrailSearch<>();
     trailSearch.setStepCallback(trailSearchStepCallback);
     trailSearch.setVisitationCallback(trialSearchVisitationCallback);
 
-    // Step 3 - Map of paths
-    // origin -> link
-    Map<Link<T, D>, Trail<T, D>> originTrails = findOriginTrails(trailSearch, origin, exitDomains);
-    // link -> destination
-    Map<Link<T, D>, Trail<T, D>> destinationTrails = findDestinationTrails(trailSearch, destination, entryDomains);
-    // link -> link
-    Table<Link<T, D>, Link<T, D>, Trail<T, D>> linkTrails = findLinkTrails(trailSearch, entryDomains, exitDomains);
-
-    // Step 4 - Set up graph
+    // Step 3 - Set up graph
     PathEdgeGraph<T, D> graph = new PathEdgeGraph<>();
     // Nodes
     PathEdgeGraph.Node originNode = graph.generateNode();
     PathEdgeGraph.Node destinationNode = graph.generateNode();
-    Map<Link<T, D>, PathEdgeGraph.Node> linkNodeMap = new HashMap<>();
-    links.forEach(link -> linkNodeMap.put(link, graph.generateLinkNode(link)));
-    // Edges
-    originTrails.forEach((link, p) -> graph.addEdge(originNode, linkNodeMap.get(link), p));
-    destinationTrails.forEach((link, p) -> graph.addEdge(linkNodeMap.get(link), destinationNode, p));
-    linkTrails.cellSet().forEach((cell) -> graph.addEdge(
-        linkNodeMap.get(cell.getRowKey()),
-        linkNodeMap.get(cell.getColumnKey()),
-        cell.getValue()));
     // Origin to Endpoint edge if they are in the same domain
     if (origin.getDomain().equals(destination.getDomain())) {
       try {
@@ -196,17 +183,36 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
       }
     }
 
+    // origin -> link
+    Map<Link<T, D>, Trail<T, D>> originTrails = findOriginTrails(trailSearch, origin, exitDomains);
+    // link -> destination
+    Map<Link<T, D>, Trail<T, D>> destinationTrails = findDestinationTrails(trailSearch, destination, entryDomains);
+    // link -> link
+    Table<Link<T, D>, Link<T, D>, Trail<T, D>> linkTrails = findLinkTrails(trailSearch, entryDomains, exitDomains);
+
+    Map<Link<T, D>, PathEdgeGraph.Node> linkNodeMap = new HashMap<>();
+    links.forEach(link -> linkNodeMap.put(link, graph.generateLinkNode(link)));
+    // Edges
+    originTrails.entrySet()
+        .stream()
+        .filter(entry -> entry.getValue() != null)
+        .forEach(entry -> graph.addEdge(originNode, linkNodeMap.get(entry.getKey()), entry.getValue()));
+    destinationTrails.entrySet()
+        .stream()
+        .filter(entry -> entry.getValue() != null)
+        .forEach(entry -> graph.addEdge(linkNodeMap.get(entry.getKey()), destinationNode, entry.getValue()));
+    linkTrails.cellSet().stream()
+        .filter(cell -> cell.getValue() != null)
+        .forEach((cell) -> graph.addEdge(
+            linkNodeMap.get(cell.getRowKey()),
+            linkNodeMap.get(cell.getColumnKey()),
+            cell.getValue()));
+
     // Step 5 - Solve graph - Find the minimum path from the domain graph
     return graph.findMinimumPath(originNode, destinationNode);
   }
 
-  /**
-   * For every domain, get a set of links that have destinations to that domain.
-   * Part of Step 1 of high-level search algorithm.
-   *
-   * @return a map of every domain to the set of all viable links
-   */
-  public final Map<D, Set<Link<T, D>>> collectEntryDomains() {
+  public final Map<D, Set<Link<T, D>>> collectAllEntryDomains() {
     Map<D, Set<Link<T, D>>> entryDomains = new HashMap<>();
     for (Link<T, D> link : links) {
       entryDomains.putIfAbsent(link.getDestination().getDomain(), new HashSet<>());
@@ -216,12 +222,37 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
   }
 
   /**
+   * For every domain, get a set of links that have destinations to that domain.
+   * Part of Step 1 of high-level search algorithm.
+   *
+   * @return a map of every domain to the set of all viable links
+   */
+  public final Map<D, Set<Link<T, D>>> collectEntryDomains(List<Link<T, D>> links) {
+    Map<D, Set<Link<T, D>>> entryDomains = new HashMap<>();
+    for (Link<T, D> link : links) {
+      entryDomains.putIfAbsent(link.getDestination().getDomain(), new HashSet<>());
+      entryDomains.get(link.getDestination().getDomain()).add(link);
+    }
+    return entryDomains;
+  }
+
+  public final Map<D, Set<Link<T, D>>> collectAllExitDomains() {
+    Map<D, Set<Link<T, D>>> exitDomains = new HashMap<>();
+    for (Link<T, D> link : links) {
+      exitDomains.putIfAbsent(link.getOrigin().getDomain(), new HashSet<>());
+      exitDomains.get(link.getOrigin().getDomain()).add(link);
+    }
+    return exitDomains;
+  }
+
+
+  /**
    * For every domain, get a set of links that have origins from that domain.
    * Part of Step 1 of high-level search algorithm.
    *
    * @return a map of every domain to the set of all viable links
    */
-  public final Map<D, Set<Link<T, D>>> collectExitDomains() {
+  public final Map<D, Set<Link<T, D>>> collectExitDomains(List<Link<T, D>> links) {
     Map<D, Set<Link<T, D>>> exitDomains = new HashMap<>();
     for (Link<T, D> link : links) {
       exitDomains.putIfAbsent(link.getOrigin().getDomain(), new HashSet<>());
@@ -263,8 +294,8 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
    * Find all trails that go to the destination
    * Part of Step 3 of high-level search algorithm.
    *
-   * @param trailSearch the local search object
-   * @param destination      the origin from which the trails will be found
+   * @param trailSearch  the local search object
+   * @param destination  the origin from which the trails will be found
    * @param entryDomains for every domain, all links which enter the domain. Only the domain of the destination will be used.
    * @return map of all links to trails of which every link is
    * mapped to the trail which goes from the destination of the link to the overall destination
@@ -291,9 +322,9 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
    * Find all trails that go between links
    * Part of Step 3 of high-level search algorithm.
    *
-   * @param trailSearch the local search object
+   * @param trailSearch  the local search object
    * @param entryDomains for every domain, all links which enter the domain.
-   * @param exitDomains for every domain, all links which exit the domain.
+   * @param exitDomains  for every domain, all links which exit the domain.
    * @return table of all links to trails of which every link-link key is
    * mapped to the trail which goes from the destination of the first link
    * to the origin of the other link.

@@ -30,6 +30,7 @@ import edu.whimc.indicator.spigot.util.Permissions;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,19 +49,39 @@ public class IndicatorDebugCommand extends CommandNode {
                                   @NotNull Command command,
                                   @NotNull String label,
                                   @NotNull String[] args) {
+    boolean enabled;
     if (!(sender instanceof Player)) {
-      sendCommandError(sender, CommandError.NO_PLAYER);
-      return false;
-    }
-    Player player = (Player) sender;
-
-    DebugManager debugManager = Indicator.getInstance().getDebugManager();
-    if (debugManager.isDebugging(player.getUniqueId())) {
-      debugManager.stopDebugging(player.getUniqueId());
-      player.sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled"));
+      if (sender instanceof ConsoleCommandSender) {
+        if (Indicator.getInstance()
+            .getDebugManager()
+            .isConsoleDebugging()) {
+          Indicator.getInstance().getDebugManager().setConsoleDebugging(false);
+          enabled = false;
+        } else {
+          Indicator.getInstance().getDebugManager().setConsoleDebugging(true);
+          enabled = true;
+        }
+      } else {
+        sendCommandError(sender, CommandError.NO_PLAYER);
+        return false;
+      }
     } else {
-      debugManager.startDebugging(player.getUniqueId());
-      player.sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled"));
+      Player player = (Player) sender;
+
+      DebugManager debugManager = Indicator.getInstance().getDebugManager();
+      if (debugManager.isDebugging(player.getUniqueId())) {
+        debugManager.stopDebugging(player.getUniqueId());
+        enabled = false;
+      } else {
+        debugManager.startDebugging(player.getUniqueId());
+        enabled = true;
+      }
+    }
+
+    if (enabled) {
+      sender.sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled"));
+    } else {
+      sender.sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled"));
     }
     return true;
   }

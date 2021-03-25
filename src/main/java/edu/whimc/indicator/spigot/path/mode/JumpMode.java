@@ -37,9 +37,6 @@ public class JumpMode implements Mode<LocationCell, World> {
     if (origin.getBlockAtOffset(0, -1, 0).isPassable()) {
       return locations;
     }
-    if (!origin.getBlockAtOffset(0, 0, 0).isPassable()) {
-      return locations;
-    }
     if (!origin.getBlockAtOffset(0, 1, 0).isPassable()) {
       return locations;
     }

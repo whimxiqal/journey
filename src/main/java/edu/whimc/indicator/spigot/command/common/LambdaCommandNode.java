@@ -32,7 +32,7 @@ import java.util.function.BiFunction;
 
 public class LambdaCommandNode extends CommandNode {
 
-  BiFunction<CommandSender, String[], Boolean> executor;
+  private final BiFunction<CommandSender, String[], Boolean> executor;
 
   public LambdaCommandNode(@Nullable CommandNode parent,
                            @Nullable Permission permission,

@@ -26,6 +26,7 @@ import com.google.common.collect.Table;
 import edu.whimc.indicator.common.path.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -33,7 +34,7 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
 
   private final Table<Node, Node, Trail<T, D>> edges = HashBasedTable.create();
 
-  public void addEdge(Node origin, Node destination, Trail<T, D> trail) {
+  public void addEdge(Node origin, Node destination, @NotNull Trail<T, D> trail) {
     this.edges.put(origin, destination, trail);
   }
 
@@ -104,9 +105,7 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
         }
         Path<T, D> path = new Path<>();
         while (!links.isEmpty()) {
-          if (!path.addLinkedTrail(trails.pop(), links.pop())) {
-            throw new RuntimeException("Could not add linked trail to path");
-          }
+          path.addLinkedTrail(trails.pop(), links.pop());
         }
         if (!path.addFinalTrail(trails.pop())) {
           throw new RuntimeException("Could not add final trail");

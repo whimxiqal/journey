@@ -31,10 +31,9 @@ public final class Path<T extends Locatable<T, D>, D> {
   private final List<Trail<T, D>> trails = Lists.newArrayList();
   private final List<Link<T, D>> domainLinks = Lists.newArrayList();
 
-  public boolean addLinkedTrail(Trail<T, D> trail, Link<T, D> link) {
+  public void addLinkedTrail(Trail<T, D> trail, Link<T, D> link) {
     this.trails.add(trail);
     this.domainLinks.add(link);
-    return true;
   }
 
   public boolean addFinalTrail(Trail<T, D> trail) {

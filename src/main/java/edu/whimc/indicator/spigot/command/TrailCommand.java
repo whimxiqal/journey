@@ -28,6 +28,7 @@ import edu.whimc.indicator.common.path.Path;
 import edu.whimc.indicator.common.path.Step;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
+import edu.whimc.indicator.spigot.command.common.Parameter;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.path.LocationCell;
@@ -57,6 +58,13 @@ public class TrailCommand extends CommandNode {
         Permissions.TRAIL_PERMISSION,
         "Provide a trail to your destination",
         "trail");
+    addSubcommand(Parameter.builder()
+            .supplier(Parameter.ParameterSupplier.builder()
+                .strict(false)
+                .usage("[timeout]")
+                .build())
+            .build(),
+        "Specify the number of seconds to wait for a response");
   }
 
   @Override
@@ -69,6 +77,24 @@ public class TrailCommand extends CommandNode {
       return false;
     }
     Player player = (Player) sender;
+
+    int timeout = 30;
+    if (args.length >= 1) {
+      try {
+        timeout = Integer.parseInt(args[0]);
+        if (timeout < 1) {
+          player.sendMessage(Format.error("The timeout must be at least 1 second"));
+          timeout = 30;
+        } else if (timeout > 600) {
+          player.sendMessage(Format.error("The timeout must be at most 10 minutes"));
+          timeout = 30;
+        }
+      } catch (NumberFormatException e) {
+        player.sendMessage(Format.error("The timeout could not be converted to an integer"));
+        timeout = 30;
+      }
+    }
+
     Endpoint<JavaPlugin, LocationCell, World> destination;
     UUID playerUuid = player.getUniqueId();
     if (Indicator.getInstance()
@@ -87,6 +113,7 @@ public class TrailCommand extends CommandNode {
       Indicator.getInstance().getEndpointManager().put(playerUuid, destination);
     }
 
+    final int finalTimeout = timeout;
     Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
       IndicatorSearch search = new IndicatorSearch(player);
 
@@ -94,11 +121,11 @@ public class TrailCommand extends CommandNode {
       BukkitTask timeoutNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> {
         search.setCancelled(true);
         Indicator.getInstance().getDebugManager().broadcastDebugMessage(Format.debug("Search cancelled due to timeout."));
-      }, 200 /* 10 seconds */);
+      }, finalTimeout * 20);
 
       // Set up a "Working..." message if it takes too long
       BukkitTask workingNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () ->
-          sender.sendMessage(Format.info("Finding a path to your destination...")), 10);
+          sender.sendMessage(Format.info("Searching for path to your destination (" + finalTimeout + " sec)...")), 10);
 
       Path<LocationCell, World> path = search.findPath(
           new LocationCell(player.getLocation()),
@@ -137,7 +164,7 @@ public class TrailCommand extends CommandNode {
             }
             steps.get(i).getLocatable().getDomain().spawnParticle(particle,
                 steps.get(i).getLocatable().getX() + rand.nextDouble(),
-                steps.get(i).getLocatable().getY() + 0.2f,
+                steps.get(i).getLocatable().getY() + 0.4f,
                 steps.get(i).getLocatable().getZ() + rand.nextDouble(),
                 1,
                 0, 0, 0,

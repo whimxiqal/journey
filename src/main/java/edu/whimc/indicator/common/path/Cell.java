@@ -22,6 +22,9 @@
 package edu.whimc.indicator.common.path;
 
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
 
@@ -30,11 +33,11 @@ public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
   @Getter protected final int z;
   protected final D domain;
 
-  public Cell(int x, int y, int z, D domain) {
+  public Cell(int x, int y, int z, @NotNull D domain) {
     this.x = x;
     this.y = y;
     this.z = z;
-    this.domain = domain;
+    this.domain = Objects.requireNonNull(domain);
   }
 
   @Override

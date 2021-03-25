@@ -25,7 +25,6 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,8 +89,8 @@ public final class Indicator extends JavaPlugin {
       TrailSearch<LocationCell, World> trailSearch = new TrailSearch<>();
       List<Mode<LocationCell, World>> noFly = Lists.newArrayList(new WalkMode(), new JumpMode(), new SwimMode());
       IndicatorSearch globalSearch = new IndicatorSearch(noFly, p -> true);
-      Map<World, Set<Link<LocationCell, World>>> entryDomains = globalSearch.collectEntryDomains();
-      Map<World, Set<Link<LocationCell, World>>> exitDomains = globalSearch.collectExitDomains();
+      Map<World, Set<Link<LocationCell, World>>> entryDomains = globalSearch.collectAllEntryDomains();
+      Map<World, Set<Link<LocationCell, World>>> exitDomains = globalSearch.collectAllExitDomains();
 
       // Run all link <-> link searches with all common modes without flying
       globalSearch.findLinkTrails(trailSearch, entryDomains, exitDomains);

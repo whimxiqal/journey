@@ -31,7 +31,7 @@ public enum CommandError {
   ONLY_PLAYER("Only players may execute that command!");
 
   @Getter
-  private String message;
+  private final String message;
 
   CommandError(String message) {
     this.message = message;

@@ -73,7 +73,6 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     }
     // Check if we finished
     if (completion.test(locatable)) {
-      Indicator.getInstance().getLogger().info("Completed journey");
       if (Indicator.getInstance().getDebugManager().isDebugging(playerUuid)) {
         Player player = Bukkit.getPlayer(playerUuid);
         if (player != null) {

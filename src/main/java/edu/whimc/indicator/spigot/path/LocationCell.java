@@ -25,17 +25,18 @@ import edu.whimc.indicator.common.path.Cell;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public class LocationCell extends Cell<LocationCell, World> {
 
-  public LocationCell(int x, int y, int z, World world) {
+  public LocationCell(int x, int y, int z, @NotNull World world) {
     super(x, y, z, world);
   }
 
   public LocationCell(Location location) {
-    super(location.getBlockX(), location.getBlockY(), location.getBlockZ(), location.getWorld());
+    super(location.getBlockX(), location.getBlockY(), location.getBlockZ(), Objects.requireNonNull(location.getWorld()));
   }
 
   @Override

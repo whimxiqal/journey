@@ -21,9 +21,7 @@
 
 package edu.whimc.indicator.common.search;
 
-import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.*;
-import edu.whimc.indicator.common.path.ModeType;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;

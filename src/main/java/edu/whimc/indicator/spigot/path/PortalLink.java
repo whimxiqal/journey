@@ -16,6 +16,14 @@ public class PortalLink implements Link<LocationCell, World> {
   private final Completion<LocationCell, World> completion;
 
   public PortalLink(Portal portal) {
+    if (portal.getDestination() == null) {
+      throw new IllegalStateException("Error with portal: " + portal.getName()
+          + "A Portal Link may only be created with portals that have a destination.");
+    }
+    if (portal.getDestination().getLocation().getWorld() == null) {
+      throw new IllegalStateException("Error with portal: " + portal.getName()
+          + ". A Portal Link may only be created with portals that have a world associated with its destination.");
+    }
     this.portalName = portal.getName();
 
     this.posX1 = portal.getPos1().getBlockX();
@@ -26,11 +34,8 @@ public class PortalLink implements Link<LocationCell, World> {
     this.posZ2 = portal.getPos2().getBlockZ();
     this.world = portal.getWorld();
 
-    this.origin = new LocationCell((posX1 + posX2) / 2,
-        Math.min(posY1, posY2),  // bottom of portal
-        (posZ1 + posZ2) / 2,
-        world);
-    this.destination = new LocationCell(portal.getDestination().getLocation());
+    this.origin = getOriginOf(portal);
+    this.destination = getDestinationOf(portal);
     this.completion = cell -> Math.min(posX1, posX2) <= cell.getX()
         && cell.getX() <= Math.max(posX1, posX2)
         && Math.min(posY1, posY2) <= cell.getY()
@@ -61,6 +66,21 @@ public class PortalLink implements Link<LocationCell, World> {
 
   @Override
   public boolean verify() {
-    return Portal.getPortal(portalName) != null;
+    Portal portal = Portal.getPortal(portalName);
+    if (portal == null) {
+      return false;
+    }
+    return this.origin.equals(getOriginOf(portal)) && this.destination.equals(getDestinationOf(portal));
+  }
+
+  private LocationCell getOriginOf(Portal portal) {
+    return new LocationCell((portal.getPos1().getBlockX() + portal.getPos2().getBlockX()) / 2,
+        Math.min(portal.getPos1().getBlockY(), portal.getPos2().getBlockY()),  // bottom of portal
+        (portal.getPos1().getBlockZ() + portal.getPos2().getBlockZ()) / 2,
+        world);
+  }
+
+  private LocationCell getDestinationOf(Portal portal) {
+    return new LocationCell(portal.getDestination().getLocation());
   }
 }

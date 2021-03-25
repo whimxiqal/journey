@@ -1,5 +1,7 @@
 package edu.whimc.indicator.spigot.cache;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -10,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DebugManager {
 
   private final Set<UUID> debugging = ConcurrentHashMap.newKeySet();
+  @Setter @Getter
+  private boolean consoleDebugging = true;
 
   @SuppressWarnings("UnusedReturnValue")
   public boolean startDebugging(UUID playerUuid) {
@@ -32,6 +36,9 @@ public class DebugManager {
         player.sendMessage(message);
       }
     });
+    if (consoleDebugging) {
+      Bukkit.getConsoleSender().sendMessage(message);
+    }
   }
 
 }

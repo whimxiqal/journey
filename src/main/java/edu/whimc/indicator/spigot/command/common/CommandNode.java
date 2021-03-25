@@ -244,12 +244,12 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args) {
-    List<String> cmds = Lists.newLinkedList();
+    List<String> allPossible = Lists.newLinkedList();
     if (this.permission != null && !sender.hasPermission(this.permission)) {
-      return cmds; // empty
+      return allPossible; // empty
     }
     if (args.length == 0) {
-      return cmds; // empty
+      return allPossible; // empty
     }
     for (CommandNode child : children) {
       for (int i = 0; i < child.aliases.size(); i++) {
@@ -267,18 +267,18 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
         // and we have permission to the command, add it
         if (args.length == 1 && i == 0) {
           if (child.permission == null || sender.hasPermission(child.permission)) {
-            cmds.add(alias);
+            allPossible.add(alias);
           }
         }
       }
     }
 
     for (Parameter param : parameters.keySet()) {
-      cmds.addAll(param.nextAllowedInputs(sender, Arrays.copyOfRange(args, 0, args.length - 1)));
+      allPossible.addAll(param.nextAllowedInputs(sender, Arrays.copyOfRange(args, 0, args.length - 1)));
     }
 
     List<String> out = Lists.newLinkedList();
-    StringUtil.copyPartialMatches(args[args.length - 1], cmds, out);
+    StringUtil.copyPartialMatches(args[args.length - 1], allPossible, out);
     Collections.sort(out);
     return out;
   }
