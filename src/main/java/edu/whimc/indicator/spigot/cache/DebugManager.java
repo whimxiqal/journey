@@ -13,7 +13,7 @@ public class DebugManager {
 
   private final Set<UUID> debugging = ConcurrentHashMap.newKeySet();
   @Setter @Getter
-  private boolean consoleDebugging = true;
+  private boolean consoleDebugging = false;
 
   @SuppressWarnings("UnusedReturnValue")
   public boolean startDebugging(UUID playerUuid) {

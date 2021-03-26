@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class TrailSearch<T extends Locatable<T, D>, D> {
 
@@ -42,29 +41,29 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
   private Consumer<Step<T, D>> stepCallback = loc -> {
   };
 
-  public Trail<T, D> findShortestTrail(T origin,
-                                       T destination,
-                                       Collection<Mode<T, D>> modes,
-                                       Supplier<Boolean> cancellation)
+  @NotNull
+  public Trail<T, D> findOptimalTrail(TrailSearchRequest<T, D> request)
       throws MemoryCapacityException {
-    if (!origin.getDomain().equals(destination.getDomain())) {
+    if (!request.getOrigin().getDomain().equals(request.getDestination().getDomain())) {
       throw new IllegalArgumentException("The input locatables ["
-          + origin + " and "
-          + destination
+          + request.getOrigin() + " and "
+          + request.getDestination()
           + "] must have the same domain to search for a trail");
     }
     Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(Node::getProximity));
     Map<T, Node> visited = new HashMap<>();
 
-    Node originNode = new Node(new Step<>(origin, ModeType.NONE), null, origin.distanceTo(destination), 0);
+    Node originNode = new Node(new Step<>(request.getOrigin(), ModeType.NONE),
+        null,
+        request.getOrigin().distanceTo(request.getDestination()), 0);
     upcoming.add(originNode);
-    visited.put(origin, originNode);
+    visited.put(request.getOrigin(), originNode);
     visitationCallback.accept(originNode.getData());
 
     Node current;
     while (!upcoming.isEmpty()) {
-      if (cancellation.get()) {
-        return null;  // cancelled
+      if (request.getCancellation().get()) {
+        return Trail.INVALID();  // cancelled
       }
       if (visited.size() > MAX_SIZE) {
         throw new MemoryCapacityException(String.format(
@@ -77,7 +76,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
       stepCallback.accept(current.getData());
 
       // We found it!
-      if (current.getData().getLocatable().equals(destination)) {
+      if (current.getData().getLocatable().equals(request.getDestination())) {
         double length = current.getScore();
         LinkedList<Step<T, D>> steps = new LinkedList<>();
         do {
@@ -88,7 +87,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
       }
 
       // Need to keep going
-      for (Mode<T, D> mode : modes) {
+      for (Mode<T, D> mode : request.getModes()) {
         for (Map.Entry<T, Double> next : mode.getDestinations(current.getData().getLocatable()).entrySet()) {
           if (visited.containsKey(next.getKey())) {
             // Already visited, but see if it is better to come from this new direction
@@ -101,7 +100,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
             // Not visited. Set up node, give it a score, and add it to the system
             Node nextNode = new Node(new Step<>(next.getKey(), mode.getType()),
                 current,
-                next.getKey().distanceTo(destination),
+                next.getKey().distanceTo(request.getDestination()),
                 current.getScore() + next.getValue());
             upcoming.add(nextNode);
             visited.put(next.getKey(), nextNode);
@@ -111,7 +110,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
       }
     }
 
-    return null;  // Nothing found
+    return Trail.INVALID();  // Nothing found
   }
 
   class Node {

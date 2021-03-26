@@ -10,6 +10,7 @@ import lombok.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 class TwoLevelBreadthFirstSearchTest {
 
@@ -110,25 +111,25 @@ class TwoLevelBreadthFirstSearchTest {
       printPrinter(printer2, boardSize);
     });
 //    bfs.setLocalSearchStepCallback(x -> {});  // Reset
-    bfs.setFinishTrailSearchCallback((o, d) ->
+    bfs.setFinishTrailSearchCallback((o, d, l) ->
         clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize));
 //    bfs.setFinishLocalSearchCallback(() -> {});  // Reset
 //    bfs.setMemoryErrorCallback(() -> System.out.println("Memory error"));
 
     // Solve path
-    Path<Cell2D, Domain> path = bfs.findPath(origin, destination);
+    bfs.search(origin, destination);
 
     // Put in path
-    if (path != null) {
-      path.getAllSteps().stream().map(Step::getLocatable).forEach(cell -> {
-        if (cell.domain.equals(domain1)) {
-          printer1[cell.x][cell.y] = 'O';
-        }
-        if (cell.domain.equals(domain2)) {
-          printer2[cell.x][cell.y] = 'O';
-        }
-      });
-    }
+//    if (path != null) {
+//      path.getAllSteps().stream().map(Step::getLocatable).forEach(cell -> {
+//        if (cell.domain.equals(domain1)) {
+//          printer1[cell.x][cell.y] = 'O';
+//        }
+//        if (cell.domain.equals(domain2)) {
+//          printer2[cell.x][cell.y] = 'O';
+//        }
+//      });
+//    }
 
     // Print boards
     System.out.println("Board 1:");

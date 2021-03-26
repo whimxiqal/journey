@@ -22,6 +22,7 @@
 package edu.whimc.indicator.common.path;
 
 import com.google.common.collect.Lists;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +31,13 @@ public final class Path<T extends Locatable<T, D>, D> {
 
   private final List<Trail<T, D>> trails = Lists.newArrayList();
   private final List<Link<T, D>> domainLinks = Lists.newArrayList();
+  @Getter
+  double length = 0;
 
   public void addLinkedTrail(Trail<T, D> trail, Link<T, D> link) {
     this.trails.add(trail);
     this.domainLinks.add(link);
+    length += trail.getLength();
   }
 
   public boolean addFinalTrail(Trail<T, D> trail) {
@@ -42,6 +46,7 @@ public final class Path<T extends Locatable<T, D>, D> {
       return false;
     }
     this.trails.add(trail);
+    length += trail.getLength();
     return true;
   }
 

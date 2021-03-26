@@ -58,6 +58,7 @@ public final class Indicator extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    Indicator.getInstance().getLogger().info("Initializing Indicator...");
     // Create caches
     this.endpointManager = new EndpointManager();
     this.netherManager = new NetherManager();
@@ -83,9 +84,17 @@ public final class Indicator extends JavaPlugin {
     journeyManager.registerListeners(this);
 
     // Start doing a bunch of searches for common use cases
-    Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-      Indicator.getInstance().getLogger().info("Starting initial trail searches...");
+    valid = true;
+    Indicator.getInstance().getLogger().info("Finished initializing Indicator");
+  }
 
+  @Override
+  public void onDisable() {
+    // Plugin shutdown logic
+  }
+
+  private void initializeTrails() {
+    Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
       TrailSearch<LocationCell, World> trailSearch = new TrailSearch<>();
       List<Mode<LocationCell, World>> noFly = Lists.newArrayList(new WalkMode(), new JumpMode(), new SwimMode());
       IndicatorSearch globalSearch = new IndicatorSearch(noFly, p -> true);
@@ -93,20 +102,14 @@ public final class Indicator extends JavaPlugin {
       Map<World, Set<Link<LocationCell, World>>> exitDomains = globalSearch.collectAllExitDomains();
 
       // Run all link <-> link searches with all common modes without flying
-      globalSearch.findLinkTrails(trailSearch, entryDomains, exitDomains);
+//      globalSearch.queueLinkTrailRequests(trailSearch, entryDomains, exitDomains);
 
       globalSearch.registerMode(new FlyMode());
 
       // Run all link <-> link searches with all common modes with flying
-      globalSearch.findLinkTrails(trailSearch, entryDomains, exitDomains);
+//      globalSearch.queueLinkTrailRequests(trailSearch, entryDomains, exitDomains);
 
       valid = true;
-      Indicator.getInstance().getLogger().info("Finished initial trail searches");
     });
-  }
-
-  @Override
-  public void onDisable() {
-    // Plugin shutdown logic
   }
 }

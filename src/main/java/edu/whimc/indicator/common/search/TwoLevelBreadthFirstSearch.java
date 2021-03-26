@@ -21,9 +21,7 @@
 
 package edu.whimc.indicator.common.search;
 
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Table;
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.cache.TrailCache;
 import edu.whimc.indicator.common.path.*;
@@ -32,16 +30,18 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements Search<T, D> {
+public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
   private final List<Link<T, D>> links = Lists.newLinkedList();
   private final List<Mode<T, D>> modes = Lists.newLinkedList();
   private final ModeTypeGroup modeTypes = new ModeTypeGroup();
+  private final TrailSearchRequestQueue<T, D> trailSearchRequestQueue = new TrailSearchRequestQueue<>();
   private final TrailCache<T, D> trailCache;
 
   @Getter
@@ -50,7 +50,13 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
   @Getter
   private boolean done = false;
 
+  @Getter
+  private boolean successful = false;
+
   // Callbacks
+  @Setter
+  private Consumer<Path<T, D>> foundNewOptimalPathEvent = path -> {
+  };
   @Setter
   private BiConsumer<T, T> startTrailSearchCallback = (l1, l2) -> {
   };
@@ -105,58 +111,61 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
         .collect(Collectors.toList());
   }
 
-  private Trail<T, D> findShortestTrail(TrailSearch<T, D> bfs,
-                                        T origin,
-                                        T destination,
-                                        Supplier<Boolean> cancellation,
-                                        boolean shouldCache) {
-    Trail<T, D> trail;
-    // Check if the trail is cached
-    if (trailCache.contains(origin, destination, modeTypes)) {
-      trail = trailCache.get(origin, destination, modeTypes);
-      if (trail == null) {
-        // Don't bother to verify in the off chance that something changed between these spots
-        return null;
-      }
-      // Verify this trail still works
-      Step<T, D> prev = trail.getSteps().get(0);
-      Step<T, D> curr;
-      boolean validStep = true;
-      for (int i = 1; i < trail.getSteps().size(); i++) {
-        curr = trail.getSteps().get(i);
-        validStep = false;  // Doesn't work until proven it does
-        for (Mode<T, D> mode : modes) {
-          if (mode.getDestinations(prev.getLocatable()).containsKey(curr.getLocatable())) {
-            // This step works, keep checking
-            validStep = true;
-            break;
-          }
-        }
-        if (!validStep) {
-          // We couldn't find a way to make this step work
+  private void queueTrailRequest(PathEdgeGraph<T, D> pathEdgeGraph,
+      T origin,
+                                                  T destination,
+                                                  PathEdgeGraph.Node originNode,
+                                                  PathEdgeGraph.Node destinationNode,
+                                                  Supplier<Boolean> cancellation,
+                                                  boolean shouldCache) {
+    Trail<T, D> trail = trailCache.get(origin, destination, modeTypes);
+
+    if (trail == null) {
+      // See if we can get a trail that was cached with a subgroup of these mode types
+      trail = trailCache.getAnyMatching(origin, destination, modeTypes);
+    }
+
+    if (trail == null) {
+      // There is no valid cached trail, so just queue a search
+      trailSearchRequestQueue.add(new TrailSearchRequest<>(origin, destination, originNode, destinationNode, modes, cancellation, shouldCache));
+      return;
+    }
+
+    // There's a cached trail!
+    if (trail.getSteps().isEmpty()) {
+      // It's an invalid, no verification needed
+      return;
+    }
+
+    // Verify this trail still works
+    Step<T, D> prev = trail.getSteps().get(0);
+    Step<T, D> curr;
+    boolean validStep = true;
+    for (int i = 1; i < trail.getSteps().size(); i++) {
+      curr = trail.getSteps().get(i);
+      validStep = false;  // Doesn't work until proven it does
+      for (Mode<T, D> mode : modes) {
+        if (mode.getDestinations(prev.getLocatable()).containsKey(curr.getLocatable())) {
+          // This step works, keep checking
+          validStep = true;
           break;
         }
-        prev = curr;
       }
-      if (validStep) {
-        // All good, return the cached trail
-        return trail;
+      if (!validStep) {
+        // We couldn't find a way to make this step work
+        break;
       }
-      // The cache didn't work, do a new search
+      prev = curr;
     }
-
-    // Start a new search
-    startTrailSearchCallback.accept(origin, destination);
-    trail = bfs.findShortestTrail(origin, destination, modes, cancellation);
-    finishTrailSearchCallback.accept(origin, destination, trail == null ? -1 : trail.getLength());
-
-    if (shouldCache) {
-      trailCache.put(origin, destination, modeTypes, trail);
+    if (validStep) {
+      // All good, add the cached trail to the graph
+      pathEdgeGraph.addEdge(originNode, destinationNode, trail);
     }
-    return trail;
+    // The cache didn't work, do a new search
+
   }
 
-  private Path<T, D> findMinimumPath(T origin, T destination, List<Link<T, D>> links) {
+  private void findOptimalPath(T origin, T destination, List<Link<T, D>> links) {
     // Step 1 - organize filtered links into entry and exit points in every domain
     Map<D, Set<Link<T, D>>> entryDomains = collectEntryDomains(links);
     Map<D, Set<Link<T, D>>> exitDomains = collectExitDomains(links);
@@ -171,45 +180,110 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     // Nodes
     PathEdgeGraph.Node originNode = graph.generateNode();
     PathEdgeGraph.Node destinationNode = graph.generateNode();
+
+    Map<Link<T, D>, PathEdgeGraph.Node> linkNodeMap = new HashMap<>();
+    links.forEach(link -> linkNodeMap.put(link, graph.generateLinkNode(link)));
+    // Edges
+
     // Origin to Endpoint edge if they are in the same domain
     if (origin.getDomain().equals(destination.getDomain())) {
       try {
-        Trail<T, D> foundPath = findShortestTrail(trailSearch, origin, destination, this::isCancelled, false);
-        if (foundPath != null) {
-          graph.addEdge(originNode, destinationNode, foundPath);
-        }
+        queueTrailRequest(graph,
+            origin, destination,
+            originNode, destinationNode,
+            this::isCancelled, false);
       } catch (TrailSearch.MemoryCapacityException e) {
         memoryCapacityErrorCallback.accept(origin, destination);
       }
     }
 
-    // origin -> link
-    Map<Link<T, D>, Trail<T, D>> originTrails = findOriginTrails(trailSearch, origin, exitDomains);
-    // link -> destination
-    Map<Link<T, D>, Trail<T, D>> destinationTrails = findDestinationTrails(trailSearch, destination, entryDomains);
-    // link -> link
-    Table<Link<T, D>, Link<T, D>, Trail<T, D>> linkTrails = findLinkTrails(trailSearch, entryDomains, exitDomains);
+    // QUEUE TRAILS
+    // Queue trails: origin -> link
+    if (exitDomains.containsKey(origin.getDomain())) {
+      for (Link<T, D> exit : exitDomains.get(origin.getDomain())) {
+        queueTrailRequest(graph,
+            origin, exit.getOrigin(),
+            originNode, linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
+            this::isCancelled, false);
+      }
+    }
+    // Queue trails: link -> destination
+    if (entryDomains.containsKey(destination.getDomain())) {
+      for (Link<T, D> entry : entryDomains.get(destination.getDomain())) {
+        queueTrailRequest(graph,
+            entry.getDestination(), destination,
+            linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode), destinationNode,
+            this::isCancelled, false);
+      }
+    }
+    // Queue trails: link -> link
+    Set<D> allDomains = new HashSet<>();
+    allDomains.addAll(entryDomains.keySet());
+    allDomains.addAll(exitDomains.keySet());
 
-    Map<Link<T, D>, PathEdgeGraph.Node> linkNodeMap = new HashMap<>();
-    links.forEach(link -> linkNodeMap.put(link, graph.generateLinkNode(link)));
-    // Edges
-    originTrails.entrySet()
-        .stream()
-        .filter(entry -> entry.getValue() != null)
-        .forEach(entry -> graph.addEdge(originNode, linkNodeMap.get(entry.getKey()), entry.getValue()));
-    destinationTrails.entrySet()
-        .stream()
-        .filter(entry -> entry.getValue() != null)
-        .forEach(entry -> graph.addEdge(linkNodeMap.get(entry.getKey()), destinationNode, entry.getValue()));
-    linkTrails.cellSet().stream()
-        .filter(cell -> cell.getValue() != null)
-        .forEach((cell) -> graph.addEdge(
-            linkNodeMap.get(cell.getRowKey()),
-            linkNodeMap.get(cell.getColumnKey()),
-            cell.getValue()));
+    for (D domain : allDomains) {
+      if (entryDomains.containsKey(domain)) {
+        for (Link<T, D> entry : entryDomains.get(domain)) {
+          if (exitDomains.containsKey(domain)) {
+            for (Link<T, D> exit : exitDomains.get(domain)) {
+              if (entry.getOrigin().equals(exit.getDestination())) {
+                continue;  // We don't want to use link <-> link if they just come back to the same spot
+              }
+              queueTrailRequest(graph,
+                  entry.getDestination(), exit.getOrigin(),
+                  linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode),
+                  linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
+                  this::isCancelled, true);
+            }
+          }
+        }
+      }
+    }
 
-    // Step 5 - Solve graph - Find the minimum path from the domain graph
-    return graph.findMinimumPath(originNode, destinationNode);
+    // Node mappings to make sure that we add to edges to the global graph correctly
+
+    trailSearchRequestQueue.sortByEstimatedLength();
+
+    double optimalLength = Double.MAX_VALUE;
+    TrailSearchRequest<T, D> trailRequest;
+    Trail<T, D> latestFoundTrail;
+    Path<T, D> foundPath;
+    while (!trailSearchRequestQueue.isEmpty()) {
+
+      // Start search from the queue
+      trailRequest = trailSearchRequestQueue.pop();
+      if (trailRequest.getOrigin().distanceToSquared(trailRequest.getDestination()) > optimalLength * optimalLength) {
+        // We have already found a path that has a shorter distance than this trail,
+        //  so there's no way that this is helpful
+        continue;
+      }
+
+      startTrailSearchCallback.accept(trailRequest.getOrigin(), trailRequest.getDestination());
+      try {
+        latestFoundTrail = trailSearch.findOptimalTrail(trailRequest);
+      } catch (TrailSearch.MemoryCapacityException e) {
+        memoryCapacityErrorCallback.accept(trailRequest.getOrigin(), trailRequest.getDestination());
+        if (trailRequest.isCacheable()) {
+          trailCache.put(trailRequest.getOrigin(), trailRequest.getDestination(), modeTypes, Trail.INVALID());
+        }
+        continue;
+      }
+      finishTrailSearchCallback.accept(trailRequest.getOrigin(), trailRequest.getDestination(), latestFoundTrail.getLength());
+
+      if (trailRequest.isCacheable()) {
+        trailCache.put(trailRequest.getOrigin(), trailRequest.getDestination(), modeTypes, latestFoundTrail);
+      }
+
+      graph.addEdge(trailRequest.getOriginNode(), trailRequest.getDestinationNode(), latestFoundTrail);
+
+      // Step 5 - Solve graph - Find the minimum path from the domain graph
+      foundPath = graph.findMinimumPath(originNode, destinationNode);
+      if (foundPath != null && foundPath.getLength() < optimalLength) {
+        successful = true;
+        foundNewOptimalPathEvent.accept(foundPath);
+        optimalLength = foundPath.getLength();
+      }
+    }
   }
 
   public final Map<D, Set<Link<T, D>>> collectAllEntryDomains() {
@@ -261,108 +335,6 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     return exitDomains;
   }
 
-  /**
-   * Find all trails that go from the origin
-   * Part of Step 3 of high-level search algorithm.
-   *
-   * @param trailSearch the local search object
-   * @param origin      the origin from which the trails will be found
-   * @param exitDomains for every domain, all links which exit the domain. Only the domain of the origin will be used.
-   * @return map of all links to trails of which every link is
-   * mapped to the trail which goes from the overall origin to the origin
-   * of the link
-   */
-  public final Map<Link<T, D>, Trail<T, D>> findOriginTrails(TrailSearch<T, D> trailSearch, T origin, Map<D, Set<Link<T, D>>> exitDomains) {
-    Trail<T, D> trail;
-    Map<Link<T, D>, Trail<T, D>> originTrails = new HashMap<>();
-    if (exitDomains.containsKey(origin.getDomain())) {
-      for (Link<T, D> exit : exitDomains.get(origin.getDomain())) {
-        try {
-          trail = findShortestTrail(trailSearch, origin, exit.getOrigin(), this::isCancelled, false);
-          if (trail != null) {
-            originTrails.put(exit, trail);
-          }
-        } catch (TrailSearch.MemoryCapacityException e) {
-          memoryCapacityErrorCallback.accept(origin, exit.getOrigin());
-        }
-      }
-    }
-    return originTrails;
-  }
-
-  /**
-   * Find all trails that go to the destination
-   * Part of Step 3 of high-level search algorithm.
-   *
-   * @param trailSearch  the local search object
-   * @param destination  the origin from which the trails will be found
-   * @param entryDomains for every domain, all links which enter the domain. Only the domain of the destination will be used.
-   * @return map of all links to trails of which every link is
-   * mapped to the trail which goes from the destination of the link to the overall destination
-   */
-  public Map<Link<T, D>, Trail<T, D>> findDestinationTrails(TrailSearch<T, D> trailSearch, T destination, Map<D, Set<Link<T, D>>> entryDomains) {
-    Trail<T, D> trail;
-    Map<Link<T, D>, Trail<T, D>> destinationTrails = new HashMap<>();
-    if (entryDomains.containsKey(destination.getDomain())) {
-      for (Link<T, D> entry : entryDomains.get(destination.getDomain())) {
-        try {
-          trail = findShortestTrail(trailSearch, entry.getDestination(), destination, this::isCancelled, false);
-          if (trail != null) {
-            destinationTrails.put(entry, trail);
-          }
-        } catch (TrailSearch.MemoryCapacityException e) {
-          memoryCapacityErrorCallback.accept(entry.getDestination(), destination);
-        }
-      }
-    }
-    return destinationTrails;
-  }
-
-  /**
-   * Find all trails that go between links
-   * Part of Step 3 of high-level search algorithm.
-   *
-   * @param trailSearch  the local search object
-   * @param entryDomains for every domain, all links which enter the domain.
-   * @param exitDomains  for every domain, all links which exit the domain.
-   * @return table of all links to trails of which every link-link key is
-   * mapped to the trail which goes from the destination of the first link
-   * to the origin of the other link.
-   */
-  public Table<Link<T, D>, Link<T, D>, Trail<T, D>> findLinkTrails(TrailSearch<T, D> trailSearch,
-                                                                   Map<D, Set<Link<T, D>>> entryDomains,
-                                                                   Map<D, Set<Link<T, D>>> exitDomains) {
-    // put all domains into one set
-    Set<D> allDomains = new HashSet<>();
-    allDomains.addAll(entryDomains.keySet());
-    allDomains.addAll(exitDomains.keySet());
-
-    Trail<T, D> trail;
-    Table<Link<T, D>, Link<T, D>, Trail<T, D>> linkTrails = HashBasedTable.create();
-    for (D domain : allDomains) {
-      if (entryDomains.containsKey(domain)) {
-        for (Link<T, D> entry : entryDomains.get(domain)) {
-          if (exitDomains.containsKey(domain)) {
-            for (Link<T, D> exit : exitDomains.get(domain)) {
-              if (entry.isReverse(exit)) {
-                continue;
-              }
-              try {
-                trail = findShortestTrail(trailSearch, entry.getDestination(), exit.getOrigin(), this::isCancelled, true);
-                if (trail != null) {
-                  linkTrails.put(entry, exit, trail);
-                }
-              } catch (TrailSearch.MemoryCapacityException e) {
-                memoryCapacityErrorCallback.accept(entry.getDestination(), exit.getOrigin());
-              }
-            }
-          }
-        }
-      }
-    }
-    return linkTrails;
-  }
-
   public void setCancelled(boolean cancelled) {
     if (cancelled) {
       this.cancelled = true;
@@ -372,16 +344,16 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> implements
     }
   }
 
-  @Override
-  public Path<T, D> findPath(T origin, T destination) {
+  public CompletableFuture<Void> search(T origin, T destination) {
     done = false;
     // Stage 1 - Only keep the links that may be helpful for finding this path
     List<Link<T, D>> filteredLinks = filterLinks(origin, destination, links);
 
     // Stage 2 & 3- Create graph based on paths made from local breadth first searches
-    Path<T, D> path = findMinimumPath(origin, destination, filteredLinks);
-    done = true;
-    return path;
+    return CompletableFuture.runAsync(() -> {
+      findOptimalPath(origin, destination, filteredLinks);
+      done = true;
+    });
   }
 
 }

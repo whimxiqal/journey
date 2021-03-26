@@ -24,7 +24,6 @@ package edu.whimc.indicator.spigot.command;
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.Endpoint;
 import edu.whimc.indicator.common.path.ModeType;
-import edu.whimc.indicator.common.path.Path;
 import edu.whimc.indicator.common.path.Step;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
@@ -46,8 +45,13 @@ import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TrailCommand extends CommandNode {
+
+  private static final int DEFAULT_SEARCH_TIMEOUT = 30;
+  private static final int ONE_SECOND = 20;
 
   private static final int ILLUMINATED_COUNT = 16;
   private static final int TICKS_PER_PARTICLE = 3;
@@ -78,20 +82,25 @@ public class TrailCommand extends CommandNode {
     }
     Player player = (Player) sender;
 
-    int timeout = 30;
+    if (Indicator.getInstance().getJourneyManager().isSearching(player.getUniqueId())) {
+      player.sendMessage(Format.error("Please wait until your search is over before performing a new one."));
+      return false;
+    }
+
+    int timeout = DEFAULT_SEARCH_TIMEOUT;
     if (args.length >= 1) {
       try {
         timeout = Integer.parseInt(args[0]);
         if (timeout < 1) {
           player.sendMessage(Format.error("The timeout must be at least 1 second"));
-          timeout = 30;
+          timeout = DEFAULT_SEARCH_TIMEOUT;
         } else if (timeout > 600) {
           player.sendMessage(Format.error("The timeout must be at most 10 minutes"));
-          timeout = 30;
+          timeout = DEFAULT_SEARCH_TIMEOUT;
         }
       } catch (NumberFormatException e) {
         player.sendMessage(Format.error("The timeout could not be converted to an integer"));
-        timeout = 30;
+        timeout = DEFAULT_SEARCH_TIMEOUT;
       }
     }
 
@@ -114,35 +123,41 @@ public class TrailCommand extends CommandNode {
     }
 
     final int finalTimeout = timeout;
-    Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
-      IndicatorSearch search = new IndicatorSearch(player);
+    IndicatorSearch search = new IndicatorSearch(player);
 
-      // Set up a search cancellation in case it takes too long
-      BukkitTask timeoutNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> {
-        search.setCancelled(true);
-        Indicator.getInstance().getDebugManager().broadcastDebugMessage(Format.debug("Search cancelled due to timeout."));
-      }, finalTimeout * 20);
+    // Set up a search cancellation in case it takes too long
+    BukkitTask timeoutTask = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(),
+        () -> search.setCancelled(true),
+        finalTimeout * ONE_SECOND);
 
-      // Set up a "Working..." message if it takes too long
-      BukkitTask workingNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () ->
-          sender.sendMessage(Format.info("Searching for path to your destination (" + finalTimeout + " sec)...")), 10);
+    // Set up a "Working..." message if it takes too long
+    BukkitTask workingNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () ->
+        sender.sendMessage(Format.info("Searching for path to your destination (" + finalTimeout + " sec)...")), 10);
 
-      Path<LocationCell, World> path = search.findPath(
-          new LocationCell(player.getLocation()),
-          destination.getLocation());
+    AtomicBoolean foundPath = new AtomicBoolean(false);
+    AtomicInteger successNotificationTaskId = new AtomicInteger(0);
+    AtomicBoolean sentSuccessNotification = new AtomicBoolean(false);
 
-      // We didn't timeout, so cancel the timeout message
-      timeoutNotification.cancel();
-      // Cancel "Working..." message if it hasn't happened yet
-      workingNotification.cancel();
+    // Set behavior for if the search works
+    Random rand = new Random();
+    search.setFoundNewOptimalPathEvent(path -> {
 
-      if (path == null) {
-        sender.sendMessage(Format.error("A path to your destination could not be found."));
+      if (sentSuccessNotification.get()) {
+        // TODO do something different for subsequent found paths
+        player.sendMessage(Format.info("A faster path to your destination was found..."));
+        player.sendMessage(Format.info("You may use this feature in later versions."));
         return;
       }
 
+      if (foundPath.get()) {
+        Bukkit.getScheduler().cancelTask(successNotificationTaskId.get());
+      }
+      foundPath.set(true);
+
+      // Cancel "Working..." message if it hasn't happened yet
+      workingNotification.cancel();
+
       // Set up illumination scheduled task for showing the trails
-      Random rand = new Random();
       int illuminationTaskId = Bukkit.getScheduler().runTaskTimer(Indicator.getInstance(), () -> {
         Optional<PlayerJourney> journeyOptional = Indicator.getInstance()
             .getJourneyManager()
@@ -178,6 +193,10 @@ public class TrailCommand extends CommandNode {
         boolean completed = cell.distanceToSquared(destination.getLocation()) < 9;
         if (completed) {
           Bukkit.getScheduler().cancelTask(illuminationTaskId);
+          if (!search.isDone()) {
+            // No need to search anything anymore
+            search.setCancelled(true);
+          }
         }
         return completed;
       });
@@ -189,9 +208,35 @@ public class TrailCommand extends CommandNode {
           .ifPresent(previousJourney ->
               Bukkit.getScheduler().cancelTask(previousJourney.getIlluminationTaskId()));
 
-      sender.sendMessage(Format.success("Showing a trail to your destination"));
+      // Set up a success notification that will be cancelled if a better one is found in some amount of time
+      successNotificationTaskId.set(Bukkit.getScheduler()
+          .runTaskLater(Indicator.getInstance(),
+              () -> {
+                sender.sendMessage(Format.success("Showing a path to your destination"));
+                sentSuccessNotification.set(true);
+              },
+              ONE_SECOND)
+          .getTaskId());
 
     });
+
+    // SEARCH
+    Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
+          Indicator.getInstance().getJourneyManager().startSearching(player.getUniqueId());
+          search.search(new LocationCell(player.getLocation()), destination.getLocation())
+              .thenRun(() -> {
+                // We didn't timeout, so cancel the timeout message
+                timeoutTask.cancel();
+                // Cancel "Working..." message if it hasn't happened yet
+                workingNotification.cancel();
+                // Send failure message if we finished unsuccessfully
+                if (!search.isSuccessful()) {
+                  player.sendMessage(Format.error("A path to your destination could not be found."));
+                }
+                Indicator.getInstance().getJourneyManager().stopSearching(player.getUniqueId());
+              });
+        }
+    );
 
     return true;
 

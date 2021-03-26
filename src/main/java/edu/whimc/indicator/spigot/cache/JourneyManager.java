@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,6 +40,7 @@ public class JourneyManager implements Listener {
 
   private final Map<UUID, PlayerJourney> playerJourneys = new ConcurrentHashMap<>();
   private final Map<UUID, LocationCell> playerLocations = new ConcurrentHashMap<>();
+  private final Set<UUID> searchingPlayers = ConcurrentHashMap.newKeySet();
 
   public Optional<PlayerJourney> putPlayerJourney(@NotNull UUID playerUuid, PlayerJourney journey) {
     return Optional.ofNullable(this.playerJourneys.put(playerUuid, journey));
@@ -46,6 +48,18 @@ public class JourneyManager implements Listener {
 
   public Optional<PlayerJourney> getPlayerJourney(@NotNull UUID playerUuid) {
     return Optional.ofNullable(playerJourneys.get(playerUuid));
+  }
+
+  public boolean startSearching(@NotNull UUID playerUuid) {
+    return searchingPlayers.add(playerUuid);
+  }
+
+  public boolean stopSearching(@NotNull UUID playerUuid) {
+    return searchingPlayers.remove(playerUuid);
+  }
+
+  public boolean isSearching(@NotNull UUID playerUuid) {
+    return searchingPlayers.contains(playerUuid);
   }
 
   @EventHandler

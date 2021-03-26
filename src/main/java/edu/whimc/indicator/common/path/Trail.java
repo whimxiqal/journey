@@ -21,13 +21,20 @@
 
 package edu.whimc.indicator.common.path;
 
+import com.google.common.collect.Lists;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.util.ArrayList;
 
 @Data
 public final class Trail<T extends Locatable<T, D>, D> {
 
+  public static <A extends Locatable<A, B>, B> Trail<A, B> INVALID() {
+    return new Trail<>(Lists.newArrayList(), Double.MAX_VALUE);
+  }
+
+  @NonNull
   private final ArrayList<Step<T, D>> steps;
   private final double length;
 

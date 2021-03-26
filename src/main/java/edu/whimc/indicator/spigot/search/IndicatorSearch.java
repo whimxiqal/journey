@@ -25,6 +25,7 @@ import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
 import edu.whimc.indicator.spigot.cache.DebugManager;
+import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.PortalLink;
 import edu.whimc.indicator.spigot.path.mode.FlyMode;
@@ -49,12 +50,12 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
   public IndicatorSearch(Player player) {
     super(Indicator.getInstance().getTrailCache());
     // Modes
+    if (player.getAllowFlight()) {
+      registerMode(new FlyMode());  // Fly first because most convenient
+    }
     registerMode(new WalkMode());
     registerMode(new JumpMode());
     registerMode(new SwimMode());
-    if (player.getGameMode().equals(GameMode.CREATIVE)) {
-      registerMode(new FlyMode());
-    }
 
     // Links
     registerLinks(player::hasPermission);
@@ -106,7 +107,7 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
           origin.toString()
               + " -> "));
       debugManager.broadcastDebugMessage(Format.debug(destination.toString()));
-      debugManager.broadcastDebugMessage(Format.debug("Length: " + Math.round(length)));
+      debugManager.broadcastDebugMessage(Format.debug("Length: " + (length > 1000000 ? "Inf" : Math.round(length))));
     });
     setMemoryCapacityErrorCallback((origin, destination) -> {
       debugManager.broadcastDebugMessage(Format.debug("Ran out of allocated memory for a local trail search: "));
