@@ -23,6 +23,13 @@ package edu.whimc.indicator.common.path;
 
 import java.util.function.Predicate;
 
+/**
+ * A condition for when a Locatable may be considered
+ * within a suitable proximity.
+ *
+ * @param <T> the locatable type
+ * @param <D> the domain type
+ */
 public interface Completion<T extends Locatable<T, D>, D> extends Predicate<T> {
 
 }

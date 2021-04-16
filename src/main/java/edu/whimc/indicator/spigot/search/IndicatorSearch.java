@@ -21,50 +21,72 @@
 
 package edu.whimc.indicator.spigot.search;
 
+import com.google.common.collect.Lists;
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.common.path.Link;
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
 import edu.whimc.indicator.spigot.cache.DebugManager;
-import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.PortalLink;
-import edu.whimc.indicator.spigot.path.mode.FlyMode;
-import edu.whimc.indicator.spigot.path.mode.JumpMode;
-import edu.whimc.indicator.spigot.path.mode.SwimMode;
-import edu.whimc.indicator.spigot.path.mode.WalkMode;
+import edu.whimc.indicator.spigot.path.mode.*;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.portals.Main;
 import edu.whimc.portals.Portal;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
 public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, World> {
 
-  public IndicatorSearch(Player player) {
+  public static List<Mode<LocationCell, World>> SURVIVAL_MODES = Lists.newArrayList(
+      new WalkMode(),
+      new JumpMode(),
+      new SwimMode(),
+      new DoorMode(),
+      new ClimbMode());
+
+  /**
+   * Player constructor. Modes and links are registered according to the player's state and status
+   *
+   * @param player the in game player to create around
+   */
+  public IndicatorSearch(Player player, boolean nofly) {
     super(Indicator.getInstance().getTrailCache());
-    // Modes
-    if (player.getAllowFlight()) {
-      registerMode(new FlyMode());  // Fly first because most convenient
+    // Modes - in order of preference
+    if (player.getAllowFlight() && !nofly) {
+      registerMode(new FlyMode());
+    } else {
+      registerMode(new WalkMode());
+      registerMode(new JumpMode());
+      registerMode(new SwimMode());
     }
-    registerMode(new WalkMode());
-    registerMode(new JumpMode());
-    registerMode(new SwimMode());
+    registerMode(new DoorMode());
+    registerMode(new ClimbMode());
 
     // Links
-    registerLinks(player::hasPermission);
+    registerLinks(player::hasPermission, player);
 
     // Callbacks
     setCallbacks();
   }
 
-  public IndicatorSearch(List<Mode<LocationCell, World>> modes, Predicate<String> permissionPredicate) {
+  /**
+   * Direct initializing constructor. Links are only registered if the permission predicate
+   * matches with the behavior associated with the links.
+   *
+   * @param modes               the modes to use during searching
+   * @param permissionPredicate a predicate to determine which links to add
+   */
+  public IndicatorSearch(Collection<Mode<LocationCell, World>> modes, Predicate<String> permissionPredicate) {
     super(Indicator.getInstance().getTrailCache());
     modes.forEach(this::registerMode);
     registerLinks(permissionPredicate);
@@ -74,6 +96,10 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
   }
 
   private void registerLinks(Predicate<String> permissionSupplier) {
+    this.registerLinks(permissionSupplier, null);
+  }
+
+  private void registerLinks(Predicate<String> permissionSupplier, @Nullable Player player) {
     // Links - Nether
     Indicator.getInstance().getNetherManager().makeLinks().forEach(this::registerLink);
 
@@ -84,12 +110,31 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
           .filter(portal -> portal.getDestination() != null)
           .filter(portal -> portal.getWorld() != null)
           .filter(portal -> portal.getDestination().getLocation().getWorld() != null)
-          .filter(portal ->
-              Optional.ofNullable(portal.getPermission()).map(perm ->
-                  permissionSupplier.test(perm.getName())).orElse(true))
-          .map(PortalLink::new)
-          .forEach(this::registerLink);
+          .filter(portal -> Optional.ofNullable(portal.getPermission()).map(perm ->
+              permissionSupplier.test(perm.getName())).orElse(true))
+          .map(portal -> {
+            try {
+              return new PortalLink(portal);
+            } catch (Exception e) {
+              return null;
+            }
+          })
+          .filter(Objects::nonNull)
+          .forEach(link -> {
+            if (player == null) {
+              registerLink(link);
+            } else {
+              registerLinkVerbose(player, link);
+            }
+          });
     }
+  }
+
+  private void registerLinkVerbose(Player player, Link<LocationCell, World> link) {
+    if (Indicator.getInstance().getDebugManager().isDebugging(player.getUniqueId())) {
+      player.sendMessage(Format.debug("Registering Link: " + link.toString()));
+    }
+    super.registerLink(link);
   }
 
   private void setCallbacks() {

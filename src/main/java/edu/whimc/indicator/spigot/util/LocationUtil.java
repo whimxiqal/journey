@@ -22,6 +22,7 @@
 package edu.whimc.indicator.spigot.util;
 
 import edu.whimc.indicator.common.path.Cell;
+import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.World;
 
 public final class LocationUtil {
@@ -41,11 +42,10 @@ public final class LocationUtil {
    * @param xStep which a axis a step is being taken: x if true, z if false
    * @param isPositive which direction a step is being taken:
    *                   positive if true, negative if false
-   * @param <C> the type of locatable
    * @return true if a player can step there
    */
-  private static <C extends Cell<C, World>> boolean canStep(C cell, int offY,
-                                                            boolean xStep, boolean isPositive) {
+  private static boolean canStep(LocationCell cell, int offY,
+                                                          boolean xStep, boolean isPositive) {
     if (offY > 1 || offY < -3) return false;  // Too high to jump, too low to fall
 
     int floorX = cell.getX() + (xStep ? 1 : 0)*(isPositive ? 1 : -1);
@@ -65,19 +65,19 @@ public final class LocationUtil {
     return true;
   }
 
-  public static <C extends Cell<C, World>> boolean canStepXPos(C cell, int offY) {
+  public static boolean canStepXPos(LocationCell cell, int offY) {
     return canStep(cell, offY, true, true);
   }
 
-  public static <C extends Cell<C, World>> boolean canStepXNeg(C cell, int offY) {
+  public static boolean canStepXNeg(LocationCell cell, int offY) {
     return canStep(cell, offY, true, false);
   }
 
-  public static <C extends Cell<C, World>> boolean canStepZPos(C cell, int offY) {
+  public static boolean canStepZPos(LocationCell cell, int offY) {
     return canStep(cell, offY, false, true);
   }
 
-  public static <C extends Cell<C, World>> boolean canStepZNeg(C cell, int offY) {
+  public static boolean canStepZNeg(LocationCell cell, int offY) {
     return canStep(cell, offY, false, false);
   }
 

@@ -21,13 +21,15 @@
 
 package edu.whimc.indicator.common.path;
 
+import java.io.Serializable;
+
 /**
  * An abstraction of a location within a Minecraft world.
  *
  * @param <T> This implementation class. This is needed for {@link #distanceTo(Locatable)}.
  * @param <D> The domain, as in a Minecraft world
  */
-public interface Locatable<T extends Locatable<T, D>, D> {
+public interface Locatable<T extends Locatable<T, D>, D> extends Serializable {
 
   /**
    * Get the cartesian from one locatable to another, ignoring domain.

@@ -2,9 +2,7 @@ package edu.whimc.indicator;
 
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.common.cache.TrailCache;
-import edu.whimc.indicator.common.path.Link;
-import edu.whimc.indicator.common.path.Mode;
-import edu.whimc.indicator.common.search.TrailSearch;
+import edu.whimc.indicator.common.path.*;
 import edu.whimc.indicator.spigot.cache.DebugManager;
 import edu.whimc.indicator.spigot.cache.JourneyManager;
 import edu.whimc.indicator.spigot.cache.NetherManager;
@@ -13,10 +11,7 @@ import edu.whimc.indicator.spigot.command.IndicatorCommand;
 import edu.whimc.indicator.spigot.command.TrailCommand;
 import edu.whimc.indicator.spigot.cache.EndpointManager;
 import edu.whimc.indicator.spigot.path.LocationCell;
-import edu.whimc.indicator.spigot.path.mode.FlyMode;
-import edu.whimc.indicator.spigot.path.mode.JumpMode;
-import edu.whimc.indicator.spigot.path.mode.SwimMode;
-import edu.whimc.indicator.spigot.path.mode.WalkMode;
+import edu.whimc.indicator.spigot.path.mode.*;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -25,13 +20,15 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.nio.file.Paths;
+import java.util.*;
 
 public final class Indicator extends JavaPlugin {
 
   private static Indicator instance;
+
+  private static final String SERIALIZED_TRAIL_CACHE_FILENAME = "trails.ser";
 
   // Caches
   @Getter
@@ -66,6 +63,8 @@ public final class Indicator extends JavaPlugin {
     this.journeyManager = new JourneyManager();
     this.trailCache = new TrailCache<>();
 
+    deserializeCaches();
+
     // Register commands
     Lists.newArrayList(new IndicatorCommand(),
         new TrailCommand(),
@@ -84,32 +83,69 @@ public final class Indicator extends JavaPlugin {
     journeyManager.registerListeners(this);
 
     // Start doing a bunch of searches for common use cases
-    valid = true;
-    Indicator.getInstance().getLogger().info("Finished initializing Indicator");
+    Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+      initializeTrails();
+      valid = true;
+      Indicator.getInstance().getLogger().info("Finished initializing Indicator");
+    });
   }
 
   @Override
   public void onDisable() {
     // Plugin shutdown logic
+    serializeCaches();
+  }
+
+  @SuppressWarnings("unchecked")
+  private boolean deserializeCaches() {
+    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_TRAIL_CACHE_FILENAME).toFile();
+    if (!file.exists()) return false;
+    try (FileInputStream fileStream = new FileInputStream(file);
+         ObjectInputStream in = new ObjectInputStream(fileStream)) {
+
+      trailCache = (TrailCache<LocationCell, World>) in.readObject();
+      Indicator.getInstance().getLogger().info("Deserialized trail cache (" + trailCache.size() + " trails)");
+      return true;
+
+    } catch (IOException | ClassNotFoundException e) {
+      Indicator.getInstance().getLogger().severe("Could not deserialize trail caches");
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  private boolean serializeCaches() {
+    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_TRAIL_CACHE_FILENAME).toFile();
+    try {
+      this.getDataFolder().mkdirs();
+      if (file.createNewFile()) {
+        Indicator.getInstance().getLogger().info("Created serialized trail file");
+      }
+    } catch (IOException e) {
+      Indicator.getInstance().getLogger().severe("Could not create serialization file");
+      return false;
+    }
+
+    try (FileOutputStream fileStream = new FileOutputStream(Paths.get(
+        this.getDataFolder().toPath().toString(),
+        SERIALIZED_TRAIL_CACHE_FILENAME).toFile());
+         ObjectOutputStream out = new ObjectOutputStream(fileStream)) {
+
+      out.writeObject(trailCache);
+      Indicator.getInstance().getLogger().info("Serialized trail cache (" + trailCache.size() + " trails)");
+      return true;
+
+    } catch (IOException e) {
+      Indicator.getInstance().getLogger().severe("Could not serialize trail caches");
+      e.printStackTrace();
+      return false;
+    }
   }
 
   private void initializeTrails() {
-    Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-      TrailSearch<LocationCell, World> trailSearch = new TrailSearch<>();
-      List<Mode<LocationCell, World>> noFly = Lists.newArrayList(new WalkMode(), new JumpMode(), new SwimMode());
-      IndicatorSearch globalSearch = new IndicatorSearch(noFly, p -> true);
-      Map<World, Set<Link<LocationCell, World>>> entryDomains = globalSearch.collectAllEntryDomains();
-      Map<World, Set<Link<LocationCell, World>>> exitDomains = globalSearch.collectAllExitDomains();
-
-      // Run all link <-> link searches with all common modes without flying
-//      globalSearch.queueLinkTrailRequests(trailSearch, entryDomains, exitDomains);
-
-      globalSearch.registerMode(new FlyMode());
-
-      // Run all link <-> link searches with all common modes with flying
-//      globalSearch.queueLinkTrailRequests(trailSearch, entryDomains, exitDomains);
-
-      valid = true;
-    });
+    // Survival
+    new IndicatorSearch(IndicatorSearch.SURVIVAL_MODES, s -> true).searchCacheable();
+    // Creative/Flying
+    new IndicatorSearch(Collections.singleton(new FlyMode()), s -> true).searchCacheable();
   }
 }

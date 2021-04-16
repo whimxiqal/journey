@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class EndpointCommand extends CommandNode {
   public EndpointCommand() {
@@ -83,7 +84,8 @@ public class EndpointCommand extends CommandNode {
   public boolean onWrappedCommand(@NotNull CommandSender sender,
                                   @NotNull Command command,
                                   @NotNull String label,
-                                  @NotNull String[] args) {
+                                  @NotNull String[] args,
+                                  @NotNull Set<String> flags) {
     if (args.length < 2) {
       sendCommandError(sender, CommandError.FEW_ARGUMENTS);
       return false;

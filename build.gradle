@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'edu.whimc'
-version = '0.0.0'
+version = '0.0.0-alpha'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'

@@ -27,6 +27,8 @@ import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public abstract class FunctionlessCommandNode extends CommandNode {
 
   public FunctionlessCommandNode(@Nullable CommandNode parent,
@@ -48,7 +50,8 @@ public abstract class FunctionlessCommandNode extends CommandNode {
   public final boolean onWrappedCommand(@NotNull CommandSender sender,
                                         @NotNull Command command,
                                         @NotNull String label,
-                                        @NotNull String[] args) {
+                                        @NotNull String[] args,
+                                        @NotNull Set<String> flags) {
     sendCommandError(sender, "Too few arguments or invalid arguments!");
     return false;
   }

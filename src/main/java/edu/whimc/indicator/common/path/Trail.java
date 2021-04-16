@@ -24,14 +24,20 @@ package edu.whimc.indicator.common.path;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.NonNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 @Data
-public final class Trail<T extends Locatable<T, D>, D> {
+public final class Trail<T extends Locatable<T, D>, D> implements Serializable {
 
   public static <A extends Locatable<A, B>, B> Trail<A, B> INVALID() {
     return new Trail<>(Lists.newArrayList(), Double.MAX_VALUE);
+  }
+
+  public static <A extends Locatable<A, B>, B> boolean isValid(@Nullable Trail<A, B> trail) {
+    return trail != null && Double.compare(trail.getLength(), Double.MAX_VALUE) < 0;
   }
 
   @NonNull

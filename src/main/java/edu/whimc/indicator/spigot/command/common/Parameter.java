@@ -29,18 +29,20 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 @Builder
 public class Parameter {
 
-  @NonNull @Builder.Default
+  @NonNull
+  @Builder.Default
+  @Getter
   private final ParameterSupplier supplier = ParameterSuppliers.NONE;
+  @NonNull
+  @Builder.Default
+  @Getter
+  private final ArrayList<String> flags = new ArrayList<>();
   private final Permission permission;
   private Parameter next;
 
@@ -48,17 +50,6 @@ public class Parameter {
     return Parameter.builder()
         .supplier(ParameterSupplier.builder().usage(usage).build())
         .build();
-  }
-
-  /**
-   * Gives the supplier of possible accepted inputs for this parameter.
-   * If there is no supplier, then the constant value NONE in
-   * {@link ParameterSuppliers} is given instead.
-   *
-   * @return an appropriate {@link ParameterSupplier}
-   */
-  public ParameterSupplier getSupplier() {
-    return supplier;
   }
 
   public Optional<Permission> getPermission() {

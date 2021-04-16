@@ -33,5 +33,7 @@ public final class ModeTypes {
   public static final ModeType BOAT = ModeType.of("boat", false);
   public static final ModeType RAIL = ModeType.of("rail", false);
   public static final ModeType BUILD = ModeType.of("build", false);
+  public static final ModeType DOOR = ModeType.of("door", true);
+  public static final ModeType CLIMB = ModeType.of("climb", true);
 
 }

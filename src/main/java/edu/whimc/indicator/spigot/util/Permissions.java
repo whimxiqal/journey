@@ -29,7 +29,7 @@ public final class Permissions {
   }
 
   public final static Permission INDICATOR_PERMISSION = new Permission("indicator.indicator");
-  public final static Permission DEBUG_PERMISSION = new Permission("indicator.debug");
+  public final static Permission ADMIN_PERMISSION = new Permission("indicator.admin");
   public final static Permission TRAIL_PERMISSION = new Permission("indicator.trail");
   public final static Permission DESTINATION_PERMISSION = new Permission("indicator.destination");
 

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 public class LambdaCommandNode extends CommandNode {
@@ -57,7 +58,8 @@ public class LambdaCommandNode extends CommandNode {
   public final boolean onWrappedCommand(@NotNull CommandSender sender,
                                         @NotNull Command command,
                                         @NotNull String label,
-                                        @NotNull String[] args) {
+                                        @NotNull String[] args,
+                                        @NotNull Set<String> flags) {
     return executor.apply(sender, args);
   }
 }

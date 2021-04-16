@@ -28,6 +28,7 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Set;
 
 final class HelpCommandNode extends CommandNode {
 
@@ -45,7 +46,8 @@ final class HelpCommandNode extends CommandNode {
   public boolean onWrappedCommand(@NotNull CommandSender sender,
                                   @NotNull Command command,
                                   @NotNull String label,
-                                  @NotNull String[] args) {
+                                  @NotNull String[] args,
+                                  @NotNull Set<String> flags) {
     CommandNode parent = Objects.requireNonNull(this.getParent());
     sender.sendMessage(Format.success(
         "Command: "
@@ -63,8 +65,7 @@ final class HelpCommandNode extends CommandNode {
         if (node.getChildren().size() > 1 || !node.getParameters().isEmpty()) {
           builder.append(" [ . . . ]");
         }
-        builder.append(ChatColor.GRAY)
-            .append("  ")
+        builder.append(" ")
             .append(ChatColor.WHITE)
             .append(node.getDescription());
         sender.sendMessage(builder.toString());
@@ -73,17 +74,27 @@ final class HelpCommandNode extends CommandNode {
     for (Parameter parameter : parent.getParameters()) {
       if (parameter.getPermission().map(sender::hasPermission).orElse(true)) {
         parameter.getFullUsage(sender).ifPresent(usage -> {
-          String builder = ChatColor.GRAY
-              + "> "
-              + parent.getPrimaryAlias()
-              + " "
-              + ChatColor.AQUA
-              + usage
-              + ChatColor.GRAY
-              + "  "
-              + ChatColor.WHITE
-              + parent.getParameterDescription(parameter);
-          sender.sendMessage(builder);
+          StringBuilder builder = new StringBuilder();
+          builder.append(ChatColor.GRAY)
+              .append("> ")
+              .append(parent.getPrimaryAlias())
+              .append(" ")
+              .append(ChatColor.AQUA)
+              .append(usage)
+              .append(ChatColor.GRAY);
+          parameter.getFlags().forEach(flag -> builder.append(" ")
+              .append(ChatColor.DARK_GRAY)
+              .append("[")
+              .append(ChatColor.GOLD)
+              .append("-")
+              .append(flag)
+              .append(ChatColor.DARK_GRAY)
+              .append("]"));
+          builder.append("  ")
+              .append(ChatColor.WHITE)
+              .append(parent.getParameterDescription(parameter));
+
+          sender.sendMessage(builder.toString());
         });
       }
     }

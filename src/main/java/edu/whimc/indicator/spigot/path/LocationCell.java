@@ -22,21 +22,35 @@
 package edu.whimc.indicator.spigot.path;
 
 import edu.whimc.indicator.common.path.Cell;
+import edu.whimc.indicator.spigot.util.UuidToWorld;
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.UUID;
 
-public class LocationCell extends Cell<LocationCell, World> {
+public class LocationCell extends Cell<LocationCell, World, UuidToWorld> {
 
-  public LocationCell(int x, int y, int z, @NotNull World world) {
-    super(x, y, z, world);
+  /**
+   * The offset above the block location (for solid inhabitable blocks)
+   */
+  @Getter
+  private final double heightOffset;
+
+  public LocationCell(int x, double y, int z, @NotNull World world) {
+    this(x, y, z, world.getUID());
   }
 
   public LocationCell(Location location) {
-    super(location.getBlockX(), location.getBlockY(), location.getBlockZ(), Objects.requireNonNull(location.getWorld()));
+    this(location.getBlockX(), location.getBlockY(), location.getBlockZ(), Objects.requireNonNull(location.getWorld()));
+  }
+
+  public LocationCell(int x, double y, int z, @NotNull UUID worldUuid) {
+    super(x, (int) y, z, worldUuid.toString(), new UuidToWorld());
+    this.heightOffset = y - this.getY();
   }
 
   @Override
@@ -47,15 +61,19 @@ public class LocationCell extends Cell<LocationCell, World> {
   }
 
   public Block getBlock() {
-    return this.domain.getBlockAt(this.x, this.y, this.z);
+    return this.getDomain().getBlockAt(this.x, this.y, this.z);
   }
 
   public Block getBlockAtOffset(int x, int y, int z) {
-    return this.domain.getBlockAt(this.x + x, this.y + y, this.z + z);
+    return this.getDomain().getBlockAt(this.x + x, this.y + y, this.z + z);
   }
 
-  public LocationCell createLocatableAtOffset(int x, int y, int z) {
-    return new LocationCell(this.x + x, this.y + y, this.z + z, this.domain);
+  public LocationCell createLocatableAtOffset(int x, double y, int z) {
+    return new LocationCell(this.x + x, this.y + heightOffset + y, this.z + z, this.getDomain());
+  }
+
+  public boolean hasHeightOffset() {
+    return heightOffset != 0;
   }
 
   private double vectorSizeSquared(int distX, int distY, int distZ) {
@@ -64,7 +82,7 @@ public class LocationCell extends Cell<LocationCell, World> {
 
   @Override
   public String toString() {
-    return String.format("(%d, %d, %d) in %s", this.x, this.y, this.z, this.domain.getName());
+    return String.format("(%d, %d, %d) in %s", this.x, this.y, this.z, this.getDomain().getName());
   }
 
   @Override
@@ -72,11 +90,11 @@ public class LocationCell extends Cell<LocationCell, World> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     LocationCell that = (LocationCell) o;
-    return this.x == that.x && this.y == that.y && this.z == that.z && this.domain.equals(that.domain);
+    return this.x == that.x && this.y == that.y && this.z == that.z && this.getDomain().equals(that.getDomain());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.x, this.y, this.z, this.domain);
+    return Objects.hash(this.x, this.y, this.z, this.getDomain());
   }
 }

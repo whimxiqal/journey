@@ -80,6 +80,7 @@ public class PlayerJourney implements Journey<LocationCell, World> {
         }
       }
       completed = true;
+      stop();
       return;
     }
     if (trailIndex < trails.size() - 1) {
@@ -125,6 +126,11 @@ public class PlayerJourney implements Journey<LocationCell, World> {
       next.add(trails.get(trailIndex).getSteps().get(i));
     }
     return next;
+  }
+
+  @Override
+  public void stop() {
+    Bukkit.getScheduler().cancelTask(this.getIlluminationTaskId());
   }
 
   @Override

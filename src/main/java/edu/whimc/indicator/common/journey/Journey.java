@@ -52,6 +52,12 @@ public interface Journey<T extends Locatable<T, D>, D> {
    */
   Collection<Step<T, D>> next(int count);
 
+  /**
+   * Should run when the journey is completed or
+   * the journey is otherwise left.
+   */
+  void stop();
+
   boolean isCompleted();
 
 }

@@ -2,20 +2,24 @@ package edu.whimc.indicator.spigot.path;
 
 import edu.whimc.indicator.common.path.Completion;
 import edu.whimc.indicator.common.path.Link;
+import edu.whimc.indicator.spigot.util.SpigotUtil;
 import edu.whimc.portals.Portal;
 import org.bukkit.World;
+import org.jetbrains.annotations.Nullable;
 
 public class PortalLink implements Link<LocationCell, World> {
 
   private final String portalName;
   private final LocationCell origin;
   private final LocationCell destination;
-  private final int posX1, posY1, posZ1;
-  private final int posX2, posY2, posZ2;
   private final World world;
   private final Completion<LocationCell, World> completion;
 
   public PortalLink(Portal portal) {
+    if (portal.getWorld() == null) {
+      throw new IllegalStateException("Error with portal: " + portal.getName()
+          + "A Portal Link may only be created with portals that have a world.");
+    }
     if (portal.getDestination() == null) {
       throw new IllegalStateException("Error with portal: " + portal.getName()
           + "A Portal Link may only be created with portals that have a destination.");
@@ -25,23 +29,20 @@ public class PortalLink implements Link<LocationCell, World> {
           + ". A Portal Link may only be created with portals that have a world associated with its destination.");
     }
     this.portalName = portal.getName();
-
-    this.posX1 = portal.getPos1().getBlockX();
-    this.posY1 = portal.getPos1().getBlockY();
-    this.posZ1 = portal.getPos1().getBlockZ();
-    this.posX2 = portal.getPos2().getBlockX();
-    this.posY2 = portal.getPos2().getBlockY();
-    this.posZ2 = portal.getPos2().getBlockZ();
     this.world = portal.getWorld();
 
     this.origin = getOriginOf(portal);
+    if (this.origin == null) {
+      throw new IllegalStateException("Error with portal: " + portal.getName()
+          + ". A reachable central location could not be identified.");
+    }
     this.destination = getDestinationOf(portal);
-    this.completion = cell -> Math.min(posX1, posX2) <= cell.getX()
-        && cell.getX() <= Math.max(posX1, posX2)
-        && Math.min(posY1, posY2) <= cell.getY()
-        && cell.getY() <= Math.max(posY1, posY2)
-        && Math.min(posZ1, posZ2) <= cell.getZ()
-        && cell.getZ() <= Math.max(posZ1, posZ2);
+    this.completion = cell -> Math.min(portal.getPos1().getBlockX(), portal.getPos2().getBlockX()) <= cell.getX()
+        && cell.getX() <= Math.max(portal.getPos1().getBlockX(), portal.getPos2().getBlockX())
+        && Math.min(portal.getPos1().getBlockY(), portal.getPos2().getBlockY()) <= cell.getY()
+        && cell.getY() <= Math.max(portal.getPos1().getBlockY(), portal.getPos2().getBlockY())
+        && Math.min(portal.getPos1().getBlockZ(), portal.getPos2().getBlockZ()) <= cell.getZ()
+        && cell.getZ() <= Math.max(portal.getPos1().getBlockZ(), portal.getPos2().getBlockZ());
   }
 
   @Override
@@ -73,14 +74,42 @@ public class PortalLink implements Link<LocationCell, World> {
     return this.origin.equals(getOriginOf(portal)) && this.destination.equals(getDestinationOf(portal));
   }
 
+  @Nullable
   private LocationCell getOriginOf(Portal portal) {
-    return new LocationCell((portal.getPos1().getBlockX() + portal.getPos2().getBlockX()) / 2,
-        Math.min(portal.getPos1().getBlockY(), portal.getPos2().getBlockY()),  // bottom of portal
-        (portal.getPos1().getBlockZ() + portal.getPos2().getBlockZ()) / 2,
-        world);
+    // Start by trying to use the center of the portal.
+    int xLoc = (portal.getPos1().getBlockX() + portal.getPos2().getBlockX()) / 2;  // center of portal
+    int yLoc = Math.min(portal.getPos1().getBlockY(), portal.getPos2().getBlockY());  // bottom of portal
+    int zLoc = (portal.getPos1().getBlockZ() + portal.getPos2().getBlockZ()) / 2;
+    while (!SpigotUtil.isLaterallyPassable(portal.getWorld().getBlockAt(xLoc, yLoc, zLoc))
+        || !SpigotUtil.isPassable(portal.getWorld().getBlockAt(xLoc, yLoc + 1, zLoc))) {
+      yLoc++;
+      if (yLoc > Math.max(portal.getPos1().getBlockY(), portal.getPos2().getBlockY())) {
+        // There is no y value that works for the center of this portal.
+        // Try every other point and see what sticks (this does not repeat)
+        for (xLoc = portal.getPos1().getBlockX(); xLoc <= portal.getPos2().getBlockX(); xLoc++) {
+          for (yLoc = portal.getPos1().getBlockY(); yLoc < portal.getPos2().getBlockY(); yLoc++) {
+            for (zLoc = portal.getPos1().getBlockZ(); zLoc <= portal.getPos2().getBlockZ(); zLoc++) {
+              if (SpigotUtil.isLaterallyPassable(portal.getWorld().getBlockAt(xLoc, yLoc, zLoc))
+              && SpigotUtil.isPassable(portal.getWorld().getBlockAt(xLoc, yLoc + 1, zLoc))) {
+                return new LocationCell(xLoc, yLoc, zLoc, world);
+              }
+            }
+          }
+        }
+        // Nothing at all found
+        return null;
+      }
+    }
+    // We found one at the center of the portal!
+    return new LocationCell(xLoc, yLoc, zLoc, world);
   }
 
   private LocationCell getDestinationOf(Portal portal) {
     return new LocationCell(portal.getDestination().getLocation());
+  }
+
+  @Override
+  public String toString() {
+    return "PortalLink{portalName='" + portalName + "'}";
   }
 }

@@ -13,7 +13,6 @@ public class TrailSearchRequest<T extends Locatable<T, D>, D> {
   private final T destination;
   private final PathEdgeGraph.Node originNode;
   private final PathEdgeGraph.Node destinationNode;
-  private final Collection<Mode<T, D>> modes;
   private final Supplier<Boolean> cancellation;
   private final boolean cacheable;
 }

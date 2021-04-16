@@ -1,17 +1,20 @@
 package edu.whimc.indicator.common.cache;
 
 import com.google.common.collect.Maps;
+import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.Locatable;
 import edu.whimc.indicator.common.path.Trail;
 import edu.whimc.indicator.common.path.ModeTypeGroup;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TrailCache<T extends Locatable<T, D>, D> {
+public class TrailCache<T extends Locatable<T, D>, D> implements Serializable {
 
   private final Map<T, Map<T, Map<ModeTypeGroup, Trail<T, D>>>> cache = new ConcurrentHashMap<>();
+  private int size = 0;
 
   @Nullable
   public Trail<T, D> put(T origin, T destination, ModeTypeGroup modeTypes, Trail<T, D> trail) {
@@ -22,6 +25,10 @@ public class TrailCache<T extends Locatable<T, D>, D> {
 
     Trail<T, D> replaced = modeTypeMap.get(modeTypes);
     modeTypeMap.put(modeTypes, trail);
+
+    if (replaced == null) {
+      size++;
+    }
     return replaced;
   }
 
@@ -43,6 +50,15 @@ public class TrailCache<T extends Locatable<T, D>, D> {
       }
     }
     return null;
+  }
+
+  public int size() {
+    return size;
+  }
+
+  public void clear() {
+    cache.clear();
+    size = 0;
   }
 
   /**

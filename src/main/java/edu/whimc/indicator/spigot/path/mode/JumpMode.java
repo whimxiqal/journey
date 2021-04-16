@@ -25,6 +25,7 @@ import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.path.ModeType;
 import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.util.SpigotUtil;
 import org.bukkit.World;
 
 import java.util.HashMap;
@@ -34,17 +35,18 @@ public class JumpMode implements Mode<LocationCell, World> {
   @Override
   public Map<LocationCell, Double> getDestinations(LocationCell origin) {
     Map<LocationCell, Double> locations = new HashMap<>();
-    if (origin.getBlockAtOffset(0, -1, 0).isPassable()) {
+    if (SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(0, -1, 0))) {
+      // Nothing to jump off of
       return locations;
     }
-    if (!origin.getBlockAtOffset(0, 1, 0).isPassable()) {
+    if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(0, 2, 0))) {
+      // No room to jump
       return locations;
     }
-    if (!origin.getBlockAtOffset(0, 2, 0).isPassable()) {
-      return locations;
-    }
+    // 1 block up
+    locations.put(origin.createLocatableAtOffset(0, 1, 0), 1.0d);
 
-    // 1 block away
+    // 1 block away and up
     for (int offX = -1; offX <= 1; offX++) {
       outerZ:
       for (int offZ = -1; offZ <= 1; offZ++) {
@@ -52,13 +54,22 @@ public class JumpMode implements Mode<LocationCell, World> {
           for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
             if (offXIn == 0 && offZIn == 0) continue;
             for (int offY = 1; offY <= 2; offY++) { // Check two blocks tall
-              if (!origin.getBlockAtOffset(offXIn * offX /* get sign back */, offY, offZIn * offZ).isPassable()) {
+              if (!SpigotUtil.isPassable(origin.getBlockAtOffset(
+                  offXIn * offX /* get sign back */,
+                  offY,
+                  offZIn * offZ /* get sign back */))) {
                 continue outerZ;
               }
             }
           }
         }
-        if (!origin.getBlockAtOffset(offX, 0, offZ).isPassable()) {
+        if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
+            && (origin.getBlockAtOffset(offX, 1, offZ).getBoundingBox().getHeight()
+            + 1.0
+            - (origin.getBlockAtOffset(0, 0, 0).isPassable()
+        ? origin.getBlockAtOffset(0, -1, 0).getBoundingBox().getHeight() - 1
+        : origin.getBlockAtOffset(0, 0, 0).getBoundingBox().getHeight()) < 1.2)) {
+          // Can stand here
           LocationCell other = origin.createLocatableAtOffset(offX, 1, offZ);
           locations.put(other, origin.distanceTo(other));
           break;

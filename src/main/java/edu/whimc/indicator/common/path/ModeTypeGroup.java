@@ -4,13 +4,22 @@ import com.google.common.collect.Sets;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.Set;
 
-public class ModeTypeGroup {
+public class ModeTypeGroup implements Serializable {
 
   private final Set<ModeType> modeTypes = Sets.newHashSet();
   @Getter
   private int primeProduct = 1;
+
+  public ModeTypeGroup() {
+  }
+
+  public <T extends Locatable<T, D>, D> ModeTypeGroup(Collection<ModeType> modes) {
+    modes.forEach(this::add);
+  }
 
   public boolean add(@NotNull ModeType modeType) {
     if (this.modeTypes.add(modeType)) {

@@ -25,13 +25,16 @@ import edu.whimc.indicator.common.path.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class TrailSearch<T extends Locatable<T, D>, D> {
 
   public static final int MAX_SIZE = 10000;
+  public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 2;
 
   @Setter
   private Consumer<Step<T, D>> visitationCallback = loc -> {
@@ -41,34 +44,40 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
   private Consumer<Step<T, D>> stepCallback = loc -> {
   };
 
-  @NotNull
-  public Trail<T, D> findOptimalTrail(TrailSearchRequest<T, D> request)
-      throws MemoryCapacityException {
-    if (!request.getOrigin().getDomain().equals(request.getDestination().getDomain())) {
+  @Nullable
+  public Trail<T, D> findOptimalTrail(TrailSearchRequest<T, D> request, Collection<Mode<T, D>> modes) {
+    return findOptimalTrail(request.getOrigin(),
+        request.getDestination(),
+        modes,
+        request.getCancellation());
+  }
+
+  @Nullable
+  public Trail<T, D> findOptimalTrail(T origin, T destination,
+                                      Collection<Mode<T, D>> modes, Supplier<Boolean> cancellation) {
+    if (!origin.getDomain().equals(destination.getDomain())) {
       throw new IllegalArgumentException("The input locatables ["
-          + request.getOrigin() + " and "
-          + request.getDestination()
+          + origin + " and "
+          + destination
           + "] must have the same domain to search for a trail");
     }
     Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(Node::getProximity));
     Map<T, Node> visited = new HashMap<>();
 
-    Node originNode = new Node(new Step<>(request.getOrigin(), ModeType.NONE),
+    Node originNode = new Node(new Step<>(origin, ModeType.NONE),
         null,
-        request.getOrigin().distanceTo(request.getDestination()), 0);
+        origin.distanceTo(destination), 0);
     upcoming.add(originNode);
-    visited.put(request.getOrigin(), originNode);
+    visited.put(origin, originNode);
     visitationCallback.accept(originNode.getData());
 
     Node current;
     while (!upcoming.isEmpty()) {
-      if (request.getCancellation().get()) {
-        return Trail.INVALID();  // cancelled
+      if (cancellation.get()) {
+        return null;  // Cancelled
       }
       if (visited.size() > MAX_SIZE) {
-        throw new MemoryCapacityException(String.format(
-            "The path finding algorithm used too much memory: %d elements",
-            visited.size()));  // Too large, couldn't find a solution
+        return Trail.INVALID();  // Too large, couldn't find a solution
       }
 
       current = upcoming.poll();
@@ -76,7 +85,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
       stepCallback.accept(current.getData());
 
       // We found it!
-      if (current.getData().getLocatable().equals(request.getDestination())) {
+      if (current.getData().getLocatable().distanceToSquared(destination) <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED) {
         double length = current.getScore();
         LinkedList<Step<T, D>> steps = new LinkedList<>();
         do {
@@ -87,7 +96,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
       }
 
       // Need to keep going
-      for (Mode<T, D> mode : request.getModes()) {
+      for (Mode<T, D> mode : modes) {
         for (Map.Entry<T, Double> next : mode.getDestinations(current.getData().getLocatable()).entrySet()) {
           if (visited.containsKey(next.getKey())) {
             // Already visited, but see if it is better to come from this new direction
@@ -100,7 +109,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
             // Not visited. Set up node, give it a score, and add it to the system
             Node nextNode = new Node(new Step<>(next.getKey(), mode.getType()),
                 current,
-                next.getKey().distanceTo(request.getDestination()),
+                next.getKey().distanceTo(destination),
                 current.getScore() + next.getValue());
             upcoming.add(nextNode);
             visited.put(next.getKey(), nextNode);
@@ -109,7 +118,6 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
         }
       }
     }
-
     return Trail.INVALID();  // Nothing found
   }
 
@@ -132,12 +140,6 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
       this.score = score;
     }
 
-  }
-
-  static class MemoryCapacityException extends RuntimeException {
-    public MemoryCapacityException(String msg) {
-      super(msg);
-    }
   }
 
 }

@@ -25,6 +25,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.spigot.util.Format;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -35,12 +37,7 @@ import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
@@ -52,6 +49,8 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
   private final List<String> aliases = Lists.newLinkedList();
   private final List<CommandNode> children = Lists.newLinkedList();
   private final Map<Parameter, String> parameters = Maps.newLinkedHashMap();
+  @Setter @Getter
+  private boolean canBypassInvalid = false;
 
   /**
    * Simple constructor.
@@ -180,16 +179,26 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                  @NotNull String label,
                                  @NotNull String[] args) {
 
-    if (!Indicator.getInstance().isValid()) {
+    if (!Indicator.getInstance().isValid() && !canBypassInvalid) {
       sender.sendMessage(Format.warn("The Indicator plugin is still initializing..."));
       return false;
     }
 
+    String[] argsCombined = Format.combineQuotedArguments(args);
+
     // Adds support for quotations around space-delimited arguments
-    String[] actualArgs;
+    List<String> actualArgsList = new LinkedList<>();
+    Set<String> flags = new HashSet<>();
+    for (String arg : argsCombined) {
+      if (arg.charAt(0) == '-') {
+        flags.add(arg.substring(1));
+      } else {
+        actualArgsList.add(arg);
+      }
+    }
+
     if (isRoot()) {
-      actualArgs = Format.combineQuotedArguments(args);
-      for (String arg : actualArgs) {
+      for (String arg : actualArgsList) {
         if (arg.length() > ARG_MAX_LENGTH) {
           sender.sendMessage(Format.error("Arguments cannot exceed "
               + ARG_MAX_LENGTH
@@ -197,9 +206,8 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
           return false;
         }
       }
-    } else {
-      actualArgs = Arrays.copyOf(args, args.length);
     }
+    String[] actualArgs = actualArgsList.toArray(new String[0]);
 
     // Main method
     if (this.permission != null && !sender.hasPermission(this.permission)) {
@@ -207,7 +215,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
       return false;
     }
     if (actualArgs.length < 1) {
-      return onWrappedCommand(sender, command, label, actualArgs);
+      return onWrappedCommand(sender, command, label, actualArgs, flags);
     }
     for (CommandNode child : children) {
       for (String alias : child.aliases) {
@@ -216,7 +224,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
         }
       }
     }
-    return onWrappedCommand(sender, command, label, actualArgs);
+    return onWrappedCommand(sender, command, label, actualArgs, flags);
   }
 
   /**
@@ -237,7 +245,8 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
   public abstract boolean onWrappedCommand(@NotNull CommandSender sender,
                                            @NotNull Command command,
                                            @NotNull String label,
-                                           @NotNull String[] args);
+                                           @NotNull String[] args,
+                                           @NotNull Set<String> flags);
 
   @Override
   public final List<String> onTabComplete(@NotNull CommandSender sender,

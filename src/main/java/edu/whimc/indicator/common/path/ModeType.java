@@ -25,9 +25,10 @@ import edu.whimc.indicator.common.util.PrimeUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public final class ModeType {
+public final class ModeType implements Serializable {
 
   public static final ModeType NONE = ModeType.of("none", false);  // Origin, for example
   private static PrimeUtil primeUtil = null;

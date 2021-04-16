@@ -31,6 +31,8 @@ public class IndicatorCommand extends FunctionlessCommandNode {
         "The root for all indicator commands",
         "indicator");
     addChildren(new IndicatorDebugCommand(this));
+    addChildren(new IndicatorInvalidateCommand(this));
+    setCanBypassInvalid(true);
   }
 
 }

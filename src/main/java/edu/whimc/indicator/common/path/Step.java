@@ -25,6 +25,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 
+import java.io.Serializable;
+
 /**
  * A representation of a movement step between {@link Locatable}s on a {@link Trail}.
  *
@@ -33,7 +35,7 @@ import lombok.NonNull;
  */
 @Data
 @AllArgsConstructor
-public final class Step<T extends Locatable<T, D>, D> {
+public final class Step<T extends Locatable<T, D>, D> implements Serializable {
   /**
    * An object to identify location.
    */

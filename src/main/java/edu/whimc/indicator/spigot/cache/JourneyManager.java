@@ -43,11 +43,23 @@ public class JourneyManager implements Listener {
   private final Set<UUID> searchingPlayers = ConcurrentHashMap.newKeySet();
 
   public Optional<PlayerJourney> putPlayerJourney(@NotNull UUID playerUuid, PlayerJourney journey) {
-    return Optional.ofNullable(this.playerJourneys.put(playerUuid, journey));
+    PlayerJourney oldJourney = this.playerJourneys.put(playerUuid, journey);
+    if (oldJourney != null) {
+      oldJourney.stop();
+    }
+    return Optional.ofNullable(oldJourney);
   }
 
   public Optional<PlayerJourney> getPlayerJourney(@NotNull UUID playerUuid) {
     return Optional.ofNullable(playerJourneys.get(playerUuid));
+  }
+
+  public Optional<PlayerJourney> removePlayerJourney(@NotNull UUID playerUuid) {
+    PlayerJourney oldJourney = playerJourneys.remove(playerUuid);
+    if (oldJourney != null) {
+      oldJourney.stop();
+    }
+    return Optional.ofNullable(oldJourney);
   }
 
   public boolean startSearching(@NotNull UUID playerUuid) {

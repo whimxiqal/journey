@@ -22,36 +22,38 @@
 package edu.whimc.indicator.common.search;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AtomicDouble;
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.cache.TrailCache;
 import edu.whimc.indicator.common.path.*;
 import edu.whimc.indicator.common.util.TriConsumer;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
-  private final List<Link<T, D>> links = Lists.newLinkedList();
-  private final List<Mode<T, D>> modes = Lists.newLinkedList();
+  public enum Status {
+    IDLE,
+    RUNNING,
+    CANCELLED,
+    FAILED,
+    SUCCEEDED
+  }
+
+  private final Collection<Link<T, D>> links = Lists.newLinkedList();
+  private final Collection<Mode<T, D>> modes = Lists.newLinkedList();
   private final ModeTypeGroup modeTypes = new ModeTypeGroup();
-  private final TrailSearchRequestQueue<T, D> trailSearchRequestQueue = new TrailSearchRequestQueue<>();
   private final TrailCache<T, D> trailCache;
 
   @Getter
-  private boolean cancelled = false;
-
-  @Getter
-  private boolean done = false;
-
-  @Getter
-  private boolean successful = false;
+  private Status status = Status.IDLE;
 
   // Callbacks
   @Setter
@@ -101,7 +103,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
    * @param links       all domain connections
    * @return just the domain connections that could be part of the best answer
    */
-  private List<Link<T, D>> filterLinks(T origin, T destination, List<Link<T, D>> links) {
+  private List<Link<T, D>> filterLinks(T origin, T destination, Collection<Link<T, D>> links) {
     DomainGraph<D> graph = new DomainGraph<>();
     links.forEach(link -> graph.addEdge(link.getOrigin().getDomain(), link.getDestination().getDomain()));
     Set<D> onPath = graph.domainsOnConnectingPath(origin.getDomain(), destination.getDomain());
@@ -111,57 +113,67 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
         .collect(Collectors.toList());
   }
 
-  private void queueTrailRequest(PathEdgeGraph<T, D> pathEdgeGraph,
-      T origin,
-                                                  T destination,
-                                                  PathEdgeGraph.Node originNode,
-                                                  PathEdgeGraph.Node destinationNode,
-                                                  Supplier<Boolean> cancellation,
-                                                  boolean shouldCache) {
-    Trail<T, D> trail = trailCache.get(origin, destination, modeTypes);
+  private Trail<T, D> queueTrailRequestIfNotCached(@Nullable T origin, @Nullable T destination,
+                                                   TrailSearchRequestQueue<T, D> queue,
+                                                   TrailSearchRequest<T, D> request) {
+    Trail<T, D> trail = trailCache.get(request.getOrigin(), request.getDestination(), modeTypes);
+    boolean shouldQueue = false;
 
     if (trail == null) {
+
+      // There is no cached trail for these inputs, so queue a search
+      shouldQueue = true;
+
       // See if we can get a trail that was cached with a subgroup of these mode types
-      trail = trailCache.getAnyMatching(origin, destination, modeTypes);
+      //  so that we can give an answer to the overall graph sooner
+      trail = trailCache.getAnyMatching(request.getOrigin(), request.getDestination(), modeTypes);
+
     }
 
-    if (trail == null) {
-      // There is no valid cached trail, so just queue a search
-      trailSearchRequestQueue.add(new TrailSearchRequest<>(origin, destination, originNode, destinationNode, modes, cancellation, shouldCache));
-      return;
-    }
+    if (trail != null) {
+      // There's a cached trail!
+      if (!trail.getSteps().isEmpty()) {
+        // It's not an invalid so we have to verify that it still works
+        //  (no verification needed for invalids, we will verify that
+        //  it is invalid using a scheduled task)
 
-    // There's a cached trail!
-    if (trail.getSteps().isEmpty()) {
-      // It's an invalid, no verification needed
-      return;
-    }
-
-    // Verify this trail still works
-    Step<T, D> prev = trail.getSteps().get(0);
-    Step<T, D> curr;
-    boolean validStep = true;
-    for (int i = 1; i < trail.getSteps().size(); i++) {
-      curr = trail.getSteps().get(i);
-      validStep = false;  // Doesn't work until proven it does
-      for (Mode<T, D> mode : modes) {
-        if (mode.getDestinations(prev.getLocatable()).containsKey(curr.getLocatable())) {
-          // This step works, keep checking
-          validStep = true;
-          break;
+        Step<T, D> prev = trail.getSteps().get(0);
+        Step<T, D> curr;
+        boolean validStep = true;
+        for (int i = 1; i < trail.getSteps().size(); i++) {
+          curr = trail.getSteps().get(i);
+          validStep = false;  // Doesn't work until proven it does
+          for (Mode<T, D> mode : modes) {
+            if (mode.getDestinations(prev.getLocatable()).containsKey(curr.getLocatable())) {
+              // This step works, keep checking
+              validStep = true;
+              break;
+            }
+          }
+          if (!validStep) {
+            // We couldn't find a way to make this step work
+            break;
+          }
+          prev = curr;
+        }
+        if (!validStep) {
+          // This trail no longer works. Requeue.
+          trail = null;
+          shouldQueue = true;
         }
       }
-      if (!validStep) {
-        // We couldn't find a way to make this step work
-        break;
+    }
+
+    if (shouldQueue) {
+      if (request.getOrigin().equals(origin)) {
+        queue.addOriginRequest(request);
+      } else if (request.getDestination().equals(destination)) {
+        queue.addDestinationRequest(request);
+      } else {
+        queue.addLinkRequest(request);
       }
-      prev = curr;
     }
-    if (validStep) {
-      // All good, add the cached trail to the graph
-      pathEdgeGraph.addEdge(originNode, destinationNode, trail);
-    }
-    // The cache didn't work, do a new search
+    return trail;
 
   }
 
@@ -177,6 +189,8 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
     // Step 3 - Set up graph
     PathEdgeGraph<T, D> graph = new PathEdgeGraph<>();
+    TrailSearchRequestQueue<T, D> queue = new TrailSearchRequestQueue<>();
+    Trail<T, D> trail;
     // Nodes
     PathEdgeGraph.Node originNode = graph.generateNode();
     PathEdgeGraph.Node destinationNode = graph.generateNode();
@@ -187,13 +201,12 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
     // Origin to Endpoint edge if they are in the same domain
     if (origin.getDomain().equals(destination.getDomain())) {
-      try {
-        queueTrailRequest(graph,
-            origin, destination,
-            originNode, destinationNode,
-            this::isCancelled, false);
-      } catch (TrailSearch.MemoryCapacityException e) {
-        memoryCapacityErrorCallback.accept(origin, destination);
+      trail = queueTrailRequestIfNotCached(origin, destination, queue,
+          new TrailSearchRequest<>(origin, destination,
+              originNode, destinationNode,
+              this::isCancelled, false));
+      if (trail != null) {
+        graph.addEdge(originNode, destinationNode, trail);
       }
     }
 
@@ -201,19 +214,25 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
     // Queue trails: origin -> link
     if (exitDomains.containsKey(origin.getDomain())) {
       for (Link<T, D> exit : exitDomains.get(origin.getDomain())) {
-        queueTrailRequest(graph,
-            origin, exit.getOrigin(),
-            originNode, linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
-            this::isCancelled, false);
+        trail = queueTrailRequestIfNotCached(origin, destination, queue,
+            new TrailSearchRequest<>(origin, exit.getOrigin(),
+                originNode, linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
+                this::isCancelled, false));
+        if (trail != null) {
+          graph.addEdge(originNode, linkNodeMap.get(exit), trail);
+        }
       }
     }
     // Queue trails: link -> destination
     if (entryDomains.containsKey(destination.getDomain())) {
       for (Link<T, D> entry : entryDomains.get(destination.getDomain())) {
-        queueTrailRequest(graph,
-            entry.getDestination(), destination,
-            linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode), destinationNode,
-            this::isCancelled, false);
+        trail = queueTrailRequestIfNotCached(origin, destination, queue,
+            new TrailSearchRequest<>(entry.getDestination(), destination,
+                linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode), destinationNode,
+                this::isCancelled, false));
+        if (trail != null) {
+          graph.addEdge(linkNodeMap.get(entry), destinationNode, trail);
+        }
       }
     }
     // Queue trails: link -> link
@@ -229,11 +248,14 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
               if (entry.getOrigin().equals(exit.getDestination())) {
                 continue;  // We don't want to use link <-> link if they just come back to the same spot
               }
-              queueTrailRequest(graph,
-                  entry.getDestination(), exit.getOrigin(),
-                  linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode),
-                  linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
-                  this::isCancelled, true);
+              trail = queueTrailRequestIfNotCached(origin, destination, queue,
+                  new TrailSearchRequest<>(entry.getDestination(), exit.getOrigin(),
+                      linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode),
+                      linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
+                      this::isCancelled, true));
+              if (trail != null) {
+                graph.addEdge(linkNodeMap.get(entry), linkNodeMap.get(exit), trail);
+              }
             }
           }
         }
@@ -242,48 +264,61 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
     // Node mappings to make sure that we add to edges to the global graph correctly
 
-    trailSearchRequestQueue.sortByEstimatedLength();
+    queue.sortByEstimatedLength();
 
-    double optimalLength = Double.MAX_VALUE;
-    TrailSearchRequest<T, D> trailRequest;
+    AtomicDouble optimalLength = new AtomicDouble(Math.sqrt(Double.MAX_VALUE) / 2);  // Very large
+    AtomicReference<TrailSearchRequest<T, D>> trailSearchRequest = new AtomicReference<>();
     Trail<T, D> latestFoundTrail;
     Path<T, D> foundPath;
-    while (!trailSearchRequestQueue.isEmpty()) {
+    while (!queue.isEmpty()) {
 
       // Start search from the queue
-      trailRequest = trailSearchRequestQueue.pop();
-      if (trailRequest.getOrigin().distanceToSquared(trailRequest.getDestination()) > optimalLength * optimalLength) {
-        // We have already found a path that has a shorter distance than this trail,
-        //  so there's no way that this is helpful
+      latestFoundTrail = queue.popAndRunIntelligentlyIf(trailSearch, modes,
+          request -> {
+            trailSearchRequest.set(request);
+            boolean willRun = request.getOrigin().distanceToSquared(request.getDestination()) < optimalLength.get() * optimalLength.get();
+            if (willRun) {
+              startTrailSearchCallback.accept(request.getOrigin(), request.getDestination());
+            }
+            return willRun;
+          });
+      if (queue.isImpossibleResult()) {
+        // We have checked through some possibilities and found that no result is possible
+        return;
+      }
+      if (latestFoundTrail == null) {
         continue;
       }
+      finishTrailSearchCallback.accept(trailSearchRequest.get().getOrigin(), trailSearchRequest.get().getDestination(), latestFoundTrail.getLength());
 
-      startTrailSearchCallback.accept(trailRequest.getOrigin(), trailRequest.getDestination());
-      try {
-        latestFoundTrail = trailSearch.findOptimalTrail(trailRequest);
-      } catch (TrailSearch.MemoryCapacityException e) {
-        memoryCapacityErrorCallback.accept(trailRequest.getOrigin(), trailRequest.getDestination());
-        if (trailRequest.isCacheable()) {
-          trailCache.put(trailRequest.getOrigin(), trailRequest.getDestination(), modeTypes, Trail.INVALID());
-        }
-        continue;
-      }
-      finishTrailSearchCallback.accept(trailRequest.getOrigin(), trailRequest.getDestination(), latestFoundTrail.getLength());
-
-      if (trailRequest.isCacheable()) {
-        trailCache.put(trailRequest.getOrigin(), trailRequest.getDestination(), modeTypes, latestFoundTrail);
+      if (trailSearchRequest.get().isCacheable()) {
+        trailCache.put(trailSearchRequest.get().getOrigin(), trailSearchRequest.get().getDestination(), modeTypes, latestFoundTrail);
       }
 
-      graph.addEdge(trailRequest.getOriginNode(), trailRequest.getDestinationNode(), latestFoundTrail);
+      if (Trail.isValid(latestFoundTrail)) {
+        graph.addEdge(trailSearchRequest.get().getOriginNode(), trailSearchRequest.get().getDestinationNode(), latestFoundTrail);
+      }
 
       // Step 5 - Solve graph - Find the minimum path from the domain graph
       foundPath = graph.findMinimumPath(originNode, destinationNode);
-      if (foundPath != null && foundPath.getLength() < optimalLength) {
-        successful = true;
+      if (foundPath != null && foundPath.getLength() < optimalLength.get()) {
+        status = Status.SUCCEEDED;
         foundNewOptimalPathEvent.accept(foundPath);
-        optimalLength = foundPath.getLength();
+        optimalLength.set(foundPath.getLength());
       }
     }
+  }
+
+  public boolean isCancelled() {
+    return status.equals(Status.CANCELLED);
+  }
+
+  public boolean isDone() {
+    return status.equals(Status.SUCCEEDED) || status.equals(Status.FAILED) || status.equals(Status.CANCELLED);
+  }
+
+  public boolean isSuccessful() {
+    return status.equals(Status.SUCCEEDED);
   }
 
   public final Map<D, Set<Link<T, D>>> collectAllEntryDomains() {
@@ -335,25 +370,70 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
     return exitDomains;
   }
 
-  public void setCancelled(boolean cancelled) {
-    if (cancelled) {
-      this.cancelled = true;
-      this.done = true;
-    } else {
-      this.cancelled = false;
+  /**
+   * Cancel this search. If it has already succeeded, no effect.
+   */
+  public void cancel() {
+    if (!this.status.equals(Status.SUCCEEDED)) {
+      this.status = Status.CANCELLED;
     }
   }
 
-  public CompletableFuture<Void> search(T origin, T destination) {
-    done = false;
+  public void search(T origin, T destination) {
+    status = Status.RUNNING;
+
     // Stage 1 - Only keep the links that may be helpful for finding this path
     List<Link<T, D>> filteredLinks = filterLinks(origin, destination, links);
 
     // Stage 2 & 3- Create graph based on paths made from local breadth first searches
-    return CompletableFuture.runAsync(() -> {
-      findOptimalPath(origin, destination, filteredLinks);
-      done = true;
-    });
+    findOptimalPath(origin, destination, filteredLinks);
+    if (!status.equals(Status.SUCCEEDED)) {
+      status = Status.FAILED;
+    }
+  }
+
+  public void searchCacheable() {
+    status = Status.RUNNING;
+
+    TrailSearchRequestQueue<T, D> queue = new TrailSearchRequestQueue<>();
+    Map<D, Set<Link<T, D>>> entryDomains = collectAllEntryDomains();
+    Map<D, Set<Link<T, D>>> exitDomains = collectAllExitDomains();
+    Set<D> allDomains = new HashSet<>();
+    allDomains.addAll(entryDomains.keySet());
+    allDomains.addAll(exitDomains.keySet());
+    Trail<T, D> trail;
+    for (D domain : allDomains) {
+      if (entryDomains.containsKey(domain)) {
+        for (Link<T, D> entry : entryDomains.get(domain)) {
+          if (exitDomains.containsKey(domain)) {
+            for (Link<T, D> exit : exitDomains.get(domain)) {
+              if (entry.getOrigin().equals(exit.getDestination())) {
+                continue;  // We don't want to use link <-> link if they just come back to the same spot
+              }
+              queueTrailRequestIfNotCached(null, null, queue,
+                  new TrailSearchRequest<>(entry.getDestination(), exit.getOrigin(),
+                      null, null,
+                      () -> false, true));
+            }
+          }
+        }
+      }
+    }
+
+    TrailSearch<T, D> search = new TrailSearch<>();
+    AtomicReference<TrailSearchRequest<T, D>> request = new AtomicReference<>();
+    while (!queue.isEmpty()) {
+      trail = queue.popAndRunLinkRequest(search, modes, req -> {
+        request.set(req);
+        startTrailSearchCallback.accept(req.getOrigin(), req.getDestination());
+      });
+      if (trail != null) {
+        finishTrailSearchCallback.accept(request.get().getOrigin(), request.get().getDestination(), trail.getLength());
+        trailCache.put(request.get().getOrigin(), request.get().getDestination(), modeTypes, trail);
+      }
+    }
+
+    status = Status.SUCCEEDED;
   }
 
 }

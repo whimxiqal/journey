@@ -35,20 +35,24 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public class IndicatorDebugCommand extends CommandNode {
 
   public IndicatorDebugCommand(@Nullable CommandNode parent) {
     super(parent,
-        Permissions.DEBUG_PERMISSION,
+        Permissions.ADMIN_PERMISSION,
         "Enable or disable debug mode",
         "debug");
+    setCanBypassInvalid(true);
   }
 
   @Override
   public boolean onWrappedCommand(@NotNull CommandSender sender,
                                   @NotNull Command command,
                                   @NotNull String label,
-                                  @NotNull String[] args) {
+                                  @NotNull String[] args,
+                                  @NotNull Set<String> flags) {
     boolean enabled;
     if (!(sender instanceof Player)) {
       if (sender instanceof ConsoleCommandSender) {
