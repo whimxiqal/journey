@@ -6,6 +6,13 @@ import org.bukkit.block.data.type.Slab;
 
 public final class SpigotUtil {
 
+  public static final double STEVE_HEIGHT = 1.8;
+  public static final double STEVE_HEIGHT_SNEAK = 1.5;
+  public static final double STEVE_HEIGHT_GLIDE = 0.6;
+  public static final double STEVE_HEIGHT_SWIM = 0.6;
+  public static final double STEVE_WIDTH = 0.6;
+
+  public static final double STEP_HEIGHT = 0.5;
   /**
    * Return true if you can pass vertically through this block.
    *

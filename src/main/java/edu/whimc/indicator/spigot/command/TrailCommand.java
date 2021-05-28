@@ -30,7 +30,10 @@ import edu.whimc.indicator.config.Settings;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.command.common.Parameter;
+import edu.whimc.indicator.spigot.command.menu.CustomLocationsMenu;
+import edu.whimc.indicator.spigot.command.menu.Menu;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
+import edu.whimc.indicator.spigot.quests.QuestsMenu;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.common.path.ModeTypes;
@@ -125,7 +128,7 @@ public class TrailCommand extends CommandNode {
       Indicator.getInstance().getEndpointManager().put(playerUuid, destination);
     }
 
-    final int finalTimeout = timeout;
+    final long finalTimeout = timeout;
     IndicatorSearch search = new IndicatorSearch(player, flags.contains("nofly"));
 
     // Set up a search cancellation in case it takes too long
@@ -243,4 +246,16 @@ public class TrailCommand extends CommandNode {
     return true;
 
   }
+
+  private Menu trailMenu(Player player) {
+    return Menu.builder().setTitle("Trail Menu")
+        .setHeader("Where do you want to go?")
+        .addElement(Menu.builder().setTitle("Waypoints")
+            .setHeader("Special server-wide destinations")
+            .build())
+        .addElement(QuestsMenu.buildFor(player))
+        .addElement(CustomLocationsMenu.buildFor(player))
+        .build();
+  }
+
 }

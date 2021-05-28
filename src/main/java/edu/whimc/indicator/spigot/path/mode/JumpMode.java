@@ -21,6 +21,7 @@
 
 package edu.whimc.indicator.spigot.path.mode;
 
+import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.path.ModeType;
 import edu.whimc.indicator.common.path.ModeTypes;
@@ -53,22 +54,28 @@ public class JumpMode implements Mode<LocationCell, World> {
         for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
           for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
             if (offXIn == 0 && offZIn == 0) continue;
-            for (int offY = 1; offY <= 2; offY++) { // Check two blocks tall
-              if (!SpigotUtil.isPassable(origin.getBlockAtOffset(
-                  offXIn * offX /* get sign back */,
-                  offY,
-                  offZIn * offZ /* get sign back */))) {
-                continue outerZ;
-              }
+            // Check two blocks tall
+            if (!SpigotUtil.isLaterallyPassable(origin.getBlockAtOffset(
+                offXIn * offX /* get sign back */,
+                1,
+                offZIn * offZ /* get sign back */))) {
+              continue outerZ;
+            }
+            if (!SpigotUtil.isPassable(origin.getBlockAtOffset(
+                offXIn * offX /* get sign back */,
+                2,
+                offZIn * offZ /* get sign back */))) {
+              continue outerZ;
             }
           }
         }
-        if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
-            && (origin.getBlockAtOffset(offX, 1, offZ).getBoundingBox().getHeight()
+        double jumpDistance = (origin.getBlockAtOffset(offX, 1, offZ).getBoundingBox().getHeight()
             + 1.0
             - (origin.getBlockAtOffset(0, 0, 0).isPassable()
-        ? origin.getBlockAtOffset(0, -1, 0).getBoundingBox().getHeight() - 1
-        : origin.getBlockAtOffset(0, 0, 0).getBoundingBox().getHeight()) < 1.2)) {
+            ? origin.getBlockAtOffset(0, -1, 0).getBoundingBox().getHeight() - 1
+            : origin.getBlockAtOffset(0, 0, 0).getBoundingBox().getHeight()));
+        if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
+            && jumpDistance <= 1.2) {
           // Can stand here
           LocationCell other = origin.createLocatableAtOffset(offX, 1, offZ);
           locations.put(other, origin.distanceTo(other));

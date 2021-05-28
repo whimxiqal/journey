@@ -39,12 +39,11 @@ import java.util.stream.Collectors;
 
 public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
-  public enum Status {
+  public enum RunningStatus {
     IDLE,
     RUNNING,
     CANCELLED,
-    FAILED,
-    SUCCEEDED
+    COMPLETED,
   }
 
   private final Collection<Link<T, D>> links = Lists.newLinkedList();
@@ -53,7 +52,8 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
   private final TrailCache<T, D> trailCache;
 
   @Getter
-  private Status status = Status.IDLE;
+  private RunningStatus runningStatus = RunningStatus.IDLE;
+  private boolean succeeded = false;
 
   // Callbacks
   @Setter
@@ -302,7 +302,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
       // Step 5 - Solve graph - Find the minimum path from the domain graph
       foundPath = graph.findMinimumPath(originNode, destinationNode);
       if (foundPath != null && foundPath.getLength() < optimalLength.get()) {
-        status = Status.SUCCEEDED;
+        succeeded = true;
         foundNewOptimalPathEvent.accept(foundPath);
         optimalLength.set(foundPath.getLength());
       }
@@ -310,15 +310,19 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
   }
 
   public boolean isCancelled() {
-    return status.equals(Status.CANCELLED);
+    return runningStatus.equals(RunningStatus.CANCELLED);
+  }
+
+  public boolean isCompleted() {
+    return runningStatus.equals(RunningStatus.COMPLETED);
   }
 
   public boolean isDone() {
-    return status.equals(Status.SUCCEEDED) || status.equals(Status.FAILED) || status.equals(Status.CANCELLED);
+    return runningStatus.equals(RunningStatus.COMPLETED) || runningStatus.equals(RunningStatus.CANCELLED);
   }
 
   public boolean isSuccessful() {
-    return status.equals(Status.SUCCEEDED);
+    return succeeded;
   }
 
   public final Map<D, Set<Link<T, D>>> collectAllEntryDomains() {
@@ -374,26 +378,25 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
    * Cancel this search. If it has already succeeded, no effect.
    */
   public void cancel() {
-    if (!this.status.equals(Status.SUCCEEDED)) {
-      this.status = Status.CANCELLED;
+    if (!this.runningStatus.equals(RunningStatus.COMPLETED)) {
+      this.runningStatus = RunningStatus.CANCELLED;
     }
   }
 
   public void search(T origin, T destination) {
-    status = Status.RUNNING;
+    runningStatus = RunningStatus.RUNNING;
+    succeeded = false;
 
     // Stage 1 - Only keep the links that may be helpful for finding this path
     List<Link<T, D>> filteredLinks = filterLinks(origin, destination, links);
 
     // Stage 2 & 3- Create graph based on paths made from local breadth first searches
     findOptimalPath(origin, destination, filteredLinks);
-    if (!status.equals(Status.SUCCEEDED)) {
-      status = Status.FAILED;
-    }
   }
 
   public void searchCacheable() {
-    status = Status.RUNNING;
+    runningStatus = RunningStatus.RUNNING;
+    succeeded = false;
 
     TrailSearchRequestQueue<T, D> queue = new TrailSearchRequestQueue<>();
     Map<D, Set<Link<T, D>>> entryDomains = collectAllEntryDomains();
@@ -433,7 +436,8 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
       }
     }
 
-    status = Status.SUCCEEDED;
+    runningStatus = RunningStatus.COMPLETED;
+    succeeded = true;
   }
 
 }

@@ -51,11 +51,20 @@ public class FlyMode implements Mode<LocationCell, World> {
                 // This is the origin, we don't want to move here
                 if (offXIn == 0 && offYIn == 0 && offZIn == 0) continue;
                 // Make sure we get the pillar of y values for the player's body
-                for (int h = 0; h <= offYIn + 1; h++) {
+                if (!SpigotUtil.isLaterallyPassable(origin.getBlockAtOffset( // Floor
+                    offXIn * offX /* get sign back */,
+                    offYIn * offY /* get sign back */,
+                    offZIn * offZ /* get sign back */))) {
+                  continue outerZ;
+                }
+                for (int h = 0; h <= offYIn; h++) {
+                  // The rest of the pillar above the floor
                   if (!SpigotUtil.isPassable(origin.getBlockAtOffset(
                       offXIn * offX /* get sign back */,
-                      offYIn * offY + h,
-                      offZIn * offZ))) {
+                      ((offYIn * offY /* get sign back */ + offYIn) >> 1) /* 1 for positive, 0 for negative */
+                          + h
+                          + (1 - offYIn) /* for if offYIn is 0 */,
+                      offZIn * offZ /* get sign back */))) {
                     continue outerZ;
                   }
                 }
