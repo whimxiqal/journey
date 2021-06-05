@@ -30,10 +30,7 @@ import edu.whimc.indicator.config.Settings;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.command.common.Parameter;
-import edu.whimc.indicator.spigot.command.menu.CustomLocationsMenu;
-import edu.whimc.indicator.spigot.command.menu.Menu;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
-import edu.whimc.indicator.spigot.quests.QuestsMenu;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.common.path.ModeTypes;
@@ -45,7 +42,6 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +49,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TrailCommand extends CommandNode {
+public final class TrailCommand extends CommandNode {
 
   private static final int ONE_SECOND = 20;
 
@@ -61,10 +57,12 @@ public class TrailCommand extends CommandNode {
   private static final int TICKS_PER_PARTICLE = 3;
   private static final double CHANCE_OF_PARTICLE = 0.4;
 
+  private static final List<CommandNode> extraChildren = new LinkedList<>();
+
   public TrailCommand() {
     super(null,
         Permissions.TRAIL_PERMISSION,
-        "Provide a trail to your destination",
+        "View your current activated trail",
         "trail");
     addSubcommand(Parameter.builder()
             .flags(Lists.newArrayList("nofly"))
@@ -74,6 +72,8 @@ public class TrailCommand extends CommandNode {
                 .build())
             .build(),
         "Specify the number of seconds to wait for a response");
+    addChildren(new TrailCustomCommand(this));
+    addChildren(extraChildren.toArray(new CommandNode[0]));
   }
 
   @Override
@@ -82,51 +82,28 @@ public class TrailCommand extends CommandNode {
                                   @NotNull String label,
                                   @NotNull String[] args,
                                   @NotNull Set<String> flags) {
+
     if (!(sender instanceof Player)) {
       sendCommandError(sender, CommandError.ONLY_PLAYER);
       return false;
     }
     Player player = (Player) sender;
 
+    player.sendMessage("Trail command!");
+    return true;
+  }
+
+  public static boolean blazeTrailTo(@NotNull Player player,
+                                     @NotNull LocationCell endpoint,
+                                     @NotNull Set<String> flags,
+                                     int timeout) {
+
     if (Indicator.getInstance().getJourneyManager().isSearching(player.getUniqueId())) {
       player.sendMessage(Format.error("Please wait until your search is over before performing a new one."));
       return false;
     }
 
-    int timeout = Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
-    if (args.length >= 1) {
-      try {
-        timeout = Integer.parseInt(args[0]);
-        if (timeout < 1) {
-          player.sendMessage(Format.error("The timeout must be at least 1 second"));
-          timeout = Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
-        } else if (timeout > 600) {
-          player.sendMessage(Format.error("The timeout must be at most 10 minutes"));
-          timeout = Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
-        }
-      } catch (NumberFormatException e) {
-        player.sendMessage(Format.error("The timeout could not be converted to an integer"));
-        timeout = Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
-      }
-    }
-
-    Endpoint<JavaPlugin, LocationCell, World> destination;
     UUID playerUuid = player.getUniqueId();
-    if (Indicator.getInstance()
-        .getEndpointManager()
-        .containsKey(playerUuid)) {
-      destination = Indicator.getInstance().getEndpointManager().get(playerUuid);
-    } else {
-      sender.sendMessage(Format.warn("You don't have a destination set!"));
-      sender.sendMessage(Format.warn("Defaulting to your world's spawn."));
-
-      LocationCell spawnLocation = new LocationCell(player.getWorld().getSpawnLocation());
-      destination = new Endpoint<>(Indicator.getInstance(),
-          spawnLocation,
-          loc -> loc.distanceToSquared(spawnLocation) < 9);  // Finish within 3 blocks
-
-      Indicator.getInstance().getEndpointManager().put(playerUuid, destination);
-    }
 
     final long finalTimeout = timeout;
     IndicatorSearch search = new IndicatorSearch(player, flags.contains("nofly"));
@@ -138,7 +115,7 @@ public class TrailCommand extends CommandNode {
 
     // Set up a "Working..." message if it takes too long
     BukkitTask workingNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () ->
-        sender.sendMessage(Format.info("Searching for path to your destination (" + finalTimeout + " sec)...")), 10);
+        player.sendMessage(Format.info("Searching for path to your destination (" + finalTimeout + " sec)...")), 10);
 
     AtomicBoolean foundPath = new AtomicBoolean(false);
     AtomicInteger successNotificationTaskId = new AtomicInteger(0);
@@ -196,7 +173,7 @@ public class TrailCommand extends CommandNode {
 
       // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
       PlayerJourney journey = new PlayerJourney(playerUuid, path, cell -> {
-        boolean completed = cell.distanceToSquared(destination.getLocation()) < 9;
+        boolean completed = cell.distanceToSquared(endpoint) < 9;
         if (completed) {
           if (!search.isDone()) {
             // No need to search anything anymore
@@ -214,7 +191,7 @@ public class TrailCommand extends CommandNode {
       successNotificationTaskId.set(Bukkit.getScheduler()
           .runTaskLater(Indicator.getInstance(),
               () -> {
-                sender.sendMessage(Format.success("Showing a path to your destination"));
+                player.sendMessage(Format.success("Showing a path to your destination"));
                 sentSuccessNotification.set(true);
               },
               ONE_SECOND / 2)
@@ -227,7 +204,7 @@ public class TrailCommand extends CommandNode {
           // Add to the searching set so they can't search again
           Indicator.getInstance().getJourneyManager().startSearching(player.getUniqueId());
           // Search... this may take a long time
-          search.search(new LocationCell(player.getLocation()), destination.getLocation());
+          search.search(new LocationCell(player.getLocation()), endpoint);
 
           // Cancel the timeout message if it hasn't happened yet
           timeoutTask.cancel();
@@ -244,18 +221,32 @@ public class TrailCommand extends CommandNode {
     );
 
     return true;
-
   }
 
-  private Menu trailMenu(Player player) {
-    return Menu.builder().setTitle("Trail Menu")
-        .setHeader("Where do you want to go?")
-        .addElement(Menu.builder().setTitle("Waypoints")
-            .setHeader("Special server-wide destinations")
-            .build())
-        .addElement(QuestsMenu.buildFor(player))
-        .addElement(CustomLocationsMenu.buildFor(player))
-        .build();
+  public static void registerChild(CommandNode commandNode) {
+    extraChildren.add(commandNode);
+  }
+
+  public static int getTimeout(CommandSender src, String[] args, int timeoutIndex) {
+    if (timeoutIndex >= args.length) {
+      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+    }
+    int timeout;
+    try {
+      timeout = Integer.parseInt(args[timeoutIndex]);
+    } catch (NumberFormatException e) {
+      src.sendMessage(Format.error("The timeout could not be converted to an integer"));
+      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+    }
+
+    if (timeout < 1) {
+      src.sendMessage(Format.error("The timeout must be at least 1 second"));
+      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+    } else if (timeout > 600) {
+      src.sendMessage(Format.error("The timeout must be at most 10 minutes"));
+      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+    }
+    return timeout;
   }
 
 }

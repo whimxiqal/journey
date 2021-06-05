@@ -37,31 +37,35 @@ public final class ParameterSuppliers {
   }
 
   public static final Parameter.ParameterSupplier NONE = Parameter.ParameterSupplier.builder()
-      .allowedEntries(Lists::newLinkedList)
+      .allowedEntries((src, prev) -> Lists.newLinkedList())
       .usage("")
       .build();
 
   public static final Parameter.ParameterSupplier ONLINE_PLAYER = Parameter.ParameterSupplier.builder()
-      .allowedEntries(prev ->
+      .allowedEntries((src, prev) ->
           Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()))
       .usage("<player>")
       .strict(false)
       .build();
 
   public static final Parameter.ParameterSupplier WORLD = Parameter.ParameterSupplier.builder()
-          .allowedEntries(prev -> Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()))
+          .allowedEntries((src, prev) -> Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()))
           .usage("<world>")
           .strict(true)
           .build();
 
   public static final Parameter.ParameterSupplier BOOLEAN = Parameter.ParameterSupplier.builder()
-      .allowedEntries(prev ->
+      .allowedEntries((src, prev) ->
           Lists.newArrayList("true", "false", "t", "f"))
       .usage("true|false")
       .build();
 
+  public static final Parameter.ParameterSupplier INTEGER = Parameter.ParameterSupplier.builder()
+      .usage("<integer>")
+      .build();
+
   public static final Parameter.ParameterSupplier ITEM = Parameter.ParameterSupplier.builder()
-      .allowedEntries(prev -> {
+      .allowedEntries((src, prev) -> {
         List<String> out = Lists.newLinkedList();
         Lists.newLinkedList(Registry.MATERIAL)
             .stream()

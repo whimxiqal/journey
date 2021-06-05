@@ -34,7 +34,7 @@ public abstract class Cell<T extends Cell<T, D, F>, D, F extends Function<String
   @Getter protected final int y;
   @Getter protected final int z;
   protected final String domainId;
-  protected final Function<String, D> domainFunction;
+  protected final F domainFunction;
   private transient D domain;
 
   public Cell(int x, int y, int z, @NotNull String domainId, @NotNull F domainFunction) {

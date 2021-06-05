@@ -30,7 +30,7 @@ import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 @Builder
 public class Parameter {
@@ -79,9 +79,9 @@ public class Parameter {
       return Lists.newLinkedList();
     }
     if (toParse.length == 0) {
-      return supplier.getAllowedEntries(Arrays.asList(previous));
+      return supplier.getAllowedEntries(sender, Arrays.asList(previous));
     }
-    if (this.supplier.matches(Arrays.asList(previous), toParse[0])) {
+    if (this.supplier.matches(sender, Arrays.asList(previous), toParse[0])) {
       String[] newPrevious = Arrays.copyOf(previous, previous.length + 1);
       newPrevious[newPrevious.length - 1] = toParse[0];
       return getNext()
@@ -143,7 +143,7 @@ public class Parameter {
   public static class ParameterSupplier {
 
     @Builder.Default
-    private final Function<List<String>, List<String>> allowedEntries = prev -> Lists.newLinkedList();
+    private final BiFunction<CommandSender, List<String>, List<String>> allowedEntries = (src, prev) -> Lists.newLinkedList();
     @Getter
     @Builder.Default
     private final String usage = "";
@@ -152,12 +152,12 @@ public class Parameter {
     @Builder.Default
     private boolean strict = true;
 
-    public Collection<String> getAllowedEntries(List<String> previousParameters) {
-      return allowedEntries.apply(previousParameters);
+    public Collection<String> getAllowedEntries(CommandSender sender, List<String> previousParameters) {
+      return allowedEntries.apply(sender, previousParameters);
     }
 
-    public boolean matches(List<String> previousParameters, String input) {
-      List<String> allowedEntriesApplied = allowedEntries.apply(previousParameters);
+    public boolean matches(CommandSender sender, List<String> previousParameters, String input) {
+      List<String> allowedEntriesApplied = allowedEntries.apply(sender, previousParameters);
       return !strict || allowedEntriesApplied.isEmpty() || allowedEntriesApplied.stream().anyMatch(allowed -> allowed.equalsIgnoreCase(input));
     }
 

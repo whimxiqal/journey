@@ -24,6 +24,7 @@ package edu.whimc.indicator.spigot.command.common;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.spigot.util.Format;
 import lombok.Getter;
 import lombok.Setter;
@@ -190,7 +191,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
     List<String> actualArgsList = new LinkedList<>();
     Set<String> flags = new HashSet<>();
     for (String arg : argsCombined) {
-      if (arg.charAt(0) == '-') {
+      if (arg.charAt(0) == '-' && !Extra.isNumber(arg.substring(1))) {
         flags.add(arg.substring(1));
       } else {
         actualArgsList.add(arg);

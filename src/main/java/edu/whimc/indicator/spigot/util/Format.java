@@ -22,6 +22,7 @@
 package edu.whimc.indicator.spigot.util;
 
 import com.google.common.collect.Lists;
+import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.ChatColor;
 
 import java.util.LinkedList;
@@ -37,28 +38,54 @@ public final class Format {
   public static final ChatColor WARN = ChatColor.YELLOW;
   public static final ChatColor ERROR = ChatColor.RED;
   public static final ChatColor DEBUG = ChatColor.AQUA;
-  public static final ChatColor ACCENT = ChatColor.BLUE;
+  public static final ChatColor ACCENT = ChatColor.LIGHT_PURPLE;
+  public static final ChatColor ACCENT2 = ChatColor.DARK_AQUA;
   public static final ChatColor DEFAULT = ChatColor.WHITE;
   public static final String PREFIX = THEME + "Indicator % " + ChatColor.RESET;
 
-  public static String success(String message) {
-    return PREFIX + SUCCESS + message;
+  public static String applyColorToAllOf(ChatColor color, Object... message) {
+    StringBuilder builder = new StringBuilder();
+    for (Object m : message) {
+      builder.append(color).append(m);
+    }
+    return builder.toString();
   }
 
-  public static String info(String message) {
-    return PREFIX + INFO + message;
+  public static String success(Object... message) {
+    return PREFIX + applyColorToAllOf(SUCCESS, message);
   }
 
-  public static String warn(String message) {
-    return PREFIX + WARN + message;
+  public static String info(Object... message) {
+    return PREFIX + applyColorToAllOf(INFO, message);
   }
 
-  public static String error(String message) {
-    return PREFIX + ERROR + message;
+  public static String warn(Object... message) {
+    return PREFIX + applyColorToAllOf(WARN, message);
   }
 
-  public static String debug(String message) {
-    return PREFIX + DEBUG + message;
+  public static String error(Object... message) {
+    return PREFIX + applyColorToAllOf(ERROR, message);
+  }
+
+  public static String debug(Object... message) {
+    return PREFIX + applyColorToAllOf(DEBUG, message);
+  }
+
+  public static String note(Object... message) {
+    return applyColorToAllOf(DEFAULT, message);
+  }
+
+  public static String locationCell(LocationCell cell, ChatColor defaultColor) {
+    return applyColorToAllOf(defaultColor,
+        "[",
+        Format.ACCENT + "" + cell.getX(),
+        ", ",
+        Format.ACCENT + "" + cell.getY(),
+        ", ",
+        Format.ACCENT + "" + cell.getZ(),
+        " in ",
+        Format.ACCENT + cell.getDomain().getName(),
+        "]");
   }
 
   public static String[] combineQuotedArguments(String[] input) {

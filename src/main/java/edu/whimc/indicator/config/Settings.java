@@ -25,14 +25,23 @@
 
 package edu.whimc.indicator.config;
 
+import edu.whimc.indicator.common.data.DataType;
+
 /**
  * An enumeration of all Settings. No need to register anywhere, that's done dynamically.
  */
 public final class Settings {
 
+  public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT = new Setting<>("search.timeout", 15, Integer.class);
+  public static final Setting<String> STORAGE_ADDRESS = new Setting<>("storage.address", "whimcproject.web.illinois.edu", String.class);
+  public static final Setting<String> STORAGE_DATABASE = new Setting<>("storage.database", "db", String.class);
+  public static final Setting<String> STORAGE_USERNAME = new Setting<>("storage.username", "username", String.class);
+  public static final Setting<String> STORAGE_PASSWORD = new Setting<>("storage.password", "p@ssword", String.class);
+  public static final Setting<DataType> CUSTOM_ENDPOINT_STORAGE_TYPE = new Setting<>("storage.custom_endpoint_type", DataType.SQLite, DataType.class);
+  public static final Setting<DataType> SERVER_ENDPOINT_STORAGE_TYPE = new Setting<>("storage.server_endpoint_type", DataType.SQLite, DataType.class);
+
+
   private Settings() {
   }
-
-  public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT = new Setting<>("search.timeout", 15, Integer.class);
 
 }

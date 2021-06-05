@@ -1,18 +1,19 @@
 package edu.whimc.indicator;
 
-import com.google.common.collect.Lists;
 import edu.whimc.indicator.common.cache.TrailCache;
-import edu.whimc.indicator.common.path.*;
+import edu.whimc.indicator.common.data.DataManager;
+import edu.whimc.indicator.config.ConfigManager;
 import edu.whimc.indicator.spigot.cache.DebugManager;
 import edu.whimc.indicator.spigot.cache.JourneyManager;
 import edu.whimc.indicator.spigot.cache.NetherManager;
-import edu.whimc.indicator.spigot.command.EndpointCommand;
 import edu.whimc.indicator.spigot.command.IndicatorCommand;
 import edu.whimc.indicator.spigot.command.TrailCommand;
-import edu.whimc.indicator.spigot.cache.EndpointManager;
+import edu.whimc.indicator.spigot.command.common.CommandNode;
+import edu.whimc.indicator.spigot.data.SpigotDataManager;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.mode.*;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
+import edu.whimc.indicator.spigot.util.UuidToWorld;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -32,7 +33,7 @@ public final class Indicator extends JavaPlugin {
 
   // Caches
   @Getter
-  private EndpointManager endpointManager;
+  private ConfigManager configManager;
   @Getter
   private NetherManager netherManager;
   @Getter
@@ -43,6 +44,10 @@ public final class Indicator extends JavaPlugin {
   private TrailCache<LocationCell, World> trailCache;
   @Getter
   private boolean valid = false;
+
+  // Database
+  @Getter
+  private DataManager<LocationCell, World, UuidToWorld> dataManager;
 
   public static Indicator getInstance() {
     return instance;
@@ -57,7 +62,7 @@ public final class Indicator extends JavaPlugin {
   public void onEnable() {
     Indicator.getInstance().getLogger().info("Initializing Indicator...");
     // Create caches
-    this.endpointManager = new EndpointManager();
+    this.configManager = new ConfigManager();
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();
     this.journeyManager = new JourneyManager();
@@ -65,19 +70,19 @@ public final class Indicator extends JavaPlugin {
 
     deserializeCaches();
 
+    // Set up data manager
+    this.dataManager = new SpigotDataManager();
+
     // Register commands
-    Lists.newArrayList(new IndicatorCommand(),
-        new TrailCommand(),
-        new EndpointCommand()).forEach(root -> {
+    for (CommandNode root : new CommandNode[]{new IndicatorCommand(), new TrailCommand()}) {
       PluginCommand command = getCommand(root.getPrimaryAlias());
       if (command == null) {
-        throw new NullPointerException("You must register this command in the plugin.yml");
+        throw new NullPointerException("You must register command " + root.getPrimaryAlias() + " in the plugin.yml");
       }
       command.setExecutor(root);
       command.setTabCompleter(root);
       root.getPermission().map(Permission::getName).ifPresent(command::setPermission);
-    });
-
+    }
     // Register listeners
     netherManager.registerListeners(this);
     journeyManager.registerListeners(this);
