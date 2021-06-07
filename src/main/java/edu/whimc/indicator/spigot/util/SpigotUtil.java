@@ -1,6 +1,5 @@
 package edu.whimc.indicator.spigot.util;
 
-import edu.whimc.indicator.Indicator;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Slab;
 

@@ -150,7 +150,7 @@ public class Parameter {
     // True if this parameter is only correct if it's in the allowedEntries
     @Getter
     @Builder.Default
-    private boolean strict = true;
+    private final boolean strict = true;
 
     public Collection<String> getAllowedEntries(CommandSender sender, List<String> previousParameters) {
       return allowedEntries.apply(sender, previousParameters);

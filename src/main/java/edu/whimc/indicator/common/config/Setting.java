@@ -23,18 +23,20 @@
  *
  */
 
-package edu.whimc.indicator.config;
+package edu.whimc.indicator.common.config;
 
+import edu.whimc.indicator.Indicator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class Setting<T> {
+public abstract class Setting<T> {
 
   private final String path;
   private final T defaultValue;
   private T value;
-  private final Class<T> clazz;
+  protected final Class<T> clazz;
+  boolean initialized = false;
 
   Setting(@NotNull String path, @NotNull T defaultValue, @NotNull Class<T> clazz) {
     if (!clazz.isInstance(defaultValue)) {
@@ -42,7 +44,6 @@ public class Setting<T> {
     }
     this.path = Objects.requireNonNull(path);
     this.defaultValue = Objects.requireNonNull(defaultValue);
-    this.value = Objects.requireNonNull(defaultValue);
     this.clazz = clazz;
   }
 
@@ -58,11 +59,22 @@ public class Setting<T> {
 
   public void setValue(@NotNull T value) {
     this.value = Objects.requireNonNull(value);
+    this.initialized = true;
   }
 
   @NotNull
   public T getValue() {
+    if (!initialized) {
+      Indicator.getInstance().getLogger().warning("This setting at " + path + " has not been initialized! Using default value.");
+      value = getDefaultValue();
+      initialized = true;
+    }
     return value;
   }
+
+  abstract T parseValue(@NotNull String string);
+
+  @NotNull
+  abstract String printValue();
 
 }

@@ -24,11 +24,11 @@ package edu.whimc.indicator.spigot.command.common;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.common.data.DataAccessException;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.spigot.util.Format;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -50,7 +50,8 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
   private final List<String> aliases = Lists.newLinkedList();
   private final List<CommandNode> children = Lists.newLinkedList();
   private final Map<Parameter, String> parameters = Maps.newLinkedHashMap();
-  @Setter @Getter
+  @Setter
+  @Getter
   private boolean canBypassInvalid = false;
 
   /**
@@ -166,8 +167,11 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
   }
 
   public final void sendCommandError(CommandSender sender, String error) {
-    sender.sendMessage(Format.error(error));
-    sender.sendMessage(Format.error("Try: " + ChatColor.GRAY + "/" + getFullCommand() + " help"));
+    sender.spigot().sendMessage(Format.error(error));
+    // TODO figure out why this method has no hover/click event
+    sender.spigot().sendMessage(Format.chain(Format.textOf(Format.PREFIX),
+        Format.command("/" + getFullCommand() + " help",
+            Format.DEFAULT + "Run help command")));
   }
 
   public final void sendCommandError(CommandSender sender, CommandError error) {
@@ -181,11 +185,11 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                  @NotNull String[] args) {
 
     if (!Indicator.getInstance().isValid() && !canBypassInvalid) {
-      sender.sendMessage(Format.warn("The Indicator plugin is still initializing..."));
+      sender.spigot().sendMessage(Format.warn("The Indicator plugin is still initializing..."));
       return false;
     }
 
-    String[] argsCombined = Format.combineQuotedArguments(args);
+    String[] argsCombined = Extra.combineQuotedArguments(args);
 
     // Adds support for quotations around space-delimited arguments
     List<String> actualArgsList = new LinkedList<>();
@@ -201,7 +205,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
     if (isRoot()) {
       for (String arg : actualArgsList) {
         if (arg.length() > ARG_MAX_LENGTH) {
-          sender.sendMessage(Format.error("Arguments cannot exceed "
+          sender.spigot().sendMessage(Format.error("Arguments cannot exceed "
               + ARG_MAX_LENGTH
               + " characters!"));
           return false;
@@ -212,20 +216,24 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
     // Main method
     if (this.permission != null && !sender.hasPermission(this.permission)) {
-      sender.sendMessage(Format.error("You don't have permission to do this!"));
+      sender.spigot().sendMessage(Format.error("You don't have permission to do this!"));
       return false;
     }
-    if (actualArgs.length < 1) {
-      return onWrappedCommand(sender, command, label, actualArgs, flags);
-    }
-    for (CommandNode child : children) {
-      for (String alias : child.aliases) {
-        if (alias.equalsIgnoreCase(actualArgs[0])) {
-          return child.onCommand(sender, command, child.getPrimaryAlias(), Arrays.copyOfRange(actualArgs, 1, actualArgs.length));
+    if (actualArgs.length != 0) {
+      for (CommandNode child : children) {
+        for (String alias : child.aliases) {
+          if (alias.equalsIgnoreCase(actualArgs[0])) {
+            return child.onCommand(sender, command, child.getPrimaryAlias(), Arrays.copyOfRange(actualArgs, 1, actualArgs.length));
+          }
         }
       }
     }
-    return onWrappedCommand(sender, command, label, actualArgs, flags);
+    try {
+      return onWrappedCommand(sender, command, label, actualArgs, flags);
+    } catch (DataAccessException e) {
+      sender.spigot().sendMessage(Format.error("An error occurred. Please contact an administrator."));
+      return false;
+    }
   }
 
   /**
@@ -247,7 +255,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                            @NotNull Command command,
                                            @NotNull String label,
                                            @NotNull String[] args,
-                                           @NotNull Set<String> flags);
+                                           @NotNull Set<String> flags) throws DataAccessException;
 
   @Override
   public final List<String> onTabComplete(@NotNull CommandSender sender,

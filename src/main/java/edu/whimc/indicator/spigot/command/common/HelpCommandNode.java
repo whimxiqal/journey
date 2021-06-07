@@ -49,7 +49,7 @@ final class HelpCommandNode extends CommandNode {
                                   @NotNull String[] args,
                                   @NotNull Set<String> flags) {
     CommandNode parent = Objects.requireNonNull(this.getParent());
-    sender.sendMessage(Format.success(
+    sender.spigot().sendMessage(Format.success(
         "Command: "
             + ChatColor.GRAY
             + parent.getFullCommand()));

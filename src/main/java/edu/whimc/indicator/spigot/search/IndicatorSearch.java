@@ -47,7 +47,7 @@ import java.util.function.Predicate;
 
 public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, World> {
 
-  public static List<Mode<LocationCell, World>> SURVIVAL_MODES = Lists.newArrayList(
+  public static final List<Mode<LocationCell, World>> SURVIVAL_MODES = Lists.newArrayList(
       new WalkMode(),
       new JumpMode(),
       new SwimMode(),
@@ -132,7 +132,7 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
 
   private void registerLinkVerbose(Player player, Link<LocationCell, World> link) {
     if (Indicator.getInstance().getDebugManager().isDebugging(player.getUniqueId())) {
-      player.sendMessage(Format.debug("Registering Link: " + link.toString()));
+      player.spigot().sendMessage(Format.debug("Registering Link: " + link.toString()));
     }
     super.registerLink(link);
   }

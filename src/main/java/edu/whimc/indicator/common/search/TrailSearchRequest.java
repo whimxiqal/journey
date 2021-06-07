@@ -1,10 +1,8 @@
 package edu.whimc.indicator.common.search;
 
 import edu.whimc.indicator.common.path.Locatable;
-import edu.whimc.indicator.common.path.Mode;
 import lombok.Data;
 
-import java.util.Collection;
 import java.util.function.Supplier;
 
 @Data

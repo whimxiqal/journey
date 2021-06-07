@@ -23,7 +23,7 @@
  *
  */
 
-package edu.whimc.indicator.config;
+package edu.whimc.indicator.common.config;
 
 import edu.whimc.indicator.common.data.DataType;
 
@@ -32,13 +32,13 @@ import edu.whimc.indicator.common.data.DataType;
  */
 public final class Settings {
 
-  public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT = new Setting<>("search.timeout", 15, Integer.class);
-  public static final Setting<String> STORAGE_ADDRESS = new Setting<>("storage.address", "whimcproject.web.illinois.edu", String.class);
-  public static final Setting<String> STORAGE_DATABASE = new Setting<>("storage.database", "db", String.class);
-  public static final Setting<String> STORAGE_USERNAME = new Setting<>("storage.username", "username", String.class);
-  public static final Setting<String> STORAGE_PASSWORD = new Setting<>("storage.password", "p@ssword", String.class);
-  public static final Setting<DataType> CUSTOM_ENDPOINT_STORAGE_TYPE = new Setting<>("storage.custom_endpoint_type", DataType.SQLite, DataType.class);
-  public static final Setting<DataType> SERVER_ENDPOINT_STORAGE_TYPE = new Setting<>("storage.server_endpoint_type", DataType.SQLite, DataType.class);
+  public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT = new IntegerSetting("search.default-timeout", 15);
+  public static final Setting<String> STORAGE_ADDRESS = new StringSetting("storage.auth.address", "my.address");
+  public static final Setting<String> STORAGE_DATABASE = new StringSetting("storage.auth.database", "my_database");
+  public static final Setting<String> STORAGE_USERNAME = new StringSetting("storage.auth.username", "username");
+  public static final Setting<String> STORAGE_PASSWORD = new StringSetting("storage.auth.password", "p@ssword");
+  public static final Setting<DataType> CUSTOM_ENDPOINT_STORAGE_TYPE = new EnumSetting<>("storage.custom_endpoint_type", DataType.SQLITE, DataType.class);
+  public static final Setting<DataType> SERVER_ENDPOINT_STORAGE_TYPE = new EnumSetting<>("storage.server_endpoint_type", DataType.SQLITE, DataType.class);
 
 
   private Settings() {

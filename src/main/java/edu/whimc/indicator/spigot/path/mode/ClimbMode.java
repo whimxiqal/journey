@@ -7,7 +7,6 @@ import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.Directional;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -76,7 +76,7 @@ public class PlayerJourney implements Journey<LocationCell, World> {
       if (Indicator.getInstance().getDebugManager().isDebugging(playerUuid)) {
         Player player = Bukkit.getPlayer(playerUuid);
         if (player != null) {
-          player.sendMessage(Format.debug("Reached destination: " + trails.get(trails.size() - 1).getDestination()));
+          player.spigot().sendMessage(Format.debug("Reached destination: " + trails.get(trails.size() - 1).getDestination()));
         }
       }
       completed = true;
@@ -90,7 +90,7 @@ public class PlayerJourney implements Journey<LocationCell, World> {
         if (Indicator.getInstance().getDebugManager().isDebugging(playerUuid)) {
           Player player = Bukkit.getPlayer(playerUuid);
           if (player != null) {
-            player.sendMessage(Format.debug("Reached destination: " + links.get(trailIndex)));
+            player.spigot().sendMessage(Format.debug("Reached destination: " + links.get(trailIndex)));
           }
         }
         trailIndex++;

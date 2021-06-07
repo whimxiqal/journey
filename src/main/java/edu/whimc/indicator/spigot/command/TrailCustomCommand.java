@@ -1,14 +1,15 @@
 package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.data.DataManager;
+import edu.whimc.indicator.common.data.CustomEndpointManager;
+import edu.whimc.indicator.common.data.DataAccessException;
+import edu.whimc.indicator.common.tools.BufferedFunction;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.common.util.Validator;
 import edu.whimc.indicator.spigot.command.common.*;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
-import edu.whimc.indicator.spigot.util.UuidToWorld;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -23,7 +24,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
 
   public TrailCustomCommand(@NotNull CommandNode parent) {
     super(parent,
-        Permissions.TRAIL_PERMISSION,
+        Permissions.TRAIL_BLAZE_PERMISSION,
         "Use custom locations in trails",
         "custom");
 
@@ -33,18 +34,39 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
     addChildren(new TrailCustomSaveCommand(this));
   }
 
+  private static BufferedFunction<Player, List<String>> bufferedCustomLocationsFunction() {
+    return new BufferedFunction<>(player -> {
+      try {
+        return new ArrayList<>(Indicator.getInstance().getDataManager()
+            .getCustomEndpointManager()
+            .getCustomEndpoints(player.getUniqueId()).keySet());
+      } catch (DataAccessException e) {
+        return new LinkedList<>();
+      }
+    }, 1000);
+  }
+
   public static class TrailCustomBlazeCommand extends PlayerCommandNode {
 
     public TrailCustomBlazeCommand(@NotNull CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_PERMISSION,
+          Permissions.TRAIL_BLAZE_PERMISSION,
           "Blaze a trail to a custom destination",
           "blaze");
+
+      BufferedFunction<Player, List<String>> customLocationsFunction = bufferedCustomLocationsFunction();
       addSubcommand(Parameter.builder()
           .supplier(Parameter.ParameterSupplier.builder()
               .usage("<name>")
-              .build())
+              .allowedEntries((src, prev) -> {
+                if (src instanceof Player) {
+                  return customLocationsFunction.apply((Player) src);
+                } else {
+                  return new ArrayList<>();
+                }
+              }).build())
           .build(), "Use a previously saved custom location");
+
       addSubcommand(Parameter.builder()
           .supplier(ParameterSuppliers.WORLD)
           .next(Parameter.builder()
@@ -62,7 +84,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) {
+                                          @NotNull Set<String> flags) throws DataAccessException {
 
       LocationCell endLocation;
       World world;
@@ -75,7 +97,9 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
         return false;
       }
 
-      DataManager<LocationCell, World, UuidToWorld> dataManager = Indicator.getInstance().getDataManager();
+      CustomEndpointManager<LocationCell, World> customEndpointManager = Indicator.getInstance()
+          .getDataManager()
+          .getCustomEndpointManager();
       try {
         if (args.length >= 4) {
           world = Bukkit.getWorld(args[0]);
@@ -90,48 +114,53 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
               : Integer.parseInt(args[3]);
 
           if (world == null) {
-            player.sendMessage(Format.error("That's not a valid world"));
+            player.spigot().sendMessage(Format.error("That's not a valid world"));
             return false;
           }
 
           if (x < -100000 || x > 100000 || y < -100000 || y > 100000 || z < -100000 || z > 100000) {
-            player.sendMessage(Format.error("Your inputs are out of range"));
+            player.spigot().sendMessage(Format.error("Your inputs are out of range"));
             return false;
           }
 
           endLocation = new LocationCell(x, y, z, world);
         } else {
-          endLocation = dataManager.getCustomEndpointManager().getCustomEndpoint(player.getUniqueId(), args[0]);
+          endLocation = customEndpointManager.getCustomEndpoint(player.getUniqueId(), args[0]);
 
           if (endLocation == null) {
-            player.sendMessage(Format.error("The custom location ", Format.INFO + "" + args[0], " could not be found"));
+            player.spigot().sendMessage(Format.error("The custom location ", Format.INFO + "" + args[0], " could not be found"));
             return false;
           }
         }
       } catch (IllegalArgumentException e) {
-        player.sendMessage(Format.error("Your numbers could not be read"));
+        player.spigot().sendMessage(Format.error("Your numbers could not be read"));
         return false;
       }
 
       if (TrailCommand.blazeTrailTo(player, endLocation, flags, TrailCommand.getTimeout(player, args, 4))) {
 
+        player.spigot().sendMessage(Format.success("Blazing a trail to "));
+        player.spigot().sendMessage(Format.success(" " + Format.toPlain(Format.locationCell(endLocation, Format.SUCCESS)) + " !"));
+
         // Check if we should save a custom endpoint
-        if (!dataManager.getCustomEndpointManager().hasCustomEndpoint(player.getUniqueId(), endLocation)) {
-          // Save it!
-          if (args.length >= 6) {
-            if (Validator.isValidDataName(args[5])) {
-              dataManager.getCustomEndpointManager().addCustomEndpoint(player.getUniqueId(), endLocation, args[5]);
-            } else {
-              player.sendMessage(Format.error("Your custom name ", Format.note(args[5]), " contains illegal characters"));
-              return false;
-            }
-          } else {
-            dataManager.getCustomEndpointManager().addCustomEndpoint(player.getUniqueId(), endLocation);
+        if (args.length >= 6) {
+          if (customEndpointManager.hasCustomEndpoint(player.getUniqueId(), endLocation)) {
+            player.spigot().sendMessage(Format.error("A custom location already exists at that location!"));
+            return false;
           }
+          if (customEndpointManager.hasCustomEndpoint(player.getUniqueId(), args[5])) {
+            player.spigot().sendMessage(Format.error("A custom location already exists with that name!"));
+            return false;
+          }
+          if (!Validator.isValidDataName(args[5])) {
+            player.spigot().sendMessage(Format.error("Your custom name ", Format.toPlain(Format.note(args[5])), " contains illegal characters"));
+            return false;
+          }
+          // Save it!
+          customEndpointManager.addCustomEndpoint(player.getUniqueId(), endLocation, args[5]);
+          player.spigot().sendMessage(Format.success("Saved your custom location with name ", Format.toPlain(Format.note(args[5])), "!"));
         }
 
-        player.sendMessage(Format.success("Blazing a trail to "));
-        player.sendMessage(Format.success(" " + Format.locationCell(endLocation, Format.SUCCESS) + " !"));
         return true;
       } else {
         return false;
@@ -140,18 +169,25 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
     }
   }
 
-  public static class TrailCustomSaveCommand extends PlayerCommandNode {
+  public static class TrailCustomDeleteCommand extends PlayerCommandNode {
 
-    public TrailCustomSaveCommand(@Nullable CommandNode parent) {
+    public TrailCustomDeleteCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_PERMISSION,
-          "Save your current location as a custom trail location",
-          "save");
+          Permissions.TRAIL_BLAZE_PERMISSION,
+          "Delete a saved custom destination",
+          "delete");
+      BufferedFunction<Player, List<String>> customLocationsFunction = bufferedCustomLocationsFunction();
       addSubcommand(Parameter.builder()
           .supplier(Parameter.ParameterSupplier.builder()
-              .usage("[name]")
-              .build())
-          .build(), "Save with this name");
+              .usage("<name>")
+              .allowedEntries((src, prev) -> {
+                if (src instanceof Player) {
+                  return customLocationsFunction.apply((Player) src);
+                } else {
+                  return new ArrayList<>();
+                }
+              }).build())
+          .build(), "Use a previously saved custom location");
     }
 
     @Override
@@ -159,45 +195,32 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) {
-      DataManager.CustomEndpoint<LocationCell, World, UuidToWorld> customEndpointManager = Indicator.getInstance()
-          .getDataManager()
-          .getCustomEndpointManager();
-
-      if (customEndpointManager.hasCustomEndpoint(player.getUniqueId(), new LocationCell(player.getLocation()))) {
-        player.sendMessage(Format.error("A custom location already exists at that location!"));
+                                          @NotNull Set<String> flags) throws DataAccessException {
+      if (args.length < 1) {
+        sendCommandError(player, CommandError.FEW_ARGUMENTS);
         return false;
       }
 
-      if (args.length > 0) {
-        String name = args[0];
-        if (!Validator.isValidDataName(name)) {
-          player.sendMessage(Format.error("That name is invalid"));
-          return false;
-        }
-
-        if (customEndpointManager.hasCustomEndpoint(player.getUniqueId(), name)) {
-          player.sendMessage(Format.error("A custom location already exists with that name!"));
-          return false;
-        }
-
-        customEndpointManager.addCustomEndpoint(player.getUniqueId(), new LocationCell(player.getLocation()), name);
-        player.sendMessage(Format.success("Added custom location named ", Format.note(name)));
+      CustomEndpointManager<LocationCell, World> endpointManager = Indicator.getInstance()
+          .getDataManager()
+          .getCustomEndpointManager();
+      if (endpointManager.hasCustomEndpoint(player.getUniqueId(), args[0])) {
+        Indicator.getInstance().getDataManager().getCustomEndpointManager().removeCustomEndpoint(player.getUniqueId(), args[0]);
+        player.spigot().sendMessage(Format.success("The custom location ", Format.INFO + "" + args[0], " has been removed"));
+        return true;
       } else {
-        Indicator.getInstance().getDataManager()
-            .getCustomEndpointManager()
-            .addCustomEndpoint(player.getUniqueId(), new LocationCell(player.getLocation()));
-        player.sendMessage(Format.success("Added custom location"));
+        player.spigot().sendMessage(Format.error("The custom location ", Format.INFO + "" + args[0], " could not be found"));
+        return false;
       }
-      return true;
     }
+
   }
 
   public static class TrailCustomListCommand extends PlayerCommandNode {
 
     public TrailCustomListCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_PERMISSION,
+          Permissions.TRAIL_BLAZE_PERMISSION,
           "List saved custom destinations",
           "list");
       addSubcommand(Parameter.builder()
@@ -214,18 +237,18 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) {
+                                          @NotNull Set<String> flags) throws DataAccessException {
       int pageNumber;
       if (args.length > 0) {
         try {
           pageNumber = Integer.parseInt(args[0]);
 
           if (pageNumber < 0) {
-            player.sendMessage(Format.error("The page number may not be negative!"));
+            player.spigot().sendMessage(Format.error("The page number may not be negative!"));
             return false;
           }
         } catch (NumberFormatException e) {
-          player.sendMessage(Format.error("The page number must be an integer"));
+          player.spigot().sendMessage(Format.error("The page number must be an integer"));
           return false;
         }
       } else {
@@ -238,7 +261,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
           .getCustomEndpoints(player.getUniqueId());
 
       if (cells.isEmpty()) {
-        player.sendMessage(Format.warn("You have no saved custom locations yet!"));
+        player.spigot().sendMessage(Format.warn("You have no saved custom locations yet!"));
         return true;
       }
 
@@ -246,11 +269,13 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
       sortedEntryList.sort(Map.Entry.comparingByKey());
 
       StringBuilder builder = new StringBuilder();
-      sortedEntryList.forEach(entry -> builder.append(
-          Format.note(Format.ACCENT2 + entry.getKey(),
-              " > ",
-              Format.locationCell(entry.getValue(), Format.DEFAULT),
-              "\n")));
+      sortedEntryList.forEach(entry -> builder
+          .append(Format.ACCENT2)
+          .append(entry.getKey())
+          .append(Format.DEFAULT)
+          .append(" > ")
+          .append(Format.toPlain(Format.locationCell(entry.getValue(), Format.DEFAULT)))
+          .append("\n"));
       ChatPaginator.ChatPage chatPage = ChatPaginator.paginate(builder.toString(),
           pageNumber,
           ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH,
@@ -258,10 +283,10 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
 
       pageNumber = Math.min(pageNumber, chatPage.getTotalPages());
 
-      player.sendMessage(Format.success("Custom Locations - Page ",
-          Format.note(pageNumber),
+      player.spigot().sendMessage(Format.success("Custom Locations - Page ",
+          Format.toPlain(Format.note(Integer.toString(pageNumber))),
           " of ",
-          Format.note(chatPage.getTotalPages())));
+          Format.toPlain(Format.note(Integer.toString(chatPage.getTotalPages())))));
       Arrays.stream(chatPage.getLines()).forEach(player::sendMessage);
 
       return true;
@@ -269,18 +294,18 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
 
   }
 
-  public static class TrailCustomDeleteCommand extends PlayerCommandNode {
+  public static class TrailCustomSaveCommand extends PlayerCommandNode {
 
-    public TrailCustomDeleteCommand(@Nullable CommandNode parent) {
+    public TrailCustomSaveCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_PERMISSION,
-          "Delete a saved custom destination",
-          "delete");
+          Permissions.TRAIL_BLAZE_PERMISSION,
+          "Save your current location as a custom trail location",
+          "save");
       addSubcommand(Parameter.builder()
           .supplier(Parameter.ParameterSupplier.builder()
               .usage("<name>")
               .build())
-          .build(), "Remove a previously saved custom location");
+          .build(), "Save with this name");
     }
 
     @Override
@@ -288,25 +313,41 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) {
-      if (args.length < 1) {
+                                          @NotNull Set<String> flags) throws DataAccessException {
+
+      if (args.length == 0) {
         sendCommandError(player, CommandError.FEW_ARGUMENTS);
         return false;
       }
 
-      DataManager.CustomEndpoint<LocationCell, World, UuidToWorld> endpointManager = Indicator.getInstance()
-          .getDataManager()
-          .getCustomEndpointManager();
-      if (endpointManager.hasCustomEndpoint(player.getUniqueId(), args[0])) {
-        Indicator.getInstance().getDataManager().getCustomEndpointManager().removeCustomEndpoint(player.getUniqueId(), args[0].toLowerCase());
-        player.sendMessage(Format.success("The custom location ", Format.INFO + "" + args[0], " has been removed"));
-        return true;
-      } else {
-        player.sendMessage(Format.error("The custom location ", Format.INFO + "" + args[0], " could not be found"));
+      String name = args[0];
+      if (!Validator.isValidDataName(name)) {
+        player.spigot().sendMessage(Format.error("That name is invalid"));
         return false;
       }
-    }
 
+      CustomEndpointManager<LocationCell, World> customEndpointManager = Indicator.getInstance()
+          .getDataManager()
+          .getCustomEndpointManager();
+
+      String existingName = customEndpointManager.getCustomEndpointName(player.getUniqueId(), new LocationCell(player.getLocation()));
+      if (existingName != null) {
+        player.spigot().sendMessage(Format.error("Custom location ", Format.toPlain(Format.note(existingName)), " already exists at that location!"));
+        return false;
+      }
+
+      LocationCell existingCell = customEndpointManager.getCustomEndpoint(player.getUniqueId(), name);
+      if (existingCell != null) {
+        player.spigot().sendMessage(Format.error("A custom location already exists with that name at",
+            Format.toPlain(Format.locationCell(existingCell, Format.DEFAULT)),
+            "!"));
+        return false;
+      }
+
+      customEndpointManager.addCustomEndpoint(player.getUniqueId(), new LocationCell(player.getLocation()), name);
+      player.spigot().sendMessage(Format.success("Added custom location named ", Format.toPlain(Format.note(name))));
+      return true;
+    }
   }
 
 }

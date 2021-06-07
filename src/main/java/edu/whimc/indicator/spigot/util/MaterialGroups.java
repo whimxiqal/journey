@@ -3,8 +3,6 @@ package edu.whimc.indicator.spigot.util;
 import com.google.common.collect.Sets;
 import org.bukkit.Material;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public final class MaterialGroups {

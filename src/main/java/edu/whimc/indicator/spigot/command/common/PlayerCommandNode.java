@@ -1,5 +1,6 @@
 package edu.whimc.indicator.spigot.command.common;
 
+import edu.whimc.indicator.common.data.DataAccessException;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -23,7 +24,7 @@ public abstract class PlayerCommandNode extends CommandNode {
                                   @NotNull Command command,
                                   @NotNull String label,
                                   @NotNull String[] args,
-                                  @NotNull Set<String> flags) {
+                                  @NotNull Set<String> flags) throws DataAccessException {
     Player player;
     if (!(sender instanceof Player)) {
       sendCommandError(sender, CommandError.ONLY_PLAYER);
@@ -37,5 +38,5 @@ public abstract class PlayerCommandNode extends CommandNode {
                                         @NotNull Command command,
                                         @NotNull String label,
                                         @NotNull String[] args,
-                                        @NotNull Set<String> flags);
+                                        @NotNull Set<String> flags) throws DataAccessException;
 }

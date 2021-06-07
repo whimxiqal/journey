@@ -25,12 +25,12 @@ import org.bukkit.permissions.Permission;
 
 public final class Permissions {
 
-  private Permissions() {
-  }
-
   public final static Permission INDICATOR_PERMISSION = new Permission("indicator.indicator");
   public final static Permission ADMIN_PERMISSION = new Permission("indicator.admin");
-  public final static Permission TRAIL_PERMISSION = new Permission("indicator.trail");
-  public final static Permission DESTINATION_PERMISSION = new Permission("indicator.destination");
+  public final static Permission TRAIL_BLAZE_PERMISSION = new Permission("indicator.trail.blaze");
+  public static final Permission TRAIL_MANAGE_PERMISSION = new Permission("indicator.trail.manage");
+
+  private Permissions() {
+  }
 
 }

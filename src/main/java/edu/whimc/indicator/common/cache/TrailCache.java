@@ -1,7 +1,6 @@
 package edu.whimc.indicator.common.cache;
 
 import com.google.common.collect.Maps;
-import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.Locatable;
 import edu.whimc.indicator.common.path.Trail;
 import edu.whimc.indicator.common.path.ModeTypeGroup;

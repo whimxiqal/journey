@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.UUID;
 
-public class LocationCell extends Cell<LocationCell, World, UuidToWorld> {
+public class LocationCell extends Cell<LocationCell, World> {
 
   /**
    * The offset above the block location (for solid inhabitable blocks)

@@ -21,7 +21,6 @@
 
 package edu.whimc.indicator.spigot.path.mode;
 
-import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.path.ModeType;
 import edu.whimc.indicator.common.path.ModeTypes;

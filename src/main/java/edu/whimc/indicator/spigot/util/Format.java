@@ -21,11 +21,14 @@
 
 package edu.whimc.indicator.spigot.util;
 
-import com.google.common.collect.Lists;
 import edu.whimc.indicator.spigot.path.LocationCell;
+import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.ChatColor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.Arrays;
 
 public final class Format {
 
@@ -43,39 +46,51 @@ public final class Format {
   public static final ChatColor DEFAULT = ChatColor.WHITE;
   public static final String PREFIX = THEME + "Indicator % " + ChatColor.RESET;
 
-  public static String applyColorToAllOf(ChatColor color, Object... message) {
+  public static String toPlain(BaseComponent[] text) {
     StringBuilder builder = new StringBuilder();
-    for (Object m : message) {
-      builder.append(color).append(m);
+    for (BaseComponent component : text) {
+      builder.append(component.toPlainText());
     }
     return builder.toString();
   }
 
-  public static String success(Object... message) {
-    return PREFIX + applyColorToAllOf(SUCCESS, message);
+  public static BaseComponent[] textOf(String single) {
+    return new BaseComponent[] {new TextComponent(single)};
   }
 
-  public static String info(Object... message) {
-    return PREFIX + applyColorToAllOf(INFO, message);
+  public static BaseComponent[] applyColorToAllOf(ChatColor color, String... message) {
+    StringBuilder builder = new StringBuilder();
+    for (Object m : message) {
+      builder.append(color).append(m);
+    }
+    return textOf(builder.toString());
   }
 
-  public static String warn(Object... message) {
-    return PREFIX + applyColorToAllOf(WARN, message);
+  public static BaseComponent[] success(String... message) {
+    return chain(textOf(PREFIX), applyColorToAllOf(SUCCESS, message));
   }
 
-  public static String error(Object... message) {
-    return PREFIX + applyColorToAllOf(ERROR, message);
+  public static BaseComponent[] info(String... message) {
+    return chain(textOf(PREFIX), applyColorToAllOf(INFO, message));
   }
 
-  public static String debug(Object... message) {
-    return PREFIX + applyColorToAllOf(DEBUG, message);
+  public static BaseComponent[] warn(String... message) {
+    return chain(textOf(PREFIX), applyColorToAllOf(WARN, message));
   }
 
-  public static String note(Object... message) {
+  public static BaseComponent[] error(String... message) {
+    return chain(textOf(PREFIX), applyColorToAllOf(ERROR, message));
+  }
+
+  public static BaseComponent[] debug(String... message) {
+    return chain(textOf(PREFIX), applyColorToAllOf(DEBUG, message));
+  }
+
+  public static BaseComponent[] note(String... message) {
     return applyColorToAllOf(DEFAULT, message);
   }
 
-  public static String locationCell(LocationCell cell, ChatColor defaultColor) {
+  public static BaseComponent[] locationCell(LocationCell cell, ChatColor defaultColor) {
     return applyColorToAllOf(defaultColor,
         "[",
         Format.ACCENT + "" + cell.getX(),
@@ -88,33 +103,28 @@ public final class Format {
         "]");
   }
 
-  public static String[] combineQuotedArguments(String[] input) {
-    String full = String.join(" ", input);
-    LinkedList<String> out = Lists.newLinkedList();
-    boolean inEncloser = false;
-    StringBuilder arg = new StringBuilder();
-    for (char c : full.toCharArray()) {
-      if (c == ' ') {
-        if (inEncloser) {
-          arg.append(c);
-        } else {
-          out.add(arg.toString());
-          arg = new StringBuilder();
-        }
-      } else if (c == '"') {
-        inEncloser = !inEncloser;
-        if (!arg.toString().isEmpty()) {
-          out.add(arg.toString());
-        }
-        arg = new StringBuilder();
-      } else {
-        arg.append(c);
-      }
-    }
-    if (!arg.toString().isEmpty()) {
-      out.add(arg.toString());
-    }
-    return out.toArray(new String[0]);
+  public static BaseComponent[] chain(BaseComponent[]... arrays) {
+    return Arrays.stream(arrays)
+        .flatMap(Arrays::stream)
+        .toArray(BaseComponent[]::new);
   }
 
+  public static BaseComponent[] command(@NotNull String command, @Nullable String description) {
+    return command(command, command, description);
+  }
+
+  public static BaseComponent[] command(@NotNull String label, @NotNull String command, @Nullable String description) {
+    return new ComponentBuilder()
+        .append(Format.INFO + "[")
+        .append(Format.ACCENT + label)
+        .italic(true)
+        .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
+        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+            new Text((description == null || description.isEmpty())
+                ? command
+                : description + "\n\n" + command)))
+        .append(Format.INFO + "]")
+        .italic(false)
+        .create();
+  }
 }

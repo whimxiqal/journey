@@ -26,7 +26,7 @@ public class IndicatorInvalidateCommand extends CommandNode {
                                   @NotNull String[] args,
                                   @NotNull Set<String> flags) {
     Indicator.getInstance().getTrailCache().clear();
-    sender.sendMessage(Format.success("Cleared cache"));
+    sender.spigot().sendMessage(Format.success("Cleared cache"));
     return true;
   }
 }

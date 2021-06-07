@@ -21,27 +21,25 @@
 
 package edu.whimc.indicator.spigot.command;
 
-import com.google.common.collect.Lists;
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.path.Endpoint;
 import edu.whimc.indicator.common.path.ModeType;
 import edu.whimc.indicator.common.path.Step;
-import edu.whimc.indicator.config.Settings;
-import edu.whimc.indicator.spigot.command.common.CommandError;
+import edu.whimc.indicator.common.config.Settings;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
-import edu.whimc.indicator.spigot.command.common.Parameter;
+import edu.whimc.indicator.spigot.command.common.FunctionlessCommandNode;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
+import me.blackvein.quests.Quests;
 import org.bukkit.Bukkit;
 import org.bukkit.Particle;
 import org.bukkit.World;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +47,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class TrailCommand extends CommandNode {
+public final class TrailCommand extends FunctionlessCommandNode {
 
   private static final int ONE_SECOND = 20;
 
@@ -61,36 +59,18 @@ public final class TrailCommand extends CommandNode {
 
   public TrailCommand() {
     super(null,
-        Permissions.TRAIL_PERMISSION,
+        Permissions.TRAIL_BLAZE_PERMISSION,
         "View your current activated trail",
         "trail");
-    addSubcommand(Parameter.builder()
-            .flags(Lists.newArrayList("nofly"))
-            .supplier(Parameter.ParameterSupplier.builder()
-                .strict(false)
-                .usage("[timeout]")
-                .build())
-            .build(),
-        "Specify the number of seconds to wait for a response");
     addChildren(new TrailCustomCommand(this));
-    addChildren(extraChildren.toArray(new CommandNode[0]));
-  }
-
-  @Override
-  public boolean onWrappedCommand(@NotNull CommandSender sender,
-                                  @NotNull Command command,
-                                  @NotNull String label,
-                                  @NotNull String[] args,
-                                  @NotNull Set<String> flags) {
-
-    if (!(sender instanceof Player)) {
-      sendCommandError(sender, CommandError.ONLY_PLAYER);
-      return false;
+    addChildren(new TrailServerCommand(this));
+    // Quests plugin
+    Plugin questsPlugin = Bukkit.getPluginManager().getPlugin("Quests");
+    if (questsPlugin instanceof Quests) {
+      addChildren(new TrailQuestsCommand(this, (Quests) questsPlugin));
     }
-    Player player = (Player) sender;
-
-    player.sendMessage("Trail command!");
-    return true;
+    // Add extra children
+    addChildren(extraChildren.toArray(new CommandNode[0]));
   }
 
   public static boolean blazeTrailTo(@NotNull Player player,
@@ -99,7 +79,7 @@ public final class TrailCommand extends CommandNode {
                                      int timeout) {
 
     if (Indicator.getInstance().getJourneyManager().isSearching(player.getUniqueId())) {
-      player.sendMessage(Format.error("Please wait until your search is over before performing a new one."));
+      player.spigot().sendMessage(Format.error("Please wait until your search is over before performing a new one."));
       return false;
     }
 
@@ -115,7 +95,7 @@ public final class TrailCommand extends CommandNode {
 
     // Set up a "Working..." message if it takes too long
     BukkitTask workingNotification = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () ->
-        player.sendMessage(Format.info("Searching for path to your destination (" + finalTimeout + " sec)...")), 10);
+        player.spigot().sendMessage(Format.info("Searching for path to your destination (" + finalTimeout + " sec)...")), 10);
 
     AtomicBoolean foundPath = new AtomicBoolean(false);
     AtomicInteger successNotificationTaskId = new AtomicInteger(0);
@@ -127,8 +107,8 @@ public final class TrailCommand extends CommandNode {
 
       if (sentSuccessNotification.get()) {
         // TODO do something different for subsequent found paths
-        player.sendMessage(Format.info("A faster path to your destination was found..."));
-        player.sendMessage(Format.info("You may use this feature in later versions."));
+        player.spigot().sendMessage(Format.info("A faster path to your destination was found..."));
+        player.spigot().sendMessage(Format.info("You may use this feature in later versions."));
         return;
       }
 
@@ -191,7 +171,7 @@ public final class TrailCommand extends CommandNode {
       successNotificationTaskId.set(Bukkit.getScheduler()
           .runTaskLater(Indicator.getInstance(),
               () -> {
-                player.sendMessage(Format.success("Showing a path to your destination"));
+                player.spigot().sendMessage(Format.success("Showing a path to your destination"));
                 sentSuccessNotification.set(true);
               },
               ONE_SECOND / 2)
@@ -212,7 +192,7 @@ public final class TrailCommand extends CommandNode {
           workingNotification.cancel();
           // Send failure message if we finished unsuccessfully
           if (!search.isSuccessful()) {
-            player.sendMessage(Format.error("A path to your destination could not be found."));
+            player.spigot().sendMessage(Format.error("A path to your destination could not be found."));
             Indicator.getInstance().getJourneyManager().removePlayerJourney(playerUuid);
           }
           // Remove from the searching set so they can search again
@@ -235,15 +215,15 @@ public final class TrailCommand extends CommandNode {
     try {
       timeout = Integer.parseInt(args[timeoutIndex]);
     } catch (NumberFormatException e) {
-      src.sendMessage(Format.error("The timeout could not be converted to an integer"));
+      src.spigot().sendMessage(Format.error("The timeout could not be converted to an integer"));
       return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
     }
 
     if (timeout < 1) {
-      src.sendMessage(Format.error("The timeout must be at least 1 second"));
+      src.spigot().sendMessage(Format.error("The timeout must be at least 1 second"));
       return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
     } else if (timeout > 600) {
-      src.sendMessage(Format.error("The timeout must be at most 10 minutes"));
+      src.spigot().sendMessage(Format.error("The timeout must be at most 10 minutes"));
       return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
     }
     return timeout;

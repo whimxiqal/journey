@@ -83,9 +83,9 @@ public class IndicatorDebugCommand extends CommandNode {
     }
 
     if (enabled) {
-      sender.sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled"));
+      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled"));
     } else {
-      sender.sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled"));
+      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled"));
     }
     return true;
   }

@@ -24,20 +24,19 @@ package edu.whimc.indicator.common.path;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.function.Function;
 
-public abstract class Cell<T extends Cell<T, D, F>, D, F extends Function<String, D> & Serializable> implements Locatable<T, D> {
+public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
 
   @Getter protected final int x;
   @Getter protected final int y;
   @Getter protected final int z;
   protected final String domainId;
-  protected final F domainFunction;
+  protected final Function<String, D> domainFunction;
   private transient D domain;
 
-  public Cell(int x, int y, int z, @NotNull String domainId, @NotNull F domainFunction) {
+  public Cell(int x, int y, int z, @NotNull String domainId, @NotNull Function<String, D> domainFunction) {
     this.x = x;
     this.y = y;
     this.z = z;

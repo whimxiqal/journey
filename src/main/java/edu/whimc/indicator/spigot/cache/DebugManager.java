@@ -2,6 +2,7 @@ package edu.whimc.indicator.spigot.cache;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -38,6 +39,18 @@ public class DebugManager {
     });
     if (consoleDebugging) {
       Bukkit.getConsoleSender().sendMessage(message);
+    }
+  }
+
+  public void broadcastDebugMessage(BaseComponent[] message) {
+    debugging.forEach(uuid -> {
+      Player player = Bukkit.getServer().getPlayer(uuid);
+      if (player != null) {
+        player.spigot().sendMessage(message);
+      }
+    });
+    if (consoleDebugging) {
+      Bukkit.getConsoleSender().spigot().sendMessage(message);
     }
   }
 

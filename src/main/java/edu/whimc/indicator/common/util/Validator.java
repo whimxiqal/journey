@@ -12,6 +12,7 @@ public final class Validator {
    * @return true if it is valid
    */
   public static boolean isValidDataName(String name) {
+    if (name.equalsIgnoreCase("help")) return false;
     return Pattern.matches("^[a-zA-Z][a-zA-Z0-9 -]{1,30}[a-zA-Z0-9]$", name);
   }
 

@@ -2,7 +2,7 @@ package edu.whimc.indicator;
 
 import edu.whimc.indicator.common.cache.TrailCache;
 import edu.whimc.indicator.common.data.DataManager;
-import edu.whimc.indicator.config.ConfigManager;
+import edu.whimc.indicator.common.config.ConfigManager;
 import edu.whimc.indicator.spigot.cache.DebugManager;
 import edu.whimc.indicator.spigot.cache.JourneyManager;
 import edu.whimc.indicator.spigot.cache.NetherManager;
@@ -13,7 +13,6 @@ import edu.whimc.indicator.spigot.data.SpigotDataManager;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.mode.*;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
-import edu.whimc.indicator.spigot.util.UuidToWorld;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -47,7 +46,7 @@ public final class Indicator extends JavaPlugin {
 
   // Database
   @Getter
-  private DataManager<LocationCell, World, UuidToWorld> dataManager;
+  private DataManager<LocationCell, World> dataManager;
 
   public static Indicator getInstance() {
     return instance;
@@ -62,7 +61,7 @@ public final class Indicator extends JavaPlugin {
   public void onEnable() {
     Indicator.getInstance().getLogger().info("Initializing Indicator...");
     // Create caches
-    this.configManager = new ConfigManager();
+    this.configManager = new ConfigManager("config.yml");
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();
     this.journeyManager = new JourneyManager();
@@ -122,6 +121,7 @@ public final class Indicator extends JavaPlugin {
   private boolean serializeCaches() {
     File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_TRAIL_CACHE_FILENAME).toFile();
     try {
+      //noinspection ResultOfMethodCallIgnored
       this.getDataFolder().mkdirs();
       if (file.createNewFile()) {
         Indicator.getInstance().getLogger().info("Created serialized trail file");
