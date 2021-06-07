@@ -62,7 +62,7 @@ public class PortalLink implements Link<LocationCell, World> {
 
   @Override
   public double weight() {
-    return 2;
+    return 3;
   }
 
   @Override

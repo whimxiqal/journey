@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.cache.TrailCache;
 import edu.whimc.indicator.common.path.*;
+import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import edu.whimc.indicator.common.util.TriConsumer;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,7 +38,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
+public class TwoLevelBreadthFirstSearch<T extends Cell<T, D>, D> {
 
   public enum RunningStatus {
     IDLE,
@@ -54,26 +55,6 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
   @Getter
   private RunningStatus runningStatus = RunningStatus.IDLE;
   private boolean succeeded = false;
-
-  // Callbacks
-  @Setter
-  private Consumer<Path<T, D>> foundNewOptimalPathEvent = path -> {
-  };
-  @Setter
-  private BiConsumer<T, T> startTrailSearchCallback = (l1, l2) -> {
-  };
-  @Setter
-  private Consumer<Step<T, D>> trialSearchVisitationCallback = loc -> {
-  };
-  @Setter
-  private Consumer<Step<T, D>> trailSearchStepCallback = loc -> {
-  };
-  @Setter
-  private TriConsumer<T, T, Double> finishTrailSearchCallback = (l1, l2, integer) -> {
-  };
-  @Setter
-  private BiConsumer<T, T> memoryCapacityErrorCallback = (l1, l2) -> {
-  };
 
   public TwoLevelBreadthFirstSearch(TrailCache<T, D> trailCache) {
     this.trailCache = trailCache;
@@ -115,7 +96,8 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
   private Trail<T, D> queueTrailRequestIfNotCached(@Nullable T origin, @Nullable T destination,
                                                    TrailSearchRequestQueue<T, D> queue,
-                                                   TrailSearchRequest<T, D> request) {
+                                                   TrailSearchRequest<T, D> request,
+                                                   SearchTracker<T, D> tracker) {
     Trail<T, D> trail = trailCache.get(request.getOrigin(), request.getDestination(), modeTypes);
     boolean shouldQueue = false;
 
@@ -144,7 +126,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
           curr = trail.getSteps().get(i);
           validStep = false;  // Doesn't work until proven it does
           for (Mode<T, D> mode : modes) {
-            if (mode.getDestinations(prev.getLocatable()).containsKey(curr.getLocatable())) {
+            if (mode.getDestinations(prev.getLocatable(), tracker).containsKey(curr.getLocatable())) {
               // This step works, keep checking
               validStep = true;
               break;
@@ -177,15 +159,13 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
 
   }
 
-  private void findOptimalPath(T origin, T destination, List<Link<T, D>> links) {
+  private void findOptimalPath(T origin, T destination, List<Link<T, D>> links, SearchTracker<T, D> tracker) {
     // Step 1 - organize filtered links into entry and exit points in every domain
     Map<D, Set<Link<T, D>>> entryDomains = collectEntryDomains(links);
     Map<D, Set<Link<T, D>>> exitDomains = collectExitDomains(links);
 
     // Step 2 - Initialize local-domain search class
     TrailSearch<T, D> trailSearch = new TrailSearch<>();
-    trailSearch.setStepCallback(trailSearchStepCallback);
-    trailSearch.setVisitationCallback(trialSearchVisitationCallback);
 
     // Step 3 - Set up graph
     PathEdgeGraph<T, D> graph = new PathEdgeGraph<>();
@@ -204,7 +184,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
       trail = queueTrailRequestIfNotCached(origin, destination, queue,
           new TrailSearchRequest<>(origin, destination,
               originNode, destinationNode,
-              this::isCancelled, false));
+              this::isCancelled, false), tracker);
       if (trail != null) {
         graph.addEdge(originNode, destinationNode, trail);
       }
@@ -217,7 +197,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
         trail = queueTrailRequestIfNotCached(origin, destination, queue,
             new TrailSearchRequest<>(origin, exit.getOrigin(),
                 originNode, linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
-                this::isCancelled, false));
+                this::isCancelled, false), tracker);
         if (trail != null) {
           graph.addEdge(originNode, linkNodeMap.get(exit), trail);
         }
@@ -229,7 +209,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
         trail = queueTrailRequestIfNotCached(origin, destination, queue,
             new TrailSearchRequest<>(entry.getDestination(), destination,
                 linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode), destinationNode,
-                this::isCancelled, false));
+                this::isCancelled, false), tracker);
         if (trail != null) {
           graph.addEdge(linkNodeMap.get(entry), destinationNode, trail);
         }
@@ -252,7 +232,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
                   new TrailSearchRequest<>(entry.getDestination(), exit.getOrigin(),
                       linkNodeMap.computeIfAbsent(entry, graph::generateLinkNode),
                       linkNodeMap.computeIfAbsent(exit, graph::generateLinkNode),
-                      this::isCancelled, true));
+                      this::isCancelled, true), tracker);
               if (trail != null) {
                 graph.addEdge(linkNodeMap.get(entry), linkNodeMap.get(exit), trail);
               }
@@ -278,10 +258,10 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
             trailSearchRequest.set(request);
             boolean willRun = request.getOrigin().distanceToSquared(request.getDestination()) < optimalLength.get() * optimalLength.get();
             if (willRun) {
-              startTrailSearchCallback.accept(request.getOrigin(), request.getDestination());
+              tracker.startTrailSearch(request.getOrigin(), request.getDestination());
             }
             return willRun;
-          });
+          }, tracker);
       if (queue.isImpossibleResult()) {
         // We have checked through some possibilities and found that no result is possible
         return;
@@ -289,7 +269,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
       if (latestFoundTrail == null) {
         continue;
       }
-      finishTrailSearchCallback.accept(trailSearchRequest.get().getOrigin(), trailSearchRequest.get().getDestination(), latestFoundTrail.getLength());
+      tracker.finishTrailSearch(trailSearchRequest.get().getOrigin(), trailSearchRequest.get().getDestination(), latestFoundTrail.getLength());
 
       if (trailSearchRequest.get().isCacheable()) {
         trailCache.put(trailSearchRequest.get().getOrigin(), trailSearchRequest.get().getDestination(), modeTypes, latestFoundTrail);
@@ -303,7 +283,16 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
       foundPath = graph.findMinimumPath(originNode, destinationNode);
       if (foundPath != null && foundPath.getLength() < optimalLength.get()) {
         succeeded = true;
-        foundNewOptimalPathEvent.accept(foundPath);
+        tracker.foundNewOptimalPath(foundPath, cell -> {
+          boolean completed = cell.distanceToSquared(destination) < 9;
+          if (completed) {
+            if (!isDone()) {
+              // No need to search anything anymore
+              cancel();
+            }
+          }
+          return completed;
+        });
         optimalLength.set(foundPath.getLength());
       }
     }
@@ -383,7 +372,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
     }
   }
 
-  public void search(T origin, T destination) {
+  public void search(T origin, T destination, SearchTracker<T, D> tracker) {
     runningStatus = RunningStatus.RUNNING;
     succeeded = false;
 
@@ -391,10 +380,10 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
     List<Link<T, D>> filteredLinks = filterLinks(origin, destination, links);
 
     // Stage 2 & 3- Create graph based on paths made from local breadth first searches
-    findOptimalPath(origin, destination, filteredLinks);
+    findOptimalPath(origin, destination, filteredLinks, tracker);
   }
 
-  public void searchCacheable() {
+  public void searchCacheable(SearchTracker<T, D> tracker) {
     runningStatus = RunningStatus.RUNNING;
     succeeded = false;
 
@@ -416,7 +405,7 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
               queueTrailRequestIfNotCached(null, null, queue,
                   new TrailSearchRequest<>(entry.getDestination(), exit.getOrigin(),
                       null, null,
-                      () -> false, true));
+                      () -> false, true), tracker);
             }
           }
         }
@@ -428,10 +417,10 @@ public class TwoLevelBreadthFirstSearch<T extends Locatable<T, D>, D> {
     while (!queue.isEmpty()) {
       trail = queue.popAndRunLinkRequest(search, modes, req -> {
         request.set(req);
-        startTrailSearchCallback.accept(req.getOrigin(), req.getDestination());
-      });
+        tracker.startTrailSearch(req.getOrigin(), req.getDestination());
+      }, tracker);
       if (trail != null) {
-        finishTrailSearchCallback.accept(request.get().getOrigin(), request.get().getDestination(), trail.getLength());
+        tracker.finishTrailSearch(request.get().getOrigin(), request.get().getDestination(), trail.getLength());
         trailCache.put(request.get().getOrigin(), request.get().getDestination(), modeTypes, trail);
       }
     }

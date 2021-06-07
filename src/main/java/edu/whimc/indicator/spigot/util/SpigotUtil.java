@@ -1,6 +1,8 @@
 package edu.whimc.indicator.spigot.util;
 
+import edu.whimc.indicator.Indicator;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Slab;
 
 public final class SpigotUtil {
@@ -22,7 +24,7 @@ public final class SpigotUtil {
     if (isPassable(block)) {
       return true;
     }
-    if (MaterialGroups.VERTICALLY_PASSABLE.contains(block.getType())) {
+    if (MaterialGroups.VERTICALLY_PASSABLE.contains(block.getBlockData())) {
       return true;
     }
     return false;
@@ -38,10 +40,7 @@ public final class SpigotUtil {
     if (isPassable(block)) {
       return true;
     }
-    if (MaterialGroups.LATERALLY_PASSABLE.contains(block.getType())) {
-      if (block.getBlockData() instanceof Slab) {
-        return ((Slab) block.getBlockData()).getType().equals(Slab.Type.BOTTOM);
-      }
+    if (MaterialGroups.LATERALLY_PASSABLE.contains(block.getBlockData())) {
       return true;
     }
     return false;
@@ -54,7 +53,7 @@ public final class SpigotUtil {
    * @return false if you cannot pass through at all
    */
   public static boolean isPassable(Block block) {
-    return block.isPassable() && !MaterialGroups.INVALID_PASSABLE.contains(block.getType());
+    return block.isPassable() && !MaterialGroups.INVALID_PASSABLE.contains(block.getBlockData());
   }
 
   /**
@@ -64,8 +63,8 @@ public final class SpigotUtil {
    * @return false if a player cannot stand on top of the block
    */
   public static boolean canStandOn(Block block) {
-    return (!block.isPassable() && block.getBoundingBox().getHeight() >= 1.0)
-        || MaterialGroups.TALL_SOLIDS.contains(block.getType());
+    return (!block.isPassable()/* && block.getBoundingBox().getHeight() >= 1.0*/)
+        || MaterialGroups.TALL_SOLIDS.contains(block.getBlockData());
   }
 
   /**
@@ -77,6 +76,16 @@ public final class SpigotUtil {
   public static boolean canStandIn(Block block) {
     return isLaterallyPassable(block)
         && !isVerticallyPassable(block);
+  }
+
+  public static Slab setSlabType(BlockData blockData, Slab.Type type) {
+    if (blockData instanceof Slab) {
+      Slab slab = ((Slab) blockData);
+      slab.setType(type);
+      return slab;
+    } else {
+      throw new IllegalArgumentException("You may only pass Slab block data!");
+    }
   }
 
 }

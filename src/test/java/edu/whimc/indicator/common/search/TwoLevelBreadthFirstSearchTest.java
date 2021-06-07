@@ -4,13 +4,14 @@ import com.google.common.collect.Lists;
 import edu.whimc.indicator.common.cache.TrailCache;
 import edu.whimc.indicator.common.path.*;
 import edu.whimc.indicator.common.path.ModeType;
+import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
+import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 class TwoLevelBreadthFirstSearchTest {
 
@@ -18,18 +19,18 @@ class TwoLevelBreadthFirstSearchTest {
   Domain domain2 = new Domain("d2");
 
   static int boardSize = 12;
-  static Cell2D[][] board1 = new Cell2D[boardSize][boardSize];
-  static Cell2D[][] board2 = new Cell2D[boardSize][boardSize];
+  static Point3D[][] board1 = new Point3D[boardSize][boardSize];
+  static Point3D[][] board2 = new Point3D[boardSize][boardSize];
 
 
   @Test
   void findPath() {
 
-    // Initialize domains to be completely free
+    // Initialize domains to be complete.getY() free
     for (int i = 0; i < boardSize; i++) {
       for (int j = 0; j < boardSize; j++) {
-        board1[i][j] = new Cell2D(i, j, domain1);
-        board2[i][j] = new Cell2D(i, j, domain2);
+        board1[i][j] = new Point3D(i, j, domain1);
+        board2[i][j] = new Point3D(i, j, domain2);
       }
     }
 
@@ -67,11 +68,11 @@ class TwoLevelBreadthFirstSearchTest {
     char[][] printer2 = new char[boardSize][boardSize];
 
     // Set up parameters for search
-    TrailCache<Cell2D, Domain> trailCache = new TrailCache<>();
-    TwoLevelBreadthFirstSearch<Cell2D, Domain> bfs = new TwoLevelBreadthFirstSearch<>(trailCache);
-    Cell2D origin = board1[4][4];
-    Cell2D destination = board1[4][8];
-    List<Link<Cell2D, Domain>> links = Lists.newLinkedList();
+    TrailCache<Point3D, Domain> trailCache = new TrailCache<>();
+    TwoLevelBreadthFirstSearch<Point3D, Domain> bfs = new TwoLevelBreadthFirstSearch<>(trailCache);
+    Point3D origin = board1[4][4];
+    Point3D destination = board1[4][8];
+    List<Link<Point3D, Domain>> links = Lists.newLinkedList();
     links.add(new TestLink(board1[8][4], board2[3][6]));
     links.add(new TestLink(board2[7][7], board1[8][8]));
     links.forEach(bfs::registerLink);
@@ -80,53 +81,18 @@ class TwoLevelBreadthFirstSearchTest {
     clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
 
     bfs.registerMode(new StepMode());
-    bfs.setTrialSearchVisitationCallback(step -> {
-      Cell2D cell = step.getLocatable();
-      System.out.printf("Distance to destination: %f\n", cell.distanceTo(links.get(1).getOrigin()));
-      if (cell.getDomain().equals(domain1)) {
-        printer1[cell.x][cell.y] = '+';
-      }
-      if (cell.getDomain().equals(domain2)) {
-        printer2[cell.x][cell.y] = '+';
-      }
-      // Print boards
-      System.out.println("Board 1:");
-      printPrinter(printer1, boardSize);
-      System.out.println("Board 2:");
-      printPrinter(printer2, boardSize);
-    });
-//    bfs.setLocalSearchVisitationCallback(x -> {});  // Reset
-    bfs.setTrailSearchStepCallback(step -> {
-      Cell2D cell = step.getLocatable();
-      if (cell.getDomain().equals(domain1)) {
-        printer1[cell.x][cell.y] = '.';
-      }
-      if (cell.getDomain().equals(domain2)) {
-        printer2[cell.x][cell.y] = '.';
-      }
-      // Print boards
-      System.out.println("Board 1:");
-      printPrinter(printer1, boardSize);
-      System.out.println("Board 2:");
-      printPrinter(printer2, boardSize);
-    });
-//    bfs.setLocalSearchStepCallback(x -> {});  // Reset
-    bfs.setFinishTrailSearchCallback((o, d, l) ->
-        clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize));
-//    bfs.setFinishLocalSearchCallback(() -> {});  // Reset
-//    bfs.setMemoryErrorCallback(() -> System.out.println("Memory error"));
 
     // Solve path
-    bfs.search(origin, destination);
+    bfs.search(origin, destination, new TestSearchTracker(printer1, printer2, links));
 
     // Put in path
 //    if (path != null) {
 //      path.getAllSteps().stream().map(Step::getLocatable).forEach(cell -> {
 //        if (cell.domain.equals(domain1)) {
-//          printer1[cell.x][cell.y] = 'O';
+//          printer1[cell.getX()][cell.getY()] = 'O';
 //        }
 //        if (cell.domain.equals(domain2)) {
-//          printer2[cell.x][cell.y] = 'O';
+//          printer2[cell.getX()][cell.getY()] = 'O';
 //        }
 //      });
 //    }
@@ -138,10 +104,10 @@ class TwoLevelBreadthFirstSearchTest {
     printPrinter(printer2, boardSize);
   }
 
-  private void clearPrinters(Cell2D[][] board1, Cell2D[][] board2,
+  private void clearPrinters(Point3D[][] board1, Point3D[][] board2,
                              char[][] printer1, char[][] printer2,
-                             Cell2D origin, Cell2D destination,
-                             List<Link<Cell2D, Domain>> links,
+                             Point3D origin, Point3D destination,
+                             List<Link<Point3D, Domain>> links,
                              int boardSize) {
     for (int i = 0; i < boardSize; i++) {
       for (int j = 0; j < boardSize; j++) {
@@ -160,29 +126,29 @@ class TwoLevelBreadthFirstSearchTest {
 
     // Put in origin and destination
     if (origin.getDomain().equals(domain1)) {
-      printer1[origin.x][origin.y] = 'A';
+      printer1[origin.getX()][origin.getY()] = 'A';
     } else {
-      printer2[origin.x][origin.y] = 'A';
+      printer2[origin.getX()][origin.getY()] = 'A';
     }
     if (origin.getDomain().equals(domain1)) {
-      printer1[destination.x][destination.y] = 'B';
+      printer1[destination.getX()][destination.getY()] = 'B';
     } else {
-      printer2[destination.x][destination.y] = 'B';
+      printer2[destination.getX()][destination.getY()] = 'B';
     }
 
     // Put in links
     for (int i = 0; i < links.size(); i++) {
       if (links.get(i).getOrigin().getDomain().equals(domain1)) {
-        printer1[links.get(i).getOrigin().x][links.get(i).getOrigin().y] = Character.forDigit(i, 10);
+        printer1[links.get(i).getOrigin().getX()][links.get(i).getOrigin().getY()] = Character.forDigit(i, 10);
       }
       if (links.get(i).getOrigin().getDomain().equals(domain2)) {
-        printer2[links.get(i).getOrigin().x][links.get(i).getOrigin().y] = Character.forDigit(i, 10);
+        printer2[links.get(i).getOrigin().getX()][links.get(i).getOrigin().getY()] = Character.forDigit(i, 10);
       }
       if (links.get(i).getDestination().getDomain().equals(domain1)) {
-        printer1[links.get(i).getDestination().x][links.get(i).getDestination().y] = Character.forDigit(i, 10);
+        printer1[links.get(i).getDestination().getX()][links.get(i).getDestination().getY()] = Character.forDigit(i, 10);
       }
       if (links.get(i).getDestination().getDomain().equals(domain2)) {
-        printer2[links.get(i).getDestination().x][links.get(i).getDestination().y] = Character.forDigit(i, 10);
+        printer2[links.get(i).getDestination().getX()][links.get(i).getDestination().getY()] = Character.forDigit(i, 10);
       }
     }
   }
@@ -196,38 +162,30 @@ class TwoLevelBreadthFirstSearchTest {
     }
   }
 
-  public static class Cell2D implements Locatable<Cell2D, Domain> {
+  public static class Point3D extends Cell<Point3D, Domain> {
 
-    private final int x;
-    private final int y;
     private final Domain domain;
 
-    Cell2D(int x, int y, Domain domain) {
-      this.x = x;
-      this.y = y;
+    public Point3D(int x, int y, Domain domain) {
+      super(x, y, 0, domain.getName(), name -> domain);
       this.domain = domain;
     }
 
     @Override
-    public double distanceToSquared(Cell2D other) {
-      return (this.x - other.x) * (this.x - other.x) + (this.y - other.y) * (this.y - other.y);
-    }
-
-    @Override
-    public Domain getDomain() {
-      return this.domain;
+    public double distanceToSquared(Point3D other) {
+      return this.getX() * other.getX() + this.getY() * other.getY() + this.z * other.z;
     }
 
     public String print() {
-      return String.format("(%d, %d, %s)", x, y, domain.getName());
+      return String.format("(%d, %d, %d, %s)", x, y, z, domain.getName());
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      Cell2D cell = (Cell2D) o;
-      return x == cell.x && y == cell.y && Objects.equals(domain, cell.domain);
+      Point3D that = (Point3D) o;
+      return this.x == that.x && this.y == that.y && this.z == that.z && this.getDomain().equals(that.getDomain());
     }
 
     @Override
@@ -236,28 +194,28 @@ class TwoLevelBreadthFirstSearchTest {
     }
   }
 
-  public static class TestLink implements Link<Cell2D, Domain> {
+  public static class TestLink implements Link<Point3D, Domain> {
 
-    private final Cell2D origin;
-    private final Cell2D destination;
+    private final Point3D origin;
+    private final Point3D destination;
 
-    public TestLink(Cell2D origin, Cell2D destination) {
+    public TestLink(Point3D origin, Point3D destination) {
       this.origin = origin;
       this.destination = destination;
     }
 
     @Override
-    public Cell2D getOrigin() {
+    public Point3D getOrigin() {
       return origin;
     }
 
     @Override
-    public Cell2D getDestination() {
+    public Point3D getDestination() {
       return destination;
     }
 
     @Override
-    public Completion<Cell2D, Domain> getCompletion() {
+    public Completion<Point3D, Domain> getCompletion() {
       return loc -> loc.equals(destination);
     }
 
@@ -292,42 +250,106 @@ class TwoLevelBreadthFirstSearchTest {
     }
   }
 
-  public class StepMode implements Mode<Cell2D, Domain> {
+  public class StepMode extends Mode<Point3D, Domain> {
 
     @Override
-    public Map<Cell2D, Double> getDestinations(Cell2D origin) {
-      Map<Cell2D, Double> map = new HashMap<>();
+    public void collectDestinations(Point3D origin) {
       for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
           if (i == 0 && j == 0) continue;
-          if (origin.x + i < 0) continue;
-          if (origin.x + i >= boardSize) continue;
-          if (origin.y + j < 0) continue;
-          if (origin.y + j >= boardSize) continue;
-          Cell2D adding = null;
+          if (origin.getX() + i < 0) continue;
+          if (origin.getX() + i >= boardSize) continue;
+          if (origin.getY() + j < 0) continue;
+          if (origin.getY() + j >= boardSize) continue;
+          Point3D adding = null;
           if (origin.getDomain().equals(domain1)) {
-            // Make sure we can't go diagonally if adjacent borders won't allow such a move
-            if (i * i * j * j == 1 && board1[origin.x + i][origin.y] == null && board1[origin.x][origin.y + j] == null)
+            // Make sure we can't go diagonal.getY() if adjacent borders won't allow such a move
+            if (i * i * j * j == 1 && board1[origin.getX() + i][origin.getY()] == null && board1[origin.getX()][origin.getY() + j] == null)
               continue;
-            adding = board1[origin.x + i][origin.y + j];
+            adding = board1[origin.getX() + i][origin.getY() + j];
           }
           if (origin.getDomain().equals(domain2)) {
-            // Make sure we can't go diagonally if adjacent borders won't allow such a move
-            if (i * i * j * j == 1 && board2[origin.x + i][origin.y] == null && board2[origin.x][origin.y + j] == null)
+            // Make sure we can't go diagonal.getY() if adjacent borders won't allow such a move
+            if (i * i * j * j == 1 && board2[origin.getX() + i][origin.getY()] == null && board2[origin.getX()][origin.getY() + j] == null)
               continue;
-            adding = board2[origin.x + i][origin.y + j];
+            adding = board2[origin.getX() + i][origin.getY() + j];
           }
           if (adding != null) {
-            map.put(adding, origin.distanceTo(adding));
+            accept(adding, origin.distanceTo(adding));
           }
         }
       }
-      return map;
     }
 
     @Override
     public ModeType getType() {
       return null;
+    }
+  }
+
+  @AllArgsConstructor
+  public class TestSearchTracker implements SearchTracker<Point3D, Domain> {
+
+    private final char[][] printer1;
+    private final char[][] printer2;
+    private final List<Link<Point3D, Domain>> links;
+
+    @Override
+    public void acceptResult(Point3D cell, Result result, ModeType type) {
+      // nothing
+    }
+
+    @Override
+    public void foundNewOptimalPath(Path<Point3D, Domain> path, Completion<Point3D, Domain> completion) {
+      // nothing
+    }
+
+    @Override
+    public void startTrailSearch(Point3D origin, Point3D destination) {
+      // nothing
+    }
+
+    @Override
+    public void trailSearchVisitation(Step<Point3D, Domain> step) {
+      Point3D cell = step.getLocatable();
+      System.out.printf("Distance to destination: %f\n", cell.distanceTo(links.get(1).getOrigin()));
+      if (cell.getDomain().equals(domain1)) {
+        printer1[cell.getX()][cell.getY()] = '+';
+      }
+      if (cell.getDomain().equals(domain2)) {
+        printer2[cell.getX()][cell.getY()] = '+';
+      }
+      // Print boards
+      System.out.println("Board 1:");
+      printPrinter(printer1, boardSize);
+      System.out.println("Board 2:");
+      printPrinter(printer2, boardSize);
+    }
+
+    @Override
+    public void trailSearchStep(Step<Point3D, Domain> step) {
+      Point3D cell = step.getLocatable();
+      if (cell.getDomain().equals(domain1)) {
+        printer1[cell.getX()][cell.getY()] = '.';
+      }
+      if (cell.getDomain().equals(domain2)) {
+        printer2[cell.getX()][cell.getY()] = '.';
+      }
+      // Print boards
+      System.out.println("Board 1:");
+      printPrinter(printer1, boardSize);
+      System.out.println("Board 2:");
+      printPrinter(printer2, boardSize);
+    }
+
+    @Override
+    public void finishTrailSearch(Point3D origin, Point3D destination, double distance) {
+      clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
+    }
+
+    @Override
+    public void memoryCapacityReached(Point3D origin, Point3D destination) {
+
     }
   }
 }

@@ -29,25 +29,25 @@ import edu.whimc.indicator.spigot.util.SpigotUtil;
 import org.bukkit.Material;
 import org.bukkit.World;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class WalkMode implements Mode<LocationCell, World> {
+public class WalkMode extends Mode<LocationCell, World> {
 
   @Override
-  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
-    Map<LocationCell, Double> locations = new HashMap<>();
-
+  public void collectDestinations(LocationCell origin) {
+    LocationCell cell;
+    LocationCell cell2;
     // Can you drop into an inhabitable block?
+    cell = origin.createLocatableAtOffset(0, -1, 0);
     if (SpigotUtil.canStandOn(origin.getBlockAtOffset(0, -2, 0))
-        || SpigotUtil.canStandIn(origin.getBlockAtOffset(0, -1, 0))) {
-      locations.put(origin.createLocatableAtOffset(0, -1, 0), 1d);
+        || SpigotUtil.canStandIn(cell.getBlock())) {
+      accept(cell, 1d);
+    } else {
+      reject(cell);
     }
 
     // Can we even stand here?
     if (!SpigotUtil.canStandOn(origin.getBlockAtOffset(0, -1, 0))
         && !SpigotUtil.canStandIn(origin.getBlockAtOffset(0, 0, 0))) {
-      return locations;
+      return;
     }
 
     // 1 block away
@@ -60,31 +60,41 @@ public class WalkMode implements Mode<LocationCell, World> {
           for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
             if (offXIn == 0 && offZIn == 0) continue;
             for (int offY = 0; offY <= 1; offY++) { // Check two blocks tall
-              if (!SpigotUtil.isLaterallyPassable(origin.getBlockAtOffset(offXIn * offX /* get sign back */, offY, offZIn * offZ))) {
+              cell = origin.createLocatableAtOffset(offXIn * offX /* get sign back */, offY, offZIn * offZ);
+              if (!SpigotUtil.isLaterallyPassable(cell.getBlock())) {
+                reject(cell);
                 continue outerZ;  // Barrier - invalid move
               }
             }
           }
         }
+
         // We can move to offX and offY laterally
-        if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))) {
+        cell = origin.createLocatableAtOffset(offX, 0, offZ);
+        if (!SpigotUtil.isVerticallyPassable(cell.getBlock())) {
           // We can just stand right here (carpets, slabs, etc.)
-          LocationCell other = origin.createLocatableAtOffset(offX, 0, offZ);
-          locations.put(other, origin.distanceTo(other));
+          accept(cell, origin.distanceTo(cell));
+        } else {
+          reject(cell);
         }
+
         for (int offY = -1; offY >= -4; offY--) {  // Check for floor anywhere up to a 3 block fall
-          if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(offX, offY, offZ))) {
-            if (origin.getBlockAtOffset(offX, offY + 2, offZ).getType().equals(Material.WATER)) {
+          cell = origin.createLocatableAtOffset(offX, offY, offZ);
+          if (!SpigotUtil.isVerticallyPassable(cell.getBlock())) {
+            cell2 = origin.createLocatableAtOffset(offX, offY + 2, offZ);
+            if (cell2.getBlock().getType().equals(Material.WATER)) {
+              reject(cell2);
               break;  // Water (drowning) - invalid destination
             }
             LocationCell other = origin.createLocatableAtOffset(offX, offY + 1, offZ);
-            locations.put(other, origin.distanceTo(other));
+            accept(other, origin.distanceTo(other));
             break;
+          } else {
+            reject(cell);
           }
         }
       }
     }
-    return locations;
   }
 
   @Override

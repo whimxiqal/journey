@@ -21,12 +21,35 @@
 
 package edu.whimc.indicator.common.path;
 
+import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
+import edu.whimc.indicator.common.search.tracker.SearchTracker;
+
+import java.util.HashMap;
 import java.util.Map;
 
-public interface Mode<T extends Locatable<T, D>, D> {
+public abstract class Mode<T extends Cell<T, D>, D> {
 
-  Map<T, Double> getDestinations(T origin);
+  private Map<T, Double> map = new HashMap<>();
+  private SearchTracker<T, D> tracker = new BlankSearchTracker<>();
 
-  ModeType getType();
+  public final Map<T, Double> getDestinations(T origin, SearchTracker<T, D> tracker) {
+    this.map = new HashMap<>();
+    this.tracker = tracker;
+    collectDestinations(origin);
+    return map;
+  }
+
+  protected final void accept(T destination, double distance) {
+    this.map.put(destination, distance);
+    tracker.acceptResult(destination, SearchTracker.Result.SUCCESS, getType());
+  }
+
+  protected final void reject(T destination) {
+    tracker.acceptResult(destination, SearchTracker.Result.FAILURE, getType());
+  }
+
+  protected abstract void collectDestinations(T origin);
+
+  public abstract ModeType getType();
 
 }

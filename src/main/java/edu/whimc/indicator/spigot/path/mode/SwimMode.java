@@ -6,14 +6,10 @@ import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.World;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class SwimMode implements Mode<LocationCell, World> {
+public class SwimMode extends Mode<LocationCell, World> {
   @Override
-  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
+  public void collectDestinations(LocationCell origin) {
     // TODO implement
-    return new HashMap<>();
   }
 
   @Override

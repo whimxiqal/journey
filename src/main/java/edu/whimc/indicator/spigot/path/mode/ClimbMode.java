@@ -8,34 +8,24 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class ClimbMode implements Mode<LocationCell, World> {
+public final class ClimbMode extends Mode<LocationCell, World> {
   @Override
-  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
-    Map<LocationCell, Double> ladderBlocks = new HashMap<>();
+  protected void collectDestinations(LocationCell origin) {
+    tryToClimb(origin.getBlockAtOffset(1, 0, 0));
+    tryToClimb(origin.getBlockAtOffset(-1, 0, 0));
+    tryToClimb(origin.getBlockAtOffset(0, 1, 0));
+    tryToClimb(origin.getBlockAtOffset(0, -1, 0));
+    tryToClimb(origin.getBlockAtOffset(0, 0, 1));
+    tryToClimb(origin.getBlockAtOffset(0, 0, -1));
+  }
 
-    if (canClimb(origin.getBlockAtOffset(1, 0, 0))) {
-      ladderBlocks.put(origin.createLocatableAtOffset(1, 0, 0), 1.0d);
+  private void tryToClimb(Block block) {
+    LocationCell cell = new LocationCell(block.getLocation());
+    if (canClimb(block)) {
+      accept(cell, 1.0d);
+    } else {
+      reject(cell);
     }
-    if (canClimb(origin.getBlockAtOffset(-1, 0, 0))) {
-      ladderBlocks.put(origin.createLocatableAtOffset(-1, 0, 0), 1.0d);
-    }
-    if (canClimb(origin.getBlockAtOffset(0, 1, 0))) {
-      ladderBlocks.put(origin.createLocatableAtOffset(0, 1, 0), 1.0d);
-    }
-    if (canClimb(origin.getBlockAtOffset(0, -1, 0))) {
-      ladderBlocks.put(origin.createLocatableAtOffset(0, -1, 0), 1.0d);
-    }
-    if (canClimb(origin.getBlockAtOffset(0, 0, 1))) {
-      ladderBlocks.put(origin.createLocatableAtOffset(0, 0, 1), 1.0d);
-    }
-    if (canClimb(origin.getBlockAtOffset(0, 0, -1))) {
-      ladderBlocks.put(origin.createLocatableAtOffset(0, 0, -1), 1.0d);
-    }
-
-    return ladderBlocks;
   }
 
   private boolean canClimb(Block block) {

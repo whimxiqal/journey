@@ -12,16 +12,15 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Door;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class DoorMode implements Mode<LocationCell, World> {
+public final class DoorMode extends Mode<LocationCell, World> {
 
   @Override
-  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
-    Map<LocationCell, Double> doorFloors = new HashMap<>();
+  public void collectDestinations(LocationCell origin) {
+    LocationCell cell;
+    Block block;
     // Pos X - East
-    Block block = origin.getBlockAtOffset(1, 0, 0);
+    cell = origin.createLocatableAtOffset(1, 0, 0);
+    block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
       // Check it's a solid floor
@@ -33,26 +32,33 @@ public class DoorMode implements Mode<LocationCell, World> {
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            doorFloors.put(origin.createLocatableAtOffset(1, 0, 0), 1.0d);
+            accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getBlockData())) {
               // We can step on a pressure plate to open it
-              doorFloors.put(origin.createLocatableAtOffset(1, 0, 0), 1.0d);
-            } else {
+              accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d);
+            } else if (false) {
               // TODO Find any buttons or levers nearby
+            } else {
+              reject(origin.createLocatableAtOffset(1, 0, 0));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          doorFloors.put(origin.createLocatableAtOffset(1, 0, 0), 1d);
+          accept(origin.createLocatableAtOffset(1, 0, 0), 1d);
         }
+      } else {
+        reject(origin.createLocatableAtOffset(1, -1, 0));
       }
+    } else {
+      reject(new LocationCell(block.getLocation()));
     }
 
     // Pos Z - North
-    block = origin.getBlockAtOffset(0, 0, 1);
+    cell = origin.createLocatableAtOffset(0, 0, 1);
+    block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
       // Check it's a solid floor
@@ -64,26 +70,33 @@ public class DoorMode implements Mode<LocationCell, World> {
               || doorBlock.getFacing().equals(BlockFace.WEST)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            doorFloors.put(origin.createLocatableAtOffset(0, 0, 1), 1.0d);
+            accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getBlockData())) {
               // We can step on a pressure plate to open it
-              doorFloors.put(origin.createLocatableAtOffset(0, 0, 1), 1.0d);
-            } else {
+              accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d);
+            } else if (false) {
               // TODO Find any buttons or levers nearby
+            } else {
+              reject(origin.createLocatableAtOffset(1, 0, 0));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          doorFloors.put(origin.createLocatableAtOffset(0, 0, 1), 1d);
+          accept(origin.createLocatableAtOffset(0, 0, 1), 1d);
         }
+      } else {
+        reject(origin.createLocatableAtOffset(1, -1, 0));
       }
+    } else {
+      reject(new LocationCell(block.getLocation()));
     }
 
     // Neg X - West
-    block = origin.getBlockAtOffset(-1, 0, 0);
+    cell = origin.createLocatableAtOffset(-1, 0, 0);
+    block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
       // Check it's a solid floor
@@ -95,26 +108,33 @@ public class DoorMode implements Mode<LocationCell, World> {
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            doorFloors.put(origin.createLocatableAtOffset(-1, 0, 0), 1.0d);
+            accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getBlockData())) {
               // We can step on a pressure plate to open it
-              doorFloors.put(origin.createLocatableAtOffset(-1, 0, 0), 1.0d);
-            } else {
+              accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d);
+            } else if (false) {
               // TODO Find any buttons or levers nearby
+            } else {
+              reject(origin.createLocatableAtOffset(1, 0, 0));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          doorFloors.put(origin.createLocatableAtOffset(-1, 0, 0), 1d);
+          accept(origin.createLocatableAtOffset(-1, 0, 0), 1d);
         }
+      } else {
+        reject(origin.createLocatableAtOffset(1, -1, 0));
       }
+    } else {
+      reject(new LocationCell(block.getLocation()));
     }
 
     // Neg Z - South
-    block = origin.getBlockAtOffset(0, 0, -1);
+    cell = origin.createLocatableAtOffset(0, 0, -1);
+    block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
       // Check it's a solid floor
@@ -126,25 +146,30 @@ public class DoorMode implements Mode<LocationCell, World> {
               || doorBlock.getFacing().equals(BlockFace.WEST)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            doorFloors.put(origin.createLocatableAtOffset(0, 0, -1), 1.0d);
+            accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getBlockData())) {
               // We can step on a pressure plate to open it
-              doorFloors.put(origin.createLocatableAtOffset(0, 0, -1), 1.0d);
-            } else {
+              accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d);
+            } else if (false) {
               // TODO Find any buttons or levers nearby
+            } else {
+              reject(origin.createLocatableAtOffset(1, 0, 0));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          doorFloors.put(origin.createLocatableAtOffset(0, 0, -1), 1d);
+          accept(origin.createLocatableAtOffset(0, 0, -1), 1d);
         }
+      } else {
+        reject(origin.createLocatableAtOffset(1, -1, 0));
       }
+    } else {
+      reject(new LocationCell(block.getLocation()));
     }
 
-    return doorFloors;
   }
 
   @Override

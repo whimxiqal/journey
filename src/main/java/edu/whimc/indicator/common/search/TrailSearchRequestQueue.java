@@ -1,9 +1,10 @@
 package edu.whimc.indicator.common.search;
 
 import com.google.common.collect.Lists;
-import edu.whimc.indicator.common.path.Locatable;
+import edu.whimc.indicator.common.path.Cell;
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.path.Trail;
+import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class TrailSearchRequestQueue<T extends Locatable<T, D>, D> {
+public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
 
   private final LinkedList<TrailSearchRequest<T, D>> originRequestQueue = Lists.newLinkedList();
   private final LinkedList<TrailSearchRequest<T, D>> destinationRequestQueue = Lists.newLinkedList();
@@ -84,7 +85,8 @@ public class TrailSearchRequestQueue<T extends Locatable<T, D>, D> {
   @Nullable
   public Trail<T, D> popAndRunIntelligentlyIf(TrailSearch<T, D> trailSearch,
                                               Collection<Mode<T, D>> modes,
-                                              Predicate<TrailSearchRequest<T, D>> requestPredicate) {
+                                              Predicate<TrailSearchRequest<T, D>> requestPredicate,
+                                              SearchTracker<T, D> tracker) {
     startedPopping = true;
     if (isEmpty()) throw new NoSuchElementException();
     TrailSearchRequest<T, D> request;
@@ -138,7 +140,7 @@ public class TrailSearchRequestQueue<T extends Locatable<T, D>, D> {
       return null;
     }
 
-    Trail<T, D> trail = trailSearch.findOptimalTrail(request, modes);
+    Trail<T, D> trail = trailSearch.findOptimalTrail(request, modes, tracker);
 
     // Mark flags if valid trail was found
     if (Trail.isValid(trail)) {
@@ -155,12 +157,13 @@ public class TrailSearchRequestQueue<T extends Locatable<T, D>, D> {
   @Nullable
   public Trail<T, D> popAndRunLinkRequest(TrailSearch<T, D> trailSearch,
                                           Collection<Mode<T, D>> modes,
-                                          Consumer<TrailSearchRequest<T, D>> requestConsumer) {
+                                          Consumer<TrailSearchRequest<T, D>> requestConsumer,
+                                          SearchTracker<T, D> tracker) {
     startedPopping = true;
     if (linkRequestQueue.isEmpty()) throw new NoSuchElementException();
     TrailSearchRequest<T, D> request = linkRequestQueue.pop();
     requestConsumer.accept(request);
-    return trailSearch.findOptimalTrail(request, modes);
+    return trailSearch.findOptimalTrail(request, modes, tracker);
   }
 
   public void sortByEstimatedLength() {

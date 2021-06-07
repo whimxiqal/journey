@@ -26,7 +26,6 @@ import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.path.Link;
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
-import edu.whimc.indicator.spigot.cache.DebugManager;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.PortalLink;
 import edu.whimc.indicator.spigot.path.mode.*;
@@ -74,9 +73,6 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
 
     // Links
     registerLinks(player::hasPermission, player);
-
-    // Callbacks
-    setCallbacks();
   }
 
   /**
@@ -90,9 +86,6 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
     super(Indicator.getInstance().getTrailCache());
     modes.forEach(this::registerMode);
     registerLinks(permissionPredicate);
-
-    // Callbacks
-    setCallbacks();
   }
 
   private void registerLinks(Predicate<String> permissionSupplier) {
@@ -135,32 +128,6 @@ public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, Wo
       player.spigot().sendMessage(Format.debug("Registering Link: " + link.toString()));
     }
     super.registerLink(link);
-  }
-
-  private void setCallbacks() {
-    DebugManager debugManager = Indicator.getInstance().getDebugManager();
-    setStartTrailSearchCallback((origin, destination) -> {
-      debugManager.broadcastDebugMessage(Format.PREFIX + Format.WARN + "Began" + Format.DEBUG + " a trail search: ");
-      debugManager.broadcastDebugMessage(Format.debug(
-          origin.toString()
-              + " -> "));
-      debugManager.broadcastDebugMessage(Format.debug(destination.toString()));
-    });
-    setFinishTrailSearchCallback((origin, destination, length) -> {
-      debugManager.broadcastDebugMessage(Format.PREFIX + Format.SUCCESS + "Finished" + Format.DEBUG + " a trail search: ");
-      debugManager.broadcastDebugMessage(Format.debug(
-          origin.toString()
-              + " -> "));
-      debugManager.broadcastDebugMessage(Format.debug(destination.toString()));
-      debugManager.broadcastDebugMessage(Format.debug("Length: " + (length > 1000000 ? "Inf" : Math.round(length))));
-    });
-    setMemoryCapacityErrorCallback((origin, destination) -> {
-      debugManager.broadcastDebugMessage(Format.debug("Ran out of allocated memory for a local trail search: "));
-      debugManager.broadcastDebugMessage(Format.debug(
-          origin.toString()
-              + " -> "));
-      debugManager.broadcastDebugMessage(Format.debug(destination.toString()));
-    });
   }
 
 }

@@ -213,8 +213,14 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
       }
     }
     String[] actualArgs = actualArgsList.toArray(new String[0]);
+    return onCommand(sender, command, label, actualArgs, flags);
+  }
 
-    // Main method
+  private boolean onCommand(@NotNull CommandSender sender,
+                            @NotNull Command command,
+                            @NotNull String label,
+                            @NotNull String[] actualArgs,
+                            @NotNull Set<String> flags) {
     if (this.permission != null && !sender.hasPermission(this.permission)) {
       sender.spigot().sendMessage(Format.error("You don't have permission to do this!"));
       return false;
@@ -223,7 +229,11 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
       for (CommandNode child : children) {
         for (String alias : child.aliases) {
           if (alias.equalsIgnoreCase(actualArgs[0])) {
-            return child.onCommand(sender, command, child.getPrimaryAlias(), Arrays.copyOfRange(actualArgs, 1, actualArgs.length));
+            return child.onCommand(sender,
+                command,
+                child.getPrimaryAlias(),
+                Arrays.copyOfRange(actualArgs, 1, actualArgs.length),
+                flags);
           }
         }
       }

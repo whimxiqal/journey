@@ -28,14 +28,10 @@ import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.SpigotUtil;
 import org.bukkit.World;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class FlyMode implements Mode<LocationCell, World> {
+public class FlyMode extends Mode<LocationCell, World> {
   @Override
-  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
-    Map<LocationCell, Double> locations = new HashMap<>();
-
+  public void collectDestinations(LocationCell origin) {
+    LocationCell cell;
     // Check every block in a 3x3 grid centered around the current location
     for (int offX = -1; offX <= 1; offX++) {
       for (int offY = -1; offY <= 1; offY++) {
@@ -51,20 +47,24 @@ public class FlyMode implements Mode<LocationCell, World> {
                 // This is the origin, we don't want to move here
                 if (offXIn == 0 && offYIn == 0 && offZIn == 0) continue;
                 // Make sure we get the pillar of y values for the player's body
-                if (!SpigotUtil.isLaterallyPassable(origin.getBlockAtOffset( // Floor
+                cell = origin.createLocatableAtOffset( // Floor
                     offXIn * offX /* get sign back */,
                     offYIn * offY /* get sign back */,
-                    offZIn * offZ /* get sign back */))) {
+                    offZIn * offZ /* get sign back */);
+                if (!SpigotUtil.isLaterallyPassable(cell.getBlock())) {
+                  reject(cell);
                   continue outerZ;
                 }
                 for (int h = 0; h <= offYIn; h++) {
                   // The rest of the pillar above the floor
-                  if (!SpigotUtil.isPassable(origin.getBlockAtOffset(
+                  cell = origin.createLocatableAtOffset(
                       offXIn * offX /* get sign back */,
                       ((offYIn * offY /* get sign back */ + offYIn) >> 1) /* 1 for positive, 0 for negative */
                           + h
                           + (1 - offYIn) /* for if offYIn is 0 */,
-                      offZIn * offZ /* get sign back */))) {
+                      offZIn * offZ /* get sign back */);
+                  if (!SpigotUtil.isPassable(cell.getBlock())) {
+                    reject(cell);
                     continue outerZ;
                   }
                 }
@@ -72,12 +72,11 @@ public class FlyMode implements Mode<LocationCell, World> {
             }
           }
           LocationCell other = origin.createLocatableAtOffset(offX, offY, offZ);
-          locations.put(other, origin.distanceTo(other));
+          accept(other, origin.distanceTo(other));
         }
       }
     }
 
-    return locations;
   }
 
   @Override

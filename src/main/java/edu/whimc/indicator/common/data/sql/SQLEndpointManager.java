@@ -37,8 +37,8 @@ public abstract class SQLEndpointManager<T extends Cell<T, D>, D> {
 
 
   protected void addEndpoint(@Nullable UUID playerUuid,
-                          @NotNull T cell,
-                          @NotNull String name) throws IllegalArgumentException, DataAccessException {
+                             @NotNull T cell,
+                             @NotNull String name) throws IllegalArgumentException, DataAccessException {
     try (Connection connection = connectionController.establishConnection()) {
       addEndpoint(playerUuid, cell, name, connection, false);
     } catch (SQLException e) {
@@ -83,9 +83,10 @@ public abstract class SQLEndpointManager<T extends Cell<T, D>, D> {
   protected void removeEndpoint(@Nullable UUID playerUuid, @NotNull T cell) throws DataAccessException {
     try (Connection connection = connectionController.establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
+          "DELETE FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
           "player_uuid",
+          playerUuid == null ? "IS" : "=",
           "world_uuid",
           "x",
           "y",
@@ -107,9 +108,10 @@ public abstract class SQLEndpointManager<T extends Cell<T, D>, D> {
   protected void removeEndpoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = connectionController.establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "DELETE FROM %s WHERE %s = ? AND %s = ?;",
+          "DELETE FROM %s WHERE %s %s ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
           "player_uuid",
+          playerUuid == null ? "IS" : "=",
           "name_id"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
@@ -126,9 +128,10 @@ public abstract class SQLEndpointManager<T extends Cell<T, D>, D> {
   protected T getEndpoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = connectionController.establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "SELECT * FROM %s WHERE %s = ? AND %s = ?;",
+          "SELECT * FROM %s WHERE %s %s ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
           "player_uuid",
+          playerUuid == null ? "IS" : "=",
           "name_id"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
@@ -153,9 +156,10 @@ public abstract class SQLEndpointManager<T extends Cell<T, D>, D> {
   protected String getEndpointName(@Nullable UUID playerUuid, @NotNull T cell) throws DataAccessException {
     try (Connection connection = connectionController.establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "SELECT * FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
+          "SELECT * FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
           "player_uuid",
+          playerUuid == null ? "IS" : "=",
           "world_uuid",
           "x",
           "y",
@@ -199,9 +203,10 @@ public abstract class SQLEndpointManager<T extends Cell<T, D>, D> {
   private Map<String, T> getEndpoints(@Nullable UUID playerUuid,
                                       @NotNull Connection connection) throws SQLException {
     PreparedStatement statement = connection.prepareStatement(String.format(
-        "SELECT * FROM %s WHERE %s = ?;",
+        "SELECT * FROM %s WHERE %s %s ?;",
         ENDPOINT_TABLE_NAME,
-        "player_uuid"));
+        "player_uuid",
+        playerUuid == null ? "IS" : "="));
 
     statement.setString(1, playerUuid == null ? null : playerUuid.toString());
 
@@ -225,10 +230,10 @@ public abstract class SQLEndpointManager<T extends Cell<T, D>, D> {
           + "name_id varchar(32) NOT NULL, "
           + "name varchar(32) NOT NULL, "
           + "world_uuid char(36) NOT NULL, "
-          + "x int(7), "
-          + "y int(7), "
-          + "z int(7), "
-          + "timestamp integer"
+          + "x int(7) NOT NULL, "
+          + "y int(7) NOT NULL, "
+          + "z int(7) NOT NULL, "
+          + "timestamp integer NOT NULL"
           + ");";
       connection.prepareStatement(tableStatement).execute();
 

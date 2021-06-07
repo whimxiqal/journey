@@ -22,6 +22,7 @@
 package edu.whimc.indicator.common.search;
 
 import edu.whimc.indicator.common.path.*;
+import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class TrailSearch<T extends Locatable<T, D>, D> {
+public class TrailSearch<T extends Cell<T, D>, D> {
 
   public static final int MAX_SIZE = 10000;
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 2;
@@ -44,17 +45,21 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
   private Consumer<Step<T, D>> stepCallback = loc -> {
   };
 
+
   @Nullable
-  public Trail<T, D> findOptimalTrail(TrailSearchRequest<T, D> request, Collection<Mode<T, D>> modes) {
+  public Trail<T, D> findOptimalTrail(TrailSearchRequest<T, D> request, Collection<Mode<T, D>> modes, SearchTracker<T, D> tracker) {
     return findOptimalTrail(request.getOrigin(),
         request.getDestination(),
         modes,
-        request.getCancellation());
+        request.getCancellation(),
+        tracker);
   }
 
   @Nullable
   public Trail<T, D> findOptimalTrail(T origin, T destination,
-                                      Collection<Mode<T, D>> modes, Supplier<Boolean> cancellation) {
+                                      Collection<Mode<T, D>> modes,
+                                      Supplier<Boolean> cancellation,
+                                      SearchTracker<T, D> tracker) {
     if (!origin.getDomain().equals(destination.getDomain())) {
       throw new IllegalArgumentException("The input locatables ["
           + origin + " and "
@@ -97,7 +102,7 @@ public class TrailSearch<T extends Locatable<T, D>, D> {
 
       // Need to keep going
       for (Mode<T, D> mode : modes) {
-        for (Map.Entry<T, Double> next : mode.getDestinations(current.getData().getLocatable()).entrySet()) {
+        for (Map.Entry<T, Double> next : mode.getDestinations(current.getData().getLocatable(), tracker).entrySet()) {
           if (visited.containsKey(next.getKey())) {
             // Already visited, but see if it is better to come from this new direction
             if (current.getScore() + next.getValue() < visited.get(next.getKey()).getScore()) {

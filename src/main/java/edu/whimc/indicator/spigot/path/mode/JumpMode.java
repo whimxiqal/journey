@@ -28,23 +28,26 @@ import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.SpigotUtil;
 import org.bukkit.World;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class JumpMode implements Mode<LocationCell, World> {
+public class JumpMode extends Mode<LocationCell, World> {
   @Override
-  public Map<LocationCell, Double> getDestinations(LocationCell origin) {
-    Map<LocationCell, Double> locations = new HashMap<>();
-    if (SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(0, -1, 0))) {
+  public void collectDestinations(LocationCell origin) {
+    LocationCell cell;
+
+    cell = origin.createLocatableAtOffset(0, -1, 0);
+    if (SpigotUtil.isVerticallyPassable(cell.getBlock())) {
       // Nothing to jump off of
-      return locations;
+      reject(cell);
+      return;
     }
-    if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(0, 2, 0))) {
+
+    cell = origin.createLocatableAtOffset(0, 2, 0);
+    if (!SpigotUtil.isVerticallyPassable(cell.getBlock())) {
       // No room to jump
-      return locations;
+      reject(cell);
+      return;
     }
     // 1 block up
-    locations.put(origin.createLocatableAtOffset(0, 1, 0), 1.0d);
+    accept(origin.createLocatableAtOffset(0, 1, 0), 1.0d);
 
     // 1 block away and up
     for (int offX = -1; offX <= 1; offX++) {
@@ -54,36 +57,40 @@ public class JumpMode implements Mode<LocationCell, World> {
           for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
             if (offXIn == 0 && offZIn == 0) continue;
             // Check two blocks tall
-            if (!SpigotUtil.isLaterallyPassable(origin.getBlockAtOffset(
+            cell = origin.createLocatableAtOffset(
                 offXIn * offX /* get sign back */,
                 1,
-                offZIn * offZ /* get sign back */))) {
+                offZIn * offZ /* get sign back */);
+            if (!SpigotUtil.isLaterallyPassable(cell.getBlock())) {
+              reject(cell);
               continue outerZ;
             }
-            if (!SpigotUtil.isPassable(origin.getBlockAtOffset(
+            cell = origin.createLocatableAtOffset(
                 offXIn * offX /* get sign back */,
                 2,
-                offZIn * offZ /* get sign back */))) {
+                offZIn * offZ /* get sign back */);
+            if (!SpigotUtil.isPassable(cell.getBlock())) {
+              reject(cell);
               continue outerZ;
             }
           }
         }
-        double jumpDistance = (origin.getBlockAtOffset(offX, 1, offZ).getBoundingBox().getHeight()
+        double jumpDistance = (origin.getBlockAtOffset(offX, 1, offZ).getBoundingBox().getMaxY()
             + 1.0
             - (origin.getBlockAtOffset(0, 0, 0).isPassable()
-            ? origin.getBlockAtOffset(0, -1, 0).getBoundingBox().getHeight() - 1
-            : origin.getBlockAtOffset(0, 0, 0).getBoundingBox().getHeight()));
+            ? origin.getBlockAtOffset(0, -1, 0).getBoundingBox().getMaxY() - 1
+            : origin.getBlockAtOffset(0, 0, 0).getBoundingBox().getMaxY()));
+        LocationCell other = origin.createLocatableAtOffset(offX, 1, offZ);
         if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
             && jumpDistance <= 1.2) {
           // Can stand here
-          LocationCell other = origin.createLocatableAtOffset(offX, 1, offZ);
-          locations.put(other, origin.distanceTo(other));
-          break;
+          accept(other, origin.distanceTo(other));
+//          break; I don't think this goes here?
+        } else {
+          reject(other);
         }
       }
     }
-
-    return locations;
   }
 
   @Override
