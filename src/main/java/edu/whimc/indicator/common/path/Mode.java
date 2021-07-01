@@ -21,7 +21,6 @@
 
 package edu.whimc.indicator.common.path;
 
-import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
 
 import java.util.HashMap;
@@ -30,7 +29,7 @@ import java.util.Map;
 public abstract class Mode<T extends Cell<T, D>, D> {
 
   private Map<T, Double> map = new HashMap<>();
-  private SearchTracker<T, D> tracker = new BlankSearchTracker<>();
+  private SearchTracker<T, D> tracker;
 
   public final Map<T, Double> getDestinations(T origin, SearchTracker<T, D> tracker) {
     this.map = new HashMap<>();

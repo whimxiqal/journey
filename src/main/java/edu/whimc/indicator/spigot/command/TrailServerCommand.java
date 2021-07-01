@@ -4,6 +4,7 @@ import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.data.DataAccessException;
 import edu.whimc.indicator.common.data.ServerEndpointManager;
 import edu.whimc.indicator.common.tools.BufferedSupplier;
+import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.common.util.Validator;
 import edu.whimc.indicator.spigot.command.common.*;
 import edu.whimc.indicator.spigot.path.LocationCell;
@@ -17,12 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TrailServerCommand extends FunctionlessCommandNode {
 
   public TrailServerCommand(@NotNull CommandNode parent) {
     super(parent,
-        Permissions.TRAIL_BLAZE_PERMISSION,
+        Permissions.TRAIL_USE_PERMISSION,
         "Use server-wide locations in trails",
         "server");
 
@@ -35,9 +37,10 @@ public class TrailServerCommand extends FunctionlessCommandNode {
   private static BufferedSupplier<List<String>> bufferedServerLocationSupplier() {
     return new BufferedSupplier<>(() -> {
       try {
-        return new ArrayList<>(Indicator.getInstance().getDataManager()
+        return Indicator.getInstance().getDataManager()
             .getServerEndpointManager()
-            .getServerEndpoints().keySet());
+            .getServerEndpoints().keySet()
+            .stream().map(Extra::quoteStringWithSpaces).collect(Collectors.toList());
       } catch (DataAccessException e) {
         return new LinkedList<>();
       }
@@ -48,7 +51,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
 
     public TrailServerBlazeCommand(@NotNull CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_BLAZE_PERMISSION,
+          Permissions.TRAIL_USE_PERMISSION,
           "Blaze a trail to a server destination",
           "blaze");
 
@@ -68,7 +71,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
 
       if (args.length == 0) {
         sendCommandError(player, CommandError.FEW_ARGUMENTS);
@@ -83,7 +86,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
         endLocation = serverEndpointManager.getServerEndpoint(args[0]);
 
         if (endLocation == null) {
-          player.spigot().sendMessage(Format.error("The server location ", Format.INFO + "" + args[0], " could not be found"));
+          player.spigot().sendMessage(Format.error("The server location ", Format.toPlain(Format.note(args[0])), " could not be found"));
           return false;
         }
       } catch (IllegalArgumentException e) {
@@ -91,29 +94,26 @@ public class TrailServerCommand extends FunctionlessCommandNode {
         return false;
       }
 
-      if (TrailCommand.blazeTrailTo(player, endLocation, flags, TrailCommand.getTimeout(player, args, 4))) {
-
-        player.spigot().sendMessage(Format.success("Blazing a trail to "));
-        player.spigot().sendMessage(Format.success(" " + Format.toPlain(Format.locationCell(endLocation, Format.SUCCESS)) + " !"));
+      if (TrailCommand.blazeTrailTo(player, endLocation, flags)) {
 
         // Check if we should save a server endpoint
-        if (args.length >= 6) {
+        if (args.length >= 5) {
           if (serverEndpointManager.hasServerEndpoint(endLocation)) {
             player.spigot().sendMessage(Format.error("A server location already exists at that location!"));
             return false;
           }
-          if (serverEndpointManager.hasServerEndpoint(args[5])) {
+          if (serverEndpointManager.hasServerEndpoint(args[4])) {
             player.spigot().sendMessage(Format.error("A server location already exists with that name!"));
             return false;
           }
-          if (!Validator.isValidDataName(args[5])) {
-            player.spigot().sendMessage(Format.error("Your server name ", Format.toPlain(Format.note(args[5])), " contains illegal characters"));
+          if (!Validator.isValidDataName(args[4])) {
+            player.spigot().sendMessage(Format.error("Your server name ", Format.toPlain(Format.note(args[4])), " contains illegal characters"));
             return false;
           }
           // Save it!
-          serverEndpointManager.addServerEndpoint(endLocation, args[5]);
+          serverEndpointManager.addServerEndpoint(endLocation, args[4]);
           player.spigot().sendMessage(Format.success("Saved your server location with name ",
-              Format.toPlain(Format.note(args[5])),
+              Format.toPlain(Format.note(args[4])),
               "!"));
         }
 
@@ -148,7 +148,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
       if (args.length < 1) {
         sendCommandError(player, CommandError.FEW_ARGUMENTS);
         return false;
@@ -159,10 +159,10 @@ public class TrailServerCommand extends FunctionlessCommandNode {
           .getServerEndpointManager();
       if (endpointManager.hasServerEndpoint(args[0])) {
         Indicator.getInstance().getDataManager().getServerEndpointManager().removeServerEndpoint(args[0]);
-        player.spigot().sendMessage(Format.success("The server location ", Format.INFO + "" + args[0], " has been removed"));
+        player.spigot().sendMessage(Format.success("The server location ", Format.toPlain(Format.note(args[0])), " has been removed"));
         return true;
       } else {
-        player.spigot().sendMessage(Format.error("The server location ", Format.INFO + "" + args[0], " could not be found"));
+        player.spigot().sendMessage(Format.error("The server location ", Format.toPlain(Format.note(args[0])), " could not be found"));
         return false;
       }
     }
@@ -175,7 +175,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
 
     public TrailServerListCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_BLAZE_PERMISSION,
+          Permissions.TRAIL_USE_PERMISSION,
           "List saved server destinations",
           "list");
       addSubcommand(Parameter.builder()
@@ -192,7 +192,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
       int pageNumber;
       if (args.length > 0) {
         try {
@@ -268,7 +268,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
 
       if (args.length == 0) {
         sendCommandError(player, CommandError.FEW_ARGUMENTS);

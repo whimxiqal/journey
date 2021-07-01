@@ -28,10 +28,18 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
 
-public final class ModeType implements Serializable {
+public enum ModeType implements Serializable {
 
-  public static final ModeType NONE = ModeType.of("none", false);  // Origin, for example
-  private static PrimeUtil primeUtil = null;
+  NONE("none", false),  // Origin, for example
+  WALK("walk", true),
+  JUMP("jump", true),
+  SWIM("swim", true),
+  FLY("fly", true),
+  BOAT("boat", false),
+  RAIL("rail", false),
+  BUILD("build", false),
+  DOOR("door", true),
+  CLIMB("climb", true);
 
   @Getter
   private final String id;
@@ -42,30 +50,10 @@ public final class ModeType implements Serializable {
   @Getter
   private final boolean common;
 
-  private ModeType(@NotNull String id, boolean common, int primeIdentifier) {
+  ModeType(@NotNull String id, boolean common) {
     this.id = id;
     this.common = common;
-    this.primeIdentifier = primeIdentifier;
-  }
-
-  public static ModeType of(String id, boolean common) {
-    if (primeUtil == null) {
-      primeUtil = new PrimeUtil();
-    }
-    return new ModeType(id, common, primeUtil.getNextPrime());
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    ModeType modeType = (ModeType) o;
-    return id.equals(modeType.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
+    this.primeIdentifier = PrimeUtil.getNextPrime();
   }
 
   @Override

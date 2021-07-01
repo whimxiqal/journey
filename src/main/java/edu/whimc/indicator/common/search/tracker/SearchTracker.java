@@ -1,6 +1,7 @@
 package edu.whimc.indicator.common.search.tracker;
 
 import edu.whimc.indicator.common.path.*;
+import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
 
 public interface SearchTracker<T extends Cell<T, D>, D> {
 
@@ -9,18 +10,22 @@ public interface SearchTracker<T extends Cell<T, D>, D> {
     SUCCESS
   }
 
-  void acceptResult(T cell, Result result, ModeType modeType);
+ void searchStarted(TwoLevelBreadthFirstSearch<T, D> search);
 
-  void foundNewOptimalPath(Path<T, D> path, Completion<T, D> completion);
+ void acceptResult(T cell, Result result, ModeType modeType);
 
-  void startTrailSearch(T origin, T destination);
+ void foundNewOptimalPath(Path<T, D> path);
 
-  void trailSearchVisitation(Step<T, D> step);
+ void startTrailSearch(T origin, T destination);
 
-  void trailSearchStep(Step<T, D> step);
+ void trailSearchVisitation(Step<T, D> step);
 
-  void finishTrailSearch(T origin, T destination, double distance);
+ void trailSearchStep(Step<T, D> step);
 
-  void memoryCapacityReached(T origin, T destination);
+ void completeTrailSearch(T origin, T destination, double distance);
+
+ void memoryCapacityReached(T origin, T destination);
+
+ void searchStopped(TwoLevelBreadthFirstSearch<T, D> search);
 
 }

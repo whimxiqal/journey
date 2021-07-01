@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 public class IndicatorInvalidateCommand extends CommandNode {
@@ -24,7 +25,7 @@ public class IndicatorInvalidateCommand extends CommandNode {
                                   @NotNull Command command,
                                   @NotNull String label,
                                   @NotNull String[] args,
-                                  @NotNull Set<String> flags) {
+                                  @NotNull Map<String, String> flags) {
     Indicator.getInstance().getTrailCache().clear();
     sender.spigot().sendMessage(Format.success("Cleared cache"));
     return true;

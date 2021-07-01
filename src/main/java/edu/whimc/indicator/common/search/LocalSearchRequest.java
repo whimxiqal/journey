@@ -6,11 +6,11 @@ import lombok.Data;
 import java.util.function.Supplier;
 
 @Data
-public class TrailSearchRequest<T extends Locatable<T, D>, D> {
+public class LocalSearchRequest<T extends Locatable<T, D>, D> {
   private final T origin;
   private final T destination;
-  private final PathEdgeGraph.Node originNode;
-  private final PathEdgeGraph.Node destinationNode;
+  private final PathEdgeWeightedGraph.Node originNode;
+  private final PathEdgeWeightedGraph.Node destinationNode;
   private final Supplier<Boolean> cancellation;
   private final boolean cacheable;
 }

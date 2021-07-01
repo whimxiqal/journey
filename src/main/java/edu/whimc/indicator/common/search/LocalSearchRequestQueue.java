@@ -15,11 +15,11 @@ import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
+public class LocalSearchRequestQueue<T extends Cell<T, D>, D> {
 
-  private final LinkedList<TrailSearchRequest<T, D>> originRequestQueue = Lists.newLinkedList();
-  private final LinkedList<TrailSearchRequest<T, D>> destinationRequestQueue = Lists.newLinkedList();
-  private final LinkedList<TrailSearchRequest<T, D>> linkRequestQueue = Lists.newLinkedList();
+  private final LinkedList<LocalSearchRequest<T, D>> originRequestQueue = Lists.newLinkedList();
+  private final LinkedList<LocalSearchRequest<T, D>> destinationRequestQueue = Lists.newLinkedList();
+  private final LinkedList<LocalSearchRequest<T, D>> linkRequestQueue = Lists.newLinkedList();
 
   private boolean foundOriginTrail = false;
   private boolean foundDestinationTrail = false;
@@ -42,7 +42,7 @@ public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
    *
    * @param request the trail request
    */
-  public void addOriginRequest(TrailSearchRequest<T, D> request) {
+  public void addOriginRequest(LocalSearchRequest<T, D> request) {
     if (startedPopping) throw new IllegalStateException("You may not add any more requests "
         + "after you have started popping off the queue");
     this.originRequestQueue.add(request);
@@ -53,7 +53,7 @@ public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
    *
    * @param request the trail request
    */
-  public void addDestinationRequest(TrailSearchRequest<T, D> request) {
+  public void addDestinationRequest(LocalSearchRequest<T, D> request) {
     if (startedPopping) throw new IllegalStateException("You may not add any more requests "
         + "after you have started popping off the queue");
     this.destinationRequestQueue.add(request);
@@ -64,7 +64,7 @@ public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
    *
    * @param request the trail request
    */
-  public void addLinkRequest(TrailSearchRequest<T, D> request) {
+  public void addLinkRequest(LocalSearchRequest<T, D> request) {
     if (startedPopping) throw new IllegalStateException("You may not add any more requests "
         + "after you have started popping off the queue");
     this.linkRequestQueue.add(request);
@@ -78,18 +78,18 @@ public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
    * there are no trails either going from the the overall origin or
    * to the overall destination, fail.
    *
-   * @param trailSearch      the searching environment
+   * @param localSearch      the searching environment
    * @param requestPredicate a predicate to superficially identify if a request is worth pursuing
    * @return the trail from the trail search, or null if the final result is impossible.
    */
   @Nullable
-  public Trail<T, D> popAndRunIntelligentlyIf(TrailSearch<T, D> trailSearch,
+  public Trail<T, D> popAndRunIntelligentlyIf(LocalSearch<T, D> localSearch,
                                               Collection<Mode<T, D>> modes,
-                                              Predicate<TrailSearchRequest<T, D>> requestPredicate,
+                                              Predicate<LocalSearchRequest<T, D>> requestPredicate,
                                               SearchTracker<T, D> tracker) {
     startedPopping = true;
     if (isEmpty()) throw new NoSuchElementException();
-    TrailSearchRequest<T, D> request;
+    LocalSearchRequest<T, D> request;
 
     boolean findingOrigin = false;
     boolean findingDestination = false;
@@ -140,7 +140,7 @@ public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
       return null;
     }
 
-    Trail<T, D> trail = trailSearch.findOptimalTrail(request, modes, tracker);
+    Trail<T, D> trail = localSearch.findOptimalTrail(request, modes, tracker);
 
     // Mark flags if valid trail was found
     if (Trail.isValid(trail)) {
@@ -155,25 +155,25 @@ public class TrailSearchRequestQueue<T extends Cell<T, D>, D> {
   }
 
   @Nullable
-  public Trail<T, D> popAndRunLinkRequest(TrailSearch<T, D> trailSearch,
+  public Trail<T, D> popAndRunLinkRequest(LocalSearch<T, D> localSearch,
                                           Collection<Mode<T, D>> modes,
-                                          Consumer<TrailSearchRequest<T, D>> requestConsumer,
+                                          Consumer<LocalSearchRequest<T, D>> requestConsumer,
                                           SearchTracker<T, D> tracker) {
     startedPopping = true;
     if (linkRequestQueue.isEmpty()) throw new NoSuchElementException();
-    TrailSearchRequest<T, D> request = linkRequestQueue.pop();
+    LocalSearchRequest<T, D> request = linkRequestQueue.pop();
     requestConsumer.accept(request);
-    return trailSearch.findOptimalTrail(request, modes, tracker);
+    return localSearch.findOptimalTrail(request, modes, tracker);
   }
 
   public void sortByEstimatedLength() {
-    Comparator<TrailSearchRequest<T, D>> comparator = Comparator.comparingDouble(this::getApproximateLength);
+    Comparator<LocalSearchRequest<T, D>> comparator = Comparator.comparingDouble(this::getApproximateLength);
     originRequestQueue.sort(comparator);
     destinationRequestQueue.sort(comparator);
     linkRequestQueue.sort(comparator);
   }
 
-  private double getApproximateLength(TrailSearchRequest<T, D> request) {
+  private double getApproximateLength(LocalSearchRequest<T, D> request) {
     return request.getOrigin().distanceToSquared(request.getDestination());
   }
 

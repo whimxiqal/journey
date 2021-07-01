@@ -42,9 +42,12 @@ import java.util.*;
 
 public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
-  public static final int ARG_MAX_LENGTH = 20;
+  public static final int ARG_MAX_LENGTH = 32;
 
+  @Getter
   private final CommandNode parent;
+  @Getter
+  private final CommandNode helpCommand;
   private final Permission permission;
   private final String description;
   private final List<String> aliases = Lists.newLinkedList();
@@ -67,7 +70,6 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                      @NotNull String description,
                      @NotNull String primaryAlias) {
     this(parent, permission, description, primaryAlias, true);
-
   }
 
   /**
@@ -91,16 +93,14 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
     this.description = description;
     this.aliases.add(primaryAlias);
     if (addHelp) {
-      this.children.add(new HelpCommandNode(this));
+      this.helpCommand = new HelpCommandNode(this);
+      addChildren(this.helpCommand);
+    } else {
+      this.helpCommand = null;
     }
   }
 
   // Getters and Setters
-
-  @Nullable
-  public final CommandNode getParent() {
-    return parent;
-  }
 
   @NotNull
   public final Optional<Permission> getPermission() {
@@ -193,10 +193,20 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
     // Adds support for quotations around space-delimited arguments
     List<String> actualArgsList = new LinkedList<>();
-    Set<String> flags = new HashSet<>();
+    Map<String, String> flags = new HashMap<>();
+    String[] flagSplit;
     for (String arg : argsCombined) {
-      if (arg.charAt(0) == '-' && !Extra.isNumber(arg.substring(1))) {
-        flags.add(arg.substring(1));
+      if (arg.isEmpty()) continue;
+      if (arg.charAt(0) == '-') {
+        flagSplit = arg.substring(1).split(":", 2);
+        if (flagSplit.length == 0) continue;
+        if (!Extra.isNumber(flagSplit[0])) {
+          if (flagSplit.length > 1) {
+            flags.put(flagSplit[0].toLowerCase(), flagSplit[1]);
+          } else {
+            flags.put(flagSplit[0].toLowerCase(), "");
+          }
+        }
       } else {
         actualArgsList.add(arg);
       }
@@ -220,7 +230,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                             @NotNull Command command,
                             @NotNull String label,
                             @NotNull String[] actualArgs,
-                            @NotNull Set<String> flags) {
+                            @NotNull Map<String, String> flags) {
     if (this.permission != null && !sender.hasPermission(this.permission)) {
       sender.spigot().sendMessage(Format.error("You don't have permission to do this!"));
       return false;
@@ -265,7 +275,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                            @NotNull Command command,
                                            @NotNull String label,
                                            @NotNull String[] args,
-                                           @NotNull Set<String> flags) throws DataAccessException;
+                                           @NotNull Map<String, String> flags) throws DataAccessException;
 
   @Override
   public final List<String> onTabComplete(@NotNull CommandSender sender,

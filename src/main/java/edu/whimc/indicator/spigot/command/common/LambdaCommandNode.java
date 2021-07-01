@@ -27,6 +27,7 @@ import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -59,7 +60,7 @@ public class LambdaCommandNode extends CommandNode {
                                         @NotNull Command command,
                                         @NotNull String label,
                                         @NotNull String[] args,
-                                        @NotNull Set<String> flags) {
+                                        @NotNull Map<String, String> flags) {
     return executor.apply(sender, args);
   }
 }

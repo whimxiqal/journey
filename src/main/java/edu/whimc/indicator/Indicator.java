@@ -3,9 +3,9 @@ package edu.whimc.indicator;
 import edu.whimc.indicator.common.cache.TrailCache;
 import edu.whimc.indicator.common.data.DataManager;
 import edu.whimc.indicator.common.config.ConfigManager;
-import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
+import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import edu.whimc.indicator.spigot.cache.DebugManager;
-import edu.whimc.indicator.spigot.cache.JourneyManager;
+import edu.whimc.indicator.spigot.cache.SearchManager;
 import edu.whimc.indicator.spigot.cache.NetherManager;
 import edu.whimc.indicator.spigot.command.IndicatorCommand;
 import edu.whimc.indicator.spigot.command.TrailCommand;
@@ -14,7 +14,7 @@ import edu.whimc.indicator.spigot.data.SpigotDataManager;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.path.mode.*;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
-import edu.whimc.indicator.spigot.search.tracker.SpigotCompleteSearchTracker;
+import edu.whimc.indicator.spigot.search.tracker.SpigotSearchTracker;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -40,7 +40,7 @@ public final class Indicator extends JavaPlugin {
   @Getter
   private DebugManager debugManager;
   @Getter
-  private JourneyManager journeyManager;
+  private SearchManager searchManager;
   @Getter
   private TrailCache<LocationCell, World> trailCache;
   @Getter
@@ -66,7 +66,7 @@ public final class Indicator extends JavaPlugin {
     this.configManager = new ConfigManager("config.yml");
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();
-    this.journeyManager = new JourneyManager();
+    this.searchManager = new SearchManager();
     this.trailCache = new TrailCache<>();
 
     deserializeCaches();
@@ -86,7 +86,7 @@ public final class Indicator extends JavaPlugin {
     }
     // Register listeners
     netherManager.registerListeners(this);
-    journeyManager.registerListeners(this);
+    searchManager.registerListeners(this);
 
     // Start doing a bunch of searches for common use cases
     Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
@@ -114,8 +114,7 @@ public final class Indicator extends JavaPlugin {
       return true;
 
     } catch (IOException | ClassNotFoundException e) {
-      Indicator.getInstance().getLogger().severe("Could not deserialize trail caches");
-      e.printStackTrace();
+      Indicator.getInstance().getLogger().severe("Could not deserialize trail caches!");
       return false;
     }
   }
@@ -150,9 +149,16 @@ public final class Indicator extends JavaPlugin {
   }
 
   private void initializeTrails() {
-    // Survival
-    new IndicatorSearch(IndicatorSearch.SURVIVAL_MODES, s -> true).searchCacheable(new BlankSearchTracker<>());
-    // Creative/Flying
-    new IndicatorSearch(Collections.singleton(new FlyMode()), s -> true).searchCacheable(new BlankSearchTracker<>());
+    SearchTracker<LocationCell, World> tracker = new SpigotSearchTracker();
+
+    // Cache survival modes
+    IndicatorSearch search = new IndicatorSearch(IndicatorSearch.SURVIVAL_MODES, s -> true);
+    search.setTracker(tracker);
+    search.searchCacheable();
+
+    // Cache creative modes (flying)
+    search = new IndicatorSearch(Collections.singleton(new FlyMode()), s -> true);
+    search.setTracker(tracker);
+    search.searchCacheable();
   }
 }

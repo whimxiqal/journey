@@ -19,12 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TrailCustomCommand extends FunctionlessCommandNode {
 
   public TrailCustomCommand(@NotNull CommandNode parent) {
     super(parent,
-        Permissions.TRAIL_BLAZE_PERMISSION,
+        Permissions.TRAIL_USE_PERMISSION,
         "Use custom locations in trails",
         "custom");
 
@@ -37,9 +38,10 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
   private static BufferedFunction<Player, List<String>> bufferedCustomLocationsFunction() {
     return new BufferedFunction<>(player -> {
       try {
-        return new ArrayList<>(Indicator.getInstance().getDataManager()
+        return Indicator.getInstance().getDataManager()
             .getCustomEndpointManager()
-            .getCustomEndpoints(player.getUniqueId()).keySet());
+            .getCustomEndpoints(player.getUniqueId()).keySet()
+            .stream().map(Extra::quoteStringWithSpaces).collect(Collectors.toList());
       } catch (DataAccessException e) {
         return new LinkedList<>();
       }
@@ -50,7 +52,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
 
     public TrailCustomBlazeCommand(@NotNull CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_BLAZE_PERMISSION,
+          Permissions.TRAIL_USE_PERMISSION,
           "Blaze a trail to a custom destination",
           "blaze");
 
@@ -71,7 +73,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
           .supplier(ParameterSuppliers.WORLD)
           .next(Parameter.builder()
               .supplier(Parameter.ParameterSupplier.builder()
-                  .usage("<x> <y> <z> [timeout] [name]")
+                  .usage("<x> <y> <z> [name]")
                   .strict(false)
                   .build())
               .build())
@@ -84,7 +86,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
 
       LocationCell endLocation;
       World world;
@@ -128,7 +130,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
           endLocation = customEndpointManager.getCustomEndpoint(player.getUniqueId(), args[0]);
 
           if (endLocation == null) {
-            player.spigot().sendMessage(Format.error("The custom location ", Format.INFO + "" + args[0], " could not be found"));
+            player.spigot().sendMessage(Format.error("The custom location ", Format.toPlain(Format.note(args[0])), " could not be found"));
             return false;
           }
         }
@@ -137,28 +139,25 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
         return false;
       }
 
-      if (TrailCommand.blazeTrailTo(player, endLocation, flags, TrailCommand.getTimeout(player, args, 4))) {
-
-        player.spigot().sendMessage(Format.success("Blazing a trail to "));
-        player.spigot().sendMessage(Format.success(" " + Format.toPlain(Format.locationCell(endLocation, Format.SUCCESS)) + " !"));
+      if (TrailCommand.blazeTrailTo(player, endLocation, flags)) {
 
         // Check if we should save a custom endpoint
-        if (args.length >= 6) {
+        if (args.length >= 5) {
           if (customEndpointManager.hasCustomEndpoint(player.getUniqueId(), endLocation)) {
             player.spigot().sendMessage(Format.error("A custom location already exists at that location!"));
             return false;
           }
-          if (customEndpointManager.hasCustomEndpoint(player.getUniqueId(), args[5])) {
+          if (customEndpointManager.hasCustomEndpoint(player.getUniqueId(), args[4])) {
             player.spigot().sendMessage(Format.error("A custom location already exists with that name!"));
             return false;
           }
           if (!Validator.isValidDataName(args[5])) {
-            player.spigot().sendMessage(Format.error("Your custom name ", Format.toPlain(Format.note(args[5])), " contains illegal characters"));
+            player.spigot().sendMessage(Format.error("Your custom name ", Format.toPlain(Format.note(args[4])), " contains illegal characters"));
             return false;
           }
           // Save it!
-          customEndpointManager.addCustomEndpoint(player.getUniqueId(), endLocation, args[5]);
-          player.spigot().sendMessage(Format.success("Saved your custom location with name ", Format.toPlain(Format.note(args[5])), "!"));
+          customEndpointManager.addCustomEndpoint(player.getUniqueId(), endLocation, args[4]);
+          player.spigot().sendMessage(Format.success("Saved your custom location with name ", Format.toPlain(Format.note(args[4])), "!"));
         }
 
         return true;
@@ -173,7 +172,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
 
     public TrailCustomDeleteCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_BLAZE_PERMISSION,
+          Permissions.TRAIL_USE_PERMISSION,
           "Delete a saved custom destination",
           "delete");
       BufferedFunction<Player, List<String>> customLocationsFunction = bufferedCustomLocationsFunction();
@@ -195,7 +194,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
       if (args.length < 1) {
         sendCommandError(player, CommandError.FEW_ARGUMENTS);
         return false;
@@ -206,10 +205,10 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
           .getCustomEndpointManager();
       if (endpointManager.hasCustomEndpoint(player.getUniqueId(), args[0])) {
         Indicator.getInstance().getDataManager().getCustomEndpointManager().removeCustomEndpoint(player.getUniqueId(), args[0]);
-        player.spigot().sendMessage(Format.success("The custom location ", Format.INFO + "" + args[0], " has been removed"));
+        player.spigot().sendMessage(Format.success("The custom location ", Format.toPlain(Format.note(args[0])), " has been removed"));
         return true;
       } else {
-        player.spigot().sendMessage(Format.error("The custom location ", Format.INFO + "" + args[0], " could not be found"));
+        player.spigot().sendMessage(Format.error("The custom location ", Format.toPlain(Format.note(args[0])), " could not be found"));
         return false;
       }
     }
@@ -220,7 +219,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
 
     public TrailCustomListCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_BLAZE_PERMISSION,
+          Permissions.TRAIL_USE_PERMISSION,
           "List saved custom destinations",
           "list");
       addSubcommand(Parameter.builder()
@@ -237,7 +236,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
       int pageNumber;
       if (args.length > 0) {
         try {
@@ -298,7 +297,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
 
     public TrailCustomSaveCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_BLAZE_PERMISSION,
+          Permissions.TRAIL_USE_PERMISSION,
           "Save your current location as a custom trail location",
           "save");
       addSubcommand(Parameter.builder()
@@ -313,7 +312,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) throws DataAccessException {
+                                          @NotNull Map<String, String> flags) throws DataAccessException {
 
       if (args.length == 0) {
         sendCommandError(player, CommandError.FEW_ARGUMENTS);

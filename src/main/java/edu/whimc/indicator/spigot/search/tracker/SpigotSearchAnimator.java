@@ -1,15 +1,16 @@
 package edu.whimc.indicator.spigot.search.tracker;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.path.Completion;
-import edu.whimc.indicator.common.path.Path;
+import edu.whimc.indicator.common.path.ModeType;
 import edu.whimc.indicator.common.path.Step;
+import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
 import edu.whimc.indicator.common.search.tracker.SearchAnimator;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 
 import java.util.Set;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SpigotSearchAnimator extends SearchAnimator<LocationCell, World> {
 
   private final Set<LocationCell> successfulLocations = ConcurrentHashMap.newKeySet();
+  private LocationCell lastFailure;
   private final UUID playerUuid;
 
   public SpigotSearchAnimator(UUID playerUuid, int delayMillis) {
@@ -27,9 +29,13 @@ public class SpigotSearchAnimator extends SearchAnimator<LocationCell, World> {
   }
 
   @Override
-  protected boolean showResult(LocationCell cell, SearchTracker.Result result) {
+  protected boolean showResult(LocationCell cell, SearchTracker.Result result, ModeType modeType) {
     Player player = Bukkit.getPlayer(playerUuid);
     if (player == null) {
+      return false;
+    }
+
+    if (this.successfulLocations.contains(cell)) {
       return false;
     }
 
@@ -38,32 +44,24 @@ public class SpigotSearchAnimator extends SearchAnimator<LocationCell, World> {
       return false;
     }
 
-    if (cell.getDomain() != player.getWorld() || cell.distanceToSquared(new LocationCell(player.getLocation())) > 10000) {
-      return false;
-    }
-
     switch (result) {
       case FAILURE:
-        if (!this.successfulLocations.contains(cell)) {
-          player.sendBlockChange(cell.getBlock().getLocation(), Material.REDSTONE_BLOCK.createBlockData());
-          Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> hideResult(cell), 20 /* ticks per second */ * 2 /* seconds */);
-          return true;
-        } else {
-          return false;
+        if (lastFailure != null) {
+          if (!this.successfulLocations.contains(lastFailure)) {
+            hideResult(lastFailure);
+          }
         }
+        lastFailure = cell;
+        return showBlock(player, cell, Material.GLOWSTONE.createBlockData());
       case SUCCESS:
-        if (!this.successfulLocations.contains(cell)) {
-          player.sendBlockChange(cell.getBlock().getLocation(), Material.EMERALD_BLOCK.createBlockData());
+        if (showBlock(player, cell, Material.LIME_STAINED_GLASS.createBlockData())) {
           this.successfulLocations.add(cell);
-          Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> hideResult(cell), 20 /* ticks per second */ * 10 /* seconds */);
           return true;
-        } else {
-          return false;
         }
       default:
         Indicator.getInstance().getLogger().info("Unhandled result type in SpigotSearchAnimator");
-        return false;
     }
+    return false;
   }
 
   private void hideResult(LocationCell cell) {
@@ -75,33 +73,50 @@ public class SpigotSearchAnimator extends SearchAnimator<LocationCell, World> {
     successfulLocations.remove(cell);
   }
 
-  @Override
-  public void foundNewOptimalPath(Path<LocationCell, World> path, Completion<LocationCell, World> completion) {
-
+  private boolean showBlock(Player player, LocationCell cell, BlockData blockData) {
+    if (cell.getDomain() != player.getWorld() || cell.distanceToSquared(new LocationCell(player.getLocation())) > 10000) {
+      return false;
+    }
+    player.sendBlockChange(cell.getBlock().getLocation(), blockData);
+    return true;
   }
 
-  @Override
-  public void startTrailSearch(LocationCell origin, LocationCell destination) {
+  private void cleanUpAnimation() {
+    Player player = Bukkit.getPlayer(playerUuid);
+    if (player == null) {
+      return;
+    }
 
-  }
+    successfulLocations.forEach(cell -> showBlock(player, cell, cell.getBlock().getBlockData()));
 
-  @Override
-  public void trailSearchVisitation(Step<LocationCell, World> step) {
-
+    if (lastFailure != null) {
+      showBlock(player, lastFailure, lastFailure.getBlock().getBlockData());
+    }
   }
 
   @Override
   public void trailSearchStep(Step<LocationCell, World> step) {
-
+    Player player = Bukkit.getPlayer(playerUuid);
+    if (player == null) {
+      return;
+    }
+    showBlock(player, step.getLocatable(), Material.OBSIDIAN.createBlockData());
   }
 
   @Override
-  public void finishTrailSearch(LocationCell origin, LocationCell destination, double distance) {
-
+  public void completeTrailSearch(LocationCell origin, LocationCell destination, double distance) {
+    cleanUpAnimation();
   }
 
   @Override
   public void memoryCapacityReached(LocationCell origin, LocationCell destination) {
-
+    cleanUpAnimation();
   }
+
+  @Override
+  public void searchStopped(TwoLevelBreadthFirstSearch<LocationCell, World> search) {
+    cleanUpAnimation();
+    setAnimating(false);
+  }
+
 }

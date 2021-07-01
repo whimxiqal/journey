@@ -21,11 +21,12 @@
 
 package edu.whimc.indicator.common.path;
 
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 /**
- * A condition for when a Locatable may be considered
- * within a suitable proximity.
+ * A condition for when a first parameter Locatable may be considered
+ * within a suitable proximity of the second parameter
  *
  * @param <T> the locatable type
  * @param <D> the domain type

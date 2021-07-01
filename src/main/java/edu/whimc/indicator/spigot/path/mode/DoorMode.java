@@ -2,7 +2,6 @@ package edu.whimc.indicator.spigot.path.mode;
 
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.path.ModeType;
-import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.MaterialGroups;
 import edu.whimc.indicator.spigot.util.SpigotUtil;
@@ -174,6 +173,6 @@ public final class DoorMode extends Mode<LocationCell, World> {
 
   @Override
   public ModeType getType() {
-    return ModeTypes.DOOR;
+    return ModeType.DOOR;
   }
 }

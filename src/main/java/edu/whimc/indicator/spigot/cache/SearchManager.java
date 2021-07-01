@@ -22,56 +22,69 @@
 package edu.whimc.indicator.spigot.cache;
 
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.common.path.Path;
+import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
+import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class JourneyManager implements Listener {
+public class SearchManager implements Listener {
 
   private final Map<UUID, PlayerJourney> playerJourneys = new ConcurrentHashMap<>();
   private final Map<UUID, LocationCell> playerLocations = new ConcurrentHashMap<>();
-  private final Set<UUID> searchingPlayers = ConcurrentHashMap.newKeySet();
+  private final Map<UUID, TwoLevelBreadthFirstSearch<LocationCell, World>> playerSearches = new ConcurrentHashMap<>();
 
-  public Optional<PlayerJourney> putPlayerJourney(@NotNull UUID playerUuid, PlayerJourney journey) {
+  public PlayerJourney putPlayerJourney(@NotNull UUID playerUuid, PlayerJourney journey) {
     PlayerJourney oldJourney = this.playerJourneys.put(playerUuid, journey);
     if (oldJourney != null) {
       oldJourney.stop();
     }
-    return Optional.ofNullable(oldJourney);
+    return oldJourney;
   }
 
-  public Optional<PlayerJourney> getPlayerJourney(@NotNull UUID playerUuid) {
-    return Optional.ofNullable(playerJourneys.get(playerUuid));
-  }
 
-  public Optional<PlayerJourney> removePlayerJourney(@NotNull UUID playerUuid) {
+  public PlayerJourney removePlayerJourney(@NotNull UUID playerUuid) {
     PlayerJourney oldJourney = playerJourneys.remove(playerUuid);
     if (oldJourney != null) {
       oldJourney.stop();
     }
-    return Optional.ofNullable(oldJourney);
+    return oldJourney;
   }
 
-  public boolean startSearching(@NotNull UUID playerUuid) {
-    return searchingPlayers.add(playerUuid);
+  public boolean hasPlayerJourney(@NotNull UUID playerUuid) {
+    return playerJourneys.containsKey(playerUuid);
   }
 
-  public boolean stopSearching(@NotNull UUID playerUuid) {
-    return searchingPlayers.remove(playerUuid);
+  public PlayerJourney getPlayerJourney(@NotNull UUID playerUuid) {
+    return playerJourneys.get(playerUuid);
+  }
+
+
+  public TwoLevelBreadthFirstSearch<LocationCell, World> putSearch(@NotNull UUID playerUuid, TwoLevelBreadthFirstSearch<LocationCell, World> search) {
+    return playerSearches.put(playerUuid, search);
+  }
+
+  public TwoLevelBreadthFirstSearch<LocationCell, World> removeSearch(@NotNull UUID playerUuid) {
+    return playerSearches.remove(playerUuid);
   }
 
   public boolean isSearching(@NotNull UUID playerUuid) {
-    return searchingPlayers.contains(playerUuid);
+    return playerSearches.containsKey(playerUuid);
+  }
+
+  public TwoLevelBreadthFirstSearch<LocationCell, World> getSearch(@NotNull UUID playerUuid) {
+    return playerSearches.get(playerUuid);
   }
 
   @EventHandler
@@ -94,6 +107,15 @@ public class JourneyManager implements Listener {
 
     playerLocations.put(playerUuid, cell);
     playerJourneys.get(playerUuid).visit(cell);
+  }
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent event) {
+    // Stop the search so we don't waste memory on someone who isn't here anymore
+    TwoLevelBreadthFirstSearch<LocationCell, World> currentSearch = getSearch(event.getPlayer().getUniqueId());
+    if (currentSearch != null) {
+      currentSearch.cancel();
+    }
   }
 
   public void registerListeners(Indicator indicator) {

@@ -23,7 +23,6 @@ package edu.whimc.indicator.spigot.path.mode;
 
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.path.ModeType;
-import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.SpigotUtil;
 import org.bukkit.World;
@@ -95,6 +94,6 @@ public class JumpMode extends Mode<LocationCell, World> {
 
   @Override
   public ModeType getType() {
-    return ModeTypes.JUMP;
+    return ModeType.JUMP;
   }
 }

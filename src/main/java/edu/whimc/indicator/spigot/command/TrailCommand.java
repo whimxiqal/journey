@@ -23,32 +23,41 @@ package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.config.Settings;
+import edu.whimc.indicator.common.path.Path;
+import edu.whimc.indicator.common.search.tracker.SearchTrackerCollection;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
+import edu.whimc.indicator.spigot.command.common.Flags;
 import edu.whimc.indicator.spigot.command.common.FunctionlessCommandNode;
-import edu.whimc.indicator.spigot.search.IndicatorSearch;
+import edu.whimc.indicator.spigot.command.common.PlayerCommandNode;
+import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.path.LocationCell;
-import edu.whimc.indicator.spigot.search.tracker.SpigotCompleteSearchTracker;
+import edu.whimc.indicator.spigot.search.IndicatorSearch;
+import edu.whimc.indicator.spigot.search.tracker.SpigotSearchAnimator;
+import edu.whimc.indicator.spigot.search.tracker.SpigotSearchTracker;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
 import me.blackvein.quests.Quests;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
+import org.bukkit.World;
+import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 
 public final class TrailCommand extends FunctionlessCommandNode {
 
-  private static final List<CommandNode> extraChildren = new LinkedList<>();
-
   public TrailCommand() {
     super(null,
-        Permissions.TRAIL_BLAZE_PERMISSION,
+        Permissions.TRAIL_USE_PERMISSION,
         "View your current activated trail",
         "trail");
+    addChildren(new TrailAcceptCommand(this));
+    addChildren(new TrailCancelCommand(this));
     addChildren(new TrailCustomCommand(this));
     addChildren(new TrailServerCommand(this));
     // Quests plugin
@@ -56,84 +65,121 @@ public final class TrailCommand extends FunctionlessCommandNode {
     if (questsPlugin instanceof Quests) {
       addChildren(new TrailQuestsCommand(this, (Quests) questsPlugin));
     }
-    // Add extra children
-    addChildren(extraChildren.toArray(new CommandNode[0]));
   }
 
   public static boolean blazeTrailTo(@NotNull Player player,
                                      @NotNull LocationCell endpoint,
-                                     @NotNull Set<String> flags,
-                                     int timeout) {
+                                     @NotNull Map<String, String> flags) {
 
-    if (Indicator.getInstance().getJourneyManager().isSearching(player.getUniqueId())) {
+    if (Indicator.getInstance().getSearchManager().isSearching(player.getUniqueId())) {
       player.spigot().sendMessage(Format.error("Please wait until your search is over before performing a new one."));
       return false;
     }
 
     UUID playerUuid = player.getUniqueId();
 
-    IndicatorSearch search = new IndicatorSearch(player, flags.contains("nofly"));
+    IndicatorSearch search = new IndicatorSearch(player, Flags.NOFLY.isIn(flags));
 
-    // Set up a search cancellation in case it takes too long
-    BukkitTask timeoutTask = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(),
-        search::cancel,
-        (long) timeout * 20 /* ticks per second */);
+    int timeout = Flags.TIMEOUT.isIn(flags)
+        ? Flags.TIMEOUT.retrieve(player, flags)
+        : Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
 
     // Set up a "Working..." message if it takes too long
     player.spigot().sendMessage(Format.info("Searching for path to your destination (" + timeout + " sec)..."));
+    player.spigot().sendMessage(Format.info(" " + Format.toPlain(Format.locationCell(endpoint, Format.INFO)) + " !"));
 
-    // Build tracker
-    SpigotCompleteSearchTracker.Builder trackerBuilder = SpigotCompleteSearchTracker.builder(player);
-    if (flags.contains("animate")) {
-      trackerBuilder.animate(10);
+    // Build tracker collection
+    SearchTrackerCollection<LocationCell, World> trackerCollection = new SearchTrackerCollection<>();
+    trackerCollection.addTracker(new SpigotSearchTracker(playerUuid));
+    if (Flags.ANIMATE.isIn(flags)) {
+      trackerCollection.addTracker(new SpigotSearchAnimator(playerUuid, Flags.ANIMATE.retrieve(player, flags)));
     }
 
-    // SEARCH
-    Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
-          // Add to the searching set so they can't search again
-          Indicator.getInstance().getJourneyManager().startSearching(player.getUniqueId());
-          // Search... this may take a long time
-          search.search(new LocationCell(player.getLocation()), endpoint, trackerBuilder.build());
+    search.setTracker(trackerCollection);
 
+    // Set up a search cancellation in case it takes too long
+    BukkitTask timeoutTask = Bukkit.getScheduler().runTaskLater(Indicator.getInstance(),
+        () -> {
+          if (search.cancel()) {
+            player.spigot().sendMessage(Format.chain(Format.error("Your search took too long. "
+                + "Try extending the timeout value with the \"-timeout:<seconds>\" flag")));
+          }
+        },
+        (long) timeout * 20 /* ticks per second */);
+
+    // SEARCH
+    BukkitTask searchTask = Bukkit.getScheduler().runTaskAsynchronously(Indicator.getInstance(), () -> {
+          // Search... this may take a long time
+          search.search(new LocationCell(player.getLocation()), endpoint);
           // Cancel the timeout message if it hasn't happened yet
           timeoutTask.cancel();
-          // Send failure message if we finished unsuccessfully
-          if (!search.isSuccessful()) {
-            player.spigot().sendMessage(Format.error("A path to your destination could not be found."));
-            Indicator.getInstance().getJourneyManager().removePlayerJourney(playerUuid);
-          }
-          // Remove from the searching set so they can search again
-          Indicator.getInstance().getJourneyManager().stopSearching(player.getUniqueId());
         }
     );
 
     return true;
   }
 
-  public static void registerChild(CommandNode commandNode) {
-    extraChildren.add(commandNode);
+  public static class TrailCancelCommand extends PlayerCommandNode {
+
+    public TrailCancelCommand(@Nullable CommandNode parent) {
+      super(parent, Permissions.TRAIL_USE_PERMISSION, "Cancel the current search", "cancel");
+    }
+
+    @Override
+    public boolean onWrappedPlayerCommand(@NotNull Player player,
+                                          @NotNull Command command,
+                                          @NotNull String label,
+                                          @NotNull String[] args,
+                                          @NotNull Map<String, String> flags) {
+      if (!Indicator.getInstance().getSearchManager().isSearching(player.getUniqueId())) {
+        player.spigot().sendMessage(Format.error("You do not have an ongoing search"));
+        return false;
+      }
+
+      Indicator.getInstance().getSearchManager().getSearch(player.getUniqueId()).cancel();
+      player.spigot().sendMessage(Format.success("Search canceled."));
+      return true;
+    }
+
   }
 
-  public static int getTimeout(CommandSender src, String[] args, int timeoutIndex) {
-    if (timeoutIndex >= args.length) {
-      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
-    }
-    int timeout;
-    try {
-      timeout = Integer.parseInt(args[timeoutIndex]);
-    } catch (NumberFormatException e) {
-      src.spigot().sendMessage(Format.error("The timeout could not be converted to an integer"));
-      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+  public static class TrailAcceptCommand extends PlayerCommandNode {
+
+    public TrailAcceptCommand(@Nullable CommandNode parent) {
+      super(parent, Permissions.TRAIL_USE_PERMISSION, "Accept a new trail suggestion", "accept");
     }
 
-    if (timeout < 1) {
-      src.spigot().sendMessage(Format.error("The timeout must be at least 1 second"));
-      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
-    } else if (timeout > 600) {
-      src.spigot().sendMessage(Format.error("The timeout must be at most 10 minutes"));
-      return Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+    @Override
+    public boolean onWrappedPlayerCommand(@NotNull Player player,
+                                          @NotNull Command command,
+                                          @NotNull String label,
+                                          @NotNull String[] args,
+                                          @NotNull Map<String, String> flags) {
+      if (!Indicator.getInstance().getSearchManager().hasPlayerJourney(player.getUniqueId())) {
+        player.spigot().sendMessage(Format.error("You have nothing to accept."));
+        return false;
+      }
+
+      PlayerJourney journey = Indicator.getInstance().getSearchManager().getPlayerJourney(player.getUniqueId());
+
+      Path<LocationCell, World> prospectivePath = journey.getProspectivePath();
+      if (prospectivePath == null) {
+        player.spigot().sendMessage(Format.error("You have nothing to accept."));
+        return false;
+      }
+
+      PlayerJourney newJourney = new PlayerJourney(player.getUniqueId(), prospectivePath);
+      journey.stop();
+
+      Indicator.getInstance().getSearchManager().putPlayerJourney(player.getUniqueId(), newJourney);
+      newJourney.illuminateTrail();
+
+      player.spigot().sendMessage(Format.success("Make your way back to your starting point;"));
+      player.spigot().sendMessage(Format.success("You have accepted a new trail."));
+
+      return true;
     }
-    return timeout;
+
   }
 
 }

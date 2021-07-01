@@ -11,9 +11,9 @@ public final class PrimeUtil {
       31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
       73, 79, 83, 89, 97, 101, 103, 107, 109, 113
   );
-  private int primeIndex = 0;
+  private static int primeIndex = 0;
 
-  public int getNextPrime() {
+  public static int getNextPrime() {
     if (primeIndex >= PRIME_NUMBERS.size()) {
       throw new IllegalStateException("Not enough prime numbers for the quantity of registered mode types");
     }

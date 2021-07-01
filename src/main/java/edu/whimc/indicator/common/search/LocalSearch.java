@@ -29,25 +29,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class TrailSearch<T extends Cell<T, D>, D> {
+public class LocalSearch<T extends Cell<T, D>, D> {
 
   public static final int MAX_SIZE = 10000;
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 2;
 
-  @Setter
-  private Consumer<Step<T, D>> visitationCallback = loc -> {
-  };
-
-  @Setter
-  private Consumer<Step<T, D>> stepCallback = loc -> {
-  };
-
 
   @Nullable
-  public Trail<T, D> findOptimalTrail(TrailSearchRequest<T, D> request, Collection<Mode<T, D>> modes, SearchTracker<T, D> tracker) {
+  public Trail<T, D> findOptimalTrail(LocalSearchRequest<T, D> request, Collection<Mode<T, D>> modes, SearchTracker<T, D> tracker) {
     return findOptimalTrail(request.getOrigin(),
         request.getDestination(),
         modes,
@@ -74,7 +65,7 @@ public class TrailSearch<T extends Cell<T, D>, D> {
         origin.distanceTo(destination), 0);
     upcoming.add(originNode);
     visited.put(origin, originNode);
-    visitationCallback.accept(originNode.getData());
+    tracker.trailSearchVisitation(originNode.getData());
 
     Node current;
     while (!upcoming.isEmpty()) {
@@ -87,7 +78,7 @@ public class TrailSearch<T extends Cell<T, D>, D> {
 
       current = upcoming.poll();
       assert current != null;
-      stepCallback.accept(current.getData());
+      tracker.trailSearchStep(current.getData());
 
       // We found it!
       if (current.getData().getLocatable().distanceToSquared(destination) <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED) {
@@ -118,7 +109,7 @@ public class TrailSearch<T extends Cell<T, D>, D> {
                 current.getScore() + next.getValue());
             upcoming.add(nextNode);
             visited.put(next.getKey(), nextNode);
-            visitationCallback.accept(nextNode.getData());
+            tracker.trailSearchVisitation(nextNode.getData());
           }
         }
       }

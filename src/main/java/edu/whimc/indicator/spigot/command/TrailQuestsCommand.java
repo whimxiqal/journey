@@ -1,6 +1,7 @@
 package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.common.tools.BufferedFunction;
+import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.spigot.command.common.*;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
@@ -17,13 +18,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TrailQuestsCommand extends FunctionlessCommandNode {
 
   public TrailQuestsCommand(@Nullable CommandNode parent, @NotNull Quests quests) {
-    super(parent, Permissions.TRAIL_BLAZE_PERMISSION,
+    super(parent, Permissions.TRAIL_USE_PERMISSION,
         "Blaze trails to destinations for quests using the Quests plugin",
         "quests");
     addChildren(new TrailNextQuestCommand(this, quests));
@@ -34,7 +35,7 @@ public class TrailQuestsCommand extends FunctionlessCommandNode {
     private final Quests quests;
 
     public TrailNextQuestCommand(@Nullable CommandNode parent, @NotNull Quests quests) {
-      super(parent, Permissions.TRAIL_BLAZE_PERMISSION,
+      super(parent, Permissions.TRAIL_USE_PERMISSION,
           "Blaze trails to your quest objectives",
           "next");
       this.quests = quests;
@@ -47,7 +48,7 @@ public class TrailQuestsCommand extends FunctionlessCommandNode {
             .getCurrentQuests()
             .keySet()
             .stream()
-            .map(Quest::getName)
+            .map(quest -> Extra.quoteStringWithSpaces(quest.getName()))
             .collect(Collectors.toList());
       }, 1000);
       addSubcommand(Parameter.builder()
@@ -62,7 +63,6 @@ public class TrailQuestsCommand extends FunctionlessCommandNode {
               })
               .strict(false)
               .build())
-          .next(Parameter.basic("[timeout]"))
           .build(), "Blaze trails to your next destination for a quest");
     }
 
@@ -71,7 +71,12 @@ public class TrailQuestsCommand extends FunctionlessCommandNode {
                                           @NotNull Command command,
                                           @NotNull String label,
                                           @NotNull String[] args,
-                                          @NotNull Set<String> flags) {
+                                          @NotNull Map<String, String> flags) {
+
+      if (args.length == 0) {
+        sendCommandError(player, CommandError.FEW_ARGUMENTS);
+        return false;
+      }
 
       Quest quest = quests.getQuest(args[0]);
       if (quest == null) {
@@ -92,7 +97,7 @@ public class TrailQuestsCommand extends FunctionlessCommandNode {
 
       LocationCell endLocation = new LocationCell(locationsToReach.getFirst());
 
-      TrailCommand.blazeTrailTo(player, endLocation, flags, TrailCommand.getTimeout(player, args, 1));
+      TrailCommand.blazeTrailTo(player, endLocation, flags);
       return true;
     }
   }

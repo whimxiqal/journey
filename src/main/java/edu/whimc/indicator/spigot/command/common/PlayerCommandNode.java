@@ -8,6 +8,7 @@ import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 public abstract class PlayerCommandNode extends CommandNode {
@@ -24,7 +25,7 @@ public abstract class PlayerCommandNode extends CommandNode {
                                   @NotNull Command command,
                                   @NotNull String label,
                                   @NotNull String[] args,
-                                  @NotNull Set<String> flags) throws DataAccessException {
+                                  @NotNull Map<String, String> flags) throws DataAccessException {
     Player player;
     if (!(sender instanceof Player)) {
       sendCommandError(sender, CommandError.ONLY_PLAYER);
@@ -38,5 +39,5 @@ public abstract class PlayerCommandNode extends CommandNode {
                                         @NotNull Command command,
                                         @NotNull String label,
                                         @NotNull String[] args,
-                                        @NotNull Set<String> flags) throws DataAccessException;
+                                        @NotNull Map<String, String> flags) throws DataAccessException;
 }

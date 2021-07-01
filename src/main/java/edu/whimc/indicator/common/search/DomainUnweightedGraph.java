@@ -25,7 +25,7 @@ import com.google.common.collect.Maps;
 
 import java.util.*;
 
-public class DomainGraph<D> {
+public class DomainUnweightedGraph<D> {
 
   private final Map<D, Set<D>> edges = Maps.newHashMap();
 

@@ -32,7 +32,7 @@ import edu.whimc.indicator.common.data.DataType;
  */
 public final class Settings {
 
-  public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT = new IntegerSetting("search.default-timeout", 15);
+  public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT = new IntegerSetting("search.default-timeout", 30);
   public static final Setting<String> STORAGE_ADDRESS = new StringSetting("storage.auth.address", "my.address");
   public static final Setting<String> STORAGE_DATABASE = new StringSetting("storage.auth.database", "my_database");
   public static final Setting<String> STORAGE_USERNAME = new StringSetting("storage.auth.username", "username");

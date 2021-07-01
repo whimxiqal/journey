@@ -76,6 +76,7 @@ class TwoLevelBreadthFirstSearchTest {
     links.add(new TestLink(board1[8][4], board2[3][6]));
     links.add(new TestLink(board2[7][7], board1[8][8]));
     links.forEach(bfs::registerLink);
+    bfs.setTracker(new TestSearchTracker(printer1, printer2, links));
 
     // Clear printer board
     clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
@@ -83,7 +84,7 @@ class TwoLevelBreadthFirstSearchTest {
     bfs.registerMode(new StepMode());
 
     // Solve path
-    bfs.search(origin, destination, new TestSearchTracker(printer1, printer2, links));
+    bfs.search(origin, destination);
 
     // Put in path
 //    if (path != null) {
@@ -288,26 +289,11 @@ class TwoLevelBreadthFirstSearchTest {
   }
 
   @AllArgsConstructor
-  public class TestSearchTracker implements SearchTracker<Point3D, Domain> {
+  public class TestSearchTracker extends BlankSearchTracker<Point3D, Domain> {
 
     private final char[][] printer1;
     private final char[][] printer2;
     private final List<Link<Point3D, Domain>> links;
-
-    @Override
-    public void acceptResult(Point3D cell, Result result, ModeType type) {
-      // nothing
-    }
-
-    @Override
-    public void foundNewOptimalPath(Path<Point3D, Domain> path, Completion<Point3D, Domain> completion) {
-      // nothing
-    }
-
-    @Override
-    public void startTrailSearch(Point3D origin, Point3D destination) {
-      // nothing
-    }
 
     @Override
     public void trailSearchVisitation(Step<Point3D, Domain> step) {
@@ -343,7 +329,7 @@ class TwoLevelBreadthFirstSearchTest {
     }
 
     @Override
-    public void finishTrailSearch(Point3D origin, Point3D destination, double distance) {
+    public void completeTrailSearch(Point3D origin, Point3D destination, double distance) {
       clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
     }
 

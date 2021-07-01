@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class PathEdgeGraph<T extends Locatable<T, D>, D> {
+public class PathEdgeWeightedGraph<T extends Locatable<T, D>, D> {
 
   private final Table<Node, Node, Trail<T, D>> edges = HashBasedTable.create();
 
@@ -98,8 +98,8 @@ public class PathEdgeGraph<T extends Locatable<T, D>, D> {
         Stack<Link<T, D>> links = new Stack<>();
         while (current.getPrevious() != null) {
           trails.add(edges.get(current.getPrevious(), current));
-          if (current instanceof PathEdgeGraph.LinkNode) {
-            links.add(((PathEdgeGraph<T, D>.LinkNode) current).getLink());
+          if (current instanceof PathEdgeWeightedGraph.LinkNode) {
+            links.add(((PathEdgeWeightedGraph<T, D>.LinkNode) current).getLink());
           }
           current = current.getPrevious();
         }

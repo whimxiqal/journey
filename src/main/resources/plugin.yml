@@ -11,17 +11,19 @@ softdepend:
   - Quests
 permissions:
   indicator.indicator:
-    default: true
+    default: false
     description: Root command for indicator subcommands
   indicator.debug:
     default: false
     description: Turn on debug mode
   indicator.trail:
-    default: true
-    description: Allows the use of the trail command
-  indicator.destination:
     default: false
-    description: Allows the use of the description sub command
+  indicator.trail.use:
+    default: false
+    description: Allows the use of trails
+  indicator.trail.manage:
+    default: false
+    description: Allows the management of trails
 commands:
   indicator:
     description: Root indicator command

@@ -60,6 +60,14 @@ public final class Extra {
     return out.toArray(new String[0]);
   }
 
+  public static String quoteStringWithSpaces(String input) {
+    if (input.contains(" ")) {
+      return "\"" + input + "\"";
+    } else {
+      return input;
+    }
+  }
+
   private Extra() {
   }
 

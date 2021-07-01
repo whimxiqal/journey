@@ -23,7 +23,6 @@ package edu.whimc.indicator.spigot.path.mode;
 
 import edu.whimc.indicator.common.path.Mode;
 import edu.whimc.indicator.common.path.ModeType;
-import edu.whimc.indicator.common.path.ModeTypes;
 import edu.whimc.indicator.spigot.path.LocationCell;
 import edu.whimc.indicator.spigot.util.SpigotUtil;
 import org.bukkit.Material;
@@ -34,12 +33,12 @@ public class WalkMode extends Mode<LocationCell, World> {
   @Override
   public void collectDestinations(LocationCell origin) {
     LocationCell cell;
+    LocationCell cell1;
     LocationCell cell2;
     // Can you drop into an inhabitable block?
     cell = origin.createLocatableAtOffset(0, -1, 0);
-    if (SpigotUtil.canStandOn(origin.getBlockAtOffset(0, -2, 0))
-        || SpigotUtil.canStandIn(cell.getBlock())) {
-      accept(cell, 1d);
+    if (SpigotUtil.canStandOn(origin.getBlockAtOffset(0, -2, 0)) && SpigotUtil.isVerticallyPassable(cell.getBlock())) {
+      accept(cell, 1.0d);
     } else {
       reject(cell);
     }
@@ -80,17 +79,17 @@ public class WalkMode extends Mode<LocationCell, World> {
 
         for (int offY = -1; offY >= -4; offY--) {  // Check for floor anywhere up to a 3 block fall
           cell = origin.createLocatableAtOffset(offX, offY, offZ);
+          cell1 = cell.createLocatableAtOffset(0, 1, 0);
           if (!SpigotUtil.isVerticallyPassable(cell.getBlock())) {
-            cell2 = origin.createLocatableAtOffset(offX, offY + 2, offZ);
+            cell2 = cell.createLocatableAtOffset(0, 2, 0);
             if (cell2.getBlock().getType().equals(Material.WATER)) {
-              reject(cell2);
-              break;  // Water (drowning) - invalid destination
+              reject(cell1); // Water (drowning) - invalid destination
+            } else {
+              accept(cell1, origin.distanceTo(cell1));
             }
-            LocationCell other = origin.createLocatableAtOffset(offX, offY + 1, offZ);
-            accept(other, origin.distanceTo(other));
             break;
           } else {
-            reject(cell);
+            reject(cell1);
           }
         }
       }
@@ -99,6 +98,6 @@ public class WalkMode extends Mode<LocationCell, World> {
 
   @Override
   public ModeType getType() {
-    return ModeTypes.WALK;
+    return ModeType.WALK;
   }
 }

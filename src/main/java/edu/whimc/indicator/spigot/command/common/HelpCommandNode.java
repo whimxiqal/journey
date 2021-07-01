@@ -22,13 +22,17 @@
 package edu.whimc.indicator.spigot.command.common;
 
 import edu.whimc.indicator.spigot.util.Format;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 final class HelpCommandNode extends CommandNode {
 
@@ -47,7 +51,7 @@ final class HelpCommandNode extends CommandNode {
                                   @NotNull Command command,
                                   @NotNull String label,
                                   @NotNull String[] args,
-                                  @NotNull Set<String> flags) {
+                                  @NotNull Map<String, String> flags) {
     CommandNode parent = Objects.requireNonNull(this.getParent());
     sender.spigot().sendMessage(Format.success(
         "Command: "
@@ -55,20 +59,21 @@ final class HelpCommandNode extends CommandNode {
             + parent.getFullCommand()));
     for (CommandNode node : parent.getChildren()) {
       if (node.getPermission().map(sender::hasPermission).orElse(true)) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(ChatColor.GRAY)
-            .append("> ")
-            .append(parent.getPrimaryAlias())
-            .append(" ")
-            .append(ChatColor.AQUA)
-            .append(node.getPrimaryAlias());
+        ComponentBuilder builder = new ComponentBuilder();
+        builder.append(ChatColor.GRAY + "> " + parent.getPrimaryAlias() + " ")
+            .append(ChatColor.AQUA + node.getPrimaryAlias());
         if (node.getChildren().size() > 1 || !node.getParameters().isEmpty()) {
           builder.append(" [ . . . ]");
+          if (node.getHelpCommand() != null) {
+            builder.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getHelpCommand().getFullCommand()))
+                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    new Text(node.getDescription().isEmpty()
+                        ? node.getFullCommand()
+                        : node.getDescription() + "\n\n" + "/" + node.getHelpCommand().getFullCommand())));
+          }
         }
-        builder.append(" ")
-            .append(ChatColor.WHITE)
-            .append(node.getDescription());
-        sender.sendMessage(builder.toString());
+        builder.append(ChatColor.WHITE + " " + node.getDescription());
+        sender.spigot().sendMessage(builder.create());
       }
     }
     for (Parameter parameter : parent.getParameters()) {

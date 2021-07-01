@@ -27,7 +27,7 @@ public final class Permissions {
 
   public final static Permission INDICATOR_PERMISSION = new Permission("indicator.indicator");
   public final static Permission ADMIN_PERMISSION = new Permission("indicator.admin");
-  public final static Permission TRAIL_BLAZE_PERMISSION = new Permission("indicator.trail.blaze");
+  public final static Permission TRAIL_USE_PERMISSION = new Permission("indicator.trail.use");
   public static final Permission TRAIL_MANAGE_PERMISSION = new Permission("indicator.trail.manage");
 
   private Permissions() {
