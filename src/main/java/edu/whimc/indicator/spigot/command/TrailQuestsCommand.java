@@ -3,7 +3,7 @@ package edu.whimc.indicator.spigot.command;
 import edu.whimc.indicator.common.tools.BufferedFunction;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.spigot.command.common.*;
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
 import me.blackvein.quests.Quest;

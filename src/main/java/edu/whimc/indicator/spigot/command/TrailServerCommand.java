@@ -7,7 +7,7 @@ import edu.whimc.indicator.common.tools.BufferedSupplier;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.common.util.Validator;
 import edu.whimc.indicator.spigot.command.common.*;
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
 import org.bukkit.World;
@@ -25,7 +25,7 @@ public class TrailServerCommand extends FunctionlessCommandNode {
   public TrailServerCommand(@NotNull CommandNode parent) {
     super(parent,
         Permissions.TRAIL_USE_PERMISSION,
-        "Use server-wide locations in trails",
+        "Use server-wide locations in paths",
         "server");
 
     addChildren(new TrailServerBlazeCommand(this));

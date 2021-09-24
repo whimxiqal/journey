@@ -21,7 +21,7 @@
 
 package edu.whimc.indicator.spigot.util;
 
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;

@@ -21,11 +21,8 @@
 
 package edu.whimc.indicator.common.journey;
 
-import edu.whimc.indicator.common.path.Locatable;
-import edu.whimc.indicator.common.path.Path;
-import edu.whimc.indicator.common.path.Step;
-import edu.whimc.indicator.spigot.path.LocationCell;
-import org.bukkit.World;
+import edu.whimc.indicator.common.navigation.Locatable;
+import edu.whimc.indicator.common.navigation.Step;
 
 import java.util.Collection;
 

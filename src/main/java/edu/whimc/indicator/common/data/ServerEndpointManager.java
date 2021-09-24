@@ -1,6 +1,6 @@
 package edu.whimc.indicator.common.data;
 
-import edu.whimc.indicator.common.path.Cell;
+import edu.whimc.indicator.common.navigation.Cell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

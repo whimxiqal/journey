@@ -23,12 +23,12 @@ package edu.whimc.indicator.spigot.search;
 
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.path.Link;
-import edu.whimc.indicator.common.path.Mode;
-import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
-import edu.whimc.indicator.spigot.path.LocationCell;
-import edu.whimc.indicator.spigot.path.PortalLink;
-import edu.whimc.indicator.spigot.path.mode.*;
+import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.common.navigation.Mode;
+import edu.whimc.indicator.common.search.Search;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
+import edu.whimc.indicator.spigot.navigation.PortalLink;
+import edu.whimc.indicator.spigot.navigation.mode.*;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.portals.Main;
 import edu.whimc.portals.Portal;
@@ -44,7 +44,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public class IndicatorSearch extends TwoLevelBreadthFirstSearch<LocationCell, World> {
+public class IndicatorSearch extends Search<LocationCell, World> {
 
   public static final List<Mode<LocationCell, World>> SURVIVAL_MODES = Lists.newArrayList(
       new WalkMode(),

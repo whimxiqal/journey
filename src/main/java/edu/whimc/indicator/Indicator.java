@@ -11,8 +11,8 @@ import edu.whimc.indicator.spigot.command.IndicatorCommand;
 import edu.whimc.indicator.spigot.command.TrailCommand;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.data.SpigotDataManager;
-import edu.whimc.indicator.spigot.path.LocationCell;
-import edu.whimc.indicator.spigot.path.mode.*;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
+import edu.whimc.indicator.spigot.navigation.mode.*;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.search.tracker.SpigotSearchTracker;
 import lombok.Getter;
@@ -30,7 +30,7 @@ public final class Indicator extends JavaPlugin {
 
   private static Indicator instance;
 
-  private static final String SERIALIZED_TRAIL_CACHE_FILENAME = "trails.ser";
+  private static final String SERIALIZED_PATH_CACHE_FILENAME = "paths.ser";
 
   // Caches
   @Getter
@@ -104,7 +104,7 @@ public final class Indicator extends JavaPlugin {
 
   @SuppressWarnings("unchecked")
   private boolean deserializeCaches() {
-    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_TRAIL_CACHE_FILENAME).toFile();
+    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_PATH_CACHE_FILENAME).toFile();
     if (!file.exists()) return false;
     try (FileInputStream fileStream = new FileInputStream(file);
          ObjectInputStream in = new ObjectInputStream(fileStream)) {
@@ -120,7 +120,7 @@ public final class Indicator extends JavaPlugin {
   }
 
   private boolean serializeCaches() {
-    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_TRAIL_CACHE_FILENAME).toFile();
+    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_PATH_CACHE_FILENAME).toFile();
     try {
       //noinspection ResultOfMethodCallIgnored
       this.getDataFolder().mkdirs();
@@ -134,7 +134,7 @@ public final class Indicator extends JavaPlugin {
 
     try (FileOutputStream fileStream = new FileOutputStream(Paths.get(
         this.getDataFolder().toPath().toString(),
-        SERIALIZED_TRAIL_CACHE_FILENAME).toFile());
+        SERIALIZED_PATH_CACHE_FILENAME).toFile());
          ObjectOutputStream out = new ObjectOutputStream(fileStream)) {
 
       out.writeObject(trailCache);

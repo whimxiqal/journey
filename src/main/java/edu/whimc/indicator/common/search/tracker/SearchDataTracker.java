@@ -1,8 +1,8 @@
 package edu.whimc.indicator.common.search.tracker;
 
 import edu.whimc.indicator.common.data.DataManager;
-import edu.whimc.indicator.common.path.*;
-import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
+import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.search.Search;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -11,7 +11,7 @@ public abstract class SearchDataTracker<T extends Cell<T, D>, D> implements Sear
   private final DataManager<T, D> dataManager;
 
   @Override
-  public void searchStarted(TwoLevelBreadthFirstSearch<T, D> search) {
+  public void searchStarted(Search<T, D> search) {
     // TODO implement
   }
 
@@ -21,7 +21,7 @@ public abstract class SearchDataTracker<T extends Cell<T, D>, D> implements Sear
   }
 
   @Override
-  public void foundNewOptimalPath(Path<T, D> path) {
+  public void foundNewOptimalPath(Itinerary itinerary) {
     // TODO implement
   }
 
@@ -51,7 +51,7 @@ public abstract class SearchDataTracker<T extends Cell<T, D>, D> implements Sear
   }
 
   @Override
-  public void searchStopped(TwoLevelBreadthFirstSearch<T, D> search) {
+  public void searchStopped(Search<T, D> search) {
     // TODO implement
   }
 }

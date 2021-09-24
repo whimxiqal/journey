@@ -1,12 +1,12 @@
 package edu.whimc.indicator.spigot.search.tracker;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.path.ModeType;
-import edu.whimc.indicator.common.path.Step;
-import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
+import edu.whimc.indicator.common.navigation.ModeType;
+import edu.whimc.indicator.common.navigation.Step;
+import edu.whimc.indicator.common.search.Search;
 import edu.whimc.indicator.common.search.tracker.SearchAnimator;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -114,7 +114,7 @@ public class SpigotSearchAnimator extends SearchAnimator<LocationCell, World> {
   }
 
   @Override
-  public void searchStopped(TwoLevelBreadthFirstSearch<LocationCell, World> search) {
+  public void searchStopped(Search<LocationCell, World> search) {
     cleanUpAnimation();
     setAnimating(false);
   }

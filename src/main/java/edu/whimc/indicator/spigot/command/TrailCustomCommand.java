@@ -7,7 +7,7 @@ import edu.whimc.indicator.common.tools.BufferedFunction;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.common.util.Validator;
 import edu.whimc.indicator.spigot.command.common.*;
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
 import org.bukkit.Bukkit;
@@ -26,7 +26,7 @@ public class TrailCustomCommand extends FunctionlessCommandNode {
   public TrailCustomCommand(@NotNull CommandNode parent) {
     super(parent,
         Permissions.TRAIL_USE_PERMISSION,
-        "Use custom locations in trails",
+        "Use custom locations in paths",
         "custom");
 
     addChildren(new TrailCustomBlazeCommand(this));

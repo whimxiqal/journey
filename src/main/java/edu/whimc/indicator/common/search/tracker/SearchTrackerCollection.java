@@ -1,7 +1,7 @@
 package edu.whimc.indicator.common.search.tracker;
 
-import edu.whimc.indicator.common.path.*;
-import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
+import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.search.Search;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -19,7 +19,7 @@ public class SearchTrackerCollection<T extends Cell<T, D>, D> implements SearchT
   }
 
   @Override
-  public void searchStarted(TwoLevelBreadthFirstSearch<T, D> search) {
+  public void searchStarted(Search<T, D> search) {
     trackers.forEach(tracker -> tracker.searchStarted(search));
   }
 
@@ -29,8 +29,8 @@ public class SearchTrackerCollection<T extends Cell<T, D>, D> implements SearchT
   }
 
   @Override
-  public void foundNewOptimalPath(Path<T, D> path) {
-    trackers.forEach(tracker -> tracker.foundNewOptimalPath(path));
+  public void foundNewOptimalPath(Itinerary itinerary) {
+    trackers.forEach(tracker -> tracker.foundNewOptimalPath(itinerary));
   }
 
   @Override
@@ -59,7 +59,7 @@ public class SearchTrackerCollection<T extends Cell<T, D>, D> implements SearchT
   }
 
   @Override
-  public void searchStopped(TwoLevelBreadthFirstSearch<T, D> search) {
+  public void searchStopped(Search<T, D> search) {
     trackers.forEach(tracker -> tracker.searchStopped(search));
   }
 }

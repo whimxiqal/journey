@@ -1,17 +1,17 @@
 package edu.whimc.indicator.common.search.tracker;
 
-import edu.whimc.indicator.common.path.*;
-import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
+import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.search.Search;
 
 public class BlankSearchTracker<T extends Cell<T, D>, D> implements SearchTracker<T, D> {
   @Override
-  public void searchStarted(TwoLevelBreadthFirstSearch<T, D> search) { }
+  public void searchStarted(Search<T, D> search) { }
 
   @Override
   public void acceptResult(T cell, Result result, ModeType modeType) { }
 
   @Override
-  public void foundNewOptimalPath(Path<T, D> path) { }
+  public void foundNewOptimalPath(Itinerary itinerary) { }
 
   @Override
   public void startTrailSearch(T origin, T destination) { }
@@ -29,5 +29,5 @@ public class BlankSearchTracker<T extends Cell<T, D>, D> implements SearchTracke
   public void memoryCapacityReached(T origin, T destination) { }
 
   @Override
-  public void searchStopped(TwoLevelBreadthFirstSearch<T, D> search) { }
+  public void searchStopped(Search<T, D> search) { }
 }

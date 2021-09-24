@@ -1,7 +1,7 @@
 package edu.whimc.indicator.common.data.sql;
 
 import edu.whimc.indicator.common.data.DataAccessException;
-import edu.whimc.indicator.common.path.Cell;
+import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.common.util.Validator;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

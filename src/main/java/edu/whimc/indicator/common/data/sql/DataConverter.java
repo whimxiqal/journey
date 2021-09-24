@@ -1,6 +1,6 @@
 package edu.whimc.indicator.common.data.sql;
 
-import edu.whimc.indicator.common.path.Cell;
+import edu.whimc.indicator.common.navigation.Cell;
 import org.jetbrains.annotations.NotNull;
 
 public interface DataConverter<T extends Cell<T, D>, D> {

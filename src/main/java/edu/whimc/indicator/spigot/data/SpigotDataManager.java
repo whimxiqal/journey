@@ -9,7 +9,7 @@ import edu.whimc.indicator.spigot.data.sql.mysql.SpigotMySQLCustomEndpointManage
 import edu.whimc.indicator.spigot.data.sql.mysql.SpigotMySQLServerEndpointManager;
 import edu.whimc.indicator.spigot.data.sql.sqlite.SpigotSQLiteCustomEndpointManager;
 import edu.whimc.indicator.spigot.data.sql.sqlite.SpigotSQLiteServerEndpointManager;
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import lombok.Getter;
 import org.bukkit.World;
 

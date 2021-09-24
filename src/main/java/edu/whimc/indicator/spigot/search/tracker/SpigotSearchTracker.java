@@ -1,11 +1,11 @@
 package edu.whimc.indicator.spigot.search.tracker;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.path.*;
-import edu.whimc.indicator.common.search.TwoLevelBreadthFirstSearch;
+import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.search.Search;
 import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -38,14 +38,14 @@ public class SpigotSearchTracker extends BlankSearchTracker<LocationCell, World>
   }
 
   @Override
-  public void searchStarted(TwoLevelBreadthFirstSearch<LocationCell, World> search) {
+  public void searchStarted(Search<LocationCell, World> search) {
     if (playerUuid != null) {
       Indicator.getInstance().getSearchManager().putSearch(playerUuid, search);
     }
   }
 
   @Override
-  public void foundNewOptimalPath(Path<LocationCell, World> path) {
+  public void foundNewOptimalPath(Itinerary itinerary) {
     if (playerUuid == null) {
       return;
     }
@@ -55,8 +55,8 @@ public class SpigotSearchTracker extends BlankSearchTracker<LocationCell, World>
     }
 
     if (presentedPath) {
-      Indicator.getInstance().getSearchManager().getPlayerJourney(player.getUniqueId()).setProspectivePath(path);
-      player.spigot().sendMessage(Format.info("A faster path to your destination was found from your original location"));
+      Indicator.getInstance().getSearchManager().getPlayerJourney(player.getUniqueId()).setProspectiveItinerary(itinerary);
+      player.spigot().sendMessage(Format.info("A faster itinerary to your destination was found from your original location"));
       player.spigot().sendMessage(Format.chain(Format.info("Run "),
           Format.command("/trail accept", "Accept an incoming trail request"),
           Format.textOf(" to accept")));
@@ -69,7 +69,7 @@ public class SpigotSearchTracker extends BlankSearchTracker<LocationCell, World>
     foundPath = true;
 
     // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
-    PlayerJourney journey = new PlayerJourney(playerUuid, path);
+    PlayerJourney journey = new PlayerJourney(playerUuid, itinerary);
     journey.illuminateTrail();
 
     // Save the journey
@@ -79,7 +79,7 @@ public class SpigotSearchTracker extends BlankSearchTracker<LocationCell, World>
     successNotificationTaskId = Bukkit.getScheduler()
         .runTaskLater(Indicator.getInstance(),
             () -> {
-              player.spigot().sendMessage(Format.success("Showing a path to your destination"));
+              player.spigot().sendMessage(Format.success("Showing a itinerary to your destination"));
               presentedPath = true;
             },
             20 /* ticks per second */ * 2 /* seconds */)
@@ -115,7 +115,7 @@ public class SpigotSearchTracker extends BlankSearchTracker<LocationCell, World>
   }
 
   @Override
-  public void searchStopped(TwoLevelBreadthFirstSearch<LocationCell, World> search) {
+  public void searchStopped(Search<LocationCell, World> search) {
     // Send failure message if we finished unsuccessfully
     if (playerUuid != null) {
       Player player = Bukkit.getPlayer(playerUuid);

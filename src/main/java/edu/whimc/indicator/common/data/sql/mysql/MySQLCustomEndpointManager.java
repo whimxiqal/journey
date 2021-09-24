@@ -2,7 +2,7 @@ package edu.whimc.indicator.common.data.sql.mysql;
 
 import edu.whimc.indicator.common.data.sql.DataConverter;
 import edu.whimc.indicator.common.data.sql.SQLCustomEndpointManager;
-import edu.whimc.indicator.common.path.Cell;
+import edu.whimc.indicator.common.navigation.Cell;
 
 import java.util.*;
 

@@ -1,7 +1,7 @@
 package edu.whimc.indicator.common.search.tracker;
 
-import edu.whimc.indicator.common.path.Cell;
-import edu.whimc.indicator.common.path.ModeType;
+import edu.whimc.indicator.common.navigation.Cell;
+import edu.whimc.indicator.common.navigation.ModeType;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

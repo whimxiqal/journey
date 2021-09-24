@@ -23,14 +23,14 @@ package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.config.Settings;
-import edu.whimc.indicator.common.path.Path;
+import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.search.tracker.SearchTrackerCollection;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.command.common.Flags;
 import edu.whimc.indicator.spigot.command.common.FunctionlessCommandNode;
 import edu.whimc.indicator.spigot.command.common.PlayerCommandNode;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
-import edu.whimc.indicator.spigot.path.LocationCell;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.search.tracker.SpigotSearchAnimator;
 import edu.whimc.indicator.spigot.search.tracker.SpigotSearchTracker;
@@ -162,13 +162,13 @@ public final class TrailCommand extends FunctionlessCommandNode {
 
       PlayerJourney journey = Indicator.getInstance().getSearchManager().getPlayerJourney(player.getUniqueId());
 
-      Path<LocationCell, World> prospectivePath = journey.getProspectivePath();
-      if (prospectivePath == null) {
+      Itinerary<LocationCell, World> prospectiveItinerary = journey.getProspectiveItinerary();
+      if (prospectiveItinerary == null) {
         player.spigot().sendMessage(Format.error("You have nothing to accept."));
         return false;
       }
 
-      PlayerJourney newJourney = new PlayerJourney(player.getUniqueId(), prospectivePath);
+      PlayerJourney newJourney = new PlayerJourney(player.getUniqueId(), prospectiveItinerary);
       journey.stop();
 
       Indicator.getInstance().getSearchManager().putPlayerJourney(player.getUniqueId(), newJourney);

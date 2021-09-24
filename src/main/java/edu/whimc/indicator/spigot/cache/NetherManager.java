@@ -22,9 +22,9 @@
 package edu.whimc.indicator.spigot.cache;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.path.Link;
-import edu.whimc.indicator.spigot.path.LocationCell;
-import edu.whimc.indicator.spigot.path.NetherLink;
+import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
+import edu.whimc.indicator.spigot.navigation.NetherLink;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.NetherUtil;
 import org.bukkit.Bukkit;
