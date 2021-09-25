@@ -3,10 +3,9 @@ package edu.whimc.indicator.common.data.sql;
 import edu.whimc.indicator.common.data.DataAccessException;
 import edu.whimc.indicator.common.data.ServerEndpointManager;
 import edu.whimc.indicator.common.navigation.Cell;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 public abstract class SQLServerEndpointManager<T extends Cell<T, D>, D>
     extends SQLEndpointManager<T, D>

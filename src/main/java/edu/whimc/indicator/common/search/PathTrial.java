@@ -21,15 +21,26 @@
 
 package edu.whimc.indicator.common.search;
 
-import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.navigation.Cell;
+import edu.whimc.indicator.common.navigation.Mode;
+import edu.whimc.indicator.common.navigation.ModeType;
+import edu.whimc.indicator.common.navigation.Path;
+import edu.whimc.indicator.common.navigation.Step;
+import edu.whimc.indicator.common.search.old.LocalSearchRequest;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.function.Supplier;
 
 public class PathTrial<T extends Cell<T, D>, D> {
 

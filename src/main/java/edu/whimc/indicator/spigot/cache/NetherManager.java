@@ -27,6 +27,14 @@ import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.navigation.NetherLink;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.NetherUtil;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -37,10 +45,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.world.PortalCreateEvent;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class NetherManager implements Listener {
 
@@ -103,9 +107,9 @@ public class NetherManager implements Listener {
       // Destination Portal
       Optional<NetherUtil.PortalGroup> destinationGroup = NetherUtil
           .locateAll(new LocationCell(loc),
-          16,
-          loc.getBlockY() - 16,
-          loc.getBlockY() + 16)
+              16,
+              loc.getBlockY() - 16,
+              loc.getBlockY() + 16)
           .stream()
           .min(Comparator.comparingDouble(group ->
               group.port().distanceToSquared(new LocationCell(to))));

@@ -1,7 +1,10 @@
 package edu.whimc.indicator.common.search.tracker;
 
 import edu.whimc.indicator.common.data.DataManager;
-import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.navigation.Cell;
+import edu.whimc.indicator.common.navigation.Itinerary;
+import edu.whimc.indicator.common.navigation.ModeType;
+import edu.whimc.indicator.common.navigation.Step;
 import edu.whimc.indicator.common.search.Search;
 import lombok.RequiredArgsConstructor;
 

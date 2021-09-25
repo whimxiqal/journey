@@ -1,20 +1,28 @@
 package edu.whimc.indicator;
 
 import edu.whimc.indicator.common.cache.TrailCache;
-import edu.whimc.indicator.common.data.DataManager;
 import edu.whimc.indicator.common.config.ConfigManager;
+import edu.whimc.indicator.common.data.DataManager;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import edu.whimc.indicator.spigot.cache.DebugManager;
-import edu.whimc.indicator.spigot.cache.SearchManager;
 import edu.whimc.indicator.spigot.cache.NetherManager;
+import edu.whimc.indicator.spigot.cache.SearchManager;
 import edu.whimc.indicator.spigot.command.IndicatorCommand;
 import edu.whimc.indicator.spigot.command.TrailCommand;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.data.SpigotDataManager;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
-import edu.whimc.indicator.spigot.navigation.mode.*;
+import edu.whimc.indicator.spigot.navigation.mode.FlyMode;
 import edu.whimc.indicator.spigot.search.IndicatorSearch;
 import edu.whimc.indicator.spigot.search.tracker.SpigotSearchTracker;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Paths;
+import java.util.Collections;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -22,16 +30,10 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.*;
-import java.nio.file.Paths;
-import java.util.*;
-
 public final class Indicator extends JavaPlugin {
 
-  private static Indicator instance;
-
   private static final String SERIALIZED_PATH_CACHE_FILENAME = "paths.ser";
-
+  private static Indicator instance;
   // Caches
   @Getter
   private ConfigManager configManager;

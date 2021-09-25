@@ -36,6 +36,8 @@ import edu.whimc.indicator.spigot.search.tracker.SpigotSearchAnimator;
 import edu.whimc.indicator.spigot.search.tracker.SpigotSearchTracker;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
+import java.util.Map;
+import java.util.UUID;
 import me.blackvein.quests.Quests;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -45,9 +47,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.UUID;
 
 public final class TrailCommand extends FunctionlessCommandNode {
 

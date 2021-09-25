@@ -23,14 +23,13 @@ package edu.whimc.indicator.spigot.navigation;
 
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.spigot.util.UuidToWorld;
+import java.util.Objects;
+import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
-import java.util.UUID;
 
 public class LocationCell extends Cell<LocationCell, World> {
 

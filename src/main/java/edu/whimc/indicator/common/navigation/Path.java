@@ -22,15 +22,18 @@
 package edu.whimc.indicator.common.navigation;
 
 import com.google.common.collect.Lists;
+import java.io.Serializable;
+import java.util.ArrayList;
 import lombok.Data;
 import lombok.NonNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-
 @Data
 public final class Path<T extends Locatable<T, D>, D> implements Serializable {
+
+  @NonNull
+  private final ArrayList<Step<T, D>> steps;
+  private final double length;
 
   public static <A extends Locatable<A, B>, B> Path<A, B> INVALID() {
     return new Path<>(Lists.newArrayList(), Double.MAX_VALUE);
@@ -39,10 +42,6 @@ public final class Path<T extends Locatable<T, D>, D> implements Serializable {
   public static <A extends Locatable<A, B>, B> boolean isValid(@Nullable Path<A, B> path) {
     return path != null && Double.compare(path.getLength(), Double.MAX_VALUE) < 0;
   }
-
-  @NonNull
-  private final ArrayList<Step<T, D>> steps;
-  private final double length;
 
   public T getOrigin() {
     if (steps.isEmpty()) return null;

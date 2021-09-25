@@ -22,7 +22,6 @@
 package edu.whimc.indicator.common.navigation;
 
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
-
 import java.util.HashMap;
 import java.util.Map;
 

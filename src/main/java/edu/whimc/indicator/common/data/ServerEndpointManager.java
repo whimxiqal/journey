@@ -1,10 +1,9 @@
 package edu.whimc.indicator.common.data;
 
 import edu.whimc.indicator.common.navigation.Cell;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public interface ServerEndpointManager<T extends Cell<T, D>, D> {
 

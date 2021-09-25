@@ -1,19 +1,18 @@
 package edu.whimc.indicator.spigot.search.tracker;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.search.Search;
 import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 public class SpigotSearchTracker extends BlankSearchTracker<LocationCell, World> {
 

@@ -26,14 +26,17 @@
 package edu.whimc.indicator.common.config;
 
 import edu.whimc.indicator.Indicator;
-import org.bukkit.configuration.InvalidConfigurationException;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.bukkit.configuration.InvalidConfigurationException;
 
 public class ConfigManager {
 

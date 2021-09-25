@@ -1,9 +1,8 @@
 package edu.whimc.indicator.common.data.sql.mysql;
 
 import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.data.sql.SQLConnectionController;
 import edu.whimc.indicator.common.config.Settings;
-
+import edu.whimc.indicator.common.data.sql.SQLConnectionController;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

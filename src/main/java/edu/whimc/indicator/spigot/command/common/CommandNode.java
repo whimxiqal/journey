@@ -27,6 +27,14 @@ import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.data.DataAccessException;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.spigot.util.Format;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.command.Command;
@@ -37,8 +45,6 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 public abstract class CommandNode implements CommandExecutor, TabCompleter {
 

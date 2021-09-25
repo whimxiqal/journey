@@ -1,12 +1,11 @@
 package edu.whimc.indicator.common.navigation;
 
 import com.google.common.collect.Sets;
-import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 public class ModeTypeGroup implements Serializable {
 

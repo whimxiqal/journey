@@ -22,15 +22,19 @@
 package edu.whimc.indicator.spigot.command.common;
 
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiFunction;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
-import java.util.function.BiFunction;
 
 @Builder
 public class Parameter {
@@ -50,6 +54,28 @@ public class Parameter {
     return Parameter.builder()
         .supplier(ParameterSupplier.builder().usage(usage).build())
         .build();
+  }
+
+  /**
+   * Create a single parameter by putting the given parameters in series.
+   *
+   * @param first  the necessary first parameter
+   * @param others the following parameters
+   * @return a single merged parameter
+   */
+  public static Parameter chain(@NotNull Parameter first, @NotNull Parameter... others) {
+    Objects.requireNonNull(first);
+    Objects.requireNonNull(others);
+    List<Parameter> parameters = Lists.newArrayList(first);
+    parameters.addAll(Arrays.asList(others));
+    for (int i = 0; i < parameters.size() - 1; i++) {
+      Parameter cur = parameters.get(i);
+      while (cur.getNext().isPresent()) {
+        cur = cur.getNext().get();
+      }
+      cur.next = parameters.get(i + 1);
+    }
+    return parameters.get(0);
   }
 
   public Optional<Permission> getPermission() {
@@ -93,28 +119,6 @@ public class Parameter {
           .orElse(Lists.newArrayList());
     }
     return Lists.newLinkedList();
-  }
-
-  /**
-   * Create a single parameter by putting the given parameters in series.
-   *
-   * @param first  the necessary first parameter
-   * @param others the following parameters
-   * @return a single merged parameter
-   */
-  public static Parameter chain(@NotNull Parameter first, @NotNull Parameter... others) {
-    Objects.requireNonNull(first);
-    Objects.requireNonNull(others);
-    List<Parameter> parameters = Lists.newArrayList(first);
-    parameters.addAll(Arrays.asList(others));
-    for (int i = 0; i < parameters.size() - 1; i++) {
-      Parameter cur = parameters.get(i);
-      while (cur.getNext().isPresent()) {
-        cur = cur.getNext().get();
-      }
-      cur.next = parameters.get(i + 1);
-    }
-    return parameters.get(0);
   }
 
   /**

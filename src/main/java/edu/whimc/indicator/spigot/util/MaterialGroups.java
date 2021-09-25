@@ -1,16 +1,11 @@
 package edu.whimc.indicator.spigot.util;
 
 import com.google.common.collect.Sets;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.type.Slab;
-
-import java.util.Set;
 
 public final class MaterialGroups {
-
-  private MaterialGroups() {
-  }
 
   /**
    * All pressure plates.
@@ -29,7 +24,6 @@ public final class MaterialGroups {
       Material.STONE_PRESSURE_PLATE.createBlockData(),
       Material.WARPED_PRESSURE_PLATE.createBlockData()
   );
-
   /**
    * Anything that a player, under any circumstance, is not allowed to touch.
    */
@@ -37,13 +31,11 @@ public final class MaterialGroups {
       Material.LAVA.createBlockData(),
       Material.NETHER_PORTAL.createBlockData(),
       Material.END_PORTAL.createBlockData());
-
   /**
    * Anything that a player can squeeze through vertically, other than the obvious.
    */
   public static final Set<BlockData> VERTICALLY_PASSABLE = Sets.newHashSet(
       Material.LADDER.createBlockData());
-
   /**
    * Anything that a player can squeeze through laterally, other than the obvious.
    */
@@ -105,11 +97,13 @@ public final class MaterialGroups {
       SpigotUtil.setSlabType(Material.BLACKSTONE_SLAB.createBlockData(), Slab.Type.BOTTOM),
       SpigotUtil.setSlabType(Material.POLISHED_BLACKSTONE_SLAB.createBlockData(), Slab.Type.BOTTOM),
       SpigotUtil.setSlabType(Material.POLISHED_BLACKSTONE_BRICK_SLAB.createBlockData(), Slab.Type.BOTTOM)*/);
-
   /**
    * Anything that a player can stand on, other than the obvious.
    */
   public static final Set<BlockData> TALL_SOLIDS = Sets.newHashSet(
       Material.LADDER.createBlockData());
+
+  private MaterialGroups() {
+  }
 
 }

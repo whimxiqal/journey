@@ -2,13 +2,12 @@ package edu.whimc.indicator.common.cache;
 
 import com.google.common.collect.Maps;
 import edu.whimc.indicator.common.navigation.Locatable;
-import edu.whimc.indicator.common.navigation.Path;
 import edu.whimc.indicator.common.navigation.ModeTypeGroup;
-import org.jetbrains.annotations.Nullable;
-
+import edu.whimc.indicator.common.navigation.Path;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.jetbrains.annotations.Nullable;
 
 public class TrailCache<T extends Locatable<T, D>, D> implements Serializable {
 

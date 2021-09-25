@@ -2,10 +2,9 @@ package edu.whimc.indicator.spigot.data;
 
 import edu.whimc.indicator.common.data.sql.DataConverter;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
+import java.util.UUID;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.UUID;
 
 public class SpigotDataConverter implements DataConverter<LocationCell, World> {
 

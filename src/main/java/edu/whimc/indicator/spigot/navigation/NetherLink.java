@@ -24,10 +24,9 @@ package edu.whimc.indicator.spigot.navigation;
 import edu.whimc.indicator.common.navigation.Completion;
 import edu.whimc.indicator.common.navigation.Link;
 import edu.whimc.indicator.spigot.util.NetherUtil;
+import java.util.Objects;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 public final class NetherLink implements Link<LocationCell, World> {
 

@@ -26,17 +26,16 @@
 package edu.whimc.indicator.common.config;
 
 import edu.whimc.indicator.Indicator;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class Setting<T> {
 
+  protected final Class<T> clazz;
   private final String path;
   private final T defaultValue;
-  private T value;
-  protected final Class<T> clazz;
   boolean initialized = false;
+  private T value;
 
   Setting(@NotNull String path, @NotNull T defaultValue, @NotNull Class<T> clazz) {
     if (!clazz.isInstance(defaultValue)) {
@@ -57,11 +56,6 @@ public abstract class Setting<T> {
     return clazz.cast(defaultValue);
   }
 
-  public void setValue(@NotNull T value) {
-    this.value = Objects.requireNonNull(value);
-    this.initialized = true;
-  }
-
   @NotNull
   public T getValue() {
     if (!initialized) {
@@ -70,6 +64,11 @@ public abstract class Setting<T> {
       initialized = true;
     }
     return value;
+  }
+
+  public void setValue(@NotNull T value) {
+    this.value = Objects.requireNonNull(value);
+    this.initialized = true;
   }
 
   abstract T parseValue(@NotNull String string);

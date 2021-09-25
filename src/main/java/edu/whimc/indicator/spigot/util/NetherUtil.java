@@ -22,17 +22,18 @@
 package edu.whimc.indicator.spigot.util;
 
 import edu.whimc.indicator.spigot.navigation.LocationCell;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
-import java.util.*;
-
 public final class NetherUtil {
-
-  private NetherUtil() {
-  }
 
   private static final BlockFace[] BLOCK_FACES = new BlockFace[]{
       BlockFace.EAST,
@@ -41,6 +42,9 @@ public final class NetherUtil {
       BlockFace.SOUTH,
       BlockFace.UP,
       BlockFace.DOWN};
+
+  private NetherUtil() {
+  }
 
   /**
    * * Gets the nearest Nether portal within the specified radius in relation to the given cell.

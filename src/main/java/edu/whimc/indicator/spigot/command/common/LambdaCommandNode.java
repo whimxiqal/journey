@@ -21,16 +21,14 @@
 
 package edu.whimc.indicator.spigot.command.common;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.BiFunction;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.BiFunction;
 
 public class LambdaCommandNode extends CommandNode {
 

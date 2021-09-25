@@ -27,15 +27,14 @@ import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.Path;
 import edu.whimc.indicator.common.search.PathTrial;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
-import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
 public class LocalSearchRequestQueue<T extends Cell<T, D>, D> {
 

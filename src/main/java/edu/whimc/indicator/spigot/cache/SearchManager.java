@@ -25,6 +25,9 @@ import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.search.Search;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
@@ -32,10 +35,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchManager implements Listener {
 

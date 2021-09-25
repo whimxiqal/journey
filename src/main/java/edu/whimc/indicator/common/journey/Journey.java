@@ -23,7 +23,6 @@ package edu.whimc.indicator.common.journey;
 
 import edu.whimc.indicator.common.navigation.Locatable;
 import edu.whimc.indicator.common.navigation.Step;
-
 import java.util.Collection;
 
 /**

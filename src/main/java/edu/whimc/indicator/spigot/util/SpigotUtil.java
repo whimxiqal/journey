@@ -1,6 +1,5 @@
 package edu.whimc.indicator.spigot.util;
 
-import edu.whimc.indicator.Indicator;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Slab;
@@ -14,6 +13,7 @@ public final class SpigotUtil {
   public static final double STEVE_WIDTH = 0.6;
 
   public static final double STEP_HEIGHT = 0.5;
+
   /**
    * Return true if you can pass vertically through this block.
    *
@@ -24,10 +24,7 @@ public final class SpigotUtil {
     if (isPassable(block)) {
       return true;
     }
-    if (MaterialGroups.VERTICALLY_PASSABLE.contains(block.getBlockData())) {
-      return true;
-    }
-    return false;
+    return MaterialGroups.VERTICALLY_PASSABLE.contains(block.getBlockData());
   }
 
   /**
@@ -40,10 +37,7 @@ public final class SpigotUtil {
     if (isPassable(block)) {
       return true;
     }
-    if (MaterialGroups.LATERALLY_PASSABLE.contains(block.getBlockData())) {
-      return true;
-    }
-    return false;
+    return MaterialGroups.LATERALLY_PASSABLE.contains(block.getBlockData());
   }
 
   /**

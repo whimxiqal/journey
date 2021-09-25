@@ -21,13 +21,12 @@
 
 package edu.whimc.indicator.spigot.command.common;
 
+import java.util.Map;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public abstract class FunctionlessCommandNode extends CommandNode {
 

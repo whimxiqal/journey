@@ -22,18 +22,18 @@
 package edu.whimc.indicator.spigot.util;
 
 import edu.whimc.indicator.spigot.navigation.LocationCell;
-import net.md_5.bungee.api.chat.*;
+import java.util.Arrays;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.ChatColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
 public final class Format {
-
-  private Format() {
-  }
 
   public static final ChatColor THEME = ChatColor.LIGHT_PURPLE;
   public static final ChatColor SUCCESS = ChatColor.GREEN;
@@ -45,6 +45,8 @@ public final class Format {
   public static final ChatColor ACCENT2 = ChatColor.DARK_AQUA;
   public static final ChatColor DEFAULT = ChatColor.WHITE;
   public static final String PREFIX = THEME + "Indicator % " + ChatColor.RESET;
+  private Format() {
+  }
 
   public static String toPlain(BaseComponent[] text) {
     StringBuilder builder = new StringBuilder();
@@ -55,7 +57,7 @@ public final class Format {
   }
 
   public static BaseComponent[] textOf(String single) {
-    return new BaseComponent[] {new TextComponent(single)};
+    return new BaseComponent[]{new TextComponent(single)};
   }
 
   public static BaseComponent[] applyColorToAllOf(ChatColor color, String... message) {

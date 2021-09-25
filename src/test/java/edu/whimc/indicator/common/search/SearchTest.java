@@ -2,25 +2,27 @@ package edu.whimc.indicator.common.search;
 
 import com.google.common.collect.Lists;
 import edu.whimc.indicator.common.cache.TrailCache;
-import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.navigation.Cell;
+import edu.whimc.indicator.common.navigation.Completion;
+import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.ModeType;
+import edu.whimc.indicator.common.navigation.Step;
 import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
+import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
-
 class SearchTest {
-
-  Domain domain1 = new Domain("d1");
-  Domain domain2 = new Domain("d2");
 
   static int boardSize = 12;
   static Point3D[][] board1 = new Point3D[boardSize][boardSize];
   static Point3D[][] board2 = new Point3D[boardSize][boardSize];
-
+  Domain domain1 = new Domain("d1");
+  Domain domain2 = new Domain("d2");
 
   @Test
   void findPath() {

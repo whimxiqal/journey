@@ -1,10 +1,9 @@
 package edu.whimc.indicator.common.tools;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class BufferedFunction<T, R> implements Function<T, R> {

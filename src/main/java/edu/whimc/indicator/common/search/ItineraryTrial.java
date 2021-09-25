@@ -23,12 +23,19 @@ package edu.whimc.indicator.common.search;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.navigation.Itinerary;
+import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.common.navigation.Locatable;
+import edu.whimc.indicator.common.navigation.Path;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.Stack;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 public class ItineraryTrial<T extends Locatable<T, D>, D> {
 
@@ -36,36 +43,6 @@ public class ItineraryTrial<T extends Locatable<T, D>, D> {
 
   public void addEdge(Node origin, Node destination, @NotNull Path<T, D> path) {
     this.edges.put(origin, destination, path);
-  }
-
-  public static class Node {
-    @Getter @Setter
-    private double distance;
-    @Setter @Getter
-    private Node previous;
-    /**
-     * The "weight" of the node, which is the cost of traversing through this node.
-     */
-    @Getter
-    protected double weight = 0;
-
-    private Node(double distance) {
-      this.distance = distance;
-    }
-  }
-
-  private class LinkNode extends Node {
-    private final Link<T, D> link;
-
-    public LinkNode(Link<T, D> link, double distance) {
-      super(distance);
-      this.link = link;
-      weight = link.weight();
-    }
-
-    public Link<T, D> getLink() {
-      return link;
-    }
   }
 
   public Node generateNode() {
@@ -133,6 +110,38 @@ public class ItineraryTrial<T extends Locatable<T, D>, D> {
 
     return null;  // Could not find it
 
+  }
+
+  public static class Node {
+    /**
+     * The "weight" of the node, which is the cost of traversing through this node.
+     */
+    @Getter
+    protected double weight = 0;
+    @Getter
+    @Setter
+    private double distance;
+    @Setter
+    @Getter
+    private Node previous;
+
+    private Node(double distance) {
+      this.distance = distance;
+    }
+  }
+
+  private class LinkNode extends Node {
+    private final Link<T, D> link;
+
+    public LinkNode(Link<T, D> link, double distance) {
+      super(distance);
+      this.link = link;
+      weight = link.weight();
+    }
+
+    public Link<T, D> getLink() {
+      return link;
+    }
   }
 
 }

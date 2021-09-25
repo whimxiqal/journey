@@ -22,10 +22,9 @@
 package edu.whimc.indicator.common.navigation;
 
 import com.google.common.collect.Lists;
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 
 public final class Itinerary<T extends Locatable<T, D>, D> {
 

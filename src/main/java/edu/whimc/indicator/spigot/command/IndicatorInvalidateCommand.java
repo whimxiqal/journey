@@ -4,13 +4,11 @@ import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
+import java.util.Map;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.Set;
 
 public class IndicatorInvalidateCommand extends CommandNode {
 

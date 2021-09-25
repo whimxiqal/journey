@@ -27,6 +27,7 @@ import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
+import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -34,9 +35,6 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.Set;
 
 public class IndicatorDebugCommand extends CommandNode {
 

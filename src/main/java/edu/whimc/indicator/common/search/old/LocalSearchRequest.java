@@ -23,9 +23,8 @@ package edu.whimc.indicator.common.search.old;
 
 import edu.whimc.indicator.common.navigation.Locatable;
 import edu.whimc.indicator.common.search.ItineraryTrial;
-import lombok.Data;
-
 import java.util.function.Supplier;
+import lombok.Data;
 
 @Data
 public class LocalSearchRequest<T extends Locatable<T, D>, D> {

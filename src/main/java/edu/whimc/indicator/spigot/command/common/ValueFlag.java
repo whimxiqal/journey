@@ -1,9 +1,8 @@
 package edu.whimc.indicator.spigot.command.common;
 
-import org.bukkit.entity.Player;
-
 import java.util.Map;
 import java.util.function.BiFunction;
+import org.bukkit.entity.Player;
 
 public class ValueFlag<T> extends Flag {
 

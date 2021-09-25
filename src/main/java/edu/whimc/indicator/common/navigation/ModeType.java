@@ -22,10 +22,9 @@
 package edu.whimc.indicator.common.navigation;
 
 import edu.whimc.indicator.common.util.PrimeUtil;
+import java.io.Serializable;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.Serializable;
 
 public enum ModeType implements Serializable {
 

@@ -1,10 +1,10 @@
 package edu.whimc.indicator.spigot.data;
 
 import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.common.config.Settings;
 import edu.whimc.indicator.common.data.CustomEndpointManager;
 import edu.whimc.indicator.common.data.DataManager;
 import edu.whimc.indicator.common.data.ServerEndpointManager;
-import edu.whimc.indicator.common.config.Settings;
 import edu.whimc.indicator.spigot.data.sql.mysql.SpigotMySQLCustomEndpointManager;
 import edu.whimc.indicator.spigot.data.sql.mysql.SpigotMySQLServerEndpointManager;
 import edu.whimc.indicator.spigot.data.sql.sqlite.SpigotSQLiteCustomEndpointManager;

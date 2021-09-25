@@ -1,10 +1,12 @@
 package edu.whimc.indicator.common.util;
 
 import com.google.common.collect.Lists;
-
 import java.util.LinkedList;
 
 public final class Extra {
+
+  private Extra() {
+  }
 
   public static boolean isNumber(String s) {
     for (int c : s.toCharArray()) {
@@ -66,9 +68,6 @@ public final class Extra {
     } else {
       return input;
     }
-  }
-
-  private Extra() {
   }
 
 }

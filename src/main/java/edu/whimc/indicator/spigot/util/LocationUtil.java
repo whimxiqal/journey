@@ -32,23 +32,24 @@ public final class LocationUtil {
    * Determine if the user can step from the given block to a
    * block one block away in the X or Z direction and some
    * amount of blocks up or down.
-   *
+   * <p>
    * Does no checks for whether a player can stand at the given
    * origin points.
-   * @param cell the cell to check against
-   * @param offY the offset of the step in y
-   * @param xStep which a axis a step is being taken: x if true, z if false
+   *
+   * @param cell       the cell to check against
+   * @param offY       the offset of the step in y
+   * @param xStep      which a axis a step is being taken: x if true, z if false
    * @param isPositive which direction a step is being taken:
    *                   positive if true, negative if false
    * @return true if a player can step there
    */
   private static boolean canStep(LocationCell cell, int offY,
-                                                          boolean xStep, boolean isPositive) {
+                                 boolean xStep, boolean isPositive) {
     if (offY > 1 || offY < -3) return false;  // Too high to jump, too low to fall
 
-    int floorX = cell.getX() + (xStep ? 1 : 0)*(isPositive ? 1 : -1);
+    int floorX = cell.getX() + (xStep ? 1 : 0) * (isPositive ? 1 : -1);
     int floorY = cell.getY() - 1 + offY;
-    int floorZ = cell.getZ() + (xStep ? 0 : 1)*(isPositive ? 1 : -1);
+    int floorZ = cell.getZ() + (xStep ? 0 : 1) * (isPositive ? 1 : -1);
 
     if (cell.getDomain().getBlockAt(floorX, floorY, floorZ).isPassable()) {
       return false;  // There is no floor

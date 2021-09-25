@@ -6,19 +6,26 @@ import edu.whimc.indicator.common.data.ServerEndpointManager;
 import edu.whimc.indicator.common.tools.BufferedSupplier;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.common.util.Validator;
-import edu.whimc.indicator.spigot.command.common.*;
+import edu.whimc.indicator.spigot.command.common.CommandError;
+import edu.whimc.indicator.spigot.command.common.CommandNode;
+import edu.whimc.indicator.spigot.command.common.FunctionlessCommandNode;
+import edu.whimc.indicator.spigot.command.common.Parameter;
+import edu.whimc.indicator.spigot.command.common.PlayerCommandNode;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.util.ChatPaginator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class TrailServerCommand extends FunctionlessCommandNode {
 

@@ -25,38 +25,42 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.cache.TrailCache;
-import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.navigation.Cell;
+import edu.whimc.indicator.common.navigation.Itinerary;
+import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.common.navigation.Mode;
+import edu.whimc.indicator.common.navigation.ModeTypeGroup;
+import edu.whimc.indicator.common.navigation.Path;
+import edu.whimc.indicator.common.navigation.Step;
+import edu.whimc.indicator.common.search.old.DomainUnweightedGraph;
+import edu.whimc.indicator.common.search.old.LocalSearchRequest;
+import edu.whimc.indicator.common.search.old.LocalSearchRequestQueue;
 import edu.whimc.indicator.common.search.tracker.BlankSearchTracker;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-
 public class Search<T extends Cell<T, D>, D> {
-
-  public enum RunningStatus {
-    IDLE,
-    RUNNING,
-    CANCELLED,
-    COMPLETED,
-  }
 
   private final Collection<Link<T, D>> links = Lists.newLinkedList();
   private final Collection<Mode<T, D>> modes = Lists.newLinkedList();
   private final ModeTypeGroup modeTypes = new ModeTypeGroup();
   private final TrailCache<T, D> trailCache;
-
-  @Getter @Setter
+  @Getter
+  @Setter
   private SearchTracker<T, D> tracker = new BlankSearchTracker<>();
-
   @Getter
   private RunningStatus runningStatus = RunningStatus.IDLE;
   private boolean succeeded = false;
-
   public Search(TrailCache<T, D> trailCache) {
     this.trailCache = trailCache;
   }
@@ -173,7 +177,7 @@ public class Search<T extends Cell<T, D>, D> {
     AtomicDouble optimalLength = new AtomicDouble(Math.sqrt(Double.MAX_VALUE) / 2);  // Very large
     AtomicReference<LocalSearchRequest<T, D>> trailSearchRequest = new AtomicReference<>();
     Path<T, D> latestFoundPath;
-    Itinerary foundItinerary;
+    Itinerary<T, D> foundItinerary;
 
 
     // STEP 0 - Try a single level (local) search first
@@ -299,6 +303,7 @@ public class Search<T extends Cell<T, D>, D> {
 
   /**
    * Did the search stop because it was cancelled?
+   *
    * @return true if cancelled
    */
   public boolean isCancelled() {
@@ -307,6 +312,7 @@ public class Search<T extends Cell<T, D>, D> {
 
   /**
    * Did the search complete normally without cancellation.
+   *
    * @return true if completed
    */
   public boolean isCompleted() {
@@ -315,6 +321,7 @@ public class Search<T extends Cell<T, D>, D> {
 
   /**
    * Is the search done, as in, it is not running any more. The status can either be completed or cancelled.
+   *
    * @return true if done
    */
   public boolean isDone() {
@@ -357,7 +364,6 @@ public class Search<T extends Cell<T, D>, D> {
     }
     return exitDomains;
   }
-
 
   /**
    * For every domain, get a set of links that have origins from that domain.
@@ -452,6 +458,13 @@ public class Search<T extends Cell<T, D>, D> {
 
     runningStatus = RunningStatus.COMPLETED;
     succeeded = true;
+  }
+
+  public enum RunningStatus {
+    IDLE,
+    RUNNING,
+    CANCELLED,
+    COMPLETED,
   }
 
 }

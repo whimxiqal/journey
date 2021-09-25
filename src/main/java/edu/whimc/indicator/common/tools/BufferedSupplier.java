@@ -1,12 +1,12 @@
 package edu.whimc.indicator.common.tools;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.function.Supplier;
+import lombok.RequiredArgsConstructor;
 
 /**
  * A supplier which only gets the data after a certain
  * amount of time after the previous time the data was taken
+ *
  * @param <T> the type of data supplied
  */
 @RequiredArgsConstructor

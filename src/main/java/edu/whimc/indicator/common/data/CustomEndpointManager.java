@@ -1,11 +1,10 @@
 package edu.whimc.indicator.common.data;
 
 import edu.whimc.indicator.common.navigation.Cell;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Map;
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface CustomEndpointManager<T extends Cell<T, D>, D> {
 

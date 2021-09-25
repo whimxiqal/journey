@@ -28,21 +28,25 @@ import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.search.Search;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.navigation.PortalLink;
-import edu.whimc.indicator.spigot.navigation.mode.*;
+import edu.whimc.indicator.spigot.navigation.mode.ClimbMode;
+import edu.whimc.indicator.spigot.navigation.mode.DoorMode;
+import edu.whimc.indicator.spigot.navigation.mode.FlyMode;
+import edu.whimc.indicator.spigot.navigation.mode.JumpMode;
+import edu.whimc.indicator.spigot.navigation.mode.SwimMode;
+import edu.whimc.indicator.spigot.navigation.mode.WalkMode;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.portals.Main;
 import edu.whimc.portals.Portal;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
 
 public class IndicatorSearch extends Search<LocationCell, World> {
 

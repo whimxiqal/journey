@@ -22,48 +22,39 @@
 package edu.whimc.indicator.spigot.command.common;
 
 import com.google.common.collect.Lists;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Registry;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public final class ParameterSuppliers {
-
-  private ParameterSuppliers() {
-  }
 
   public static final Parameter.ParameterSupplier NONE = Parameter.ParameterSupplier.builder()
       .allowedEntries((src, prev) -> Lists.newLinkedList())
       .usage("")
       .build();
-
   public static final Parameter.ParameterSupplier ONLINE_PLAYER = Parameter.ParameterSupplier.builder()
       .allowedEntries((src, prev) ->
           Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()))
       .usage("<player>")
       .strict(false)
       .build();
-
   public static final Parameter.ParameterSupplier WORLD = Parameter.ParameterSupplier.builder()
-          .allowedEntries((src, prev) -> Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()))
-          .usage("<world>")
-          .strict(true)
-          .build();
-
+      .allowedEntries((src, prev) -> Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()))
+      .usage("<world>")
+      .strict(true)
+      .build();
   public static final Parameter.ParameterSupplier BOOLEAN = Parameter.ParameterSupplier.builder()
       .allowedEntries((src, prev) ->
           Lists.newArrayList("true", "false", "t", "f"))
       .usage("true|false")
       .build();
-
   public static final Parameter.ParameterSupplier INTEGER = Parameter.ParameterSupplier.builder()
       .usage("<integer>")
       .build();
-
   public static final Parameter.ParameterSupplier ITEM = Parameter.ParameterSupplier.builder()
       .allowedEntries((src, prev) -> {
         List<String> out = Lists.newLinkedList();
@@ -78,5 +69,8 @@ public final class ParameterSuppliers {
       })
       .usage("<item>")
       .build();
+
+  private ParameterSuppliers() {
+  }
 
 }

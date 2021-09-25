@@ -21,11 +21,10 @@
 
 package edu.whimc.indicator.common.navigation;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
-
-import java.io.Serializable;
 
 /**
  * A representation of a movement step between {@link Locatable}s on a {@link Path}.

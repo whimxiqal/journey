@@ -21,17 +21,19 @@
 
 package edu.whimc.indicator.common.navigation;
 
+import java.util.Objects;
+import java.util.function.Function;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-import java.util.function.Function;
-
 public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
 
-  @Getter protected final int x;
-  @Getter protected final int y;
-  @Getter protected final int z;
+  @Getter
+  protected final int x;
+  @Getter
+  protected final int y;
+  @Getter
+  protected final int z;
   protected final String domainId;
   protected final Function<String, D> domainFunction;
   private transient D domain;

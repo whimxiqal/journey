@@ -23,9 +23,20 @@ package edu.whimc.indicator.spigot.journey;
 
 import edu.whimc.indicator.Indicator;
 import edu.whimc.indicator.common.journey.Journey;
-import edu.whimc.indicator.common.navigation.*;
+import edu.whimc.indicator.common.navigation.Completion;
+import edu.whimc.indicator.common.navigation.Itinerary;
+import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.common.navigation.ModeType;
+import edu.whimc.indicator.common.navigation.Path;
+import edu.whimc.indicator.common.navigation.Step;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -34,24 +45,21 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-
 public class PlayerJourney implements Journey<LocationCell, World> {
 
   private static final int ILLUMINATED_COUNT = 32;
   private static final int TICKS_PER_PARTICLE = 3;
   private static final double CHANCE_OF_PARTICLE = 0.4;
   private static final int PROXIMAL_BLOCK_CACHE_SIZE = 128;
-
-  @Getter @Setter
-  private Itinerary prospectiveItinerary;
-
   private final UUID playerUuid;
   private final List<Path<LocationCell, World>> paths;
   private final List<Link<LocationCell, World>> links;
   private final LocationCell destination;
   private final Completion<LocationCell, World> completion;
   private final Set<LocationCell> near = new HashSet<>();
+  @Getter
+  @Setter
+  private Itinerary prospectiveItinerary;
   private int trailIndex = 0;
   private int stepIndex = 0;
   private boolean completed = false;
@@ -80,10 +88,10 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     }
     // Check if we finished
     if (completion.test(locatable)) {
-        Player player = Bukkit.getPlayer(playerUuid);
-        if (player != null) {
-          player.spigot().sendMessage(Format.success("You've reached your destination"));
-        }
+      Player player = Bukkit.getPlayer(playerUuid);
+      if (player != null) {
+        player.spigot().sendMessage(Format.success("You've reached your destination"));
+      }
       completed = true;
       stop();
       return;

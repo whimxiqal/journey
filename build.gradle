@@ -24,10 +24,6 @@ repositories {
         dirs 'libs'
     }
     maven {
-        name = 'elmakers-repo'
-        url = 'https://maven.elmakers.com/repository/'
-    }
-    maven {
         name = 'jitpack.io'
         url = 'https://jitpack.io'
     }
@@ -49,9 +45,8 @@ dependencies {
     implementation 'org.jetbrains:annotations:22.0.0'
 
     // Other plugins
-    implementation 'me.blackvein.quests:quests:3.6.2'
+    implementation 'com.github.PikaMug:Quests:4.0.7'
     implementation 'com.github.whimc:Portals:2.8.3'
-//    implementation 'edu.whimc:WHIMC-Portals:2.8.3'
 
     // Lombok
     implementation 'org.projectlombok:lombok:1.18.20'

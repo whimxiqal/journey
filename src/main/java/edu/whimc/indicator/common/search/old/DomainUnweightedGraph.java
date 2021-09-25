@@ -22,8 +22,10 @@
 package edu.whimc.indicator.common.search.old;
 
 import com.google.common.collect.Maps;
-
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 public class DomainUnweightedGraph<D> {
 

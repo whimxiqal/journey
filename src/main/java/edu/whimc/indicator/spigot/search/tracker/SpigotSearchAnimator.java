@@ -7,21 +7,20 @@ import edu.whimc.indicator.common.search.Search;
 import edu.whimc.indicator.common.search.tracker.SearchAnimator;
 import edu.whimc.indicator.common.search.tracker.SearchTracker;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class SpigotSearchAnimator extends SearchAnimator<LocationCell, World> {
 
   private final Set<LocationCell> successfulLocations = ConcurrentHashMap.newKeySet();
-  private LocationCell lastFailure;
   private final UUID playerUuid;
+  private LocationCell lastFailure;
 
   public SpigotSearchAnimator(UUID playerUuid, int delayMillis) {
     super(delayMillis);

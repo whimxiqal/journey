@@ -1,9 +1,8 @@
 package edu.whimc.indicator.spigot.command.common;
 
+import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Map;
 
 @RequiredArgsConstructor
 public class Flag {

@@ -21,14 +21,13 @@
 
 package edu.whimc.indicator.spigot.command.common;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Stack;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Stack;
 
 public class CommandTree {
 

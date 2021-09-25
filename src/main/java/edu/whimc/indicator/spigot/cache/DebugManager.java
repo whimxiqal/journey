@@ -1,19 +1,19 @@
 package edu.whimc.indicator.spigot.cache;
 
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class DebugManager {
 
   private final Set<UUID> debugging = ConcurrentHashMap.newKeySet();
-  @Setter @Getter
+  @Setter
+  @Getter
   private boolean consoleDebugging = false;
 
   @SuppressWarnings("UnusedReturnValue")

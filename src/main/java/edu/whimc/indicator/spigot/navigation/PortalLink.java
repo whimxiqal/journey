@@ -90,7 +90,7 @@ public class PortalLink implements Link<LocationCell, World> {
           for (yLoc = portal.getPos1().getBlockY(); yLoc < portal.getPos2().getBlockY(); yLoc++) {
             for (zLoc = portal.getPos1().getBlockZ(); zLoc <= portal.getPos2().getBlockZ(); zLoc++) {
               if (SpigotUtil.isLaterallyPassable(portal.getWorld().getBlockAt(xLoc, yLoc, zLoc))
-              && SpigotUtil.isPassable(portal.getWorld().getBlockAt(xLoc, yLoc + 1, zLoc))) {
+                  && SpigotUtil.isPassable(portal.getWorld().getBlockAt(xLoc, yLoc + 1, zLoc))) {
                 return new LocationCell(xLoc, yLoc, zLoc, world);
               }
             }

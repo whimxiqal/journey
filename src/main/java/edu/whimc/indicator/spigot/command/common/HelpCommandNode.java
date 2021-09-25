@@ -22,6 +22,8 @@
 package edu.whimc.indicator.spigot.command.common;
 
 import edu.whimc.indicator.spigot.util.Format;
+import java.util.Map;
+import java.util.Objects;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -30,9 +32,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
-import java.util.Objects;
 
 final class HelpCommandNode extends CommandNode {
 

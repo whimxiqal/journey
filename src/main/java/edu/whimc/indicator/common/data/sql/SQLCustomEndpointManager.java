@@ -3,10 +3,10 @@ package edu.whimc.indicator.common.data.sql;
 import edu.whimc.indicator.common.data.CustomEndpointManager;
 import edu.whimc.indicator.common.data.DataAccessException;
 import edu.whimc.indicator.common.navigation.Cell;
+import java.util.Map;
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 public abstract class SQLCustomEndpointManager<T extends Cell<T, D>, D>
     extends SQLEndpointManager<T, D>
