@@ -25,7 +25,7 @@
 
 package edu.whimc.indicator.common.config;
 
-import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -64,20 +64,20 @@ public class ConfigManager {
   }
 
   public void dumpSettings() {
-    getSettings().forEach((path, setting) -> Indicator.getInstance().getConfig().set(path, setting.printValue()));
+    getSettings().forEach((path, setting) -> IndicatorSpigot.getInstance().getConfig().set(path, setting.printValue()));
   }
 
   public void save() {
-    File configFile = new File(Indicator.getInstance().getDataFolder(), this.fileName);
+    File configFile = new File(IndicatorSpigot.getInstance().getDataFolder(), this.fileName);
     try {
       if (configFile.createNewFile()) {
-        Indicator.getInstance().getLogger().info("Created config file for Indicator");
+        IndicatorSpigot.getInstance().getLogger().info("Created config file for Indicator");
       }
       try (FileOutputStream fos = new FileOutputStream(configFile)) {
         // Stage static setting values into config object
         dumpSettings();
         // Write config to file
-        fos.write(Indicator.getInstance().getConfig().saveToString().getBytes(StandardCharsets.UTF_8));
+        fos.write(IndicatorSpigot.getInstance().getConfig().saveToString().getBytes(StandardCharsets.UTF_8));
       } catch (FileNotFoundException e) {
         e.printStackTrace();
       }
@@ -89,10 +89,10 @@ public class ConfigManager {
 
   public void loadSettings() {
     getSettings().forEach((s, setting) -> {
-      if (Indicator.getInstance().getConfig().contains(s)) {
+      if (IndicatorSpigot.getInstance().getConfig().contains(s)) {
         parseAndSetValue(setting, s);
       } else {
-        Indicator.getInstance().getConfig().set(s, setting.getValue());
+        IndicatorSpigot.getInstance().getConfig().set(s, setting.getValue());
       }
     });
   }
@@ -105,26 +105,26 @@ public class ConfigManager {
    * @param <X>         the type of setting
    */
   private <X> void parseAndSetValue(Setting<X> setting, String stringValue) {
-    setting.setValue(setting.parseValue(Objects.requireNonNull(Indicator.getInstance().getConfig().getString(stringValue))));
+    setting.setValue(setting.parseValue(Objects.requireNonNull(IndicatorSpigot.getInstance().getConfig().getString(stringValue))));
   }
 
   public void load() {
-    File configFile = new File(Indicator.getInstance().getDataFolder(), this.fileName);
+    File configFile = new File(IndicatorSpigot.getInstance().getDataFolder(), this.fileName);
     try {
       if (configFile.createNewFile()) {
-        Indicator.getInstance().getLogger().info("Created config file for Indicator");
+        IndicatorSpigot.getInstance().getLogger().info("Created config file for Indicator");
       }
       try (FileInputStream fis = new FileInputStream(configFile)) {
         byte[] data = new byte[(int) configFile.length()];
         if (fis.read(data) < 0) {
-          Indicator.getInstance().getLogger().severe("Configuration file could not be read");
+          IndicatorSpigot.getInstance().getLogger().severe("Configuration file could not be read");
         }
         // Stage into config object
-        Indicator.getInstance().getConfig().loadFromString(new String(data, StandardCharsets.UTF_8));
+        IndicatorSpigot.getInstance().getConfig().loadFromString(new String(data, StandardCharsets.UTF_8));
         // Put config object into static settings
         loadSettings();
       } catch (InvalidConfigurationException e) {
-        Indicator.getInstance().getLogger().severe("Your configuration file is malformed!");
+        IndicatorSpigot.getInstance().getLogger().severe("Your configuration file is malformed!");
         e.printStackTrace();
       } catch (FileNotFoundException e) {
         e.printStackTrace();

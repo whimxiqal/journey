@@ -21,14 +21,15 @@
 
 package edu.whimc.indicator.spigot.journey;
 
-import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.journey.Journey;
-import edu.whimc.indicator.common.navigation.Completion;
 import edu.whimc.indicator.common.navigation.Itinerary;
-import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.common.navigation.Leap;
 import edu.whimc.indicator.common.navigation.ModeType;
 import edu.whimc.indicator.common.navigation.Path;
 import edu.whimc.indicator.common.navigation.Step;
+import edu.whimc.indicator.common.search.SearchSession;
+import edu.whimc.indicator.common.tools.AlternatingList;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import java.util.HashSet;
@@ -37,8 +38,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -47,35 +46,44 @@ import org.jetbrains.annotations.NotNull;
 
 public class PlayerJourney implements Journey<LocationCell, World> {
 
-  private static final int ILLUMINATED_COUNT = 32;
+  private static final int ILLUMINATED_COUNT = 64;
   private static final int TICKS_PER_PARTICLE = 3;
   private static final double CHANCE_OF_PARTICLE = 0.4;
   private static final int PROXIMAL_BLOCK_CACHE_SIZE = 128;
   private final UUID playerUuid;
-  private final List<Path<LocationCell, World>> paths;
-  private final List<Link<LocationCell, World>> links;
-  private final LocationCell destination;
-  private final Completion<LocationCell, World> completion;
+  /**
+   * The set of all locations that are near the player.
+   * This set will contain all locations ahead of the player
+   * and once the player reaches one of the locations in the set,
+   * all locations prior will be removed and the next bunch will be
+   * added ahead so the trail continues forging ahead.
+   */
   private final Set<LocationCell> near = new HashSet<>();
-  @Getter
-  @Setter
-  private Itinerary prospectiveItinerary;
-  private int trailIndex = 0;
+  private final Itinerary<LocationCell, World> itinerary;
+  private final AlternatingList.Traversal<Leap<LocationCell, World>,
+      Path<LocationCell, World>,
+      Path<LocationCell, World>> traversal;
+  private final SearchSession<LocationCell, World> session;
   private int stepIndex = 0;
   private boolean completed = false;
   private Runnable stopIllumination;
+  /**
+   * Itinerary that is queued as a better one, in case the player wants to use it.
+   */
+  private Itinerary<LocationCell, World> prospectiveItinerary;
 
   public PlayerJourney(@NotNull final UUID playerUuid,
-                       @NotNull final Itinerary itinerary) {
+                       @NotNull SearchSession<LocationCell, World> session,
+                       @NotNull final Itinerary<LocationCell, World> itinerary) {
     this.playerUuid = playerUuid;
-    this.paths = itinerary.getTrailsCopy();
-    this.links = itinerary.getDomainLinksCopy();
-    this.destination = paths.get(paths.size() - 1).getDestination();
-    this.completion = (cell) -> cell.distanceToSquared(destination) < 9;
-    if (paths.size() == 0) {
-      throw new IllegalStateException("The journey may not have 0 paths");
-    }
-    startTrail(); // start first trail
+    this.session = session;
+    this.itinerary = itinerary;
+    this.traversal = itinerary.getStages().traverse();
+    startPath(traversal.next()); // start first trail (move beyond the first "leap")
+  }
+
+  private LocationCell destination() {
+    return itinerary.getSteps().get(itinerary.getSteps().size() - 1).getLocatable();
   }
 
   @Override
@@ -83,60 +91,49 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     if (completed) {
       return;  // We're already done, we don't care about visitation
     }
-    if (paths.get(trailIndex).getDestination() == null) {
-      throw new IllegalStateException("Could not get the destination of trail");
-    }
-    // Check if we finished
-    if (completion.test(locatable)) {
-      Player player = Bukkit.getPlayer(playerUuid);
-      if (player != null) {
-        player.spigot().sendMessage(Format.success("You've reached your destination"));
-      }
-      completed = true;
-      stop();
-      return;
-    }
-    if (trailIndex < paths.size() - 1) {
-      // Our trail destination is a link
-      if (links.get(trailIndex).getCompletion().test(locatable)) {
-        // We reached the link
-        if (Indicator.getInstance().getDebugManager().isDebugging(playerUuid)) {
-          Player player = Bukkit.getPlayer(playerUuid);
-          if (player != null) {
-            player.spigot().sendMessage(Format.debug("Reached destination: " + links.get(trailIndex)));
-          }
+    if (traversal.get().completeWith(locatable)) {
+      // We have reached our destination for the given path
+      if (traversal.hasNext()) {
+        // There is another path after this one, move on to the next one
+        startPath(traversal.next());
+      } else {
+        // There is no other path after this one, we are done
+        Player player = Bukkit.getPlayer(playerUuid);
+        if (player != null) {
+          player.spigot().sendMessage(Format.success("You've reached your destination"));
         }
-        trailIndex++;
-        startTrail();
+        completed = true;
+        stop();
+        return;
       }
     }
     if (near.contains(locatable)) {
       int originalStepIndex = stepIndex;
       LocationCell removing;
       do {
-        removing = paths.get(trailIndex).getSteps().get(stepIndex).getLocatable();
+        removing = traversal.get().getSteps().get(stepIndex).getLocatable();
         near.remove(removing);
         stepIndex++;
       } while (!locatable.equals(removing));
       for (int i = originalStepIndex + PROXIMAL_BLOCK_CACHE_SIZE;
-           i < Math.min(stepIndex + PROXIMAL_BLOCK_CACHE_SIZE, paths.get(trailIndex).getSteps().size());
+           i < Math.min(stepIndex + PROXIMAL_BLOCK_CACHE_SIZE, traversal.get().getSteps().size());
            i++) {
-        near.add(paths.get(trailIndex).getSteps().get(i).getLocatable());
+        near.add(traversal.get().getSteps().get(i).getLocatable());
       }
     }
   }
 
   @Override
   public List<Step<LocationCell, World>> next(int count) {
-    if (completed) {
-      return new LinkedList<>();  // Nothing left
-    }
     if (count > PROXIMAL_BLOCK_CACHE_SIZE) {
       throw new IllegalArgumentException("The count may not be larger than " + PROXIMAL_BLOCK_CACHE_SIZE);
     }
+    if (completed) {
+      return new LinkedList<>();  // Nothing left
+    }
     List<Step<LocationCell, World>> next = new LinkedList<>();
-    for (int i = stepIndex; i < Math.min(stepIndex + count, paths.get(trailIndex).getSteps().size()); i++) {
-      next.add(paths.get(trailIndex).getSteps().get(i));
+    for (int i = stepIndex; i < Math.min(stepIndex + count, traversal.get().getSteps().size()); i++) {
+      next.add(traversal.get().getSteps().get(i));
     }
     return next;
   }
@@ -151,23 +148,24 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     return completed;
   }
 
-  private void startTrail() {
+  private void startPath(Path<LocationCell, World> path) {
     stepIndex = 0;
     near.clear();
-    for (int i = 0; i < Math.min(PROXIMAL_BLOCK_CACHE_SIZE, paths.get(trailIndex).getSteps().size()); i++) {
-      near.add(paths.get(trailIndex).getSteps().get(i).getLocatable());
+    for (int i = 0; i < Math.min(PROXIMAL_BLOCK_CACHE_SIZE, path.getSteps().size()); i++) {
+      near.add(traversal.get().getSteps().get(i).getLocatable());
     }
   }
 
   public void illuminateTrail() {
-
     // Set up illumination scheduled task for showing the paths
     Random rand = new Random();
-    int illuminationTaskId = Bukkit.getScheduler().runTaskTimer(Indicator.getInstance(), () -> {
-      PlayerJourney journey = Indicator.getInstance()
+    int illuminationTaskId = Bukkit.getScheduler().runTaskTimer(IndicatorSpigot.getInstance(), () -> {
+      PlayerJourney journey = IndicatorSpigot.getInstance()
           .getSearchManager()
           .getPlayerJourney(playerUuid);
-      if (journey == null) return;
+      if (journey == null) {
+        return;
+      }
 
       List<Step<LocationCell, World>> steps = journey.next(ILLUMINATED_COUNT);  // Show 16 steps ahead
       Step<LocationCell, World> step;
@@ -207,6 +205,17 @@ public class PlayerJourney implements Journey<LocationCell, World> {
         1,
         0, 0, 0,
         0);
+  }
+
+  public SearchSession<LocationCell, World> getSession() {
+    return session;
+  }
+  public void setProspectiveItinerary(Itinerary<LocationCell, World> prospectiveItinerary) {
+    this.prospectiveItinerary = prospectiveItinerary;
+  }
+
+  public Itinerary<LocationCell, World> getProspectiveItinerary() {
+    return prospectiveItinerary;
   }
 
 }

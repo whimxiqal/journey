@@ -24,19 +24,24 @@ package edu.whimc.indicator.common.navigation;
 import com.google.common.collect.Lists;
 import java.io.Serializable;
 import java.util.ArrayList;
-import lombok.Data;
-import lombok.NonNull;
+import java.util.Collection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@Data
-public final class Path<T extends Locatable<T, D>, D> implements Serializable {
+public class Path<T extends Locatable<T, D>, D> implements Serializable {
 
-  @NonNull
+  private final T origin;
   private final ArrayList<Step<T, D>> steps;
   private final double length;
 
-  public static <A extends Locatable<A, B>, B> Path<A, B> INVALID() {
-    return new Path<>(Lists.newArrayList(), Double.MAX_VALUE);
+  public Path(T origin, @NotNull Collection<Step<T, D>> steps, double length) {
+    this.origin = origin;
+    this.steps = new ArrayList<>(steps);
+    this.length = length;
+  }
+
+  public static <A extends Locatable<A, B>, B> Path<A, B> invalid() {
+    return new Path<>(null, Lists.newArrayList(), Double.MAX_VALUE);
   }
 
   public static <A extends Locatable<A, B>, B> boolean isValid(@Nullable Path<A, B> path) {
@@ -44,13 +49,26 @@ public final class Path<T extends Locatable<T, D>, D> implements Serializable {
   }
 
   public T getOrigin() {
-    if (steps.isEmpty()) return null;
-    return steps.get(0).getLocatable();
+    return origin;
   }
 
   public T getDestination() {
-    if (steps.isEmpty()) return null;
+    if (steps.isEmpty()) {
+      return null;
+    }
     return steps.get(steps.size() - 1).getLocatable();
+  }
+
+  public ArrayList<Step<T, D>> getSteps() {
+    return new ArrayList<>(steps);
+  }
+
+  public double getLength() {
+    return length;
+  }
+
+  public boolean completeWith(T location) {
+    return location.distanceToSquared(getDestination()) < 4;
   }
 
 }

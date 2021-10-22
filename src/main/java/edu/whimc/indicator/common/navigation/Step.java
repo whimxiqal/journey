@@ -22,7 +22,6 @@
 package edu.whimc.indicator.common.navigation;
 
 import java.io.Serializable;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 
@@ -33,8 +32,7 @@ import lombok.NonNull;
  * @param <D> The domain type
  */
 @Data
-@AllArgsConstructor
-public final class Step<T extends Locatable<T, D>, D> implements Serializable {
+public final class Step<T extends Locatable<T, D>, D> implements Serializable, Moded {
   /**
    * An object to identify location.
    */
@@ -45,5 +43,5 @@ public final class Step<T extends Locatable<T, D>, D> implements Serializable {
    * The type of {@link Mode} that was used to get to the stored locatable.
    */
   @NonNull
-  private ModeType modeType;
+  private final ModeType modeType;
 }

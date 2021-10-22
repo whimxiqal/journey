@@ -23,7 +23,7 @@ package edu.whimc.indicator.spigot.command.common;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.data.DataAccessException;
 import edu.whimc.indicator.common.util.Extra;
 import edu.whimc.indicator.spigot.util.Format;
@@ -190,7 +190,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                  @NotNull String label,
                                  @NotNull String[] args) {
 
-    if (!Indicator.getInstance().isValid() && !canBypassInvalid) {
+    if (!IndicatorSpigot.getInstance().isValid() && !canBypassInvalid) {
       sender.spigot().sendMessage(Format.warn("The Indicator plugin is still initializing..."));
       return false;
     }

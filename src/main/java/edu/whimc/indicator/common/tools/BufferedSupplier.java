@@ -1,21 +1,33 @@
 package edu.whimc.indicator.common.tools;
 
 import java.util.function.Supplier;
-import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * A supplier which only gets the data after a certain
- * amount of time after the previous time the data was taken
+ * A {@link Supplier} that only calculates a new value after a certain amount of time has passed.
+ * This class is useful for saving time in calculations that do not need precise results
+ * from a supplier all the time in situations where the supplier has a very long operation time.
  *
- * @param <T> the type of data supplied
+ * @param <T> the input type
+ * @see BufferedFunction
  */
-@RequiredArgsConstructor
 public class BufferedSupplier<T> implements Supplier<T> {
 
   private final Supplier<T> supplier;
-  private final int delayMillis;
+  private final long delayMillis;
   private long latestQueryTime = 0;
   private T data;
+
+  /**
+   * Default constructor.
+   *
+   * @param supplier    the underlying supplier to get new values from inputs
+   * @param delayMillis the delay in milliseconds between getting new cached values
+   */
+  public BufferedSupplier(@NotNull Supplier<T> supplier, long delayMillis) {
+    this.supplier = supplier;
+    this.delayMillis = delayMillis;
+  }
 
   @Override
   public T get() {

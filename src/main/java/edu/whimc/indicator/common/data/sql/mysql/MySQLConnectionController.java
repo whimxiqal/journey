@@ -1,6 +1,6 @@
 package edu.whimc.indicator.common.data.sql.mysql;
 
-import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.config.Settings;
 import edu.whimc.indicator.common.data.sql.SQLConnectionController;
 import java.sql.Connection;
@@ -26,7 +26,7 @@ public class MySQLConnectionController implements SQLConnectionController {
     try {
       return DriverManager.getConnection(address, databaseProperties);
     } catch (SQLException e) {
-      Indicator.getInstance().getLogger().severe("Could not connect to database. "
+      IndicatorSpigot.getInstance().getLogger().severe("Could not connect to database. "
           + "Are you sure you are using the correct credentials?");
       throw e;
     }

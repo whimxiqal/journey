@@ -21,13 +21,14 @@
 
 package edu.whimc.indicator.common.navigation;
 
-import lombok.Data;
-
-@Data
 public final class Endpoint<P, T extends Locatable<T, D>, D> {
 
   private final P purpose;
   private final T location;
-  private final Completion<T, D> completion;
+
+  public Endpoint(P purpose, T location) {
+    this.purpose = purpose;
+    this.location = location;
+  }
 
 }

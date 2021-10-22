@@ -1,6 +1,7 @@
 package edu.whimc.indicator.spigot.command;
 
-import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.common.IndicatorCommon;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
@@ -24,7 +25,7 @@ public class IndicatorInvalidateCommand extends CommandNode {
                                   @NotNull String label,
                                   @NotNull String[] args,
                                   @NotNull Map<String, String> flags) {
-    Indicator.getInstance().getTrailCache().clear();
+    IndicatorCommon.getPathCache().clear();
     sender.spigot().sendMessage(Format.success("Cleared cache"));
     return true;
   }

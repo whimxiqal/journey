@@ -21,37 +21,39 @@
 
 package edu.whimc.indicator.common.navigation;
 
-import edu.whimc.indicator.common.util.PrimeUtil;
 import java.io.Serializable;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 public enum ModeType implements Serializable {
 
-  NONE("none", false),  // Origin, for example
-  WALK("walk", true),
-  JUMP("jump", true),
-  SWIM("swim", true),
-  FLY("fly", true),
-  BOAT("boat", false),
-  RAIL("rail", false),
-  BUILD("build", false),
-  DOOR("door", true),
-  CLIMB("climb", true);
+  NONE("none", false, 1),  // Origin, for example
+  WALK("walk", true, 1 << 1),
+  JUMP("jump", true, 1 << 2),
+  SWIM("swim", true, 1 << 3),
+  FLY("fly", true, 1 << 4),
+  BOAT("boat", false, 1 << 5),
+  RAIL("rail", false, 1 << 6),
+  BUILD("build", false, 1 << 7),
+  DOOR("door", true, 1 << 8),
+  CLIMB("climb", true, 1 << 9),
+  NETHER_PORTAL("netherportal", false, 1 << 10),
+  COMMAND("command", true, 1 << 11),
+  LEAP("leap", false, 1 << 12);
 
   @Getter
   private final String id;
 
   @Getter
-  private final int primeIdentifier;
-
-  @Getter
   private final boolean common;
 
-  ModeType(@NotNull String id, boolean common) {
+  @Getter
+  private final long accumulationId;
+
+  ModeType(@NotNull String id, boolean common, long accumulationId) {
     this.id = id;
     this.common = common;
-    this.primeIdentifier = PrimeUtil.getNextPrime();
+    this.accumulationId = accumulationId;
   }
 
   @Override

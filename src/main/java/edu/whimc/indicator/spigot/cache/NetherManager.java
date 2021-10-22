@@ -21,10 +21,9 @@
 
 package edu.whimc.indicator.spigot.cache;
 
-import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.navigation.Link;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
-import edu.whimc.indicator.spigot.navigation.NetherLink;
+import edu.whimc.indicator.spigot.navigation.NetherLeap;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.NetherUtil;
 import java.util.Collection;
@@ -37,7 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -48,22 +46,18 @@ import org.bukkit.event.world.PortalCreateEvent;
 
 public class NetherManager implements Listener {
 
-  private final Map<LocationCell, LocationCell> links = new ConcurrentHashMap<>();
+  private final Map<LocationCell, LocationCell> portalConnections = new ConcurrentHashMap<>();
 
-  public void registerListeners(Indicator plugin) {
-    Bukkit.getPluginManager().registerEvents(this, plugin);
-  }
-
-  public Collection<Link<LocationCell, World>> makeLinks() {
-    List<Link<LocationCell, World>> linksUnverified = links.entrySet().stream()
-        .map(entry -> new NetherLink(entry.getKey(), entry.getValue()))
+  public Collection<NetherLeap> makeLeaps() {
+    List<NetherLeap> linksUnverified = portalConnections.entrySet().stream()
+        .map(entry -> new NetherLeap(entry.getKey(), entry.getValue()))
         .collect(Collectors.toList());
-    List<Link<LocationCell, World>> linksVerified = new LinkedList<>();
-    for (Link<LocationCell, World> link : linksUnverified) {
-      if (link.verify()) {
-        linksVerified.add(link);
+    List<NetherLeap> linksVerified = new LinkedList<>();
+    for (NetherLeap leap : linksUnverified) {
+      if (leap.verify()) {
+        linksVerified.add(leap);
       } else {
-        links.remove(link.getOrigin(), link.getDestination());
+        portalConnections.remove(leap.getOrigin(), leap.getDestination());
       }
     }
     return linksVerified;
@@ -90,7 +84,7 @@ public class NetherManager implements Listener {
     LocationCell origin = new LocationCell(from);
 
     // Wait 1 second, and check for a portal around where the player is now
-    Bukkit.getScheduler().runTaskLater(Indicator.getInstance(), () -> {
+    Bukkit.getScheduler().runTaskLater(IndicatorSpigot.getInstance(), () -> {
       Location loc = entity.getLocation();
 
       // Origin portal
@@ -118,11 +112,11 @@ public class NetherManager implements Listener {
       List<LocationCell> linkedOrigins = new LinkedList<>();
       for (LocationCell originCell : originGroup.get().getBlocks()) {
         for (LocationCell destinationCell : destinationGroup.get().getBlocks()) {
-          if (!links.containsKey(originCell)) {
+          if (!portalConnections.containsKey(originCell)) {
             continue;
           }
           linkedOrigins.add(originCell);
-          if (links.get(originCell).equals(destinationCell)) {
+          if (portalConnections.get(originCell).equals(destinationCell)) {
             return;  // We already have this portal link set up
           }
         }
@@ -131,19 +125,19 @@ public class NetherManager implements Listener {
       // We don't have this portal link set up yet
 
       // Remove any connections with this origin (the portal link changed)
-      linkedOrigins.forEach(links::remove);
+      linkedOrigins.forEach(portalConnections::remove);
       linkedOrigins.add(originGroup.get().port());
 
       // Add the portal
-      LocationCell previous = links.put(originGroup.get().port(), destinationGroup.get().port());
+      LocationCell previous = portalConnections.put(originGroup.get().port(), destinationGroup.get().port());
       if (previous == null) {
-        Indicator.getInstance()
+        IndicatorSpigot.getInstance()
             .getDebugManager()
             .broadcastDebugMessage(Format.debug("Added nether link:"));
-        Indicator.getInstance()
+        IndicatorSpigot.getInstance()
             .getDebugManager()
             .broadcastDebugMessage(Format.debug(originGroup.get().port() + " -> "));
-        Indicator.getInstance()
+        IndicatorSpigot.getInstance()
             .getDebugManager()
             .broadcastDebugMessage(Format.debug(destinationGroup.get().port().toString()));
       }

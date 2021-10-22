@@ -22,11 +22,12 @@
 package edu.whimc.indicator.common.navigation;
 
 import java.io.Serializable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * An abstraction of a location within a Minecraft world.
  *
- * @param <T> This implementation class. This is needed for {@link #distanceTo(Locatable)}.
+ * @param <T> This implementation class. This is needed for self-reference.
  * @param <D> The domain, as in a Minecraft world
  */
 public interface Locatable<T extends Locatable<T, D>, D> extends Serializable {
@@ -54,10 +55,11 @@ public interface Locatable<T extends Locatable<T, D>, D> extends Serializable {
   double distanceToSquared(T other);
 
   /**
-   * The domain; usually the Minecraft world;
+   * Get the domain, usually the Minecraft world.
    *
    * @return the domain of this locatable
    */
+  @NotNull
   D getDomain();
 
 }

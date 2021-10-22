@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import org.bukkit.entity.Player;
 
-public class ValueFlag<T> extends Flag {
+public class ValueFlag<T> extends CommandFlag {
 
   private final BiFunction<Player, String, T> parser;
 

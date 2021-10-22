@@ -21,7 +21,7 @@
 
 package edu.whimc.indicator.spigot.command;
 
-import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.spigot.cache.DebugManager;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
@@ -55,13 +55,13 @@ public class IndicatorDebugCommand extends CommandNode {
     boolean enabled;
     if (!(sender instanceof Player)) {
       if (sender instanceof ConsoleCommandSender) {
-        if (Indicator.getInstance()
+        if (IndicatorSpigot.getInstance()
             .getDebugManager()
             .isConsoleDebugging()) {
-          Indicator.getInstance().getDebugManager().setConsoleDebugging(false);
+          IndicatorSpigot.getInstance().getDebugManager().setConsoleDebugging(false);
           enabled = false;
         } else {
-          Indicator.getInstance().getDebugManager().setConsoleDebugging(true);
+          IndicatorSpigot.getInstance().getDebugManager().setConsoleDebugging(true);
           enabled = true;
         }
       } else {
@@ -71,7 +71,7 @@ public class IndicatorDebugCommand extends CommandNode {
     } else {
       Player player = (Player) sender;
 
-      DebugManager debugManager = Indicator.getInstance().getDebugManager();
+      DebugManager debugManager = IndicatorSpigot.getInstance().getDebugManager();
       if (debugManager.isDebugging(player.getUniqueId())) {
         debugManager.stopDebugging(player.getUniqueId());
         enabled = false;

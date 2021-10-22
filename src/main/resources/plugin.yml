@@ -1,7 +1,7 @@
 name: Indicator
-version: @version@
-main: edu.whimc.indicator.Indicator
-api-version: 1.16
+version: 0.0.0
+main: edu.whimc.indicator.spigot.Indicator
+api-version: 1.17
 authors:
   - pietelite
 description: A path indication plugin
@@ -16,18 +16,18 @@ permissions:
   indicator.debug:
     default: false
     description: Turn on debug mode
-  indicator.trail:
+  indicator.nav:
     default: false
-  indicator.trail.use:
+  indicator.nav.use:
     default: false
     description: Allows the use of trails
-  indicator.trail.manage:
+  indicator.nav.manage:
     default: false
     description: Allows the management of trails
 commands:
   indicator:
     description: Root indicator command
-  trail:
+  nav:
     description: Shows a player a trail to their destination
   endpoint:
     description: Sets an endpoint for a player's trail

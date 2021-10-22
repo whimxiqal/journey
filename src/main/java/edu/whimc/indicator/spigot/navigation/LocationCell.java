@@ -22,10 +22,10 @@
 package edu.whimc.indicator.spigot.navigation;
 
 import edu.whimc.indicator.common.navigation.Cell;
-import edu.whimc.indicator.spigot.util.UuidToWorld;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class LocationCell extends Cell<LocationCell, World> {
 
   /**
-   * The offset above the block location (for solid inhabitable blocks)
+   * The offset above the block location (for solid inhabitable blocks).
    */
   @Getter
   private final double heightOffset;
@@ -48,27 +48,34 @@ public class LocationCell extends Cell<LocationCell, World> {
   }
 
   public LocationCell(int x, double y, int z, @NotNull UUID worldUuid) {
-    super(x, (int) y, z, worldUuid.toString(), new UuidToWorld());
+    super(x, (int) y, z, worldUuid.toString(),
+        s -> {
+          World world = Bukkit.getWorld(UUID.fromString(s));
+          if (world == null) {
+            throw new IllegalStateException("There is no world with UUID " + s);
+          }
+          return world;
+        });
     this.heightOffset = y - this.getY();
   }
 
   @Override
   public double distanceToSquared(LocationCell other) {
-    return vectorSizeSquared(this.x - other.x,
-        this.y - other.y,
-        this.z - other.z);
+    return vectorSizeSquared(this.coordinateX - other.coordinateX,
+        this.coordinateY - other.coordinateY,
+        this.coordinateZ - other.coordinateZ);
   }
 
   public Block getBlock() {
-    return this.getDomain().getBlockAt(this.x, this.y, this.z);
+    return this.getDomain().getBlockAt(this.coordinateX, this.coordinateY, this.coordinateZ);
   }
 
   public Block getBlockAtOffset(int x, int y, int z) {
-    return this.getDomain().getBlockAt(this.x + x, this.y + y, this.z + z);
+    return this.getDomain().getBlockAt(this.coordinateX + x, this.coordinateY + y, this.coordinateZ + z);
   }
 
   public LocationCell createLocatableAtOffset(int x, double y, int z) {
-    return new LocationCell(this.x + x, this.y + heightOffset + y, this.z + z, this.getDomain());
+    return new LocationCell(this.coordinateX + x, this.coordinateY + heightOffset + y, this.coordinateZ + z, this.getDomain());
   }
 
   public boolean hasHeightOffset() {
@@ -81,7 +88,7 @@ public class LocationCell extends Cell<LocationCell, World> {
 
   @Override
   public String toString() {
-    return String.format("(%d, %d, %d) in %s", this.x, this.y, this.z, this.getDomain().getName());
+    return String.format("(%d, %d, %d) in %s", this.coordinateX, this.coordinateY, this.coordinateZ, this.getDomain().getName());
   }
 
   @Override
@@ -89,11 +96,11 @@ public class LocationCell extends Cell<LocationCell, World> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     LocationCell that = (LocationCell) o;
-    return this.x == that.x && this.y == that.y && this.z == that.z && this.getDomain().equals(that.getDomain());
+    return this.coordinateX == that.coordinateX && this.coordinateY == that.coordinateY && this.coordinateZ == that.coordinateZ && this.getDomain().equals(that.getDomain());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.x, this.y, this.z, this.getDomain());
+    return Objects.hash(this.coordinateX, this.coordinateY, this.coordinateZ, this.getDomain());
   }
 }

@@ -21,14 +21,13 @@
 
 package edu.whimc.indicator.spigot.cache;
 
-import edu.whimc.indicator.Indicator;
-import edu.whimc.indicator.common.search.Search;
+import edu.whimc.indicator.common.search.SearchSession;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
+import edu.whimc.indicator.spigot.search.PlayerSearchSession;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -40,7 +39,7 @@ public class SearchManager implements Listener {
 
   private final Map<UUID, PlayerJourney> playerJourneys = new ConcurrentHashMap<>();
   private final Map<UUID, LocationCell> playerLocations = new ConcurrentHashMap<>();
-  private final Map<UUID, Search<LocationCell, World>> playerSearches = new ConcurrentHashMap<>();
+  private final Map<UUID, PlayerSearchSession> playerSearches = new ConcurrentHashMap<>();
 
   public PlayerJourney putPlayerJourney(@NotNull UUID playerUuid, PlayerJourney journey) {
     PlayerJourney oldJourney = this.playerJourneys.put(playerUuid, journey);
@@ -68,11 +67,11 @@ public class SearchManager implements Listener {
   }
 
 
-  public Search<LocationCell, World> putSearch(@NotNull UUID playerUuid, Search<LocationCell, World> search) {
+  public PlayerSearchSession putSearch(@NotNull UUID playerUuid, PlayerSearchSession search) {
     return playerSearches.put(playerUuid, search);
   }
 
-  public Search<LocationCell, World> removeSearch(@NotNull UUID playerUuid) {
+  public PlayerSearchSession removeSearch(@NotNull UUID playerUuid) {
     return playerSearches.remove(playerUuid);
   }
 
@@ -80,7 +79,7 @@ public class SearchManager implements Listener {
     return playerSearches.containsKey(playerUuid);
   }
 
-  public Search<LocationCell, World> getSearch(@NotNull UUID playerUuid) {
+  public PlayerSearchSession getSearch(@NotNull UUID playerUuid) {
     return playerSearches.get(playerUuid);
   }
 
@@ -109,13 +108,10 @@ public class SearchManager implements Listener {
   @EventHandler
   public void onQuit(PlayerQuitEvent event) {
     // Stop the search so we don't waste memory on someone who isn't here anymore
-    Search<LocationCell, World> currentSearch = getSearch(event.getPlayer().getUniqueId());
+    SearchSession<LocationCell, World> currentSearch = getSearch(event.getPlayer().getUniqueId());
     if (currentSearch != null) {
       currentSearch.cancel();
     }
   }
 
-  public void registerListeners(Indicator indicator) {
-    Bukkit.getPluginManager().registerEvents(this, indicator);
-  }
 }

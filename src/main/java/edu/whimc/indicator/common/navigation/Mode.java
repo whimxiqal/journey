@@ -21,29 +21,34 @@
 
 package edu.whimc.indicator.common.navigation;
 
-import edu.whimc.indicator.common.search.tracker.SearchTracker;
+import edu.whimc.indicator.common.IndicatorCommon;
+import edu.whimc.indicator.common.search.SearchSession;
+import edu.whimc.indicator.common.search.event.ModeFailureEvent;
+import edu.whimc.indicator.common.search.event.ModeSuccessEvent;
+import edu.whimc.indicator.common.search.event.SearchDispatcher;
+import edu.whimc.indicator.common.search.event.SearchEvent;
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Mode<T extends Cell<T, D>, D> {
 
   private Map<T, Double> map = new HashMap<>();
-  private SearchTracker<T, D> tracker;
+  private SearchSession<T, D> session;
 
-  public final Map<T, Double> getDestinations(T origin, SearchTracker<T, D> tracker) {
+  public final Map<T, Double> getDestinations(T origin, SearchSession<T, D> session) {
     this.map = new HashMap<>();
-    this.tracker = tracker;
+    this.session = session;
     collectDestinations(origin);
     return map;
   }
 
   protected final void accept(T destination, double distance) {
     this.map.put(destination, distance);
-    tracker.acceptResult(destination, SearchTracker.Result.SUCCESS, getType());
+    IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new ModeSuccessEvent<>(session, destination, getType()));
   }
 
   protected final void reject(T destination) {
-    tracker.acceptResult(destination, SearchTracker.Result.FAILURE, getType());
+    IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new ModeFailureEvent<>(session, destination, getType()));
   }
 
   protected abstract void collectDestinations(T origin);

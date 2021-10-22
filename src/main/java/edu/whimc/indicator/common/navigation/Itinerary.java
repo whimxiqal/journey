@@ -22,68 +22,60 @@
 package edu.whimc.indicator.common.navigation;
 
 import com.google.common.collect.Lists;
+import edu.whimc.indicator.common.search.PathTrial;
+import edu.whimc.indicator.common.tools.AlternatingList;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 
-public final class Itinerary<T extends Locatable<T, D>, D> {
+public final class Itinerary<T extends Cell<T, D>, D> {
 
-  private final List<Path<T, D>> paths = Lists.newArrayList();
-  private final List<Link<T, D>> domainLinks = Lists.newArrayList();
-  @Getter
-  double length = 0;
+  private final T origin;
+  private final ArrayList<Step<T, D>> steps;
+  private final AlternatingList<Leap<T, D>, Path<T, D>, Path<T, D>> stages;
+  private final double length;
 
-  public void addLinkedTrail(Path<T, D> path, Link<T, D> link) {
-    this.paths.add(path);
-    this.domainLinks.add(link);
-    length += path.getLength();
-  }
-
-  public boolean addFinalTrail(Path<T, D> path) {
-    if (paths.size() > domainLinks.size()) {
-      // There are more paths than links to a final path must have already been added.
-      return false;
-    }
-    this.paths.add(path);
-    length += path.getLength();
-    return true;
+  public Itinerary(T origin, Collection<Step<T, D>> steps, AlternatingList<Leap<T, D>, Path<T, D>, Path<T, D>> stages, double length) {
+    this.origin = origin;
+    this.steps = new ArrayList<>(steps);
+    this.stages = stages;
+    this.length = length;
   }
 
   public T getOrigin() {
-    List<Step<T, D>> steps = paths.get(0).getSteps();
-    if (paths.isEmpty() || steps.isEmpty()) {
-      return null;
+    return origin;
+  }
+
+  public ArrayList<Step<T, D>> getSteps() {
+    return new ArrayList<>(steps);
+  }
+
+  public AlternatingList<Leap<T, D>, Path<T, D>, Path<T, D>> getStages() {
+    return stages;
+  }
+
+  public double getLength() {
+    return length;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-    return steps.get(0).getLocatable();
-  }
-
-  public T getDestination() {
-    List<Step<T, D>> steps = paths.get(paths.size() - 1).getSteps();
-    if (paths.isEmpty() || steps.isEmpty()) {
-      return null;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
-    return steps.get(steps.size() - 1).getLocatable();
+    Itinerary<?, ?> itinerary = (Itinerary<?, ?>) o;
+    return Double.compare(itinerary.length, length) == 0
+        && Objects.equals(origin, itinerary.origin)
+        && Objects.equals(steps, itinerary.steps);
   }
 
-  public List<Path<T, D>> getTrailsCopy() {
-    return new ArrayList<>(paths);
+  @Override
+  public int hashCode() {
+    return Objects.hash(origin, steps, length);
   }
-
-  public List<Link<T, D>> getDomainLinksCopy() {
-    return new ArrayList<>(domainLinks);
-  }
-
-  /**
-   * Creates an (array) list of every step, ignoring links.
-   *
-   * @return all steps in a list
-   */
-  public List<Step<T, D>> getAllSteps() {
-    ArrayList<Step<T, D>> allSteps = new ArrayList<>();
-    for (Path<T, D> path : paths) {
-      allSteps.addAll(path.getSteps());
-    }
-    return allSteps;
-  }
-
 }

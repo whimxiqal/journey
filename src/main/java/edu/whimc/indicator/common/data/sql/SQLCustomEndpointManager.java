@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SQLCustomEndpointManager<T extends Cell<T, D>, D>
-    extends SQLEndpointManager<T, D>
+    extends SqlEndpointManager<T, D>
     implements CustomEndpointManager<T, D> {
 
   public SQLCustomEndpointManager(SQLConnectionController connectionController, DataConverter<T, D> dataConverter) {

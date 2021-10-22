@@ -21,127 +21,71 @@
 
 package edu.whimc.indicator.common.search;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
+import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.common.navigation.Itinerary;
-import edu.whimc.indicator.common.navigation.Link;
-import edu.whimc.indicator.common.navigation.Locatable;
+import edu.whimc.indicator.common.navigation.Leap;
+import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.Path;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.Stack;
-import lombok.Getter;
-import lombok.Setter;
+import edu.whimc.indicator.common.navigation.Step;
+import edu.whimc.indicator.common.tools.AlternatingList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
-public class ItineraryTrial<T extends Locatable<T, D>, D> {
+public class ItineraryTrial<T extends Cell<T, D>, D> {
 
-  private final Table<Node, Node, Path<T, D>> edges = HashBasedTable.create();
+  private final T origin;
+  private final AlternatingList<Leap<T, D>, PathTrial<T, D>, Object> alternatingList;
 
-  public void addEdge(Node origin, Node destination, @NotNull Path<T, D> path) {
-    this.edges.put(origin, destination, path);
+  public ItineraryTrial(T origin, AlternatingList<Leap<T, D>, PathTrial<T, D>, Object> alternatingList) {
+    this.origin = origin;
+    this.alternatingList = alternatingList;
   }
 
-  public Node generateNode() {
-    return new Node(Double.MAX_VALUE);
-  }
-
-  public Node generateLinkNode(Link<T, D> link) {
-    return new LinkNode(link, Double.MAX_VALUE);
-  }
-
-  @SuppressWarnings("unchecked")
-  public Itinerary<T, D> findMinimumPath(Node origin, Node destination) {
-    PriorityQueue<Node> toVisit = new PriorityQueue<>(Comparator.comparingDouble(n -> n.distance));
-    Set<Node> visited = new HashSet<>();
-
-    origin.setDistance(0);
-    origin.setPrevious(null);
-    toVisit.add(origin);
-
-    Node current;
-    while (!toVisit.isEmpty()) {
-      current = toVisit.poll();
-      visited.add(current);
-
-      if (current.equals(destination)) {
-        // Backwards traverse to get the correct itinerary, then
-        //  backwards traverse again to put it back in the correct
-        //  order.
-        Stack<Path<T, D>> paths = new Stack<>();
-        Stack<Link<T, D>> links = new Stack<>();
-        while (current.getPrevious() != null) {
-          paths.add(edges.get(current.getPrevious(), current));
-          if (current instanceof ItineraryTrial.LinkNode) {
-            links.add(((ItineraryTrial<T, D>.LinkNode) current).getLink());
-          }
-          current = current.getPrevious();
-        }
-        Itinerary itinerary = new Itinerary();
-        while (!links.isEmpty()) {
-          itinerary.addLinkedTrail(paths.pop(), links.pop());
-        }
-        if (!itinerary.addFinalTrail(paths.pop())) {
-          throw new RuntimeException("Could not add final trail");
-        }
-        assert paths.isEmpty();
-        assert links.isEmpty();
-        return itinerary;
-      }
-
-      // Not yet done
-      for (Map.Entry<Node, Path<T, D>> outlet : edges.row(current).entrySet()) {
-        if (visited.contains(outlet.getKey())) {
-          continue;
-        }
-        if (outlet.getKey().getDistance() > current.getDistance() + outlet.getValue().getLength()) {
-          // A better path for this node would be to come from current.
-          // We can assume that is already queued. Remove from waiting queue to update.
-          toVisit.remove(outlet.getKey());
-          outlet.getKey().setDistance(current.getDistance() + outlet.getValue().getLength() + outlet.getKey().getWeight());
-          outlet.getKey().setPrevious(current);
-          toVisit.add(outlet.getKey());
-        }
+  @NotNull
+  public Optional<Itinerary<T, D>> attempt(SearchSession<T, D> session, Collection<Mode<T, D>> modes, boolean useCache) {
+    boolean failed = false;
+    for (PathTrial<T, D> pathTrial : alternatingList.getMinors()) {
+      Optional<Path<T, D>> optionalPath = pathTrial.attempt(session, modes, useCache);
+      if (!optionalPath.isPresent()) {
+        failed = true;
       }
     }
-
-    return null;  // Could not find it
-
-  }
-
-  public static class Node {
-    /**
-     * The "weight" of the node, which is the cost of traversing through this node.
-     */
-    @Getter
-    protected double weight = 0;
-    @Getter
-    @Setter
-    private double distance;
-    @Setter
-    @Getter
-    private Node previous;
-
-    private Node(double distance) {
-      this.distance = distance;
-    }
-  }
-
-  private class LinkNode extends Node {
-    private final Link<T, D> link;
-
-    public LinkNode(Link<T, D> link, double distance) {
-      super(distance);
-      this.link = link;
-      weight = link.weight();
+    if (failed) {
+      return Optional.empty();
     }
 
-    public Link<T, D> getLink() {
-      return link;
+    // accumulate length
+    double length = 0;
+    for (Leap<T, D> leap : alternatingList.getMajors()) {
+      if (leap != null) {
+        length += leap.getLength();
+      }
     }
+    for (PathTrial<T, D> pathTrial : alternatingList.getMinors()) {
+      length += pathTrial.getLength();
+    }
+
+    List<List<Step<T, D>>> flattenedList = alternatingList.flatten(leap -> {
+      if (leap == null) {
+        return null;
+      } else {
+        return leap.getSteps();
+      }
+    }, trial -> trial.getPath().getSteps() /* Path must exist because we didn't fail */);
+    List<Step<T, D>> allSteps = new LinkedList<>();
+    for (List<Step<T, D>> list : flattenedList) {
+      if (list != null) {
+        allSteps.addAll(list);
+      }
+    }
+    return Optional.of(new Itinerary<>(origin,
+        allSteps,
+        alternatingList.convert(leap -> leap, pathTrial -> Objects.requireNonNull(pathTrial.getPath())),
+        length));
   }
 
 }

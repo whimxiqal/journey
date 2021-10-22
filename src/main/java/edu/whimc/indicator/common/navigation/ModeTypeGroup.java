@@ -3,6 +3,7 @@ package edu.whimc.indicator.common.navigation;
 import com.google.common.collect.Sets;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class ModeTypeGroup implements Serializable {
 
   private final Set<ModeType> modeTypes = Sets.newHashSet();
-  @Getter
-  private int primeProduct = 1;
+  private long accumulation = 0;
 
   public ModeTypeGroup() {
   }
@@ -22,7 +22,7 @@ public class ModeTypeGroup implements Serializable {
 
   public boolean add(@NotNull ModeType modeType) {
     if (this.modeTypes.add(modeType)) {
-      primeProduct *= modeType.getPrimeIdentifier();
+      accumulation += modeType.getAccumulationId();
       return true;
     } else {
       return false;
@@ -31,7 +31,7 @@ public class ModeTypeGroup implements Serializable {
 
   public boolean remove(@NotNull ModeType modeType) {
     if (this.modeTypes.remove(modeType)) {
-      primeProduct /= modeType.getPrimeIdentifier();
+      accumulation -= modeType.getAccumulationId();
       return true;
     } else {
       return false;
@@ -48,24 +48,28 @@ public class ModeTypeGroup implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     ModeTypeGroup that = (ModeTypeGroup) o;
 
-    return this.primeProduct == that.primeProduct;
+    return this.accumulation == that.accumulation;
   }
 
   @Override
   public int hashCode() {
-    return primeProduct;
+    return Objects.hashCode(this.accumulation);
   }
 
   @Override
   public String toString() {
     return "ModeTypeGroup{"
         + "modeTypes=" + modeTypes
-        + ", primeProduct=" + primeProduct
+        + ", accumulation=" + accumulation
         + '}';
   }
 }

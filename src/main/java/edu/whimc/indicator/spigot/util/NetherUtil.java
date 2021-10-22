@@ -33,6 +33,9 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
+/**
+ * A utility class for static operations involving the Nether.
+ */
 public final class NetherUtil {
 
   private static final BlockFace[] BLOCK_FACES = new BlockFace[]{
@@ -53,20 +56,25 @@ public final class NetherUtil {
    * @param radius    The search radius
    * @param minHeight Minimum height of search
    * @param maxHeight Maximum height of search
-   * @return Returns cell in the bottom center of the nearest nether portal if found. Otherwise returns null.
+   * @return Returns cell in the bottom center of the nearest nether portal if found. Otherwise, returns null.
    */
-  public static Collection<PortalGroup> locateAll(LocationCell origin, int radius, int minHeight, int maxHeight) {
+  public static Collection<PortalGroup> locateAll(LocationCell origin,
+                                                  int radius,
+                                                  int minHeight,
+                                                  int maxHeight) {
     Set<PortalGroup> portals = new HashSet<>();  // All PortalGroups found
     Set<LocationCell> stored = new HashSet<>();  // All Portal blocks found in the PortalGroups
     World world = origin.getDomain();
 
-    int yStart = Math.max(origin.getY() - radius, minHeight);
-    int yEnd = Math.min(origin.getY() + radius, maxHeight);
+    int startY = Math.max(origin.getY() - radius, minHeight);
+    int endY = Math.min(origin.getY() + radius, maxHeight);
 
     for (int x = origin.getX() - radius; x <= origin.getX() + radius; x++) {
-      for (int y = yStart; y <= yEnd; y += 2) {
+      for (int y = startY; y <= endY; y += 2) {
         for (int z = origin.getZ() - radius; z <= origin.getZ() + radius; z++) {
-          if (x + z % 2 == 0) break;  // Check only in checkerboard pattern
+          if (x + z % 2 == 0) {
+            break;  // Check only in checkerboard pattern
+          }
           //Location being iterated over.
           LocationCell cell = new LocationCell(x, y, z, world);
           //Don't do anything if the Portal block is already stored.
@@ -86,19 +94,29 @@ public final class NetherUtil {
     return portals;
   }
 
+  /**
+   * Locate all portals near the given cell within the given radius.
+   *
+   * @param cell   the central cell
+   * @param radius the radius around the cell
+   * @return the portals
+   */
   public static Collection<PortalGroup> locateAll(LocationCell cell, int radius) {
     return locateAll(cell, radius, cell.getY() - radius, cell.getY() + radius);
   }
 
   /**
    * Gets the Portal blocks that is part of the Nether portal.
+   * Will return null if there are no portals or the portal that has been found
+   * has too few portal blocks (<6).
    *
    * @param cell - Location to start the getting the portal blocks.
-   * @return A PortalGroup of all the found Portal blocks. Otherwise returns null. This will return null if the amount of found blocks if below 6.
+   * @return A PortalGroup of all the found Portal blocks. Otherwise, returns null.
    */
   public static PortalGroup getPortalBlocks(LocationCell cell) {
-    if (cell.getBlock().getType() != Material.NETHER_PORTAL)
+    if (cell.getBlock().getType() != Material.NETHER_PORTAL) {
       return null;
+    }
 
     PortalGroup group = portalBlock(new PortalGroup(cell.getDomain()), cell);
     return group.size() > 5 ? group : null;
@@ -115,9 +133,12 @@ public final class NetherUtil {
     return group;
   }
 
+  /**
+   * Represents a Nether portal. This actually consists of some number of blocks
+   */
   public static class PortalGroup {
     private final Set<LocationCell> portal = new HashSet<>();
-    private final HashMap<Integer, Set<LocationCell>> yBlock = new HashMap<>();
+    private final HashMap<Integer, Set<LocationCell>> blockY = new HashMap<>();
     private final World world;
     private LocationCell teleportTo;
     private int bottom = Integer.MAX_VALUE;
@@ -135,11 +156,13 @@ public final class NetherUtil {
      * Adds the Location to the PortalGroup.
      *
      * @param cell Vector to add
-     * @return if the Location was added. Otherwise false.
+     * @return if the Location was added. Otherwise, false.
      */
     public boolean add(LocationCell cell) {
       // Check to see if the block is a Portal block.
-      if (cell.getBlock().getType() != Material.NETHER_PORTAL) return false;
+      if (cell.getBlock().getType() != Material.NETHER_PORTAL) {
+        return false;
+      }
 
       boolean added = portal.add(cell);
       // If the cell was added, do more actions.
@@ -150,7 +173,7 @@ public final class NetherUtil {
           bottom = cell.getY();
         }
         //Put the Location in a Map sorted by Y value.
-        Set<LocationCell> set = yBlock.computeIfAbsent(y, k -> new HashSet<>());
+        Set<LocationCell> set = blockY.computeIfAbsent(y, k -> new HashSet<>());
         set.add(cell);
         //Reset the teleport cell and distance squared since a new block was added.
         teleportTo = null;
@@ -158,10 +181,20 @@ public final class NetherUtil {
       return added;
     }
 
+    /**
+     * Get the number of blocks in the portal.
+     *
+     * @return the size
+     */
     public int size() {
       return portal.size();
     }
 
+    /**
+     * Get all the blocks in the portal.
+     *
+     * @return all portal blocks
+     */
     public Collection<LocationCell> getBlocks() {
       return Collections.unmodifiableCollection(portal);
     }
@@ -172,19 +205,21 @@ public final class NetherUtil {
      * @return The cell at the bottom center of the Nether portal.
      */
     public LocationCell port() {
-      if (teleportTo != null)
+      if (teleportTo != null) {
         return teleportTo;
+      }
 
-      if (portal.size() == 0)
+      if (portal.size() == 0) {
         return null;
+      }
 
-      Set<LocationCell> bottomY = yBlock.get(bottom);
-      int xMin = Collections.min(bottomY, Comparator.comparingInt(LocationCell::getX)).getX();
-      int xMax = Collections.max(bottomY, Comparator.comparingInt(LocationCell::getX)).getX();
-      int zMin = Collections.min(bottomY, Comparator.comparingInt(LocationCell::getZ)).getZ();
-      int zMax = Collections.max(bottomY, Comparator.comparingInt(LocationCell::getZ)).getZ();
+      Set<LocationCell> bottomY = blockY.get(bottom);
+      int minX = Collections.min(bottomY, Comparator.comparingInt(LocationCell::getX)).getX();
+      int maxX = Collections.max(bottomY, Comparator.comparingInt(LocationCell::getX)).getX();
+      int minZ = Collections.min(bottomY, Comparator.comparingInt(LocationCell::getZ)).getZ();
+      int maxZ = Collections.max(bottomY, Comparator.comparingInt(LocationCell::getZ)).getZ();
 
-      return new LocationCell((xMax + xMin) / 2, bottom, (zMax + zMin) / 2, world);
+      return new LocationCell((maxX + minX) / 2, bottom, (maxZ + minZ) / 2, world);
     }
 
     @Override

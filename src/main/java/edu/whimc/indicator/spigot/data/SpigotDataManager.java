@@ -1,6 +1,6 @@
 package edu.whimc.indicator.spigot.data;
 
-import edu.whimc.indicator.Indicator;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.config.Settings;
 import edu.whimc.indicator.common.data.CustomEndpointManager;
 import edu.whimc.indicator.common.data.DataManager;
@@ -29,7 +29,7 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
         customEndpointManager = new SpigotMySQLCustomEndpointManager();
         break;
       default:
-        Indicator.getInstance().getLogger().severe("This type of custom endpoint storage type is not supported: "
+        IndicatorSpigot.getInstance().getLogger().severe("This type of custom endpoint storage type is not supported: "
             + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
             + ". Defaulting to SQLite storage.");
         customEndpointManager = new SpigotSQLiteCustomEndpointManager();
@@ -43,7 +43,7 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
         serverEndpointManager = new SpigotMySQLServerEndpointManager();
         break;
       default:
-        Indicator.getInstance().getLogger().severe("This type of server endpoint storage type is not supported: "
+        IndicatorSpigot.getInstance().getLogger().severe("This type of server endpoint storage type is not supported: "
             + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
             + ". Defaulting to SQLite storage.");
         serverEndpointManager = new SpigotSQLiteServerEndpointManager();
