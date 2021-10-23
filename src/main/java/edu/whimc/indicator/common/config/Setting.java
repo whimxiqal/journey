@@ -25,7 +25,7 @@
 
 package edu.whimc.indicator.common.config;
 
-import edu.whimc.indicator.spigot.IndicatorSpigot;
+import edu.whimc.indicator.common.IndicatorCommon;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +59,8 @@ public abstract class Setting<T> {
   @NotNull
   public T getValue() {
     if (!initialized) {
-      IndicatorSpigot.getInstance().getLogger().warning("This setting at " + path + " has not been initialized! Using default value.");
+      IndicatorCommon.getLogger().error("This setting at " + path
+          + " has not been initialized! Using default value.");
       value = getDefaultValue();
       initialized = true;
     }

@@ -24,12 +24,10 @@ package edu.whimc.indicator.spigot.search.listener;
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.spigot.search.AnimationManager;
 import edu.whimc.indicator.spigot.search.PlayerSearchSession;
-import edu.whimc.indicator.spigot.search.event.SpigotModeSuccessEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStepSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStopPathSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStopSearchEvent;
-import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -40,27 +38,52 @@ import org.bukkit.event.Listener;
  */
 public class AnimationListener implements Listener {
 
+  /**
+   * Handle the {@link edu.whimc.indicator.common.search.event.StepSearchEvent}
+   * by showing blocks to the player that called for the search.
+   * This is part of the algorithm-animation process.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void stepSearchEvent(SpigotStepSearchEvent event) {
     AnimationManager manager = getAnimationManager(event);
     if (manager != null) {
-      manager.showBlock(event.getSearchEvent().getStep().getLocatable(), Material.OBSIDIAN.createBlockData());
+      manager.showStep(event.getSearchEvent().getStep().getLocatable());
     }
   }
 
+  /**
+   * Handle the {@link edu.whimc.indicator.common.search.event.StopPathSearchEvent}
+   * by cleaning up the pieces of the animation for that specific path and calling
+   * {@link AnimationManager#undoAnimation()}.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void stopPathSearchEvent(SpigotStopPathSearchEvent event) {
     AnimationManager manager = getAnimationManager(event);
     if (manager != null) {
-      manager.cleanUpAnimation();
+      manager.undoAnimation();
     }
   }
 
+  /**
+   * Handle the {@link edu.whimc.indicator.common.search.event.StopSearchEvent}
+   * by cleaning up whatever is needed to be cleaned up by the running of the
+   * animation.
+   *
+   * <p>{@link #stopPathSearchEvent} is the one that normally cleans up the animations
+   * but if the animation is cancelled before it finishes, then this is the last resort
+   * to fix the user's environment.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void stopSearchEvent(SpigotStopSearchEvent event) {
     AnimationManager manager = getAnimationManager(event);
     if (manager != null) {
-      manager.cleanUpAnimation();
+      manager.undoAnimation();
     }
   }
 

@@ -81,10 +81,12 @@ public final class NavCommand extends FunctionlessCommandNode {
     if (CommandFlags.NOFLY.isIn(flags)) {
       searchFlags.add(SearchFlag.NOFLY);
     }
+    int algorithmStepDelay = 0;
     if (CommandFlags.ANIMATE.isIn(flags)) {
       searchFlags.add(SearchFlag.ANIMATE);
+      algorithmStepDelay = CommandFlags.ANIMATE.retrieve(player, flags);
     }
-    PlayerSearchSession session = new PlayerSearchSession(player, searchFlags);
+    PlayerSearchSession session = new PlayerSearchSession(player, searchFlags, algorithmStepDelay);
 
     int timeout = CommandFlags.TIMEOUT.isIn(flags)
         ? CommandFlags.TIMEOUT.retrieve(player, flags)

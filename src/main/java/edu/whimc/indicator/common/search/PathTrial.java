@@ -23,13 +23,11 @@ package edu.whimc.indicator.common.search;
 
 import edu.whimc.indicator.common.IndicatorCommon;
 import edu.whimc.indicator.common.navigation.Cell;
-import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.ModeType;
 import edu.whimc.indicator.common.navigation.ModeTypeGroup;
 import edu.whimc.indicator.common.navigation.Path;
 import edu.whimc.indicator.common.navigation.Step;
-import edu.whimc.indicator.common.search.event.SearchDispatcher;
 import edu.whimc.indicator.common.search.event.StartPathSearchEvent;
 import edu.whimc.indicator.common.search.event.StepSearchEvent;
 import edu.whimc.indicator.common.search.event.StopPathSearchEvent;
@@ -43,7 +41,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +64,26 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
   @Getter
   private ResultState state;
   @Getter
-  private boolean fromCache;
+  private final boolean fromCache;
+
+  private PathTrial(SearchSession<T, D> session,
+                    T origin, T destination,
+                    double length,
+                    Path<T, D> path,
+                    ResultState state,
+                    boolean fromCache) {
+    if (!origin.getDomain().equals(destination.getDomain())) {
+      throw new IllegalArgumentException("The domain of the origin and destination must be the same");
+    }
+    this.session = session;
+    this.origin = origin;
+    this.destination = destination;
+    this.domain = origin.getDomain();
+    this.length = length;
+    this.path = path;
+    this.state = state;
+    this.fromCache = fromCache;
+  }
 
   public static <T extends Cell<T, D>, D> PathTrial<T, D> successful(SearchSession<T, D> session,
                                                                      T origin, T destination,
@@ -85,38 +101,19 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
   }
 
   public static <T extends Cell<T, D>, D> PathTrial<T, D> approximate(SearchSession<T, D> session,
-                                            T origin, T destination) {
+                                                                      T origin, T destination) {
     return new PathTrial<>(session, origin, destination,
         origin.distanceTo(destination), null,
         ResultState.IDLE, false);
   }
 
   public static <T extends Cell<T, D>, D> PathTrial<T, D> cached(SearchSession<T, D> session,
-                                                                      T origin, T destination,
-                                                                      Path<T, D> path) {
+                                                                 T origin, T destination,
+                                                                 Path<T, D> path) {
     return new PathTrial<>(session, origin, destination,
         path == null ? origin.distanceTo(destination) : path.getLength(), path,
         path == null ? ResultState.FAILED : ResultState.SUCCESSFUL,
         true);
-  }
-
-  private PathTrial(SearchSession<T, D> session,
-                   T origin, T destination,
-                   double length,
-                   Path<T, D> path,
-                   ResultState state,
-                    boolean fromCache) {
-    if (!origin.getDomain().equals(destination.getDomain())) {
-      throw new IllegalArgumentException("The domain of the origin and destination must be the same");
-    }
-    this.session = session;
-    this.origin = origin;
-    this.destination = destination;
-    this.domain = origin.getDomain();
-    this.length = length;
-    this.path = path;
-    this.state = state;
-    this.fromCache = fromCache;
   }
 
   @NotNull
@@ -159,10 +156,13 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
       // Delay the algorithm, if requested by implementation of search session
       if (session.getAlgorithmStepDelay() != 0) {
         try {
-          Thread.sleep(session.getAlgorithmStepDelay());
+          System.out.println("Sleeping for " + session.getAlgorithmStepDelay() + " seconds.");
+          wait(session.getAlgorithmStepDelay());
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
+      } else {
+        System.out.println("Not sleeping?");
       }
 
       if (session.state.isCanceled() || visited.size() > MAX_SIZE) {
@@ -226,12 +226,16 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
     return new TrialResult<>(Optional.empty(), true);
   }
 
+  public static final record TrialResult<T extends Cell<T, D>, D>(Optional<Path<T, D>> path,
+                                                                  boolean changedProblem) {
+  }
+
   class Node {
+    @Getter
+    private final double proximity;
     @Getter
     @Setter
     private Step<T, D> data;
-    @Getter
-    private final double proximity;
     @Getter
     @Setter
     private Node previous;
@@ -247,8 +251,5 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
     }
 
   }
-
-  public static final record TrialResult<T extends Cell<T, D>, D>(Optional<Path<T, D>> path,
-                                                                  boolean changedProblem) { }
 
 }

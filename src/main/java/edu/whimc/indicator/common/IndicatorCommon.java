@@ -25,6 +25,7 @@ import edu.whimc.indicator.common.cache.PathCache;
 import edu.whimc.indicator.common.config.ConfigManager;
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.common.search.event.SearchDispatcher;
+import edu.whimc.indicator.common.util.LoggerCommon;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,13 +34,12 @@ public final class IndicatorCommon {
   private IndicatorCommon() {
   }
 
-  // TODO get rid of all mention of Spigot in common folder
-  // TODO create a logger here
-
   private static SearchDispatcher<?, ?, ?> searchEventDispatcher;
 
   @Getter @Setter
   private static ConfigManager configManager;
+
+  private static LoggerCommon logger;
 
   /**
    * A cache of all previously calculated paths.
@@ -70,6 +70,14 @@ public final class IndicatorCommon {
   @SuppressWarnings("unchecked")
   public static <T extends Cell<T, D>, D> void setPathCache(PathCache<T, D> pathCache) {
     IndicatorCommon.pathCache = pathCache;
+  }
+
+  public static void setLogger(LoggerCommon logger) {
+    IndicatorCommon.logger = logger;
+  }
+
+  public static LoggerCommon getLogger() {
+    return logger;
   }
 
 }

@@ -8,7 +8,7 @@ import edu.whimc.indicator.common.data.ServerEndpointManager;
 import edu.whimc.indicator.spigot.data.sql.mysql.SpigotMySQLCustomEndpointManager;
 import edu.whimc.indicator.spigot.data.sql.mysql.SpigotMySQLServerEndpointManager;
 import edu.whimc.indicator.spigot.data.sql.sqlite.SpigotSQLiteCustomEndpointManager;
-import edu.whimc.indicator.spigot.data.sql.sqlite.SpigotSQLiteServerEndpointManager;
+import edu.whimc.indicator.spigot.data.sql.sqlite.SpigotSqliteServerEndpointManager;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import lombok.Getter;
 import org.bukkit.World;
@@ -20,33 +20,31 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
   @Getter
   private final ServerEndpointManager<LocationCell, World> serverEndpointManager;
 
+  private final String sqliteAddress = "jdbc:sqlite:" + IndicatorSpigot.getInstance()
+      .getDataFolder().getPath() + "/indicator.db";
+
+
   public SpigotDataManager() {
     switch (Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()) {
-      case SQLITE:
-        customEndpointManager = new SpigotSQLiteCustomEndpointManager();
-        break;
-      case MYSQL:
-        customEndpointManager = new SpigotMySQLCustomEndpointManager();
-        break;
-      default:
+      case SQLITE -> customEndpointManager = new SpigotSQLiteCustomEndpointManager(sqliteAddress);
+      case MYSQL -> customEndpointManager = new SpigotMySQLCustomEndpointManager();
+      default -> {
         IndicatorSpigot.getInstance().getLogger().severe("This type of custom endpoint storage type is not supported: "
             + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
             + ". Defaulting to SQLite storage.");
-        customEndpointManager = new SpigotSQLiteCustomEndpointManager();
+        customEndpointManager = new SpigotSQLiteCustomEndpointManager(sqliteAddress);
+      }
     }
 
     switch (Settings.SERVER_ENDPOINT_STORAGE_TYPE.getValue()) {
-      case SQLITE:
-        serverEndpointManager = new SpigotSQLiteServerEndpointManager();
-        break;
-      case MYSQL:
-        serverEndpointManager = new SpigotMySQLServerEndpointManager();
-        break;
-      default:
+      case SQLITE -> serverEndpointManager = new SpigotSqliteServerEndpointManager(sqliteAddress);
+      case MYSQL -> serverEndpointManager = new SpigotMySQLServerEndpointManager();
+      default -> {
         IndicatorSpigot.getInstance().getLogger().severe("This type of server endpoint storage type is not supported: "
             + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
             + ". Defaulting to SQLite storage.");
-        serverEndpointManager = new SpigotSQLiteServerEndpointManager();
+        serverEndpointManager = new SpigotSqliteServerEndpointManager(sqliteAddress);
+      }
     }
   }
 

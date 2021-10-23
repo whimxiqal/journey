@@ -51,6 +51,7 @@ import edu.whimc.indicator.spigot.search.event.SpigotVisitationSearchEvent;
 import edu.whimc.indicator.spigot.search.listener.AnimationListener;
 import edu.whimc.indicator.spigot.search.listener.DataStorageListener;
 import edu.whimc.indicator.spigot.search.listener.SearchListener;
+import edu.whimc.indicator.spigot.util.LoggerSpigot;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -99,6 +100,8 @@ public final class IndicatorSpigot extends JavaPlugin {
     // Create caches
     IndicatorCommon.setConfigManager(SpigotConfigManager.initialize("config.yml"));
     IndicatorCommon.setPathCache(new PathCache<LocationCell, World>());
+
+    IndicatorCommon.setLogger(new LoggerSpigot());
 
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();

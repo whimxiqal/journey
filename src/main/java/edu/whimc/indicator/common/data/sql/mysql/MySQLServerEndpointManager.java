@@ -6,7 +6,7 @@ import edu.whimc.indicator.common.navigation.Cell;
 
 public abstract class MySQLServerEndpointManager<T extends Cell<T, D>, D> extends SQLServerEndpointManager<T, D> {
   public MySQLServerEndpointManager(DataConverter<T, D> dataConverter) {
-    super(new MySQLConnectionController(), dataConverter);
+    super(new MySqlConnectionController(), dataConverter);
   }
 
 }

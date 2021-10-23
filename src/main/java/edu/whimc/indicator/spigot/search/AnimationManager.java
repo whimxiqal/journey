@@ -24,13 +24,16 @@ package edu.whimc.indicator.spigot.search;
 import edu.whimc.indicator.common.navigation.ModeType;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 
+/**
+ * The place where all animation operations and memory are stored for any single
+ * {@link PlayerSearchSession}.
+ */
 public class AnimationManager {
 
   private final Set<LocationCell> successfulLocations = ConcurrentHashMap.newKeySet();
@@ -38,11 +41,27 @@ public class AnimationManager {
   private LocationCell lastFailure;
   private boolean animating;
 
+  /**
+   * General constructor.
+   *
+   * @param session the session
+   */
   public AnimationManager(PlayerSearchSession session) {
     this.session = session;
   }
 
+  /**
+   * Show the result of an algorithm step to the user.
+   *
+   * @param cell     the location
+   * @param success  whether the step was a successful move
+   * @param modeType the mode used to get there
+   * @return true if it showed the result correctly, false if it failed for some reason
+   */
   public boolean showResult(LocationCell cell, boolean success, ModeType modeType) {
+    if (!animating) {
+      return false;
+    }
     Player player = Bukkit.getPlayer(session.getCallerId());
     if (player == null) {
       return false;
@@ -58,7 +77,13 @@ public class AnimationManager {
     }
 
     if (success) {
-      if (showBlock(cell, Material.LIME_STAINED_GLASS.createBlockData())) {
+      BlockData blockData;
+      switch (modeType) {
+        case WALK -> blockData = Material.LIME_STAINED_GLASS.createBlockData();
+        case JUMP -> blockData = Material.MAGENTA_STAINED_GLASS.createBlockData();
+        default -> blockData = Material.COBWEB.createBlockData();
+      }
+      if (showBlock(cell, blockData)) {
         this.successfulLocations.add(cell);
         return true;
       }
@@ -83,7 +108,20 @@ public class AnimationManager {
     successfulLocations.remove(cell);
   }
 
-  public boolean showBlock(LocationCell cell, BlockData blockData) {
+  /**
+   * Show the location of a step in an algorithm to the user.
+   *
+   * @param cell the location
+   * @return true if it displayed correctly, false if it failed for some reason
+   */
+  public boolean showStep(LocationCell cell) {
+    return showBlock(cell, Material.OBSIDIAN.createBlockData());
+  }
+
+  private boolean showBlock(LocationCell cell, BlockData blockData) {
+    if (!animating) {
+      return false;
+    }
     Player player = getPlayer();
     if (cell.getDomain() != player.getWorld() || cell.distanceToSquared(new LocationCell(player.getLocation())) > 10000) {
       return false;
@@ -92,7 +130,10 @@ public class AnimationManager {
     return true;
   }
 
-  public void cleanUpAnimation() {
+  /**
+   * Undo all the block changes displayed to the user so everything looks as it did before animating.
+   */
+  public void undoAnimation() {
     Player player = Bukkit.getPlayer(session.getCallerId());
     if (player == null) {
       return;
@@ -109,11 +150,25 @@ public class AnimationManager {
     return Bukkit.getPlayer(session.getCallerId());
   }
 
-  public void setAnimating(boolean animating) {
-    this.animating = animating;
-  }
-
+  /**
+   * Whether this manager should be creating new animations.
+   * When set to false, the animations will still be reset and
+   * cleaned up normally.
+   *
+   * @return true if animating
+   */
   public boolean isAnimating() {
     return animating;
+  }
+
+  /**
+   * Set whether this manager should be creating new animations.
+   * When set to false, the animations will still be reset and
+   * cleaned up normally.
+   *
+   * @param animating true to animate
+   */
+  public void setAnimating(boolean animating) {
+    this.animating = animating;
   }
 }

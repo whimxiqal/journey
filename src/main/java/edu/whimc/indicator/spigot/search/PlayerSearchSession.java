@@ -54,11 +54,12 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
   @Getter
   private final AnimationManager animationManager;
 
-  public PlayerSearchSession(Player player, Set<SearchFlag> flags) {
+  public PlayerSearchSession(Player player, Set<SearchFlag> flags, int algorithmStepDelay) {
     super(player.getUniqueId(), Caller.PLAYER);
     this.sessionInfo = new SessionState();
     this.animationManager = new AnimationManager(this);
     animationManager.setAnimating(flags.contains(SearchFlag.ANIMATE));
+    setAlgorithmStepDelay(algorithmStepDelay);
     // Modes - in order of preference
     if (player.getAllowFlight() && !flags.contains(SearchFlag.NOFLY)) {
       registerMode(new FlyMode());

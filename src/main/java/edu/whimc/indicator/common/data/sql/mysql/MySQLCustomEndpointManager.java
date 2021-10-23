@@ -13,7 +13,7 @@ public abstract class MySQLCustomEndpointManager<T extends Cell<T, D>, D> extend
    * General constructor.
    */
   public MySQLCustomEndpointManager(DataConverter<T, D> dataConverter) {
-    super(new MySQLConnectionController(), dataConverter);
+    super(new MySqlConnectionController(), dataConverter);
   }
 
 }
