@@ -8,12 +8,13 @@ public class IntegerSetting extends Setting<Integer> {
   }
 
   @Override
-  Integer parseValue(@NotNull String string) {
+  public Integer parseValue(@NotNull String string) {
     return Integer.parseInt(string);
   }
 
   @Override
-  @NotNull String printValue() {
+  @NotNull
+  public String printValue() {
     return getValue().toString();
   }
 }

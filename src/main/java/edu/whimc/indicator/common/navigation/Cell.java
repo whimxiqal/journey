@@ -21,6 +21,7 @@
 
 package edu.whimc.indicator.common.navigation;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <T> the cell type, for self-reference purposes
  * @param <D> the domain type
  */
-public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D> {
+public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D>, Serializable {
 
   protected final int coordinateX;
   protected final int coordinateY;

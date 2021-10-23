@@ -19,7 +19,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.spigot.cache;
+package edu.whimc.indicator.spigot.manager;
 
 import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.spigot.navigation.LocationCell;

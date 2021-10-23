@@ -9,12 +9,13 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
   }
 
   @Override
-  E parseValue(@NotNull String string) {
+  public E parseValue(@NotNull String string) {
     return Enums.getIfPresent(this.clazz, string.toUpperCase()).orNull();
   }
 
   @Override
-  @NotNull String printValue() {
+  @NotNull
+  public String printValue() {
     return getValue().name().toLowerCase();
   }
 }

@@ -29,20 +29,23 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class WeightedGraph {
+public abstract class WeightedGraph<N, E> {
 
-  private final Table<Node, Node, Edge> edges = HashBasedTable.create();
+  private final Set<Node> nodes = new HashSet<>();
+  private final Table<Node, Node, E> edges = HashBasedTable.create();
 
-  public void addEdge(@NotNull Node origin, @NotNull Node destination, @NotNull Edge edge) {
+  public void addEdge(@NotNull Node origin, @NotNull Node destination, @NotNull E edge) {
+    this.nodes.add(origin);
+    this.nodes.add(destination);
     this.edges.put(origin, destination, edge);
   }
 
   @Nullable
-  protected final AlternatingList<Node, Edge, Object> findMinimumPath(Node origin, Node destination) {
+  protected final AlternatingList<Node, E, Object> findMinimumPath(Node origin, Node destination) {
+
     PriorityQueue<Node> toVisit = new PriorityQueue<>(Comparator.comparingDouble(n -> n.distance));
     Set<Node> visited = new HashSet<>();
 
@@ -57,25 +60,27 @@ public abstract class WeightedGraph {
 
       if (current.equals(destination)) {
         // We've reached destination. Package solution.
-        AlternatingList.Builder<Node, Edge, Object> pathBuilder = AlternatingList.builder(destination);
+        AlternatingList.Builder<Node, E, Object> pathBuilder = AlternatingList.builder(destination);
         while (!current.equals(origin)) {
           pathBuilder.addFirst(current.getPrevious(), this.edges.get(current.getPrevious(), current));
           current = current.getPrevious();
         }
+
+        resetNodes();
         return pathBuilder.build();
       } else {
         // Not yet done
-        for (Map.Entry<Node, Edge> outlet : edges.row(current).entrySet()) {
+        for (Map.Entry<Node, E> outlet : edges.row(current).entrySet()) {
           // outlet.getKey() is destination
           // outlet.getValue() is edge from 'current' to destination
           if (visited.contains(outlet.getKey())) {
             continue;
           }
-          if (outlet.getKey().getDistance() > current.getDistance() + outlet.getValue().getLength()) {
+          if (outlet.getKey().getDistance() > current.getDistance() + edgeLength(outlet.getValue())) {
             // A better path for this node would be to come from current.
             // We can assume that is already queued. Remove from waiting queue to update.
             toVisit.remove(outlet.getKey());
-            outlet.getKey().setDistance(current.getDistance() + outlet.getValue().getLength() + outlet.getKey().getWeight());
+            outlet.getKey().setDistance(current.getDistance() + edgeLength(outlet.getValue()) + nodeWeight(outlet.getKey().getData()));
             outlet.getKey().setPrevious(current);
             toVisit.add(outlet.getKey());
           }
@@ -83,24 +88,34 @@ public abstract class WeightedGraph {
       }
     }
 
+    resetNodes();
     return null;  // Could not find it
 
   }
 
-  public static class Node {
-    /**
-     * The "weight" of the node, which is the cost of traversing through this node.
-     */
-    private final double weight;
+  private void resetNodes() {
+    this.nodes.forEach(node -> {
+      node.setDistance(Double.MAX_VALUE);
+      node.setPrevious(null);
+    });
+  }
+
+  protected abstract double nodeWeight(N nodeData);
+
+  protected abstract double edgeLength(E edge);
+
+  public class Node {
+
+    private final N data;
     private double distance = Double.MAX_VALUE;
     private Node previous = null;
 
-    public Node(double weight) {
-      this.weight = weight;
+    public Node(N data) {
+      this.data = data;
     }
 
-    public double getWeight() {
-      return weight;
+    public N getData() {
+      return data;
     }
 
     public void setDistance(double distance) {
@@ -118,17 +133,10 @@ public abstract class WeightedGraph {
     public Node getPrevious() {
       return previous;
     }
-  }
 
-  public static class Edge {
-    public final double length;
-
-    public Edge(double length) {
-      this.length = length;
-    }
-
-    public double getLength() {
-      return length;
+    @Override
+    public String toString() {
+      return String.format("Node: {data: %s, distance: %s, weight: %f}", data.hashCode(), distance > Double.MAX_VALUE * .9 ? "inf" : distance, nodeWeight(data));
     }
   }
 

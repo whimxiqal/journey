@@ -22,8 +22,10 @@
 package edu.whimc.indicator.spigot.navigation;
 
 import edu.whimc.indicator.common.navigation.Cell;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -48,14 +50,7 @@ public class LocationCell extends Cell<LocationCell, World> {
   }
 
   public LocationCell(int x, double y, int z, @NotNull UUID worldUuid) {
-    super(x, (int) y, z, worldUuid.toString(),
-        s -> {
-          World world = Bukkit.getWorld(UUID.fromString(s));
-          if (world == null) {
-            throw new IllegalStateException("There is no world with UUID " + s);
-          }
-          return world;
-        });
+    super(x, (int) y, z, worldUuid.toString(), new UuidToWorld());
     this.heightOffset = y - this.getY();
   }
 
@@ -103,4 +98,18 @@ public class LocationCell extends Cell<LocationCell, World> {
   public int hashCode() {
     return Objects.hash(this.coordinateX, this.coordinateY, this.coordinateZ, this.getDomain());
   }
+
+  public static class UuidToWorld implements Function<String, World>, Serializable {
+
+    @Override
+    public World apply(String s) {
+      World world = Bukkit.getWorld(UUID.fromString(s));
+      if (world == null) {
+        throw new IllegalStateException("There is no world with UUID " + s);
+      }
+      return world;
+    }
+
+  }
+
 }

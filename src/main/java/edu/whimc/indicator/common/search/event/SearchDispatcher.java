@@ -58,8 +58,6 @@ public class SearchDispatcher<T extends Cell<T, D>, D, E> {
   public final <S extends SearchEvent<T, D>> void dispatch(S event) {
     if (events.containsKey(event.type())) {
       this.externalDispatcher.accept(getEventConversion(event.type()).convert(event));
-    } else {
-      throw new IllegalArgumentException("An event of type " + event.type() + " has no conversion.");
     }
   }
 

@@ -21,12 +21,15 @@
 
 package edu.whimc.indicator.common.search;
 
+import edu.whimc.indicator.common.IndicatorCommon;
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.navigation.Leap;
 import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.Path;
 import edu.whimc.indicator.common.navigation.Step;
+import edu.whimc.indicator.common.search.event.StartItinerarySearchEvent;
+import edu.whimc.indicator.common.search.event.StopItinerarySearchEvent;
 import edu.whimc.indicator.common.tools.AlternatingList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -35,27 +38,41 @@ import java.util.Objects;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
-public class ItineraryTrial<T extends Cell<T, D>, D> {
+public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
 
+  private final SearchSession<T, D> session;
   private final T origin;
   private final AlternatingList<Leap<T, D>, PathTrial<T, D>, Object> alternatingList;
+  private ResultState state;
 
-  public ItineraryTrial(T origin, AlternatingList<Leap<T, D>, PathTrial<T, D>, Object> alternatingList) {
+  public ItineraryTrial(SearchSession<T, D> session, T origin,
+                        AlternatingList<Leap<T, D>, PathTrial<T, D>, Object> alternatingList) {
+    this.session = session;
     this.origin = origin;
     this.alternatingList = alternatingList;
+    this.state = ResultState.IDLE;
   }
 
   @NotNull
-  public Optional<Itinerary<T, D>> attempt(SearchSession<T, D> session, Collection<Mode<T, D>> modes, boolean useCache) {
+  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCache) {
+    IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StartItinerarySearchEvent<>(session, this));
+
+    state = ResultState.RUNNING;
     boolean failed = false;
+    boolean changedProblem = false;
     for (PathTrial<T, D> pathTrial : alternatingList.getMinors()) {
-      Optional<Path<T, D>> optionalPath = pathTrial.attempt(session, modes, useCache);
-      if (!optionalPath.isPresent()) {
+      PathTrial.TrialResult<T, D> pathTrialResult = pathTrial.attempt(modes, useCache);
+      if (pathTrialResult.changedProblem()) {
+        changedProblem = true;
+      }
+      if (pathTrialResult.path().isEmpty()) {
         failed = true;
       }
     }
     if (failed) {
-      return Optional.empty();
+      state = ResultState.FAILED;
+      IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopItinerarySearchEvent<>(session, this));
+      return new TrialResult<>(Optional.empty(), changedProblem);
     }
 
     // accumulate length
@@ -82,10 +99,20 @@ public class ItineraryTrial<T extends Cell<T, D>, D> {
         allSteps.addAll(list);
       }
     }
-    return Optional.of(new Itinerary<>(origin,
+    state = ResultState.SUCCESSFUL;
+    IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopItinerarySearchEvent<>(session, this));
+    return new TrialResult<>(Optional.of(new Itinerary<>(origin,
         allSteps,
         alternatingList.convert(leap -> leap, pathTrial -> Objects.requireNonNull(pathTrial.getPath())),
-        length));
+        length)), changedProblem);
   }
+
+  @Override
+  public ResultState getState() {
+    return this.state;
+  }
+
+  public static final record TrialResult<T extends Cell<T, D>, D>(Optional<Itinerary<T, D>> itinerary,
+                                                                  boolean changedProblem) { }
 
 }

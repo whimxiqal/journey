@@ -21,17 +21,17 @@
 
 package edu.whimc.indicator.spigot.search.event;
 
-import edu.whimc.indicator.common.search.event.StopPathSearchEvent;
+import edu.whimc.indicator.common.search.event.StartItinerarySearchEvent;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class SpigotStopPathSearchEvent extends SpigotSearchEvent<StopPathSearchEvent<LocationCell, World>> {
+public class SpigotStartItinerarySearchEvent extends SpigotSearchEvent<StartItinerarySearchEvent<LocationCell, World>> {
 
   private static final HandlerList handlers = new HandlerList();
 
-  public SpigotStopPathSearchEvent(StopPathSearchEvent<LocationCell, World> event) {
+  public SpigotStartItinerarySearchEvent(StartItinerarySearchEvent<LocationCell, World> event) {
     super(event);
   }
 

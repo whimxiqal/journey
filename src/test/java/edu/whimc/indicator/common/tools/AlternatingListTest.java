@@ -24,12 +24,12 @@ package edu.whimc.indicator.common.tools;
 import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class AlternatingListTest {
 
   private static class Flub {
     public int id;
+
     public Flub(int id) {
       this.id = id;
     }
@@ -92,7 +92,7 @@ class AlternatingListTest {
     } catch (NoSuchElementException e) {
       threwError = true;
     }
-    assertTrue(threwError);
+    Assertions.assertTrue(threwError);
   }
 
 }

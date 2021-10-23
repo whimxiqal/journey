@@ -49,9 +49,11 @@ public abstract class SearchEvent<T extends Cell<T, D>, D> {
     FOUND_SOLUTION,
     MODE_FAILURE,
     MODE_SUCCESS,
+    START_ITINERARY,
     START_PATH,
     START,
     STEP,
+    STOP_ITINERARY,
     STOP_PATH,
     STOP,
     VISITATION

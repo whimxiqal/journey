@@ -20,6 +20,12 @@ public class ModeTypeGroup implements Serializable {
     modes.forEach(this::add);
   }
 
+  public static <T extends Cell<T, D>, D> ModeTypeGroup from(Collection<Mode<T,D>> modes) {
+    ModeTypeGroup modeTypeGroup = new ModeTypeGroup();
+    modes.forEach(mode -> modeTypeGroup.add(mode.getType()));
+    return modeTypeGroup;
+  }
+
   public boolean add(@NotNull ModeType modeType) {
     if (this.modeTypes.add(modeType)) {
       accumulation += modeType.getAccumulationId();

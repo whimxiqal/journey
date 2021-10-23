@@ -23,24 +23,28 @@ package edu.whimc.indicator.spigot;
 
 import edu.whimc.indicator.common.IndicatorCommon;
 import edu.whimc.indicator.common.cache.PathCache;
-import edu.whimc.indicator.common.config.ConfigManager;
 import edu.whimc.indicator.common.data.DataManager;
+import edu.whimc.indicator.common.manager.SearchManager;
 import edu.whimc.indicator.common.search.event.SearchDispatcher;
 import edu.whimc.indicator.common.search.event.SearchEvent;
-import edu.whimc.indicator.spigot.cache.DebugManager;
-import edu.whimc.indicator.spigot.cache.NetherManager;
-import edu.whimc.indicator.spigot.cache.SearchManager;
 import edu.whimc.indicator.spigot.command.IndicatorCommand;
 import edu.whimc.indicator.spigot.command.NavCommand;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
+import edu.whimc.indicator.spigot.config.SpigotConfigManager;
 import edu.whimc.indicator.spigot.data.SpigotDataManager;
+import edu.whimc.indicator.spigot.journey.PlayerJourney;
+import edu.whimc.indicator.spigot.manager.DebugManager;
+import edu.whimc.indicator.spigot.manager.NetherManager;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
+import edu.whimc.indicator.spigot.search.PlayerSearchSession;
 import edu.whimc.indicator.spigot.search.event.SpigotFoundSolutionEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotModeFailureEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotModeSuccessEvent;
+import edu.whimc.indicator.spigot.search.event.SpigotStartItinerarySearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStartPathSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStartSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStepSearchEvent;
+import edu.whimc.indicator.spigot.search.event.SpigotStopItinerarySearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStopPathSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStopSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotVisitationSearchEvent;
@@ -72,7 +76,7 @@ public final class IndicatorSpigot extends JavaPlugin {
   @Getter
   private DebugManager debugManager;
   @Getter
-  private SearchManager searchManager;
+  private SearchManager<LocationCell, World, PlayerSearchSession, PlayerJourney> searchManager;
   @Getter
   private boolean valid = false;
 
@@ -93,12 +97,12 @@ public final class IndicatorSpigot extends JavaPlugin {
   public void onEnable() {
     IndicatorSpigot.getInstance().getLogger().info("Initializing Indicator...");
     // Create caches
-    IndicatorCommon.setConfigManager(new ConfigManager("config.yml"));
-    IndicatorCommon.setPathCache(new PathCache<>());
+    IndicatorCommon.setConfigManager(SpigotConfigManager.initialize("config.yml"));
+    IndicatorCommon.setPathCache(new PathCache<LocationCell, World>());
 
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();
-    this.searchManager = new SearchManager();
+    this.searchManager = new SearchManager<>();
 
     deserializeCaches();
 
@@ -108,9 +112,11 @@ public final class IndicatorSpigot extends JavaPlugin {
     dispatcher.registerEvent(SpigotFoundSolutionEvent::new, SearchEvent.EventType.FOUND_SOLUTION);
     dispatcher.registerEvent(SpigotModeFailureEvent::new, SearchEvent.EventType.MODE_FAILURE);
     dispatcher.registerEvent(SpigotModeSuccessEvent::new, SearchEvent.EventType.MODE_SUCCESS);
+    dispatcher.registerEvent(SpigotStartItinerarySearchEvent::new, SearchEvent.EventType.START_ITINERARY);
     dispatcher.registerEvent(SpigotStartPathSearchEvent::new, SearchEvent.EventType.START_PATH);
     dispatcher.registerEvent(SpigotStartSearchEvent::new, SearchEvent.EventType.START);
     dispatcher.registerEvent(SpigotStepSearchEvent::new, SearchEvent.EventType.STEP);
+    dispatcher.registerEvent(SpigotStopItinerarySearchEvent::new, SearchEvent.EventType.STOP_ITINERARY);
     dispatcher.registerEvent(SpigotStopPathSearchEvent::new, SearchEvent.EventType.STOP_PATH);
     dispatcher.registerEvent(SpigotStopSearchEvent::new, SearchEvent.EventType.STOP);
     dispatcher.registerEvent(SpigotVisitationSearchEvent::new, SearchEvent.EventType.VISITATION);
@@ -134,11 +140,9 @@ public final class IndicatorSpigot extends JavaPlugin {
     }
     // Register listeners
     Bukkit.getPluginManager().registerEvents(netherManager, this);
-    Bukkit.getPluginManager().registerEvents(searchManager, this);
     Bukkit.getPluginManager().registerEvents(new AnimationListener(), this);
     Bukkit.getPluginManager().registerEvents(new DataStorageListener(), this);
     Bukkit.getPluginManager().registerEvents(new SearchListener(), this);
-
 
 
     // Start doing a bunch of searches for common use cases

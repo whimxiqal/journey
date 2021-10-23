@@ -21,22 +21,26 @@
 
 package edu.whimc.indicator.spigot.search.listener;
 
+import edu.whimc.indicator.common.search.SearchSession;
 import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.search.PlayerSearchSession;
-import edu.whimc.indicator.spigot.search.SessionInfo;
+import edu.whimc.indicator.spigot.search.SessionState;
 import edu.whimc.indicator.spigot.search.event.SpigotFoundSolutionEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStartSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStopSearchEvent;
 import edu.whimc.indicator.spigot.util.Format;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class SearchListener implements Listener {
 
@@ -57,7 +61,7 @@ public class SearchListener implements Listener {
     if (session == null) {
       return;
     }
-    SessionInfo sessionInfo = session.getSessionInfo();
+    SessionState sessionState = session.getSessionInfo();
 
     Player player = Bukkit.getPlayer(session.getCallerId());
     if (player == null) {
@@ -65,8 +69,8 @@ public class SearchListener implements Listener {
     }
 
     Itinerary<LocationCell, World> itinerary = event.getSearchEvent().getItinerary();
-    if (sessionInfo.wasSolutionPresented()) {
-      PlayerJourney journey = IndicatorSpigot.getInstance().getSearchManager().getPlayerJourney(player.getUniqueId());
+    if (sessionState.wasSolutionPresented()) {
+      PlayerJourney journey = IndicatorSpigot.getInstance().getSearchManager().getJourney(player.getUniqueId());
       if (journey != null) {
         journey.setProspectiveItinerary(itinerary);
         player.spigot().sendMessage(Format.info("A faster itinerary to your destination was found from your original location"));
@@ -77,24 +81,24 @@ public class SearchListener implements Listener {
       }
     }
 
-    if (sessionInfo.wasSolved()) {
-      Bukkit.getScheduler().cancelTask(sessionInfo.getSuccessNotificationTaskId());
+    if (sessionState.wasSolved()) {
+      Bukkit.getScheduler().cancelTask(sessionState.getSuccessNotificationTaskId());
     }
-    sessionInfo.setSolved(true);
+    sessionState.setSolved(true);
 
     // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
     PlayerJourney journey = new PlayerJourney(player.getUniqueId(), session, itinerary);
     journey.illuminateTrail();
 
     // Save the journey
-    IndicatorSpigot.getInstance().getSearchManager().putPlayerJourney(player.getUniqueId(), journey);
+    IndicatorSpigot.getInstance().getSearchManager().putJourney(player.getUniqueId(), journey);
 
     // Set up a success notification that will be cancelled if a better one is found in some amount of time
-    sessionInfo.setSuccessNotificationTaskId(Bukkit.getScheduler()
+    sessionState.setSuccessNotificationTaskId(Bukkit.getScheduler()
         .runTaskLater(IndicatorSpigot.getInstance(),
             () -> {
               player.spigot().sendMessage(Format.success("Showing an itinerary to your destination"));
-              sessionInfo.setSolutionPresented(true);
+              sessionState.setSolutionPresented(true);
             },
             20 /* one second (20 ticks) */)
         .getTaskId());
@@ -104,7 +108,59 @@ public class SearchListener implements Listener {
   public void stopSearchEvent(SpigotStopSearchEvent event) {
     PlayerSearchSession session = getPlayerSession(event);
     if (session != null) {
-      session.handleStop();
+      // Send failure message if we finished unsuccessfully
+      Player player = Bukkit.getPlayer(session.getCallerId());
+      if (player != null) {
+        switch (session.getState()) {
+          case FAILED -> player.spigot().sendMessage(Format.error("There is no path to your destination."));
+          case CANCELED -> player.spigot().sendMessage(Format.error("Your search was canceled before it could complete."));
+          case SUCCESSFUL -> player.spigot().sendMessage(Format.success("Your search ended (successfully)."));
+          default -> Bukkit.getLogger().warning("A player search session stopped while in the "
+              + session.getState() + " state");
+        }
+        // Remove from the searching set so they can search again
+        IndicatorSpigot.getInstance().getSearchManager().removeSearch(player.getUniqueId());
+      }
+    }
+  }
+
+  @EventHandler
+  public void onPlayerMove(PlayerMoveEvent event) {
+
+    if (event.getTo() == null) {
+      return;
+    }
+    LocationCell cell = new LocationCell(event.getTo());
+    UUID playerUuid = event.getPlayer().getUniqueId();
+    PlayerJourney playerJourney = IndicatorSpigot.getInstance().getSearchManager().getJourney(playerUuid);
+
+    if (playerJourney == null) {
+      // We don't care about a player moving unless there's a journey happening
+      return;
+    }
+
+    LocationCell currentLocation = IndicatorSpigot.getInstance().getSearchManager().getLocation(playerUuid);
+    if (currentLocation == null) {
+      IndicatorSpigot.getInstance().getSearchManager().putLocation(playerUuid, cell);
+      return;
+    }
+
+    if (currentLocation.equals(cell)) {
+      return;
+    }
+
+    IndicatorSpigot.getInstance().getSearchManager().putLocation(playerUuid, cell);
+    playerJourney.visit(cell);
+  }
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent event) {
+    // Stop the search so we don't waste memory on someone who isn't here anymore
+    SearchSession<LocationCell, World> currentSearch = IndicatorSpigot.getInstance()
+        .getSearchManager()
+        .getSearch(event.getPlayer().getUniqueId());
+    if (currentSearch != null) {
+      currentSearch.cancel();
     }
   }
 

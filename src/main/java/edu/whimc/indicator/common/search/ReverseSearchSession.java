@@ -25,15 +25,14 @@ import edu.whimc.indicator.common.IndicatorCommon;
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.navigation.Leap;
+import edu.whimc.indicator.common.navigation.ModeTypeGroup;
 import edu.whimc.indicator.common.search.event.FoundSolutionEvent;
-import edu.whimc.indicator.common.search.event.SearchDispatcher;
 import edu.whimc.indicator.common.search.event.StopSearchEvent;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,8 +48,8 @@ import java.util.UUID;
  */
 public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends SearchSession<T, D> {
 
-  public ReverseSearchSession(UUID playerUuid, Caller callerType) {
-    super(playerUuid, callerType);
+  public ReverseSearchSession(UUID callerId, Caller callerType) {
+    super(callerId, callerType);
   }
 
   @Override
@@ -78,35 +77,34 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
       leapsByDestinationDomain.get(leap.getDestination().getDomain()).add(leap);
     }
 
-    Itinerary<T, D> bestItinerary = null;
-    boolean usingCache = true;
-    while (!this.state.isCanceled()) {
+    SearchGraph<T, D> graph = new SearchGraph<>(this, origin, destination, this.leaps);
 
-      // TODO try to get this graph out of the while loop so we don't run it every time.
-      //  For some reason, I didn't do that originally and I can't remember why,
-      //  I think something to do with how I update path trials throughout one iteration
-      SearchGraph<T, D> graph = new SearchGraph<>(this, origin, destination, this.leaps);
+    // Collect path trials
+    ModeTypeGroup modeTypeGroup = ModeTypeGroup.from(this.modes);
+    if (origin.getDomain().equals(destination.getDomain())) {
+      graph.addPathTrialOriginToDestination(modeTypeGroup);
+    }
 
-      // Collect path trials
-      if (origin.getDomain().equals(destination.getDomain())) {
-        graph.addPathTrialOriginToDestination();
-      }
-
-      for (D domain : allDomains) {
-        for (Leap<T, D> pathTrialOriginLeap : leapsByDestinationDomain.get(domain)) {
-          for (Leap<T, D> pathTrialDestinationLeap : leapsByOriginDomain.get(domain)) {
-            graph.addPathTrialLeapToLeap(
-                pathTrialOriginLeap,
-                pathTrialDestinationLeap);
-            if (domain.equals(origin.getDomain())) {
-              graph.addPathTrialOriginToLeap(pathTrialDestinationLeap);
-            }
-            if (domain.equals(destination.getDomain())) {
-              graph.addPathTrialLeapToDestination(pathTrialOriginLeap);
-            }
+    for (D domain : allDomains) {
+      for (Leap<T, D> pathTrialOriginLeap : leapsByDestinationDomain.get(domain)) {
+        for (Leap<T, D> pathTrialDestinationLeap : leapsByOriginDomain.get(domain)) {
+          graph.addPathTrialLeapToLeap(
+              pathTrialOriginLeap,
+              pathTrialDestinationLeap,
+              modeTypeGroup);
+          if (domain.equals(origin.getDomain())) {
+            graph.addPathTrialOriginToLeap(pathTrialDestinationLeap, modeTypeGroup);
+          }
+          if (domain.equals(destination.getDomain())) {
+            graph.addPathTrialLeapToDestination(pathTrialOriginLeap, modeTypeGroup);
           }
         }
       }
+    }
+
+    Itinerary<T, D> bestItinerary = null;
+    boolean usingCache = true;
+    while (!this.state.isCanceled()) {
 
       ItineraryTrial<T, D> itineraryTrial = graph.calculate();
       if (itineraryTrial == null) {
@@ -124,25 +122,38 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
         return;
       }
 
-      Optional<Itinerary<T, D>> itineraryOptional = itineraryTrial.attempt(this, this.modes, usingCache);
-      if (itineraryOptional.isPresent()) {
-        if (bestItinerary != null && bestItinerary.equals(itineraryOptional.get())) {
-          // We found the same solution again, which probably means this is the best solution,
-          // so stop searching.
+      ItineraryTrial.TrialResult<T, D> trialResult = itineraryTrial.attempt(this.modes, usingCache);
+      if (trialResult.itinerary().isPresent()) {
+        if (!trialResult.changedProblem()) {
+          // This result did not change the problem, as in,
+          //  it did not affect the values that affect the algorithm, so we will get the
+          //  same solution every time. So, stop solving.
+
+          if (this.state.isRunning()) {
+            // Another solution hasn't yet been found. That means this solution was found
+            //  without changing a single piece of data so all trails must have been cached.
+            //  That's fine, just set the state to successful and return this sole solution.
+            this.state = ResultState.SUCCESSFUL;
+            IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(
+                new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
+          }
           IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
           return;
         }
-        if (bestItinerary == null || bestItinerary.getLength() < itineraryOptional.get().getLength()) {
+        if (bestItinerary == null || bestItinerary.getLength() < trialResult.itinerary().get().getLength()) {
           // TODO verify if all the paths still work (some of them might be cached)
-          bestItinerary = itineraryOptional.get();
+          bestItinerary = trialResult.itinerary().get();
           this.state = ResultState.SUCCESSFUL;
-          IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new FoundSolutionEvent<>(this, itineraryOptional.get()));
+          IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(
+              new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
         }
       }
     }
 
     // We are canceled
-    state = ResultState.CANCELED;
+    if (!state.isSuccessful()) {
+      state = ResultState.CANCELED;
+    }
     IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
   }
 }

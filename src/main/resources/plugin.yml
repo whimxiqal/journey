@@ -1,6 +1,6 @@
 name: Indicator
 version: 0.0.0
-main: edu.whimc.indicator.spigot.Indicator
+main: edu.whimc.indicator.spigot.IndicatorSpigot
 api-version: 1.17
 authors:
   - pietelite

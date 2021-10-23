@@ -22,7 +22,7 @@
 package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.spigot.IndicatorSpigot;
-import edu.whimc.indicator.spigot.cache.DebugManager;
+import edu.whimc.indicator.spigot.manager.DebugManager;
 import edu.whimc.indicator.spigot.command.common.CommandError;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.util.Format;

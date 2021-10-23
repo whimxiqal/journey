@@ -21,6 +21,7 @@
 
 package edu.whimc.indicator.spigot.search;
 
+import edu.whimc.indicator.common.search.ResultState;
 import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.navigation.Leap;
 import edu.whimc.indicator.common.search.ReverseSearchSession;
@@ -39,6 +40,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -47,12 +49,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class PlayerSearchSession extends ReverseSearchSession<LocationCell, World> {
 
-  private final SessionInfo sessionInfo;
+  @Getter
+  private final SessionState sessionInfo;
+  @Getter
   private final AnimationManager animationManager;
 
   public PlayerSearchSession(Player player, Set<SearchFlag> flags) {
     super(player.getUniqueId(), Caller.PLAYER);
-    this.sessionInfo = new SessionInfo(this);
+    this.sessionInfo = new SessionState();
     this.animationManager = new AnimationManager(this);
     animationManager.setAnimating(flags.contains(SearchFlag.ANIMATE));
     // Modes - in order of preference
@@ -68,14 +72,6 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
 
     // Links
     registerLeaps(player::hasPermission, player);
-  }
-
-  public AnimationManager getAnimationManager() {
-    return animationManager;
-  }
-
-  public SessionInfo getSessionInfo() {
-    return sessionInfo;
   }
 
   private void registerLeaps(Predicate<String> permissionSupplier) {
@@ -118,19 +114,6 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
       player.spigot().sendMessage(Format.debug("Registering Link: " + link.toString()));
     }
     super.registerLeap(link);
-  }
-
-  public void handleStop() {
-    // Send failure message if we finished unsuccessfully
-    Player player = Bukkit.getPlayer(getCallerId());
-    if (player != null) {
-      if (!state.isSuccessful() && !state.isCanceled()) {
-        player.spigot().sendMessage(Format.error("A path to your destination could not be found."));
-        IndicatorSpigot.getInstance().getSearchManager().removePlayerJourney(player.getUniqueId());
-      }
-      // Remove from the searching set so they can search again
-      IndicatorSpigot.getInstance().getSearchManager().removeSearch(player.getUniqueId());
-    }
   }
 
 }

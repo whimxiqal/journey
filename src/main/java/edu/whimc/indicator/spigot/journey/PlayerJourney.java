@@ -162,7 +162,7 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     int illuminationTaskId = Bukkit.getScheduler().runTaskTimer(IndicatorSpigot.getInstance(), () -> {
       PlayerJourney journey = IndicatorSpigot.getInstance()
           .getSearchManager()
-          .getPlayerJourney(playerUuid);
+          .getJourney(playerUuid);
       if (journey == null) {
         return;
       }

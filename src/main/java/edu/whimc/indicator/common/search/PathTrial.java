@@ -23,12 +23,16 @@ package edu.whimc.indicator.common.search;
 
 import edu.whimc.indicator.common.IndicatorCommon;
 import edu.whimc.indicator.common.navigation.Cell;
+import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.ModeType;
+import edu.whimc.indicator.common.navigation.ModeTypeGroup;
 import edu.whimc.indicator.common.navigation.Path;
 import edu.whimc.indicator.common.navigation.Step;
 import edu.whimc.indicator.common.search.event.SearchDispatcher;
+import edu.whimc.indicator.common.search.event.StartPathSearchEvent;
 import edu.whimc.indicator.common.search.event.StepSearchEvent;
+import edu.whimc.indicator.common.search.event.StopPathSearchEvent;
 import edu.whimc.indicator.common.search.event.VisitationSearchEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,10 +48,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
-public class PathTrial<T extends Cell<T, D>, D> {
+public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
 
   public static final int MAX_SIZE = 10000;
-  public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 2;
+  public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
 
   private final SearchSession<T, D> session;
   @Getter
@@ -61,34 +65,47 @@ public class PathTrial<T extends Cell<T, D>, D> {
   @Getter
   private Path<T, D> path;
   @Getter
-  private State state;
+  private ResultState state;
+  @Getter
+  private boolean fromCache;
 
   public static <T extends Cell<T, D>, D> PathTrial<T, D> successful(SearchSession<T, D> session,
                                                                      T origin, T destination,
                                                                      Path<T, D> path) {
-    return new PathTrial<>(session, origin, destination, path, State.SUCCESSFUL);
+    return new PathTrial<>(session, origin, destination,
+        path.getLength(), path,
+        ResultState.SUCCESSFUL, false);
   }
 
   public static <T extends Cell<T, D>, D> PathTrial<T, D> failed(SearchSession<T, D> session,
                                                                  T origin, T destination) {
-    return new PathTrial<>(session, origin, destination, null, State.FAILED);
+    return new PathTrial<>(session, origin, destination,
+        Double.MAX_VALUE, null,
+        ResultState.FAILED, false);
   }
 
   public static <T extends Cell<T, D>, D> PathTrial<T, D> approximate(SearchSession<T, D> session,
                                             T origin, T destination) {
-    return new PathTrial<>(session, origin, destination, null, State.UNKNOWN);
+    return new PathTrial<>(session, origin, destination,
+        origin.distanceTo(destination), null,
+        ResultState.IDLE, false);
   }
 
   public static <T extends Cell<T, D>, D> PathTrial<T, D> cached(SearchSession<T, D> session,
                                                                       T origin, T destination,
                                                                       Path<T, D> path) {
-    return new PathTrial<>(session, origin, destination, null, State.CACHED);
+    return new PathTrial<>(session, origin, destination,
+        path == null ? origin.distanceTo(destination) : path.getLength(), path,
+        path == null ? ResultState.FAILED : ResultState.SUCCESSFUL,
+        true);
   }
 
   private PathTrial(SearchSession<T, D> session,
                    T origin, T destination,
+                   double length,
                    Path<T, D> path,
-                   State state) {
+                   ResultState state,
+                    boolean fromCache) {
     if (!origin.getDomain().equals(destination.getDomain())) {
       throw new IllegalArgumentException("The domain of the origin and destination must be the same");
     }
@@ -96,17 +113,14 @@ public class PathTrial<T extends Cell<T, D>, D> {
     this.origin = origin;
     this.destination = destination;
     this.domain = origin.getDomain();
+    this.length = length;
     this.path = path;
-    this.length = origin.distanceTo(destination);
-  }
-
-  private void fail() {
-    this.length = Double.MAX_VALUE;
-    this.state = State.FAILED;
+    this.state = state;
+    this.fromCache = fromCache;
   }
 
   @NotNull
-  public Optional<Path<T, D>> attempt(SearchSession<T, D> session, Collection<Mode<T, D>> modes, boolean useCache) {
+  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCache) {
     if (!origin.getDomain().equals(destination.getDomain())) {
       throw new IllegalArgumentException("The input locatables ["
           + origin + " and "
@@ -114,17 +128,20 @@ public class PathTrial<T extends Cell<T, D>, D> {
           + "] must have the same domain to search for a path");
     }
 
-    if (this.state == State.SUCCESSFUL) {
-      return Optional.of(path);
+    if (this.state == ResultState.SUCCESSFUL) {
+      return new TrialResult<>(Optional.of(path), false);
     }
 
-    if (this.state == State.FAILED) {
-      return Optional.empty();
+    if (this.state == ResultState.FAILED) {
+      return new TrialResult<>(Optional.empty(), false);
     }
 
-    if (useCache && this.state == State.CACHED) {
-      return Optional.ofNullable(path);
+    if (useCache && this.fromCache) {
+      return new TrialResult<>(Optional.ofNullable(path), false);
     }
+
+    // Dispatch a starting event
+    IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StartPathSearchEvent<>(session, this));
 
     Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(Node::getProximity));
     Map<T, Node> visited = new HashMap<>();
@@ -138,27 +155,42 @@ public class PathTrial<T extends Cell<T, D>, D> {
 
     Node current;
     while (!upcoming.isEmpty()) {
+
+      // Delay the algorithm, if requested by implementation of search session
+      if (session.getAlgorithmStepDelay() != 0) {
+        try {
+          Thread.sleep(session.getAlgorithmStepDelay());
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+
       if (session.state.isCanceled() || visited.size() > MAX_SIZE) {
-        this.state = State.FAILED;
-        return Optional.empty();
+        // We ran out of allocated memory. Let's just call it here and say we failed
+        this.length = Double.MAX_VALUE;
+        this.state = ResultState.FAILED;
+        IndicatorCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), null);
+        return new TrialResult<>(Optional.empty(), true);
       }
 
       current = upcoming.poll();
       assert current != null;
       IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StepSearchEvent<>(session, originNode.getData()));
 
-      // We found it!
       if (current.getData().getLocatable().distanceToSquared(destination) <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED) {
+        // We found it!
         double length = current.getScore();
         LinkedList<Step<T, D>> steps = new LinkedList<>();
         do {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        this.state = State.SUCCESSFUL;
+        this.state = ResultState.SUCCESSFUL;
         this.path = new Path<>(origin, new ArrayList<>(steps), length);
         this.length = this.path.getLength();
-        return Optional.of(this.path);
+        IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+        IndicatorCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), this.path);
+        return new TrialResult<>(Optional.of(this.path), true);
       }
 
       // Need to keep going
@@ -185,8 +217,13 @@ public class PathTrial<T extends Cell<T, D>, D> {
         }
       }
     }
-    this.state = State.FAILED;
-    return Optional.empty();
+
+    // We've exhausted all possibilities. Fail.
+    this.state = ResultState.FAILED;
+    this.length = Double.MAX_VALUE;
+    IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    IndicatorCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), null);
+    return new TrialResult<>(Optional.empty(), true);
   }
 
   class Node {
@@ -211,10 +248,7 @@ public class PathTrial<T extends Cell<T, D>, D> {
 
   }
 
-  public enum State {
-    SUCCESSFUL,
-    CACHED,
-    FAILED,
-    UNKNOWN
-  }
+  public static final record TrialResult<T extends Cell<T, D>, D>(Optional<Path<T, D>> path,
+                                                                  boolean changedProblem) { }
+
 }

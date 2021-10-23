@@ -21,6 +21,7 @@
 
 package edu.whimc.indicator.spigot.search.listener;
 
+import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.spigot.search.AnimationManager;
 import edu.whimc.indicator.spigot.search.PlayerSearchSession;
 import edu.whimc.indicator.spigot.search.event.SpigotModeSuccessEvent;
@@ -32,12 +33,12 @@ import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
+/**
+ * A class to listen for Spigot events originating from
+ * {@link edu.whimc.indicator.common.search.SearchSession#search(Cell, Cell)}
+ * and allowing for the animating of the algorithm in realtime.
+ */
 public class AnimationListener implements Listener {
-
-  @EventHandler
-  public void startSearchEvent(SpigotModeSuccessEvent event) {
-
-  }
 
   @EventHandler
   public void stepSearchEvent(SpigotStepSearchEvent event) {

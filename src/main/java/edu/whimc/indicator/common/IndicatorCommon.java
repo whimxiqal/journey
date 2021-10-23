@@ -25,15 +25,16 @@ import edu.whimc.indicator.common.cache.PathCache;
 import edu.whimc.indicator.common.config.ConfigManager;
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.common.search.event.SearchDispatcher;
-import edu.whimc.indicator.spigot.navigation.LocationCell;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.World;
 
 public final class IndicatorCommon {
 
   private IndicatorCommon() {
   }
+
+  // TODO get rid of all mention of Spigot in common folder
+  // TODO create a logger here
 
   private static SearchDispatcher<?, ?, ?> searchEventDispatcher;
 
@@ -43,8 +44,7 @@ public final class IndicatorCommon {
   /**
    * A cache of all previously calculated paths.
    */
-  @Getter @Setter
-  private static PathCache<LocationCell, World> pathCache;
+  private static PathCache<?, ?> pathCache;
 
   @SuppressWarnings("unchecked")
   public static <T extends Cell<T, D>, D> SearchDispatcher<T, D, ?> getSearchEventDispatcher() {
@@ -57,6 +57,19 @@ public final class IndicatorCommon {
   @SuppressWarnings("unchecked")
   public static <T extends Cell<T, D>, D, E> void setSearchEventDispatcher(SearchDispatcher<T, D, E> dispatcher) {
     IndicatorCommon.searchEventDispatcher = dispatcher;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T extends Cell<T, D>, D> PathCache<T, D> getPathCache() {
+    if (pathCache == null) {
+      throw new IllegalStateException("No path cache! Did you forget to initialize it?");
+    }
+    return (PathCache<T, D>) pathCache;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T extends Cell<T, D>, D> void setPathCache(PathCache<T, D> pathCache) {
+    IndicatorCommon.pathCache = pathCache;
   }
 
 }

@@ -19,30 +19,28 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.spigot.search.event;
+package edu.whimc.indicator.common.search.event;
 
-import edu.whimc.indicator.common.search.event.StopPathSearchEvent;
-import edu.whimc.indicator.spigot.navigation.LocationCell;
-import org.bukkit.World;
-import org.bukkit.event.HandlerList;
-import org.jetbrains.annotations.NotNull;
+import edu.whimc.indicator.common.navigation.Cell;
+import edu.whimc.indicator.common.search.ItineraryTrial;
+import edu.whimc.indicator.common.search.PathTrial;
+import edu.whimc.indicator.common.search.SearchSession;
 
-public class SpigotStopPathSearchEvent extends SpigotSearchEvent<StopPathSearchEvent<LocationCell, World>> {
+public class StopItinerarySearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
-  private static final HandlerList handlers = new HandlerList();
+  private final ItineraryTrial<T, D> itineraryTrial;
 
-  public SpigotStopPathSearchEvent(StopPathSearchEvent<LocationCell, World> event) {
-    super(event);
+  public StopItinerarySearchEvent(SearchSession<T, D> session, ItineraryTrial<T, D> itineraryTrial) {
+    super(session);
+    this.itineraryTrial = itineraryTrial;
+  }
+
+  public ItineraryTrial<T, D> getItineraryTrial() {
+    return itineraryTrial;
   }
 
   @Override
-  @NotNull
-  public HandlerList getHandlers() {
-    return handlers;
+  EventType type() {
+    return EventType.STOP_ITINERARY;
   }
-
-  public static HandlerList getHandlerList() {
-    return handlers;
-  }
-
 }

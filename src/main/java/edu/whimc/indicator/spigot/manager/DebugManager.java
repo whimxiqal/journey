@@ -1,4 +1,4 @@
-package edu.whimc.indicator.spigot.cache;
+package edu.whimc.indicator.spigot.manager;
 
 import java.util.Set;
 import java.util.UUID;

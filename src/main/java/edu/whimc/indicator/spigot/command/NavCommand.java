@@ -21,11 +21,11 @@
 
 package edu.whimc.indicator.spigot.command;
 
-import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.config.Settings;
 import edu.whimc.indicator.common.navigation.Itinerary;
-import edu.whimc.indicator.spigot.command.common.CommandNode;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.spigot.command.common.CommandFlags;
+import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.command.common.FunctionlessCommandNode;
 import edu.whimc.indicator.spigot.command.common.PlayerCommandNode;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
@@ -96,12 +96,7 @@ public final class NavCommand extends FunctionlessCommandNode {
 
     // Set up a search cancellation in case it takes too long
     BukkitTask timeoutTask = Bukkit.getScheduler().runTaskLater(IndicatorSpigot.getInstance(),
-        () -> {
-          if (session.cancel()) {
-            player.spigot().sendMessage(Format.chain(Format.error("Your search took too long. "
-                + "Try extending the timeout value with the \"-timeout:<seconds>\" flag")));
-          }
-        },
+        session::cancel,
         (long) timeout * 20 /* ticks per second */);
 
     // SEARCH
@@ -158,7 +153,7 @@ public final class NavCommand extends FunctionlessCommandNode {
         return false;
       }
 
-      PlayerJourney journey = IndicatorSpigot.getInstance().getSearchManager().getPlayerJourney(player.getUniqueId());
+      PlayerJourney journey = IndicatorSpigot.getInstance().getSearchManager().getJourney(player.getUniqueId());
 
       Itinerary<LocationCell, World> prospectiveItinerary = journey.getProspectiveItinerary();
       if (prospectiveItinerary == null) {
@@ -169,7 +164,7 @@ public final class NavCommand extends FunctionlessCommandNode {
       PlayerJourney newJourney = new PlayerJourney(player.getUniqueId(), playerSearchSession, prospectiveItinerary);
       journey.stop();
 
-      IndicatorSpigot.getInstance().getSearchManager().putPlayerJourney(player.getUniqueId(), newJourney);
+      IndicatorSpigot.getInstance().getSearchManager().putJourney(player.getUniqueId(), newJourney);
       newJourney.illuminateTrail();
 
       player.spigot().sendMessage(Format.success("Make your way back to your starting point;"));

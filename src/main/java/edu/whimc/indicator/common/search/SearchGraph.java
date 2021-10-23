@@ -21,46 +21,37 @@
 
 package edu.whimc.indicator.common.search;
 
+import edu.whimc.indicator.common.IndicatorCommon;
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.common.navigation.Leap;
 import edu.whimc.indicator.common.navigation.ModeType;
-import edu.whimc.indicator.common.search.ItineraryTrial;
-import edu.whimc.indicator.common.search.PathTrial;
+import edu.whimc.indicator.common.navigation.ModeTypeGroup;
 import edu.whimc.indicator.common.search.graph.WeightedGraph;
 import edu.whimc.indicator.common.tools.AlternatingList;
-import edu.whimc.indicator.spigot.navigation.LocationCell;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.bukkit.World;
 import org.jetbrains.annotations.Nullable;
 
-public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph {
+public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Leap<T, D>, PathTrial<T, D>> {
 
   private final SearchSession<T, D> session;
   private final T origin;
   private final Node originNode;
   private final T destination;
   private final Node destinationNode;
-  private final Map<Node, Leap<T, D>> nodeToLeap = new HashMap<>();
-  private final Map<Edge, PathTrial<T, D>> edgeToPathTrial = new HashMap<>();
-
   private final Map<Leap<T, D>, Node> leapToNode = new HashMap<>();
-  private final Map<PathTrial<T, D>, Edge> pathTrialToEdge = new HashMap<>();
 
   public SearchGraph(SearchSession<T, D> session, T origin, T destination, Collection<Leap<T, D>> leaps) {
     this.session = session;
     this.origin = origin;
-    this.originNode = new Node(0);
-    nodeToLeap.put(this.originNode, new Leap<>(this.origin, this.origin, ModeType.NONE, 0));
+    this.originNode = new Node(new Leap<>(origin, origin, ModeType.NONE, 0));
     this.destination = destination;
-    this.destinationNode = new Node(0);
-    nodeToLeap.put(this.destinationNode, new Leap<>(this.destination, this.destination, ModeType.NONE, 0));
+    this.destinationNode = new Node(new Leap<>(destination, destination, ModeType.NONE, 0));
 
     leaps.forEach(leap -> {
-      Node leapNode = new Node(leap.getLength());
-      nodeToLeap.put(leapNode, leap);
+      Node leapNode = new Node(leap);
       leapToNode.put(leap, leapNode);
     });
   }
@@ -77,41 +68,66 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph {
     return leapToNode.get(leap);
   }
 
+  public void addPathTrialOriginToDestination(ModeTypeGroup modeTypeGroup) {
+    addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modeTypeGroup);
+  }
+
+  public void addPathTrialOriginToLeap(Leap<T, D> end, ModeTypeGroup modeTypeGroup) {
+    addPathTrial(session,
+        origin, end.getOrigin(),
+        getOriginNode(), getLeapNode(end),
+        modeTypeGroup);
+  }
+
+  public void addPathTrialLeapToDestination(Leap<T, D> start, ModeTypeGroup modeTypeGroup) {
+    addPathTrial(session,
+        start.getDestination(), destination,
+        getLeapNode(start), getDestinationNode(),
+        modeTypeGroup);
+  }
+
+  public void addPathTrialLeapToLeap(Leap<T, D> start, Leap<T, D> end, ModeTypeGroup modeTypeGroup) {
+    addPathTrial(session, start.getDestination(), end.getOrigin(),
+        getLeapNode(start), getLeapNode(end), modeTypeGroup);
+  }
+
+  private void addPathTrial(SearchSession<T, D> session, T origin, T destination,
+                            WeightedGraph<Leap<T, D>, PathTrial<T, D>>.Node originNode,
+                            WeightedGraph<Leap<T, D>, PathTrial<T, D>>.Node destinationNode,
+                            ModeTypeGroup modeTypeGroup) {
+    // First, try to access a cached path
+    if (IndicatorCommon.<T, D>getPathCache().contains(origin, destination, modeTypeGroup)) {
+      addPathTrial(PathTrial.cached(session, origin, destination,
+              IndicatorCommon.<T, D>getPathCache().get(origin, destination, modeTypeGroup)),
+          originNode, destinationNode);
+    } else {
+      addPathTrial(PathTrial.approximate(session, origin, destination), originNode, destinationNode);
+    }
+  }
+
   private void addPathTrial(PathTrial<T, D> trial, Node start, Node end) {
-    Edge edge = new Edge(trial.getLength());
-    addEdge(start, end, edge);
-    this.edgeToPathTrial.put(edge, trial);
-    this.pathTrialToEdge.put(trial, edge);
-  }
-
-  public void addPathTrialOriginToDestination() {
-    addPathTrial(PathTrial.approximate(session, origin, destination), getOriginNode(), getDestinationNode());
-  }
-
-  public void addPathTrialOriginToLeap(Leap<T, D> end) {
-    addPathTrial(PathTrial.approximate(session, origin, end.getOrigin()), getOriginNode(), getLeapNode(end));
-  }
-
-  public void addPathTrialLeapToDestination(Leap<T, D> start) {
-    addPathTrial(PathTrial.approximate(session, start.getDestination(), destination),
-        getLeapNode(start), getDestinationNode());
-  }
-
-  public void addPathTrialLeapToLeap(Leap<T, D> start, Leap<T, D> end) {
-    addPathTrial(PathTrial.approximate(session, start.getDestination(), end.getOrigin()),
-        getLeapNode(start), getLeapNode(end));
+    addEdge(start, end, trial);
   }
 
   @Nullable
   public ItineraryTrial<T, D> calculate() {
-    AlternatingList<Node, Edge, Object> graphPath = findMinimumPath(originNode, destinationNode);
+    AlternatingList<Node, PathTrial<T, D>, Object> graphPath = findMinimumPath(originNode, destinationNode);
     if (graphPath == null) {
       return null;
     } else {
-      return new ItineraryTrial<>(origin,
-          graphPath.convert(node -> Objects.requireNonNull(nodeToLeap.get(node)),
-              edge -> Objects.requireNonNull(edgeToPathTrial.get(edge))));
+      return new ItineraryTrial<>(session, origin,
+          graphPath.convert(node -> Objects.requireNonNull(node.getData()),
+              edge -> edge));
     }
   }
 
+  @Override
+  protected double nodeWeight(Leap<T, D> nodeData) {
+    return nodeData.getLength();
+  }
+
+  @Override
+  protected double edgeLength(PathTrial<T, D> edge) {
+    return edge.getLength();
+  }
 }

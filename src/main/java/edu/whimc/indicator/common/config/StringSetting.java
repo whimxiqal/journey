@@ -8,13 +8,13 @@ public class StringSetting extends Setting<String> {
   }
 
   @Override
-  String parseValue(@NotNull String string) {
+  public String parseValue(@NotNull String string) {
     return string;
   }
 
   @Override
   @NotNull
-  String printValue() {
+  public String printValue() {
     return getValue();
   }
 }

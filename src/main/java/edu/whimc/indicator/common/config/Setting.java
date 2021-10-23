@@ -71,9 +71,9 @@ public abstract class Setting<T> {
     this.initialized = true;
   }
 
-  abstract T parseValue(@NotNull String string);
+  public abstract T parseValue(@NotNull String string);
 
   @NotNull
-  abstract String printValue();
+  public abstract String printValue();
 
 }

@@ -44,6 +44,7 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
   private final UUID callerId;
   private final UUID uuid = UUID.randomUUID();
   private final Caller callerType;
+  private int algorithmStepDelay = 0;
 
   protected ResultState state = ResultState.IDLE;
 
@@ -66,10 +67,10 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
    * of this search session object to implement the actual cancellation behavior;
    * this method only tells the class that it should be canceling itself.
    */
-  public final boolean cancel() {
-    boolean alreadyCanceled = this.state.isCanceled();
-    this.state = ResultState.CANCELING;
-    return !alreadyCanceled;
+  public final void cancel() {
+    if (!state.isSuccessful() && !state.isCanceled()) {
+      this.state = ResultState.CANCELING;
+    }
   }
 
   @Override
@@ -95,6 +96,14 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
 
   public Caller getCallerType() {
     return callerType;
+  }
+
+  protected void setAlgorithmStepDelay(int delay) {
+    this.algorithmStepDelay = delay;
+  }
+
+  public int getAlgorithmStepDelay() {
+    return algorithmStepDelay;
   }
 
   @Override

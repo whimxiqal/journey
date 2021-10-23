@@ -44,7 +44,8 @@ public final class Format {
   public static final ChatColor ACCENT = ChatColor.LIGHT_PURPLE;
   public static final ChatColor ACCENT2 = ChatColor.DARK_AQUA;
   public static final ChatColor DEFAULT = ChatColor.WHITE;
-  public static final String PREFIX = THEME + "Indicator % " + ChatColor.RESET;
+  public static final String PREFIX = THEME + "Indicator " + ChatColor.DARK_GRAY + "% " + ChatColor.RESET;
+
   private Format() {
   }
 
