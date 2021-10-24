@@ -1,10 +1,10 @@
-name: Indicator
-version: 0.0.0
-main: edu.whimc.indicator.spigot.IndicatorSpigot
+name: Journey
+version: 0.0.0-beta
+main: edu.whimc.indicator.spigot.JourneySpigot
 api-version: 1.17
 authors:
   - pietelite
-description: A path indication plugin
+description: A path-optimization Minecraft solution
 website: https://whimcproject.web.illinois.edu/
 softdepend:
   - WHIMC-Portals
