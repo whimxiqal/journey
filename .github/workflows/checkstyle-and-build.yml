@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Run check style
-        uses: pietelite/checkstyle-action@master
+        uses: nikitasavinov/checkstyle-action@master
         with:
           fail_on_error: true
           reporter: 'github-pr-check'
@@ -21,7 +21,7 @@ jobs:
           level: error
           filter_mode: nofilter
           checkstyle_config: checkstyle.xml
-          checkstyle_version: 9.0
+          checkstyle_version: 9.0.1
 
   build:
     runs-on: ubuntu-latest
