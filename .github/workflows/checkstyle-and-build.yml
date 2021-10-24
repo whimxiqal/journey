@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Run check style
-        uses: nikitasavinov/checkstyle-action@master
+        uses: pietelite/checkstyle-action@master
         with:
           fail_on_error: true
           reporter: 'github-pr-check'
