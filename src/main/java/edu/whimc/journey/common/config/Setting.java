@@ -59,8 +59,7 @@ public abstract class Setting<T> {
   @NotNull
   public T getValue() {
     if (!initialized) {
-      JourneyCommon.getLogger().warn("This setting at " + path
-          + " has not been initialized! Was it not in the config file? Using default value.");
+      JourneyCommon.getLogger().info("Using default value for config setting at " + path);
       value = getDefaultValue();
       initialized = true;
     }

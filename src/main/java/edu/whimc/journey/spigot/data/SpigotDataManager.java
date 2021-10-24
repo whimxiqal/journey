@@ -21,7 +21,7 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
   private final ServerEndpointManager<LocationCell, World> serverEndpointManager;
 
   private final String sqliteAddress = "jdbc:sqlite:" + JourneySpigot.getInstance()
-      .getDataFolder().getPath() + "/indicator.db";
+      .getDataFolder().getPath() + "/journey.db";
 
 
   public SpigotDataManager() {

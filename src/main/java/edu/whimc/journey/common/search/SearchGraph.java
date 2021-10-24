@@ -23,7 +23,7 @@ package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
-import edu.whimc.journey.common.navigation.Leap;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.search.graph.WeightedGraph;
@@ -34,23 +34,23 @@ import java.util.Map;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 
-public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Leap<T, D>, PathTrial<T, D>> {
+public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Port<T, D>, PathTrial<T, D>> {
 
   private final SearchSession<T, D> session;
   private final T origin;
   private final Node originNode;
   private final T destination;
   private final Node destinationNode;
-  private final Map<Leap<T, D>, Node> leapToNode = new HashMap<>();
+  private final Map<Port<T, D>, Node> leapToNode = new HashMap<>();
 
-  public SearchGraph(SearchSession<T, D> session, T origin, T destination, Collection<Leap<T, D>> leaps) {
+  public SearchGraph(SearchSession<T, D> session, T origin, T destination, Collection<Port<T, D>> ports) {
     this.session = session;
     this.origin = origin;
-    this.originNode = new Node(new Leap<>(origin, origin, ModeType.NONE, 0));
+    this.originNode = new Node(new Port<>(origin, origin, ModeType.NONE, 0));
     this.destination = destination;
-    this.destinationNode = new Node(new Leap<>(destination, destination, ModeType.NONE, 0));
+    this.destinationNode = new Node(new Port<>(destination, destination, ModeType.NONE, 0));
 
-    leaps.forEach(leap -> {
+    ports.forEach(leap -> {
       Node leapNode = new Node(leap);
       leapToNode.put(leap, leapNode);
     });
@@ -64,36 +64,36 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Le
     return destinationNode;
   }
 
-  private Node getLeapNode(Leap<T, D> leap) {
-    return leapToNode.get(leap);
+  private Node getLeapNode(Port<T, D> port) {
+    return leapToNode.get(port);
   }
 
   public void addPathTrialOriginToDestination(ModeTypeGroup modeTypeGroup) {
     addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modeTypeGroup);
   }
 
-  public void addPathTrialOriginToLeap(Leap<T, D> end, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialOriginToLeap(Port<T, D> end, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session,
         origin, end.getOrigin(),
         getOriginNode(), getLeapNode(end),
         modeTypeGroup);
   }
 
-  public void addPathTrialLeapToDestination(Leap<T, D> start, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialLeapToDestination(Port<T, D> start, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session,
         start.getDestination(), destination,
         getLeapNode(start), getDestinationNode(),
         modeTypeGroup);
   }
 
-  public void addPathTrialLeapToLeap(Leap<T, D> start, Leap<T, D> end, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialLeapToLeap(Port<T, D> start, Port<T, D> end, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session, start.getDestination(), end.getOrigin(),
         getLeapNode(start), getLeapNode(end), modeTypeGroup);
   }
 
   private void addPathTrial(SearchSession<T, D> session, T origin, T destination,
-                            WeightedGraph<Leap<T, D>, PathTrial<T, D>>.Node originNode,
-                            WeightedGraph<Leap<T, D>, PathTrial<T, D>>.Node destinationNode,
+                            WeightedGraph<Port<T, D>, PathTrial<T, D>>.Node originNode,
+                            WeightedGraph<Port<T, D>, PathTrial<T, D>>.Node destinationNode,
                             ModeTypeGroup modeTypeGroup) {
     // First, try to access a cached path
     if (JourneyCommon.<T, D>getPathCache().contains(origin, destination, modeTypeGroup)) {
@@ -122,7 +122,7 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Le
   }
 
   @Override
-  protected double nodeWeight(Leap<T, D> nodeData) {
+  protected double nodeWeight(Port<T, D> nodeData) {
     return nodeData.getLength();
   }
 

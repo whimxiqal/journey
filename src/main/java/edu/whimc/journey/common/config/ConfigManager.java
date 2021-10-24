@@ -22,7 +22,7 @@
 package edu.whimc.journey.common.config;
 
 /**
- * An interface for determining the operation of a configuration manager for Indicator.
+ * An interface for determining the operation of a configuration manager.
  */
 public interface ConfigManager {
 

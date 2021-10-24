@@ -25,10 +25,10 @@ import org.bukkit.permissions.Permission;
 
 public final class Permissions {
 
-  public static final Permission INDICATOR_PERMISSION = new Permission("indicator.indicator");
-  public static final Permission ADMIN_PERMISSION = new Permission("indicator.admin");
-  public static final Permission NAV_USE_PERMISSION = new Permission("indicator.nav.use");
-  public static final Permission NAV_MANAGE_PERMISSION = new Permission("indicator.nav.manage");
+  public static final Permission JOURNEY_PERMISSION = new Permission("journey.journey");
+  public static final Permission ADMIN_PERMISSION = new Permission("journey.admin");
+  public static final Permission NAV_USE_PERMISSION = new Permission("journey.nav.use");
+  public static final Permission NAV_MANAGE_PERMISSION = new Permission("journey.nav.manage");
 
   private Permissions() {
   }

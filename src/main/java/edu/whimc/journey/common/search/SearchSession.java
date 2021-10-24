@@ -22,7 +22,7 @@
 package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.navigation.Cell;
-import edu.whimc.journey.common.navigation.Leap;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Mode;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,7 +39,7 @@ import java.util.UUID;
  */
 public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted {
 
-  protected final List<Leap<T, D>> leaps = new LinkedList<>();
+  protected final List<Port<T, D>> ports = new LinkedList<>();
   protected final List<Mode<T, D>> modes = new LinkedList<>();
   private final UUID callerId;
   private final UUID uuid = UUID.randomUUID();
@@ -78,8 +78,8 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
     return state;
   }
 
-  public final void registerLeap(Leap<T, D> leap) {
-    this.leaps.add(leap);
+  public final void registerLeap(Port<T, D> port) {
+    this.ports.add(port);
   }
 
   public final void registerMode(Mode<T, D> mode) {

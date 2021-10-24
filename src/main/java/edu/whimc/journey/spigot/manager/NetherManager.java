@@ -23,7 +23,7 @@ package edu.whimc.journey.spigot.manager;
 
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.navigation.LocationCell;
-import edu.whimc.journey.spigot.navigation.NetherLeap;
+import edu.whimc.journey.spigot.navigation.NetherPort;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.NetherUtil;
 import java.util.Collection;
@@ -48,12 +48,12 @@ public class NetherManager implements Listener {
 
   private final Map<LocationCell, LocationCell> portalConnections = new ConcurrentHashMap<>();
 
-  public Collection<NetherLeap> makeLeaps() {
-    List<NetherLeap> linksUnverified = portalConnections.entrySet().stream()
-        .map(entry -> new NetherLeap(entry.getKey(), entry.getValue()))
+  public Collection<NetherPort> makeLeaps() {
+    List<NetherPort> linksUnverified = portalConnections.entrySet().stream()
+        .map(entry -> new NetherPort(entry.getKey(), entry.getValue()))
         .collect(Collectors.toList());
-    List<NetherLeap> linksVerified = new LinkedList<>();
-    for (NetherLeap leap : linksUnverified) {
+    List<NetherPort> linksVerified = new LinkedList<>();
+    for (NetherPort leap : linksUnverified) {
       if (leap.verify()) {
         linksVerified.add(leap);
       } else {

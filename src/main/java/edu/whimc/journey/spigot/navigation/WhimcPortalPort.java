@@ -1,6 +1,6 @@
 package edu.whimc.journey.spigot.navigation;
 
-import edu.whimc.journey.common.navigation.Leap;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.tools.Verifiable;
 import edu.whimc.journey.spigot.util.SpigotUtil;
@@ -8,11 +8,11 @@ import edu.whimc.portals.Portal;
 import org.bukkit.World;
 import org.jetbrains.annotations.Nullable;
 
-public class PortalLeap extends Leap<LocationCell, World> implements Verifiable {
+public class WhimcPortalPort extends Port<LocationCell, World> implements Verifiable {
 
   private final String portalName;
 
-  public static PortalLeap from(Portal portal) {
+  public static WhimcPortalPort from(Portal portal) {
     if (portal.getWorld() == null) {
       throw new IllegalStateException("Error with portal: " + portal.getName()
           + "A Portal Link may only be created with portals that have a world.");
@@ -34,10 +34,10 @@ public class PortalLeap extends Leap<LocationCell, World> implements Verifiable 
 
     LocationCell destination = getDestinationOf(portal);
 
-    return new PortalLeap(portal.getName(), origin, destination);
+    return new WhimcPortalPort(portal.getName(), origin, destination);
   }
 
-  private PortalLeap(String name, LocationCell origin, LocationCell destination) {
+  private WhimcPortalPort(String name, LocationCell origin, LocationCell destination) {
     super(origin, destination, ModeType.LEAP, 5);
     this.portalName = name;
     World world = origin.getDomain();

@@ -24,7 +24,7 @@ package edu.whimc.journey.common.search;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Leap;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.search.event.FoundSolutionEvent;
 import edu.whimc.journey.common.search.event.StartSearchEvent;
@@ -62,13 +62,13 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
 
     Set<D> allDomains = new HashSet<>();
 
-    for (Leap<T, D> leap : this.leaps) {
-      allDomains.add(leap.getOrigin().getDomain());
-      allDomains.add(leap.getDestination().getDomain());
+    for (Port<T, D> port : this.ports) {
+      allDomains.add(port.getOrigin().getDomain());
+      allDomains.add(port.getDestination().getDomain());
     }
 
-    Map<D, List<Leap<T, D>>> leapsByOriginDomain = new HashMap<>();
-    Map<D, List<Leap<T, D>>> leapsByDestinationDomain = new HashMap<>();
+    Map<D, List<Port<T, D>>> leapsByOriginDomain = new HashMap<>();
+    Map<D, List<Port<T, D>>> leapsByDestinationDomain = new HashMap<>();
     // Prepare leap maps
     for (D domain : allDomains) {
       leapsByOriginDomain.put(domain, new LinkedList<>());
@@ -76,12 +76,12 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
     }
 
     // Fill leap maps
-    for (Leap<T, D> leap : this.leaps) {
-      leapsByOriginDomain.get(leap.getOrigin().getDomain()).add(leap);
-      leapsByDestinationDomain.get(leap.getDestination().getDomain()).add(leap);
+    for (Port<T, D> port : this.ports) {
+      leapsByOriginDomain.get(port.getOrigin().getDomain()).add(port);
+      leapsByDestinationDomain.get(port.getDestination().getDomain()).add(port);
     }
 
-    SearchGraph<T, D> graph = new SearchGraph<>(this, origin, destination, this.leaps);
+    SearchGraph<T, D> graph = new SearchGraph<>(this, origin, destination, this.ports);
 
     // Collect path trials
     ModeTypeGroup modeTypeGroup = ModeTypeGroup.from(this.modes);
@@ -90,17 +90,17 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
     }
 
     for (D domain : allDomains) {
-      for (Leap<T, D> pathTrialOriginLeap : leapsByDestinationDomain.get(domain)) {
-        for (Leap<T, D> pathTrialDestinationLeap : leapsByOriginDomain.get(domain)) {
+      for (Port<T, D> pathTrialOriginPort : leapsByDestinationDomain.get(domain)) {
+        for (Port<T, D> pathTrialDestinationPort : leapsByOriginDomain.get(domain)) {
           graph.addPathTrialLeapToLeap(
-              pathTrialOriginLeap,
-              pathTrialDestinationLeap,
+              pathTrialOriginPort,
+              pathTrialDestinationPort,
               modeTypeGroup);
           if (domain.equals(origin.getDomain())) {
-            graph.addPathTrialOriginToLeap(pathTrialDestinationLeap, modeTypeGroup);
+            graph.addPathTrialOriginToLeap(pathTrialDestinationPort, modeTypeGroup);
           }
           if (domain.equals(destination.getDomain())) {
-            graph.addPathTrialLeapToDestination(pathTrialOriginLeap, modeTypeGroup);
+            graph.addPathTrialLeapToDestination(pathTrialOriginPort, modeTypeGroup);
           }
         }
       }

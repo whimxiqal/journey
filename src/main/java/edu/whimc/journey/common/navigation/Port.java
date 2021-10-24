@@ -24,11 +24,11 @@ package edu.whimc.journey.common.navigation;
 import com.google.common.collect.Lists;
 import org.jetbrains.annotations.NotNull;
 
-public class Leap<T extends Cell<T, D>, D> extends Path<T, D> implements Moded {
+public class Port<T extends Cell<T, D>, D> extends Path<T, D> implements Moded {
 
   private final ModeType modeType;
 
-  public Leap(@NotNull T origin, @NotNull T destination,
+  public Port(@NotNull T origin, @NotNull T destination,
               @NotNull ModeType modeType, int length) {
     super(origin, Lists.newArrayList(new Step<>(destination, modeType)), length);
     this.modeType = modeType;

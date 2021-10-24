@@ -88,7 +88,7 @@ public class SpigotConfigManager implements ConfigManager {
     File configFile = new File(JourneySpigot.getInstance().getDataFolder(), this.fileName);
     try {
       if (configFile.createNewFile()) {
-        JourneySpigot.getInstance().getLogger().info("Created config file for Indicator");
+        JourneySpigot.getInstance().getLogger().info("Created config file for Journey");
       }
       try (FileOutputStream fos = new FileOutputStream(configFile)) {
         // Stage static setting values into config object
@@ -132,7 +132,7 @@ public class SpigotConfigManager implements ConfigManager {
     File configFile = new File(JourneySpigot.getInstance().getDataFolder(), this.fileName);
     try {
       if (configFile.createNewFile()) {
-        JourneySpigot.getInstance().getLogger().info("Created config file for Indicator");
+        JourneySpigot.getInstance().getLogger().info("Created config file for Journey");
       }
       try (FileInputStream fis = new FileInputStream(configFile)) {
         byte[] data = new byte[(int) configFile.length()];

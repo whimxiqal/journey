@@ -191,7 +191,7 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
                                  @NotNull String[] args) {
 
     if (!JourneySpigot.getInstance().isValid() && !canBypassInvalid) {
-      sender.spigot().sendMessage(Format.warn("The Indicator plugin is still initializing..."));
+      sender.spigot().sendMessage(Format.warn("The Journey plugin is still initializing..."));
       return false;
     }
 

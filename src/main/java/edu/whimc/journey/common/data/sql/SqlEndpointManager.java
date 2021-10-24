@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
 
-  private static final String ENDPOINT_TABLE_NAME = "indicator_endpoints";
+  private static final String ENDPOINT_TABLE_NAME = "journey_endpoints";
 
   @Getter
   private final SQLConnectionController connectionController;
@@ -33,7 +33,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
    * Default constructor.
    *
    * @param connectionController a controller for connecting to a SQL database
-   * @param dataConverter        a conversion controller to serialize and deserialize data from Indicator
+   * @param dataConverter        a conversion controller to serialize and deserialize data from Journey
    */
   public SqlEndpointManager(SQLConnectionController connectionController, DataConverter<T, D> dataConverter) {
     this.connectionController = connectionController;

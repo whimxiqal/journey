@@ -24,14 +24,14 @@ package edu.whimc.journey.spigot.command;
 import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
 import edu.whimc.journey.spigot.util.Permissions;
 
-public class IndicatorCommand extends FunctionlessCommandNode {
+public class JourneyCommand extends FunctionlessCommandNode {
 
-  public IndicatorCommand() {
-    super(null, Permissions.INDICATOR_PERMISSION,
-        "The root for all indicator commands",
-        "indicator");
-    addChildren(new IndicatorDebugCommand(this));
-    addChildren(new IndicatorInvalidateCommand(this));
+  public JourneyCommand() {
+    super(null, Permissions.JOURNEY_PERMISSION,
+        "The root for all journey commands",
+        "journey");
+    addChildren(new JourneyDebugCommand(this));
+    addChildren(new JourneyInvalidateCommand(this));
     setCanBypassInvalid(true);
   }
 

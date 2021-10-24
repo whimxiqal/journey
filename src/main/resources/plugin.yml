@@ -1,6 +1,6 @@
 name: Journey
 version: 0.0.0-beta
-main: edu.whimc.indicator.spigot.JourneySpigot
+main: edu.whimc.journey.spigot.JourneySpigot
 api-version: 1.17
 authors:
   - pietelite
@@ -10,23 +10,23 @@ softdepend:
   - WHIMC-Portals
   - Quests
 permissions:
-  indicator.indicator:
+  journey.journey:
     default: false
-    description: Root command for indicator subcommands
-  indicator.debug:
+    description: Root command for journey subcommands
+  journey.debug:
     default: false
     description: Turn on debug mode
-  indicator.nav:
+  journey.nav:
     default: false
-  indicator.nav.use:
+  journey.nav.use:
     default: false
     description: Allows the use of trails
-  indicator.nav.manage:
+  journey.nav.manage:
     default: false
     description: Allows the management of trails
 commands:
-  indicator:
-    description: Root indicator command
+  journey:
+    description: Root Journey command
   nav:
     description: Shows a player a trail to their destination
   endpoint:

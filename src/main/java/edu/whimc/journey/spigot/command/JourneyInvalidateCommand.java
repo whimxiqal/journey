@@ -10,11 +10,11 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IndicatorInvalidateCommand extends CommandNode {
+public class JourneyInvalidateCommand extends CommandNode {
 
-  public IndicatorInvalidateCommand(@Nullable CommandNode parent) {
+  public JourneyInvalidateCommand(@Nullable CommandNode parent) {
     super(parent, Permissions.ADMIN_PERMISSION,
-        "Clear the internal Indicator cache",
+        "Clear the internal Journey cache",
         "invalidate");
   }
 

@@ -36,9 +36,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IndicatorDebugCommand extends CommandNode {
+public class JourneyDebugCommand extends CommandNode {
 
-  public IndicatorDebugCommand(@Nullable CommandNode parent) {
+  public JourneyDebugCommand(@Nullable CommandNode parent) {
     super(parent,
         Permissions.ADMIN_PERMISSION,
         "Enable or disable debug mode",

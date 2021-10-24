@@ -26,7 +26,7 @@ import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.data.DataManager;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
-import edu.whimc.journey.spigot.command.IndicatorCommand;
+import edu.whimc.journey.spigot.command.JourneyCommand;
 import edu.whimc.journey.spigot.command.NavCommand;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.config.SpigotConfigManager;
@@ -94,10 +94,10 @@ public final class JourneySpigot extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    getLogger().info("Initializing Indicator...");
+    getLogger().info("Initializing Journey...");
 
     if (this.getDataFolder().mkdirs()) {
-      getLogger().info("Indicator data folder created.");
+      getLogger().info("Journey data folder created");
     }
 
     // Create caches
@@ -131,7 +131,7 @@ public final class JourneySpigot extends JavaPlugin {
     this.dataManager = new SpigotDataManager();
 
     // Register commands
-    for (CommandNode root : new CommandNode[]{new IndicatorCommand(), new NavCommand()}) {
+    for (CommandNode root : new CommandNode[]{new JourneyCommand(), new NavCommand()}) {
       PluginCommand command = getCommand(root.getPrimaryAlias());
       if (command == null) {
         throw new NullPointerException("You must register command " + root.getPrimaryAlias() + " in the plugin.yml");
@@ -149,9 +149,9 @@ public final class JourneySpigot extends JavaPlugin {
 
     // Start doing a bunch of searches for common use cases
     Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-//      initializeTrails();
+      // TODO initialize likely-used paths here (link to link)
       valid = true;
-      JourneySpigot.getInstance().getLogger().info("Finished initializing Indicator");
+      JourneySpigot.getInstance().getLogger().info("Finished initializing Journey");
     });
   }
 
@@ -209,20 +209,4 @@ public final class JourneySpigot extends JavaPlugin {
     }
   }
 
-  // TODO maybe create another method like this that will initialize "cacheable" paths,
-  //  which are just paths that go between locations that are unlikely to move and likely
-  //  to be used many times, like Leap to Leap.
-//  private void initializeTrails() {
-//    SearchTracker<LocationCell, World> tracker = new SpigotSearchTracker();
-//
-//    // Cache survival modes
-//    OldIndicatorSearch search = new OldIndicatorSearch(OldIndicatorSearch.SURVIVAL_MODES, s -> true);
-//    search.setTracker(tracker);
-//    search.searchCacheable();
-//
-//    // Cache creative modes (flying)
-//    search = new OldIndicatorSearch(Collections.singleton(new FlyMode()), s -> true);
-//    search.setTracker(tracker);
-//    search.searchCacheable();
-//  }
 }

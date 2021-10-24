@@ -23,7 +23,7 @@ package edu.whimc.journey.spigot.journey;
 
 import edu.whimc.journey.common.journey.Journey;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Leap;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.Path;
 import edu.whimc.journey.common.navigation.Step;
@@ -64,7 +64,7 @@ public class PlayerJourney implements Journey<LocationCell, World> {
    */
   private final Set<LocationCell> near = new HashSet<>();
   private final Itinerary<LocationCell, World> itinerary;
-  private final AlternatingList.Traversal<Leap<LocationCell, World>,
+  private final AlternatingList.Traversal<Port<LocationCell, World>,
       Path<LocationCell, World>,
       Path<LocationCell, World>> traversal;
   private final SearchSession<LocationCell, World> session;

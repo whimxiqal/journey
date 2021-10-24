@@ -5,7 +5,7 @@ import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Leap;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.search.event.FoundSolutionEvent;
@@ -71,7 +71,7 @@ class SearchTest {
     board2[4][9] = null;
     board2[3][10] = null;
 
-    // Set up IndicatorCommon
+    // Set up JourneyCommon
     SearchDispatcher<Point3D, Domain, Runnable> dispatcher = new SearchDispatcher<>(Runnable::run);
     JourneyCommon.setSearchEventDispatcher(dispatcher);
     JourneyCommon.setPathCache(new PathCache<Point3D, Domain>());
@@ -89,7 +89,7 @@ class SearchTest {
     // Set up parameters for search
     ReverseSearchSession<Point3D, Domain> session = new TestSearchSession(UUID.randomUUID(),
         SearchSession.Caller.OTHER);
-    List<Leap<Point3D, Domain>> links = Lists.newLinkedList();
+    List<Port<Point3D, Domain>> links = Lists.newLinkedList();
     links.add(new TestLink(board1[8][4], board2[3][6]));
     links.add(new TestLink(board2[7][7], board1[8][8]));
     links.forEach(session::registerLeap);
@@ -147,7 +147,7 @@ class SearchTest {
   private void clearPrinters(Point3D[][] board1, Point3D[][] board2,
                              char[][] printer1, char[][] printer2,
                              Point3D origin, Point3D destination,
-                             List<Leap<Point3D, Domain>> links,
+                             List<Port<Point3D, Domain>> links,
                              int boardSize) {
     for (int i = 0; i < boardSize; i++) {
       for (int j = 0; j < boardSize; j++) {
@@ -259,7 +259,7 @@ class SearchTest {
     }
   }
 
-  public static class TestLink extends Leap<Point3D, Domain> {
+  public static class TestLink extends Port<Point3D, Domain> {
 
     public TestLink(Point3D origin, Point3D destination) {
       super(origin, destination, ModeType.LEAP, 1);
@@ -267,7 +267,7 @@ class SearchTest {
 
     @Override
     public String toString() {
-      return String.format("Leap: {Origin: %s, Destination: %s}", getOrigin(), getDestination());
+      return String.format("Port: {Origin: %s, Destination: %s}", getOrigin(), getDestination());
     }
   }
 

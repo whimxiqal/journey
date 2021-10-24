@@ -24,7 +24,7 @@ package edu.whimc.journey.common.search;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Leap;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.Step;
 import edu.whimc.journey.common.search.event.StartItinerarySearchEvent;
@@ -41,11 +41,11 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
 
   private final SearchSession<T, D> session;
   private final T origin;
-  private final AlternatingList<Leap<T, D>, PathTrial<T, D>, Object> alternatingList;
+  private final AlternatingList<Port<T, D>, PathTrial<T, D>, Object> alternatingList;
   private ResultState state;
 
   public ItineraryTrial(SearchSession<T, D> session, T origin,
-                        AlternatingList<Leap<T, D>, PathTrial<T, D>, Object> alternatingList) {
+                        AlternatingList<Port<T, D>, PathTrial<T, D>, Object> alternatingList) {
     this.session = session;
     this.origin = origin;
     this.alternatingList = alternatingList;
@@ -76,9 +76,9 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
 
     // accumulate length
     double length = 0;
-    for (Leap<T, D> leap : alternatingList.getMajors()) {
-      if (leap != null) {
-        length += leap.getLength();
+    for (Port<T, D> port : alternatingList.getMajors()) {
+      if (port != null) {
+        length += port.getLength();
       }
     }
     for (PathTrial<T, D> pathTrial : alternatingList.getMinors()) {

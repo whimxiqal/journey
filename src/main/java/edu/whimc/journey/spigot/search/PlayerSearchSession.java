@@ -21,11 +21,11 @@
 
 package edu.whimc.journey.spigot.search;
 
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.spigot.JourneySpigot;
-import edu.whimc.journey.common.navigation.Leap;
 import edu.whimc.journey.common.search.ReverseSearchSession;
 import edu.whimc.journey.spigot.navigation.LocationCell;
-import edu.whimc.journey.spigot.navigation.PortalLeap;
+import edu.whimc.journey.spigot.navigation.WhimcPortalPort;
 import edu.whimc.journey.spigot.navigation.mode.ClimbMode;
 import edu.whimc.journey.spigot.navigation.mode.DoorMode;
 import edu.whimc.journey.spigot.navigation.mode.FlyMode;
@@ -96,7 +96,7 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
               permissionSupplier.test(perm.getName())).orElse(true))
           .map(portal -> {
             try {
-              return PortalLeap.from(portal);
+              return WhimcPortalPort.from(portal);
             } catch (Exception e) {
               return null;
             }
@@ -112,7 +112,7 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
     }
   }
 
-  private void registerLinkVerbose(Player player, Leap<LocationCell, World> link) {
+  private void registerLinkVerbose(Player player, Port<LocationCell, World> link) {
     if (JourneySpigot.getInstance().getDebugManager().isDebugging(player.getUniqueId())) {
       player.spigot().sendMessage(Format.debug("Registering Link: " + link.toString()));
     }

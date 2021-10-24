@@ -30,10 +30,10 @@ public final class Itinerary<T extends Cell<T, D>, D> {
 
   private final T origin;
   private final ArrayList<Step<T, D>> steps;
-  private final AlternatingList<Leap<T, D>, Path<T, D>, Path<T, D>> stages;
+  private final AlternatingList<Port<T, D>, Path<T, D>, Path<T, D>> stages;
   private final double length;
 
-  public Itinerary(T origin, Collection<Step<T, D>> steps, AlternatingList<Leap<T, D>, Path<T, D>, Path<T, D>> stages, double length) {
+  public Itinerary(T origin, Collection<Step<T, D>> steps, AlternatingList<Port<T, D>, Path<T, D>, Path<T, D>> stages, double length) {
     this.origin = origin;
     this.steps = new ArrayList<>(steps);
     this.stages = stages;
@@ -48,7 +48,7 @@ public final class Itinerary<T extends Cell<T, D>, D> {
     return new ArrayList<>(steps);
   }
 
-  public AlternatingList<Leap<T, D>, Path<T, D>, Path<T, D>> getStages() {
+  public AlternatingList<Port<T, D>, Path<T, D>, Path<T, D>> getStages() {
     return stages;
   }
 
