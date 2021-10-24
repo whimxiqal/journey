@@ -19,28 +19,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.common.search.event;
+package edu.whimc.indicator.spigot.manager;
 
-import edu.whimc.indicator.common.navigation.Cell;
-import edu.whimc.indicator.common.navigation.Itinerary;
-import edu.whimc.indicator.common.search.SearchSession;
+import edu.whimc.indicator.common.manager.SearchManager;
+import edu.whimc.indicator.spigot.journey.PlayerJourney;
+import edu.whimc.indicator.spigot.navigation.LocationCell;
+import edu.whimc.indicator.spigot.search.PlayerSearchSession;
+import org.bukkit.World;
 
-public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
-
-  private final Itinerary<T, D> itinerary;
-
-  public FoundSolutionEvent(SearchSession<T, D> session, Itinerary<T, D> itinerary) {
-    super(session);
-    this.itinerary = itinerary;
-  }
-
-  public Itinerary<T, D> getItinerary() {
-    return this.itinerary;
-  }
-
-  @Override
-  EventType type() {
-    return EventType.FOUND_SOLUTION;
-  }
-
+public class PlayerSearchManager extends SearchManager<LocationCell, World, PlayerSearchSession, PlayerJourney> {
 }

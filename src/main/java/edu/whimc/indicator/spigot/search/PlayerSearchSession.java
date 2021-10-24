@@ -21,7 +21,6 @@
 
 package edu.whimc.indicator.spigot.search;
 
-import edu.whimc.indicator.common.search.ResultState;
 import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.navigation.Leap;
 import edu.whimc.indicator.common.search.ReverseSearchSession;
@@ -36,13 +35,16 @@ import edu.whimc.indicator.spigot.navigation.mode.WalkMode;
 import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.portals.Main;
 import edu.whimc.portals.Portal;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
@@ -61,15 +63,16 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
     animationManager.setAnimating(flags.contains(SearchFlag.ANIMATE));
     setAlgorithmStepDelay(algorithmStepDelay);
     // Modes - in order of preference
+    Set<Material> passableBlocks = collectPassableBlocks(flags);
     if (player.getAllowFlight() && !flags.contains(SearchFlag.NOFLY)) {
-      registerMode(new FlyMode());
+      registerMode(new FlyMode(passableBlocks));
     } else {
-      registerMode(new WalkMode());
-      registerMode(new JumpMode());
-      registerMode(new SwimMode());
+      registerMode(new WalkMode(passableBlocks));
+      registerMode(new JumpMode(passableBlocks));
+      registerMode(new SwimMode(passableBlocks));
     }
-    registerMode(new DoorMode());
-    registerMode(new ClimbMode());
+    registerMode(new DoorMode(passableBlocks));
+    registerMode(new ClimbMode(passableBlocks));
 
     // Links
     registerLeaps(player::hasPermission, player);
@@ -115,6 +118,30 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
       player.spigot().sendMessage(Format.debug("Registering Link: " + link.toString()));
     }
     super.registerLeap(link);
+  }
+
+  private Set<Material> collectPassableBlocks(Set<SearchFlag> flags) {
+    Set<Material> passableBlocks = new HashSet<>();
+    if (flags.contains(SearchFlag.NODOOR)) {
+      passableBlocks.add(Material.ACACIA_DOOR);
+      passableBlocks.add(Material.ACACIA_TRAPDOOR);
+      passableBlocks.add(Material.BIRCH_DOOR);
+      passableBlocks.add(Material.BIRCH_TRAPDOOR);
+      passableBlocks.add(Material.CRIMSON_DOOR);
+      passableBlocks.add(Material.CRIMSON_TRAPDOOR);
+      passableBlocks.add(Material.DARK_OAK_DOOR);
+      passableBlocks.add(Material.DARK_OAK_TRAPDOOR);
+      passableBlocks.add(Material.IRON_DOOR);
+      passableBlocks.add(Material.JUNGLE_DOOR);
+      passableBlocks.add(Material.JUNGLE_TRAPDOOR);
+      passableBlocks.add(Material.OAK_DOOR);
+      passableBlocks.add(Material.OAK_TRAPDOOR);
+      passableBlocks.add(Material.SPRUCE_DOOR);
+      passableBlocks.add(Material.SPRUCE_TRAPDOOR);
+      passableBlocks.add(Material.WARPED_DOOR);
+      passableBlocks.add(Material.WARPED_TRAPDOOR);
+    }
+    return passableBlocks;
   }
 
 }

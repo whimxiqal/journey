@@ -19,28 +19,23 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.indicator.common.search.event;
+package edu.whimc.indicator.common.config;
 
-import edu.whimc.indicator.common.navigation.Cell;
-import edu.whimc.indicator.common.navigation.Itinerary;
-import edu.whimc.indicator.common.search.SearchSession;
+import org.jetbrains.annotations.NotNull;
 
-public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
-
-  private final Itinerary<T, D> itinerary;
-
-  public FoundSolutionEvent(SearchSession<T, D> session, Itinerary<T, D> itinerary) {
-    super(session);
-    this.itinerary = itinerary;
-  }
-
-  public Itinerary<T, D> getItinerary() {
-    return this.itinerary;
+public class BooleanSetting extends Setting<Boolean> {
+  BooleanSetting(@NotNull String path, @NotNull Boolean defaultValue) {
+    super(path, defaultValue, Boolean.class);
   }
 
   @Override
-  EventType type() {
-    return EventType.FOUND_SOLUTION;
+  public Boolean parseValue(@NotNull String string) {
+    return Boolean.parseBoolean(string);
   }
 
+  @Override
+  @NotNull
+  public String printValue() {
+    return getValue().toString();
+  }
 }

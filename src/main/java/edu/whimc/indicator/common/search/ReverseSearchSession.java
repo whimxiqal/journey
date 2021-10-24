@@ -27,6 +27,7 @@ import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.navigation.Leap;
 import edu.whimc.indicator.common.navigation.ModeTypeGroup;
 import edu.whimc.indicator.common.search.event.FoundSolutionEvent;
+import edu.whimc.indicator.common.search.event.StartSearchEvent;
 import edu.whimc.indicator.common.search.event.StopSearchEvent;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +55,9 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
 
   @Override
   public final void search(T origin, T destination) {
+
+    IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StartSearchEvent<>(this));
+
     state = ResultState.RUNNING;
 
     Set<D> allDomains = new HashSet<>();
@@ -104,10 +108,50 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
 
     Itinerary<T, D> bestItinerary = null;
     boolean usingCache = true;
+    boolean noSolution;
     while (!this.state.isCanceled()) {
 
       ItineraryTrial<T, D> itineraryTrial = graph.calculate();
+      noSolution = false;
       if (itineraryTrial == null) {
+        noSolution = true;
+      } else {
+        ItineraryTrial.TrialResult<T, D> trialResult = itineraryTrial.attempt(this.modes, usingCache);
+        if (trialResult.itinerary().isPresent()) {
+          if (!trialResult.changedProblem()) {
+            // This result did not change the problem, as in,
+            //  it did not affect the values that affect the algorithm, so we will get the
+            //  same solution every time. So, stop solving.
+
+            if (this.state.isRunning()) {
+              // Another solution hasn't yet been found. That means this solution was found
+              //  without changing a single piece of data so all trails must have been cached.
+              //  That's fine, just set the state to successful and return this sole solution.
+              this.state = ResultState.SUCCESSFUL;
+              IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(
+                  new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
+            }
+            IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
+            return;
+          }
+          if (bestItinerary == null
+              || bestItinerary.getLength() > trialResult.itinerary().get().getLength()) {
+            // TODO verify if all the paths still work (some of them might be cached)
+            bestItinerary = trialResult.itinerary().get();
+            this.state = ResultState.SUCCESSFUL;
+            IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(
+                new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
+          }
+        } else {
+          if (!trialResult.changedProblem()) {
+            // We couldn't find any solution to the itinerary trial and nothing has changed,
+            //  so there isn't any solution.
+            noSolution = true;
+          }
+        }
+      }
+
+      if (noSolution) {
         if (usingCache) {
           // We've been using cache up to this point.
           //  Let's switch into not using the cache because it may have been wrong,
@@ -120,33 +164,6 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
         state = ResultState.FAILED;
         IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
         return;
-      }
-
-      ItineraryTrial.TrialResult<T, D> trialResult = itineraryTrial.attempt(this.modes, usingCache);
-      if (trialResult.itinerary().isPresent()) {
-        if (!trialResult.changedProblem()) {
-          // This result did not change the problem, as in,
-          //  it did not affect the values that affect the algorithm, so we will get the
-          //  same solution every time. So, stop solving.
-
-          if (this.state.isRunning()) {
-            // Another solution hasn't yet been found. That means this solution was found
-            //  without changing a single piece of data so all trails must have been cached.
-            //  That's fine, just set the state to successful and return this sole solution.
-            this.state = ResultState.SUCCESSFUL;
-            IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(
-                new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
-          }
-          IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
-          return;
-        }
-        if (bestItinerary == null || bestItinerary.getLength() < trialResult.itinerary().get().getLength()) {
-          // TODO verify if all the paths still work (some of them might be cached)
-          bestItinerary = trialResult.itinerary().get();
-          this.state = ResultState.SUCCESSFUL;
-          IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(
-              new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
-        }
       }
     }
 

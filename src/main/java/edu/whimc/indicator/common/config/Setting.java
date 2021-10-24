@@ -59,8 +59,8 @@ public abstract class Setting<T> {
   @NotNull
   public T getValue() {
     if (!initialized) {
-      IndicatorCommon.getLogger().error("This setting at " + path
-          + " has not been initialized! Using default value.");
+      IndicatorCommon.getLogger().warn("This setting at " + path
+          + " has not been initialized! Was it not in the config file? Using default value.");
       value = getDefaultValue();
       initialized = true;
     }

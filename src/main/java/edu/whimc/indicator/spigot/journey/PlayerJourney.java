@@ -21,7 +21,6 @@
 
 package edu.whimc.indicator.spigot.journey;
 
-import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.common.journey.Journey;
 import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.common.navigation.Leap;
@@ -30,6 +29,8 @@ import edu.whimc.indicator.common.navigation.Path;
 import edu.whimc.indicator.common.navigation.Step;
 import edu.whimc.indicator.common.search.SearchSession;
 import edu.whimc.indicator.common.tools.AlternatingList;
+import edu.whimc.indicator.spigot.IndicatorSpigot;
+import edu.whimc.indicator.spigot.music.Song;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.Format;
 import java.util.HashSet;
@@ -47,8 +48,11 @@ import org.jetbrains.annotations.NotNull;
 public class PlayerJourney implements Journey<LocationCell, World> {
 
   private static final int ILLUMINATED_COUNT = 64;
-  private static final int TICKS_PER_PARTICLE = 3;
-  private static final double CHANCE_OF_PARTICLE = 0.4;
+
+  private static final int PARTICLE_CYCLE_COUNT = 4;
+  private static final int TICKS_PER_PARTICLE_CYCLE = 2;
+
+  private static final float PARTICLE_SPAWN_DENSITY = 0.6f;
   private static final int PROXIMAL_BLOCK_CACHE_SIZE = 128;
   private final UUID playerUuid;
   /**
@@ -100,7 +104,10 @@ public class PlayerJourney implements Journey<LocationCell, World> {
         // There is no other path after this one, we are done
         Player player = Bukkit.getPlayer(playerUuid);
         if (player != null) {
-          player.spigot().sendMessage(Format.success("You've reached your destination"));
+          player.spigot().sendMessage(Format.success("You've arrived!"));
+
+          // Play a fun chord
+          Song.SUCCESS_CHORD.play(player);
         }
         completed = true;
         stop();
@@ -148,6 +155,11 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     return completed;
   }
 
+  @Override
+  public LocationCell currentPathDestination() {
+    return traversal.get().getDestination();
+  }
+
   private void startPath(Path<LocationCell, World> path) {
     stepIndex = 0;
     near.clear();
@@ -167,55 +179,65 @@ public class PlayerJourney implements Journey<LocationCell, World> {
         return;
       }
 
+      // Illuminate destination of path
+      LocationCell pathDestination = journey.currentPathDestination();
+      pathDestination.getDomain().spawnParticle(Particle.SPELL_WITCH,
+          pathDestination.getX() + 0.5,
+          pathDestination.getY() + 0.4f,
+          pathDestination.getZ() + 0.5,
+          PARTICLE_CYCLE_COUNT * 2,
+          PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY,
+          0);
+
+      // Illuminate the rest of the path
       List<Step<LocationCell, World>> steps = journey.next(ILLUMINATED_COUNT);  // Show 16 steps ahead
       Step<LocationCell, World> step;
       for (int i = 0; i < steps.size() - 1; i++) {
-        if (rand.nextDouble() < CHANCE_OF_PARTICLE) {  // make shimmering effect
-          Particle particle;
-          ModeType modeType = steps.get(i + 1).getModeType();
-          step = steps.get(i);
-          if (modeType.equals(ModeType.WALK)) {
-            particle = Particle.FLAME;
-          } else if (modeType.equals(ModeType.JUMP)) {
-            particle = Particle.HEART;
-          } else {
-            particle = Particle.CLOUD;
-          }
+        Particle particle;
+        ModeType modeType = steps.get(i + 1).getModeType();
+        step = steps.get(i);
+        if (modeType == ModeType.FLY) {
+          particle = Particle.WAX_OFF;
+        } else {
+          particle = Particle.GLOW;
+        }
 
-          spawnParticle(step.getLocatable(), particle, rand.nextFloat(), 0.4f, rand.nextFloat());
+        step.getLocatable().getDomain().spawnParticle(particle,
+            step.getLocatable().getX() + 0.5,
+            step.getLocatable().getY() + 0.4f,
+            step.getLocatable().getZ() + 0.5,
+            PARTICLE_CYCLE_COUNT,
+            PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY,
+            0);
 
-          // Check if we need to "hint" where the trail is because the water obscures the particle
-          if (step.getLocatable().getBlock().isLiquid()
-              && !step.getLocatable().getBlockAtOffset(0, 1, 0).isLiquid()) {
-            spawnParticle(step.getLocatable(), particle, rand.nextFloat(), 1.4f, rand.nextFloat());
-          }
+        // Check if we need to "hint" where the trail is because the water obscures the particle
+        if (step.getLocatable().getBlock().isLiquid()
+            && !step.getLocatable().getBlockAtOffset(0, 1, 0).isLiquid()) {
+          step.getLocatable().getDomain().spawnParticle(particle,
+              step.getLocatable().getX() + 0.5f,
+              step.getLocatable().getY() + 1.4f,
+              step.getLocatable().getZ() + 0.5f,
+              PARTICLE_CYCLE_COUNT,
+              PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY,
+              0);
         }
       }
-    }, 0, TICKS_PER_PARTICLE).getTaskId();
+    }, 0, TICKS_PER_PARTICLE_CYCLE).getTaskId();
 
     this.stopIllumination = () -> Bukkit.getScheduler().cancelTask(illuminationTaskId);
 
   }
 
-  private void spawnParticle(LocationCell cell, Particle particle, float xOffset, float yOffset, float zOffset) {
-    cell.getDomain().spawnParticle(particle,
-        cell.getX() + xOffset,
-        cell.getY() + yOffset,
-        cell.getZ() + zOffset,
-        1,
-        0, 0, 0,
-        0);
-  }
-
   public SearchSession<LocationCell, World> getSession() {
     return session;
-  }
-  public void setProspectiveItinerary(Itinerary<LocationCell, World> prospectiveItinerary) {
-    this.prospectiveItinerary = prospectiveItinerary;
   }
 
   public Itinerary<LocationCell, World> getProspectiveItinerary() {
     return prospectiveItinerary;
+  }
+
+  public void setProspectiveItinerary(Itinerary<LocationCell, World> prospectiveItinerary) {
+    this.prospectiveItinerary = prospectiveItinerary;
   }
 
 }

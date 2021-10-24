@@ -81,22 +81,17 @@ public class AnimationManager {
       switch (modeType) {
         case WALK -> blockData = Material.LIME_STAINED_GLASS.createBlockData();
         case JUMP -> blockData = Material.MAGENTA_STAINED_GLASS.createBlockData();
+        case FLY -> blockData = Material.WHITE_STAINED_GLASS.createBlockData();
         default -> blockData = Material.COBWEB.createBlockData();
       }
-      if (showBlock(cell, blockData)) {
-        this.successfulLocations.add(cell);
-        return true;
-      }
+      return showBlock(cell, blockData);
     } else {
       if (lastFailure != null) {
-        if (!this.successfulLocations.contains(lastFailure)) {
-          hideResult(lastFailure);
-        }
+        hideResult(lastFailure);
       }
       lastFailure = cell;
       return showBlock(cell, Material.GLOWSTONE.createBlockData());
     }
-    return false;
   }
 
   private void hideResult(LocationCell cell) {
@@ -127,6 +122,7 @@ public class AnimationManager {
       return false;
     }
     player.sendBlockChange(cell.getBlock().getLocation(), blockData);
+    successfulLocations.add(cell);
     return true;
   }
 

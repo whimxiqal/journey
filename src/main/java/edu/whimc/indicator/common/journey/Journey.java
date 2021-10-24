@@ -59,4 +59,6 @@ public interface Journey<T extends Locatable<T, D>, D> {
 
   boolean isCompleted();
 
+  T currentPathDestination();
+
 }

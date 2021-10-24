@@ -54,14 +54,14 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
   }
 
   @NotNull
-  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCache) {
+  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCacheIfPossible) {
     IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StartItinerarySearchEvent<>(session, this));
 
     state = ResultState.RUNNING;
     boolean failed = false;
     boolean changedProblem = false;
     for (PathTrial<T, D> pathTrial : alternatingList.getMinors()) {
-      PathTrial.TrialResult<T, D> pathTrialResult = pathTrial.attempt(modes, useCache);
+      PathTrial.TrialResult<T, D> pathTrialResult = pathTrial.attempt(modes, useCacheIfPossible);
       if (pathTrialResult.changedProblem()) {
         changedProblem = true;
       }

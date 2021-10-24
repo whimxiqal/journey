@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class NavQuestsCommand extends FunctionlessCommandNode {
 
   public NavQuestsCommand(@Nullable CommandNode parent, @NotNull Quests quests) {
-    super(parent, Permissions.TRAIL_USE_PERMISSION,
+    super(parent, Permissions.NAV_USE_PERMISSION,
         "Blaze trails to destinations for quests using the Quests plugin",
         "quests");
     addChildren(new NavNextQuestCommand(this, quests));
@@ -38,7 +38,7 @@ public class NavQuestsCommand extends FunctionlessCommandNode {
     private final Quests quests;
 
     public NavNextQuestCommand(@Nullable CommandNode parent, @NotNull Quests quests) {
-      super(parent, Permissions.TRAIL_USE_PERMISSION,
+      super(parent, Permissions.NAV_USE_PERMISSION,
           "Blaze trails to your quest objectives",
           "next");
       this.quests = quests;
@@ -83,18 +83,18 @@ public class NavQuestsCommand extends FunctionlessCommandNode {
 
       Quest quest = quests.getQuest(args[0]);
       if (quest == null) {
-        player.spigot().sendMessage(Format.error("That quest doesn't exist"));
+        player.spigot().sendMessage(Format.error("That quest doesn't exist."));
         return false;
       }
 
       if (!quests.getQuester(player.getUniqueId()).getCurrentQuests().containsKey(quest)) {
-        player.spigot().sendMessage(Format.error("You are not doing that quest"));
+        player.spigot().sendMessage(Format.error("You are not doing that quest."));
         return false;
       }
 
       LinkedList<Location> locationsToReach = quests.getQuester(player.getUniqueId()).getCurrentStage(quest).getLocationsToReach();
       if (locationsToReach.isEmpty()) {
-        player.spigot().sendMessage(Format.error("That quest has no destination"));
+        player.spigot().sendMessage(Format.error("That quest has no destination."));
         return false;
       }
 

@@ -25,22 +25,30 @@ import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.ModeType;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.SpigotUtil;
+import java.util.Set;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 
-public class JumpMode extends Mode<LocationCell, World> {
+public class JumpMode extends SpigotMode {
+
+  public JumpMode(Set<Material> forcePassable) {
+    super(forcePassable);
+  }
+
   @Override
   public void collectDestinations(LocationCell origin) {
     LocationCell cell;
 
     cell = origin.createLocatableAtOffset(0, -1, 0);
-    if (SpigotUtil.isVerticallyPassable(cell.getBlock())) {
+    if (isVerticallyPassable(cell.getBlock())) {
       // Nothing to jump off of
       reject(cell);
       return;
     }
 
     cell = origin.createLocatableAtOffset(0, 2, 0);
-    if (!SpigotUtil.isVerticallyPassable(cell.getBlock())) {
+    if (!isVerticallyPassable(cell.getBlock())) {
       // No room to jump
       reject(cell);
       return;
@@ -60,7 +68,7 @@ public class JumpMode extends Mode<LocationCell, World> {
                 offXIn * offX /* get sign back */,
                 1,
                 offZIn * offZ /* get sign back */);
-            if (!SpigotUtil.isLaterallyPassable(cell.getBlock())) {
+            if (!isLaterallyPassable(cell.getBlock())) {
               reject(cell);
               continue outerZ;
             }
@@ -68,7 +76,7 @@ public class JumpMode extends Mode<LocationCell, World> {
                 offXIn * offX /* get sign back */,
                 2,
                 offZIn * offZ /* get sign back */);
-            if (!SpigotUtil.isPassable(cell.getBlock())) {
+            if (!isPassable(cell.getBlock())) {
               reject(cell);
               continue outerZ;
             }
@@ -80,7 +88,7 @@ public class JumpMode extends Mode<LocationCell, World> {
             ? origin.getBlockAtOffset(0, -1, 0).getBoundingBox().getMaxY() - 1
             : origin.getBlockAtOffset(0, 0, 0).getBoundingBox().getMaxY()));
         LocationCell other = origin.createLocatableAtOffset(offX, 1, offZ);
-        if (!SpigotUtil.isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
+        if (!isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
             && jumpDistance <= 1.2) {
           // Can stand here
           accept(other, origin.distanceTo(other));

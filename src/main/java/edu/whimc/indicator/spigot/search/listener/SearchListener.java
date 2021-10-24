@@ -21,9 +21,10 @@
 
 package edu.whimc.indicator.spigot.search.listener;
 
+import edu.whimc.indicator.common.navigation.Itinerary;
+import edu.whimc.indicator.common.search.ResultState;
 import edu.whimc.indicator.common.search.SearchSession;
 import edu.whimc.indicator.spigot.IndicatorSpigot;
-import edu.whimc.indicator.common.navigation.Itinerary;
 import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.search.PlayerSearchSession;
@@ -50,7 +51,15 @@ public class SearchListener implements Listener {
     if (session != null) {
       Player player = Bukkit.getPlayer(event.getSearchEvent().getSession().getCallerId());
       if (player != null) {
-        IndicatorSpigot.getInstance().getSearchManager().putSearch(player.getUniqueId(), session);
+        PlayerSearchSession oldSession = IndicatorSpigot.getInstance()
+            .getSearchManager()
+            .putSearch(player.getUniqueId(), session);
+        if (oldSession != null) {
+          if (oldSession.getState() != ResultState.SUCCESSFUL) {
+            player.spigot().sendMessage(Format.info("Canceling previously running search..."));
+          }
+          oldSession.cancel();
+        }
       }
     }
   }
@@ -73,10 +82,11 @@ public class SearchListener implements Listener {
       PlayerJourney journey = IndicatorSpigot.getInstance().getSearchManager().getJourney(player.getUniqueId());
       if (journey != null) {
         journey.setProspectiveItinerary(itinerary);
-        player.spigot().sendMessage(Format.info("A faster itinerary to your destination was found from your original location"));
+        player.spigot().sendMessage(Format.info("A faster path to your destination "
+            + "was found from your original location."));
         player.spigot().sendMessage(Format.chain(Format.info("Run "),
-            Format.command("/trail accept", "Accept an incoming trail request"),
-            Format.textOf(" to accept")));
+            Format.command("/nav accept", "Accept an incoming trail request"),
+            Format.textOf(Format.INFO + " to accept.")));
         return;
       }
     }
@@ -97,7 +107,7 @@ public class SearchListener implements Listener {
     sessionState.setSuccessNotificationTaskId(Bukkit.getScheduler()
         .runTaskLater(IndicatorSpigot.getInstance(),
             () -> {
-              player.spigot().sendMessage(Format.success("Showing an itinerary to your destination"));
+              player.spigot().sendMessage(Format.success("Showing a particle trail!"));
               sessionState.setSolutionPresented(true);
             },
             20 /* one second (20 ticks) */)
@@ -112,9 +122,11 @@ public class SearchListener implements Listener {
       Player player = Bukkit.getPlayer(session.getCallerId());
       if (player != null) {
         switch (session.getState()) {
-          case FAILED -> player.spigot().sendMessage(Format.error("There is no path to your destination."));
-          case CANCELED -> player.spigot().sendMessage(Format.error("Your search was canceled before it could complete."));
-          case SUCCESSFUL -> player.spigot().sendMessage(Format.success("Your search ended (successfully)."));
+          case FAILED -> player.spigot().sendMessage(Format.error("Search ended. There is no path to your destination."));
+          case CANCELED -> player.spigot().sendMessage(Format.info("Search canceled."));
+          case SUCCESSFUL -> {
+            /* Don't say anything. They were already notified of the successful solutions. */
+          }
           default -> Bukkit.getLogger().warning("A player search session stopped while in the "
               + session.getState() + " state");
         }

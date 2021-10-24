@@ -31,11 +31,11 @@ public class NavServerCommand extends FunctionlessCommandNode {
 
   public NavServerCommand(@NotNull CommandNode parent) {
     super(parent,
-        Permissions.TRAIL_USE_PERMISSION,
+        Permissions.NAV_USE_PERMISSION,
         "Use server-wide locations in paths",
         "server");
 
-    addChildren(new NavServerBlazeCommand(this));
+    addChildren(new NavServerToCommand(this));
     addChildren(new NavServerDeleteCommand(this));
     addChildren(new NavServerListCommand(this));
     addChildren(new NavServerSaveCommand(this));
@@ -54,13 +54,13 @@ public class NavServerCommand extends FunctionlessCommandNode {
     }, 1000);
   }
 
-  public static class NavServerBlazeCommand extends PlayerCommandNode {
+  public static class NavServerToCommand extends PlayerCommandNode {
 
-    public NavServerBlazeCommand(@NotNull CommandNode parent) {
+    public NavServerToCommand(@NotNull CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_USE_PERMISSION,
+          Permissions.NAV_USE_PERMISSION,
           "Blaze a trail to a server destination",
-          "blaze");
+          "to");
 
       BufferedSupplier<List<String>> serverLocationSupplier = bufferedServerLocationSupplier();
       addSubcommand(Parameter.builder()
@@ -93,11 +93,13 @@ public class NavServerCommand extends FunctionlessCommandNode {
         endLocation = serverEndpointManager.getServerEndpoint(args[0]);
 
         if (endLocation == null) {
-          player.spigot().sendMessage(Format.error("The server location ", Format.toPlain(Format.note(args[0])), " could not be found"));
+          player.spigot().sendMessage(Format.error("The server location ",
+              Format.toPlain(Format.note(args[0])),
+              " could not be found."));
           return false;
         }
       } catch (IllegalArgumentException e) {
-        player.spigot().sendMessage(Format.error("Your numbers could not be read"));
+        player.spigot().sendMessage(Format.error("Your numbers could not be read."));
         return false;
       }
 
@@ -114,7 +116,9 @@ public class NavServerCommand extends FunctionlessCommandNode {
             return false;
           }
           if (!Validator.isValidDataName(args[4])) {
-            player.spigot().sendMessage(Format.error("Your server name ", Format.toPlain(Format.note(args[4])), " contains illegal characters"));
+            player.spigot().sendMessage(Format.error("Your server name ",
+                Format.toPlain(Format.note(args[4])),
+                " contains illegal characters."));
             return false;
           }
           // Save it!
@@ -136,7 +140,7 @@ public class NavServerCommand extends FunctionlessCommandNode {
 
     public NavServerDeleteCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_MANAGE_PERMISSION,
+          Permissions.NAV_MANAGE_PERMISSION,
           "Delete a saved server destination",
           "delete");
 
@@ -166,10 +170,14 @@ public class NavServerCommand extends FunctionlessCommandNode {
           .getServerEndpointManager();
       if (endpointManager.hasServerEndpoint(args[0])) {
         IndicatorSpigot.getInstance().getDataManager().getServerEndpointManager().removeServerEndpoint(args[0]);
-        player.spigot().sendMessage(Format.success("The server location ", Format.toPlain(Format.note(args[0])), " has been removed"));
+        player.spigot().sendMessage(Format.success("The server location ",
+            Format.toPlain(Format.note(args[0])),
+            " has been removed."));
         return true;
       } else {
-        player.spigot().sendMessage(Format.error("The server location ", Format.toPlain(Format.note(args[0])), " could not be found"));
+        player.spigot().sendMessage(Format.error("The server location ",
+            Format.toPlain(Format.note(args[0])),
+            " could not be found."));
         return false;
       }
     }
@@ -182,7 +190,7 @@ public class NavServerCommand extends FunctionlessCommandNode {
 
     public NavServerListCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_USE_PERMISSION,
+          Permissions.NAV_USE_PERMISSION,
           "List saved server destinations",
           "list");
       addSubcommand(Parameter.builder()
@@ -210,7 +218,7 @@ public class NavServerCommand extends FunctionlessCommandNode {
             return false;
           }
         } catch (NumberFormatException e) {
-          player.spigot().sendMessage(Format.error("The page number must be an integer"));
+          player.spigot().sendMessage(Format.error("The page number must be an integer."));
           return false;
         }
       } else {
@@ -260,7 +268,7 @@ public class NavServerCommand extends FunctionlessCommandNode {
 
     public NavServerSaveCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_MANAGE_PERMISSION,
+          Permissions.NAV_MANAGE_PERMISSION,
           "Save your current location as a server trail location",
           "save");
       addSubcommand(Parameter.builder()
@@ -284,7 +292,7 @@ public class NavServerCommand extends FunctionlessCommandNode {
 
       String name = args[0];
       if (!Validator.isValidDataName(name)) {
-        player.spigot().sendMessage(Format.error("That name is invalid"));
+        player.spigot().sendMessage(Format.error("That name is invalid."));
         return false;
       }
 
@@ -294,7 +302,9 @@ public class NavServerCommand extends FunctionlessCommandNode {
 
       String existingName = serverEndpointManager.getServerEndpointName(new LocationCell(player.getLocation()));
       if (existingName != null) {
-        player.spigot().sendMessage(Format.error("Server location ", Format.toPlain(Format.note(existingName)), " already exists at that location!"));
+        player.spigot().sendMessage(Format.error("Server location ",
+            Format.toPlain(Format.note(existingName)),
+            " already exists at that location!"));
         return false;
       }
 
@@ -307,7 +317,8 @@ public class NavServerCommand extends FunctionlessCommandNode {
       }
 
       serverEndpointManager.addServerEndpoint(new LocationCell(player.getLocation()), name);
-      player.spigot().sendMessage(Format.success("Added server location named ", Format.toPlain(Format.note(name))));
+      player.spigot().sendMessage(Format.success("Added server location named ",
+          Format.toPlain(Format.note(name))));
       return true;
     }
   }

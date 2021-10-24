@@ -32,11 +32,10 @@ import edu.whimc.indicator.spigot.command.NavCommand;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
 import edu.whimc.indicator.spigot.config.SpigotConfigManager;
 import edu.whimc.indicator.spigot.data.SpigotDataManager;
-import edu.whimc.indicator.spigot.journey.PlayerJourney;
 import edu.whimc.indicator.spigot.manager.DebugManager;
 import edu.whimc.indicator.spigot.manager.NetherManager;
+import edu.whimc.indicator.spigot.manager.PlayerSearchManager;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
-import edu.whimc.indicator.spigot.search.PlayerSearchSession;
 import edu.whimc.indicator.spigot.search.event.SpigotFoundSolutionEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotModeFailureEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotModeSuccessEvent;
@@ -77,7 +76,7 @@ public final class IndicatorSpigot extends JavaPlugin {
   @Getter
   private DebugManager debugManager;
   @Getter
-  private SearchManager<LocationCell, World, PlayerSearchSession, PlayerJourney> searchManager;
+  private PlayerSearchManager searchManager;
   @Getter
   private boolean valid = false;
 
@@ -96,16 +95,20 @@ public final class IndicatorSpigot extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    IndicatorSpigot.getInstance().getLogger().info("Initializing Indicator...");
+    getLogger().info("Initializing Indicator...");
+
+    if (this.getDataFolder().mkdirs()) {
+      getLogger().info("Indicator data folder created.");
+    }
+
     // Create caches
+    IndicatorCommon.setLogger(new LoggerSpigot());
     IndicatorCommon.setConfigManager(SpigotConfigManager.initialize("config.yml"));
     IndicatorCommon.setPathCache(new PathCache<LocationCell, World>());
 
-    IndicatorCommon.setLogger(new LoggerSpigot());
-
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();
-    this.searchManager = new SearchManager<>();
+    this.searchManager = new PlayerSearchManager();
 
     deserializeCaches();
 
@@ -127,9 +130,6 @@ public final class IndicatorSpigot extends JavaPlugin {
 
     // Set up data manager
     this.dataManager = new SpigotDataManager();
-    if (this.getDataFolder().mkdirs()) {
-      getLogger().info("Indicator data folder created.");
-    }
 
     // Register commands
     for (CommandNode root : new CommandNode[]{new IndicatorCommand(), new NavCommand()}) {
@@ -159,6 +159,7 @@ public final class IndicatorSpigot extends JavaPlugin {
   @Override
   public void onDisable() {
     // Plugin shutdown logic
+    getSearchManager().stopAllJourneys();
     serializeCaches();
   }
 

@@ -25,9 +25,17 @@ import edu.whimc.indicator.common.navigation.Mode;
 import edu.whimc.indicator.common.navigation.ModeType;
 import edu.whimc.indicator.spigot.navigation.LocationCell;
 import edu.whimc.indicator.spigot.util.SpigotUtil;
+import java.util.Set;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 
-public class FlyMode extends Mode<LocationCell, World> {
+public class FlyMode extends SpigotMode {
+
+  public FlyMode(Set<Material> forcePassable) {
+    super(forcePassable);
+  }
+
   @Override
   public void collectDestinations(LocationCell origin) {
     LocationCell cell;
@@ -50,7 +58,7 @@ public class FlyMode extends Mode<LocationCell, World> {
                     offXIn * offX /* get sign back */,
                     offYIn * offY /* get sign back */,
                     offZIn * offZ /* get sign back */);
-                if (!SpigotUtil.isLaterallyPassable(cell.getBlock())) {
+                if (!isLaterallyPassable(cell.getBlock())) {
                   reject(cell);
                   continue outerZ;
                 }
@@ -62,7 +70,7 @@ public class FlyMode extends Mode<LocationCell, World> {
                           + h
                           + (1 - offYIn) /* for if offYIn is 0 */,
                       offZIn * offZ /* get sign back */);
-                  if (!SpigotUtil.isPassable(cell.getBlock())) {
+                  if (!isPassable(cell.getBlock())) {
                     reject(cell);
                     continue outerZ;
                   }

@@ -47,6 +47,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
 
+  // TODO bring this max size up to something larger like a million but
+  //  create a way to identify whether a long-running operation
+  //  is likely to be a failure a different way than maxing out memory.
+  //  For example, keep track of the best distance so far and if no
+  //  significant improvement has been made in a while, then assume it will never.
   public static final int MAX_SIZE = 10000;
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
 
@@ -117,7 +122,7 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
   }
 
   @NotNull
-  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCache) {
+  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCacheIfPossible) {
     if (!origin.getDomain().equals(destination.getDomain())) {
       throw new IllegalArgumentException("The input locatables ["
           + origin + " and "
@@ -125,16 +130,15 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
           + "] must have the same domain to search for a path");
     }
 
-    if (this.state == ResultState.SUCCESSFUL) {
+    // Return the saved states, but only if we want that result.
+    //  If we don't want to use the cache, but this result is from the cache,
+    //  then don't return this.
+    if (this.state == ResultState.SUCCESSFUL && (useCacheIfPossible || !this.fromCache)) {
       return new TrialResult<>(Optional.of(path), false);
     }
 
-    if (this.state == ResultState.FAILED) {
+    if (this.state == ResultState.FAILED && (useCacheIfPossible || !this.fromCache)) {
       return new TrialResult<>(Optional.empty(), false);
-    }
-
-    if (useCache && this.fromCache) {
-      return new TrialResult<>(Optional.ofNullable(path), false);
     }
 
     // Dispatch a starting event
@@ -153,22 +157,17 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
     Node current;
     while (!upcoming.isEmpty()) {
 
-      // Delay the algorithm, if requested by implementation of search session
-      if (session.getAlgorithmStepDelay() != 0) {
-        try {
-          System.out.println("Sleeping for " + session.getAlgorithmStepDelay() + " seconds.");
-          wait(session.getAlgorithmStepDelay());
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      } else {
-        System.out.println("Not sleeping?");
+      if (session.state.isCanceled()) {
+        // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
+        this.state = ResultState.FAILED;
+        this.length = Double.MAX_VALUE;
+        return new TrialResult<>(Optional.empty(), true);
       }
 
-      if (session.state.isCanceled() || visited.size() > MAX_SIZE) {
-        // We ran out of allocated memory. Let's just call it here and say we failed
-        this.length = Double.MAX_VALUE;
+      if (visited.size() > MAX_SIZE) {
+        // We ran out of allocated memory. Let's just call it here and say we failed and cache the failure.
         this.state = ResultState.FAILED;
+        this.length = Double.MAX_VALUE;
         IndicatorCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), null);
         return new TrialResult<>(Optional.empty(), true);
       }
@@ -186,8 +185,8 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
           current = current.getPrevious();
         } while (current != null);
         this.state = ResultState.SUCCESSFUL;
+        this.length = length;
         this.path = new Path<>(origin, new ArrayList<>(steps), length);
-        this.length = this.path.getLength();
         IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
         IndicatorCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), this.path);
         return new TrialResult<>(Optional.of(this.path), true);

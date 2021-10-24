@@ -32,9 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class SearchManager<T extends Cell<T, D>, D, S extends SearchSession<T, D>, J extends Journey<T, D>> {
 
-  private final Map<UUID, J> playerJourneys = new ConcurrentHashMap<>();
-  private final Map<UUID, T> playerLocations = new ConcurrentHashMap<>();
-  private final Map<UUID, S> playerSearches = new ConcurrentHashMap<>();
+  protected final Map<UUID, J> playerJourneys = new ConcurrentHashMap<>();
+  protected final Map<UUID, T> playerLocations = new ConcurrentHashMap<>();
+  protected final Map<UUID, S> playerSearches = new ConcurrentHashMap<>();
 
   public J putJourney(@NotNull UUID playerUuid, J journey) {
     J oldJourney = this.playerJourneys.put(playerUuid, journey);
@@ -91,5 +91,8 @@ public class SearchManager<T extends Cell<T, D>, D, S extends SearchSession<T, D
     return playerLocations.get(playerUuid);
   }
 
+  public void stopAllJourneys() {
+    playerJourneys.values().forEach(Journey::stop);
+  }
 
 }

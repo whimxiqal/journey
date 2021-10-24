@@ -23,6 +23,7 @@ package edu.whimc.indicator.spigot.command;
 
 import edu.whimc.indicator.common.config.Settings;
 import edu.whimc.indicator.common.navigation.Itinerary;
+import edu.whimc.indicator.common.search.ResultState;
 import edu.whimc.indicator.spigot.IndicatorSpigot;
 import edu.whimc.indicator.spigot.command.common.CommandFlags;
 import edu.whimc.indicator.spigot.command.common.CommandNode;
@@ -36,9 +37,14 @@ import edu.whimc.indicator.spigot.util.Format;
 import edu.whimc.indicator.spigot.util.Permissions;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import me.blackvein.quests.Quests;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -52,7 +58,7 @@ public final class NavCommand extends FunctionlessCommandNode {
 
   public NavCommand() {
     super(null,
-        Permissions.TRAIL_USE_PERMISSION,
+        Permissions.NAV_USE_PERMISSION,
         "View your current activated trail",
         "nav");
     addChildren(new TrailAcceptCommand(this));
@@ -70,17 +76,16 @@ public final class NavCommand extends FunctionlessCommandNode {
                                      @NotNull LocationCell endpoint,
                                      @NotNull Map<String, String> flags) {
 
-    if (IndicatorSpigot.getInstance().getSearchManager().isSearching(player.getUniqueId())) {
-      player.spigot().sendMessage(Format.error("Please wait until your search is over before performing a new one."));
-      return false;
-    }
-
     UUID playerUuid = player.getUniqueId();
 
     Set<SearchFlag> searchFlags = new HashSet<>();
-    if (CommandFlags.NOFLY.isIn(flags)) {
+    if (Settings.DEFAULT_NOFLY_FLAG.getValue() != CommandFlags.NOFLY.isIn(flags)) {
       searchFlags.add(SearchFlag.NOFLY);
     }
+    if (Settings.DEFAULT_NODOOR_FLAG.getValue() != CommandFlags.NODOOR.isIn(flags)) {
+      searchFlags.add(SearchFlag.NODOOR);
+    }
+
     int algorithmStepDelay = 0;
     if (CommandFlags.ANIMATE.isIn(flags)) {
       searchFlags.add(SearchFlag.ANIMATE);
@@ -94,11 +99,31 @@ public final class NavCommand extends FunctionlessCommandNode {
 
     // Set up a "Working..." message if it takes too long
     player.spigot().sendMessage(Format.info("Searching for path to your destination (" + timeout + " sec)..."));
-    player.spigot().sendMessage(Format.info(" " + Format.toPlain(Format.locationCell(endpoint, Format.INFO)) + " !"));
+    player.spigot().sendMessage(new ComponentBuilder()
+        .append(Format.PREFIX)
+        .append(new ComponentBuilder()
+            .append("  [Search Flags]")
+            .color(Format.ACCENT2.asBungee())
+            .italic(true)
+            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new Text(new ComponentBuilder("Flags: ")
+                    .color(Format.ACCENT2.asBungee())
+                    .append(searchFlags.stream()
+                        .map(flag -> flag.name().toLowerCase())
+                        .collect(Collectors.joining(", ")))
+                    .color(Format.INFO.asBungee())
+                    .create())))
+            .create())
+        .create());
 
     // Set up a search cancellation in case it takes too long
     BukkitTask timeoutTask = Bukkit.getScheduler().runTaskLater(IndicatorSpigot.getInstance(),
-        session::cancel,
+        () -> {
+          if (session.getState() != ResultState.SUCCESSFUL) {
+            player.spigot().sendMessage(Format.error("Time limit surpassed. Canceling search..."));
+          }
+          session.cancel();
+        },
         (long) timeout * 20 /* ticks per second */);
 
     // SEARCH
@@ -116,7 +141,7 @@ public final class NavCommand extends FunctionlessCommandNode {
   public static class TrailCancelCommand extends PlayerCommandNode {
 
     public TrailCancelCommand(@Nullable CommandNode parent) {
-      super(parent, Permissions.TRAIL_USE_PERMISSION, "Cancel the current search", "cancel");
+      super(parent, Permissions.NAV_USE_PERMISSION, "Cancel the current search", "cancel");
     }
 
     @Override
@@ -126,12 +151,12 @@ public final class NavCommand extends FunctionlessCommandNode {
                                           @NotNull String[] args,
                                           @NotNull Map<String, String> flags) {
       if (!IndicatorSpigot.getInstance().getSearchManager().isSearching(player.getUniqueId())) {
-        player.spigot().sendMessage(Format.error("You do not have an ongoing search"));
+        player.spigot().sendMessage(Format.error("You do not have an ongoing search."));
         return false;
       }
 
-      IndicatorSpigot.getInstance().getSearchManager().getSearch(player.getUniqueId()).cancel();
-      player.spigot().sendMessage(Format.success("Search canceled."));
+      player.spigot().sendMessage(Format.success("Cancelling search..."));
+      Objects.requireNonNull(IndicatorSpigot.getInstance().getSearchManager().getSearch(player.getUniqueId())).cancel();
       return true;
     }
 
@@ -140,7 +165,7 @@ public final class NavCommand extends FunctionlessCommandNode {
   public static class TrailAcceptCommand extends PlayerCommandNode {
 
     public TrailAcceptCommand(@Nullable CommandNode parent) {
-      super(parent, Permissions.TRAIL_USE_PERMISSION, "Accept a new trail suggestion", "accept");
+      super(parent, Permissions.NAV_USE_PERMISSION, "Accept a new trail suggestion", "accept");
     }
 
     @Override
@@ -149,13 +174,12 @@ public final class NavCommand extends FunctionlessCommandNode {
                                           @NotNull String label,
                                           @NotNull String[] args,
                                           @NotNull Map<String, String> flags) {
-      PlayerSearchSession playerSearchSession = IndicatorSpigot.getInstance().getSearchManager().getSearch(player.getUniqueId());
-      if (playerSearchSession == null) {
-        player.spigot().sendMessage(Format.error("You have no search."));
-        return false;
-      }
 
       PlayerJourney journey = IndicatorSpigot.getInstance().getSearchManager().getJourney(player.getUniqueId());
+      if (journey == null) {
+        player.spigot().sendMessage(Format.error("You have nothing to accept."));
+        return false;
+      }
 
       Itinerary<LocationCell, World> prospectiveItinerary = journey.getProspectiveItinerary();
       if (prospectiveItinerary == null) {
@@ -163,7 +187,7 @@ public final class NavCommand extends FunctionlessCommandNode {
         return false;
       }
 
-      PlayerJourney newJourney = new PlayerJourney(player.getUniqueId(), playerSearchSession, prospectiveItinerary);
+      PlayerJourney newJourney = new PlayerJourney(player.getUniqueId(), journey.getSession(), prospectiveItinerary);
       journey.stop();
 
       IndicatorSpigot.getInstance().getSearchManager().putJourney(player.getUniqueId(), newJourney);

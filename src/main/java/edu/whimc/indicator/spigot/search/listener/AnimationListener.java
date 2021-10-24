@@ -24,6 +24,8 @@ package edu.whimc.indicator.spigot.search.listener;
 import edu.whimc.indicator.common.navigation.Cell;
 import edu.whimc.indicator.spigot.search.AnimationManager;
 import edu.whimc.indicator.spigot.search.PlayerSearchSession;
+import edu.whimc.indicator.spigot.search.event.SpigotModeFailureEvent;
+import edu.whimc.indicator.spigot.search.event.SpigotModeSuccessEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStepSearchEvent;
 import edu.whimc.indicator.spigot.search.event.SpigotStopPathSearchEvent;
@@ -37,6 +39,22 @@ import org.bukkit.event.Listener;
  * and allowing for the animating of the algorithm in realtime.
  */
 public class AnimationListener implements Listener {
+
+  @EventHandler
+  public void successModeEvent(SpigotModeSuccessEvent event) {
+    AnimationManager manager = getAnimationManager(event);
+    if (manager != null) {
+      manager.showResult(event.getSearchEvent().getCell(), true, event.getSearchEvent().getModeType());
+    }
+  }
+
+  @EventHandler
+  public void failModeEvent(SpigotModeFailureEvent event) {
+    AnimationManager manager = getAnimationManager(event);
+    if (manager != null) {
+      manager.showResult(event.getSearchEvent().getCell(), false, event.getSearchEvent().getModeType());
+    }
+  }
 
   /**
    * Handle the {@link edu.whimc.indicator.common.search.event.StepSearchEvent}

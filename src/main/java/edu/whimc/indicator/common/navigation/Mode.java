@@ -44,11 +44,24 @@ public abstract class Mode<T extends Cell<T, D>, D> {
 
   protected final void accept(T destination, double distance) {
     this.map.put(destination, distance);
+    delay();
     IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new ModeSuccessEvent<>(session, destination, getType()));
   }
 
   protected final void reject(T destination) {
+    delay();
     IndicatorCommon.<T, D>getSearchEventDispatcher().dispatch(new ModeFailureEvent<>(session, destination, getType()));
+  }
+
+  private void delay() {
+    // Delay the algorithm, if requested by implementation of search session
+    if (session.getAlgorithmStepDelay() != 0) {
+      try {
+        Thread.sleep(session.getAlgorithmStepDelay());
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   protected abstract void collectDestinations(T origin);

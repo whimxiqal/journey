@@ -53,7 +53,7 @@ public class IndicatorDebugCommand extends CommandNode {
                                   @NotNull String[] args,
                                   @NotNull Map<String, String> flags) {
     boolean enabled;
-    if (!(sender instanceof Player)) {
+    if (!(sender instanceof Player player)) {
       if (sender instanceof ConsoleCommandSender) {
         if (IndicatorSpigot.getInstance()
             .getDebugManager()
@@ -69,7 +69,6 @@ public class IndicatorDebugCommand extends CommandNode {
         return false;
       }
     } else {
-      Player player = (Player) sender;
 
       DebugManager debugManager = IndicatorSpigot.getInstance().getDebugManager();
       if (debugManager.isDebugging(player.getUniqueId())) {
@@ -82,9 +81,9 @@ public class IndicatorDebugCommand extends CommandNode {
     }
 
     if (enabled) {
-      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled"));
+      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled."));
     } else {
-      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled"));
+      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled."));
     }
     return true;
   }

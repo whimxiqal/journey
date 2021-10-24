@@ -23,5 +23,6 @@ package edu.whimc.indicator.spigot.search;
 
 public enum SearchFlag {
   NOFLY,
-  ANIMATE
+  ANIMATE,
+  NODOOR
 }

@@ -33,11 +33,11 @@ public class NavCustomCommand extends FunctionlessCommandNode {
 
   public NavCustomCommand(@NotNull CommandNode parent) {
     super(parent,
-        Permissions.TRAIL_USE_PERMISSION,
+        Permissions.NAV_USE_PERMISSION,
         "Use custom locations in paths",
         "custom");
 
-    addChildren(new NavCustomBlazeCommand(this));
+    addChildren(new NavCustomToCommand(this));
     addChildren(new NavCustomDeleteCommand(this));
     addChildren(new NavCustomListCommand(this));
     addChildren(new NavCustomSaveCommand(this));
@@ -56,13 +56,13 @@ public class NavCustomCommand extends FunctionlessCommandNode {
     }, 1000);
   }
 
-  public static class NavCustomBlazeCommand extends PlayerCommandNode {
+  public static class NavCustomToCommand extends PlayerCommandNode {
 
-    public NavCustomBlazeCommand(@NotNull CommandNode parent) {
+    public NavCustomToCommand(@NotNull CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_USE_PERMISSION,
+          Permissions.NAV_USE_PERMISSION,
           "Blaze a trail to a custom destination",
-          "blaze");
+          "to");
 
       BufferedFunction<Player, List<String>> customLocationsFunction = bufferedCustomLocationsFunction();
       addSubcommand(Parameter.builder()
@@ -124,12 +124,12 @@ public class NavCustomCommand extends FunctionlessCommandNode {
               : Integer.parseInt(args[3]);
 
           if (world == null) {
-            player.spigot().sendMessage(Format.error("That's not a valid world"));
+            player.spigot().sendMessage(Format.error("That's not a valid world."));
             return false;
           }
 
           if (x < -100000 || x > 100000 || y < -100000 || y > 100000 || z < -100000 || z > 100000) {
-            player.spigot().sendMessage(Format.error("Your inputs are out of range"));
+            player.spigot().sendMessage(Format.error("Your inputs are out of range."));
             return false;
           }
 
@@ -138,12 +138,12 @@ public class NavCustomCommand extends FunctionlessCommandNode {
           endLocation = customEndpointManager.getCustomEndpoint(player.getUniqueId(), args[0]);
 
           if (endLocation == null) {
-            player.spigot().sendMessage(Format.error("The custom location ", Format.toPlain(Format.note(args[0])), " could not be found"));
+            player.spigot().sendMessage(Format.error("The custom location ", Format.toPlain(Format.note(args[0])), " could not be found."));
             return false;
           }
         }
       } catch (IllegalArgumentException e) {
-        player.spigot().sendMessage(Format.error("Your numbers could not be read"));
+        player.spigot().sendMessage(Format.error("Your numbers could not be read."));
         return false;
       }
 
@@ -160,12 +160,13 @@ public class NavCustomCommand extends FunctionlessCommandNode {
             return false;
           }
           if (!Validator.isValidDataName(args[5])) {
-            player.spigot().sendMessage(Format.error("Your custom name ", Format.toPlain(Format.note(args[4])), " contains illegal characters"));
+            player.spigot().sendMessage(Format.error("Your custom name ", Format.toPlain(Format.note(args[4])), " contains illegal characters."));
             return false;
           }
           // Save it!
           customEndpointManager.addCustomEndpoint(player.getUniqueId(), endLocation, args[4]);
-          player.spigot().sendMessage(Format.success("Saved your custom location with name ", Format.toPlain(Format.note(args[4])), "!"));
+          player.spigot().sendMessage(Format.success("Saved your custom location with name ",
+              Format.toPlain(Format.note(args[4])), "!"));
         }
 
         return true;
@@ -180,7 +181,7 @@ public class NavCustomCommand extends FunctionlessCommandNode {
 
     public NavCustomDeleteCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_USE_PERMISSION,
+          Permissions.NAV_USE_PERMISSION,
           "Delete a saved custom destination",
           "delete");
       BufferedFunction<Player, List<String>> customLocationsFunction = bufferedCustomLocationsFunction();
@@ -213,10 +214,12 @@ public class NavCustomCommand extends FunctionlessCommandNode {
           .getCustomEndpointManager();
       if (endpointManager.hasCustomEndpoint(player.getUniqueId(), args[0])) {
         IndicatorSpigot.getInstance().getDataManager().getCustomEndpointManager().removeCustomEndpoint(player.getUniqueId(), args[0]);
-        player.spigot().sendMessage(Format.success("The custom location ", Format.toPlain(Format.note(args[0])), " has been removed"));
+        player.spigot().sendMessage(Format.success("The custom location ",
+            Format.toPlain(Format.note(args[0])), " has been removed."));
         return true;
       } else {
-        player.spigot().sendMessage(Format.error("The custom location ", Format.toPlain(Format.note(args[0])), " could not be found"));
+        player.spigot().sendMessage(Format.error("The custom location ",
+            Format.toPlain(Format.note(args[0])), " could not be found."));
         return false;
       }
     }
@@ -227,7 +230,7 @@ public class NavCustomCommand extends FunctionlessCommandNode {
 
     public NavCustomListCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_USE_PERMISSION,
+          Permissions.NAV_USE_PERMISSION,
           "List saved custom destinations",
           "list");
       addSubcommand(Parameter.builder()
@@ -255,7 +258,7 @@ public class NavCustomCommand extends FunctionlessCommandNode {
             return false;
           }
         } catch (NumberFormatException e) {
-          player.spigot().sendMessage(Format.error("The page number must be an integer"));
+          player.spigot().sendMessage(Format.error("The page number must be an integer."));
           return false;
         }
       } else {
@@ -305,7 +308,7 @@ public class NavCustomCommand extends FunctionlessCommandNode {
 
     public NavCustomSaveCommand(@Nullable CommandNode parent) {
       super(parent,
-          Permissions.TRAIL_USE_PERMISSION,
+          Permissions.NAV_USE_PERMISSION,
           "Save your current location as a custom trail location",
           "save");
       addSubcommand(Parameter.builder()
@@ -329,7 +332,7 @@ public class NavCustomCommand extends FunctionlessCommandNode {
 
       String name = args[0];
       if (!Validator.isValidDataName(name)) {
-        player.spigot().sendMessage(Format.error("That name is invalid"));
+        player.spigot().sendMessage(Format.error("That name is invalid."));
         return false;
       }
 
@@ -339,7 +342,9 @@ public class NavCustomCommand extends FunctionlessCommandNode {
 
       String existingName = customEndpointManager.getCustomEndpointName(player.getUniqueId(), new LocationCell(player.getLocation()));
       if (existingName != null) {
-        player.spigot().sendMessage(Format.error("Custom location ", Format.toPlain(Format.note(existingName)), " already exists at that location!"));
+        player.spigot().sendMessage(Format.error("Custom location ",
+            Format.toPlain(Format.note(existingName)),
+            " already exists at that location!"));
         return false;
       }
 
@@ -352,7 +357,7 @@ public class NavCustomCommand extends FunctionlessCommandNode {
       }
 
       customEndpointManager.addCustomEndpoint(player.getUniqueId(), new LocationCell(player.getLocation()), name);
-      player.spigot().sendMessage(Format.success("Added custom location named ", Format.toPlain(Format.note(name))));
+      player.spigot().sendMessage(Format.success("Added custom location named ", Format.toPlain(Format.note(name)), "."));
       return true;
     }
   }

@@ -7,6 +7,8 @@ public final class CommandFlags {
 
   public static final CommandFlag NOFLY = new CommandFlag("nofly");
 
+  public static final CommandFlag NODOOR = new CommandFlag("nodoor");
+
   public static final ValueFlag<Integer> ANIMATE = new ValueFlag<>("animate",
       (player, string) -> {
         if (string.isEmpty()) {
