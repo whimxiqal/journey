@@ -31,13 +31,13 @@ import org.jetbrains.annotations.NotNull;
 
 public final class NetherPort extends Port<LocationCell, World> implements Verifiable {
 
-  public static final int NETHER_LEAP_LENGTH = 16;
+  public static final int NETHER_PORT_LENGTH = 16;
   private final LocationCell origin;
   private final LocationCell destination;
   private LocationCell currentLocation;
 
   public NetherPort(@NotNull final LocationCell origin, @NotNull final LocationCell destination) {
-    super(origin, destination, ModeType.NETHER_PORTAL, NETHER_LEAP_LENGTH);
+    super(origin, destination, ModeType.NETHER_PORTAL, NETHER_PORT_LENGTH);
     this.origin = origin;
     this.destination = destination;
   }

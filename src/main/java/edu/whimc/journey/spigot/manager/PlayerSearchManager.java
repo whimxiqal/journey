@@ -22,10 +22,13 @@
 package edu.whimc.journey.spigot.manager;
 
 import edu.whimc.journey.common.manager.SearchManager;
-import edu.whimc.journey.spigot.journey.PlayerJourney;
 import edu.whimc.journey.spigot.navigation.LocationCell;
+import edu.whimc.journey.spigot.navigation.PlayerJourney;
 import edu.whimc.journey.spigot.search.PlayerSearchSession;
 import org.bukkit.World;
 
+/**
+ * A search manager specifically for Spigot players.
+ */
 public class PlayerSearchManager extends SearchManager<LocationCell, World, PlayerSearchSession, PlayerJourney> {
 }

@@ -23,5 +23,11 @@ package edu.whimc.journey.spigot.search.listener;
 
 import org.bukkit.event.Listener;
 
+/**
+ * A listener for managing data storage as operations throughout
+ * this plugin proceed.
+ *
+ * <p><b>Not implemented yet!</b>
+ */
 public class DataStorageListener implements Listener {
 }

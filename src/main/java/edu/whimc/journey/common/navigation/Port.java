@@ -24,10 +24,29 @@ package edu.whimc.journey.common.navigation;
 import com.google.common.collect.Lists;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A direct connection between otherwise unrelated locations in any domain.
+ *
+ * <p>In many cases, there are locations that can be reached from other locations in Minecraft.
+ * Examples include teleportation commands and portals. A port is a generic representation for
+ * such connections, and they allow the algorithm to calculate accurate solutions leveraging
+ * all transportation aspects of a given Minecraft server.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
 public class Port<T extends Cell<T, D>, D> extends Path<T, D> implements Moded {
 
   private final ModeType modeType;
 
+  /**
+   * General constructor.
+   *
+   * @param origin      the origin of the port, like the entrance to a portal.
+   * @param destination the end of the port, like the endpoint of a portal
+   * @param modeType    the mode type that this movement counts as
+   * @param length      the length of this movement, for use of calculating efficiency
+   */
   public Port(@NotNull T origin, @NotNull T destination,
               @NotNull ModeType modeType, int length) {
     super(origin, Lists.newArrayList(new Step<>(destination, modeType)), length);

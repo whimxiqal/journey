@@ -17,33 +17,52 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package edu.whimc.journey.spigot.command.common;
+package edu.whimc.journey.spigot.command;
 
+import edu.whimc.journey.spigot.JourneySpigot;
+import edu.whimc.journey.spigot.command.common.CommandNode;
+import edu.whimc.journey.spigot.command.common.PlayerCommandNode;
+import edu.whimc.journey.spigot.util.Format;
 import java.util.Map;
+import java.util.Objects;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.permissions.Permission;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class FunctionlessCommandNode extends CommandNode {
+/**
+ * A command to cancel an ongoing {@link edu.whimc.journey.spigot.search.PlayerSearchSession}.
+ */
+public class JourneyCancelCommand extends PlayerCommandNode {
 
-  public FunctionlessCommandNode(@Nullable CommandNode parent,
-                                 @Nullable Permission permission,
-                                 @NotNull String description,
-                                 @NotNull String primaryAlias) {
-    super(parent, permission, description, primaryAlias);
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
+  public JourneyCancelCommand(@Nullable CommandNode parent) {
+    super(parent, null,
+        "Cancel the current search", "cancel");
   }
 
   @Override
-  public final boolean onWrappedCommand(@NotNull CommandSender sender,
+  public boolean onWrappedPlayerCommand(@NotNull Player player,
                                         @NotNull Command command,
                                         @NotNull String label,
                                         @NotNull String[] args,
                                         @NotNull Map<String, String> flags) {
-    sendCommandUsageError(sender, "Too few arguments or invalid arguments!");
-    return false;
+    if (!JourneySpigot.getInstance().getSearchManager().isSearching(player.getUniqueId())) {
+      player.spigot().sendMessage(Format.error("You do not have an ongoing search"));
+      return false;
+    }
+
+    Objects.requireNonNull(JourneySpigot.getInstance().getSearchManager().getSearch(player.getUniqueId()))
+        .cancel();
+    player.spigot().sendMessage(Format.success("Search canceled."));
+    return true;
   }
+
 }

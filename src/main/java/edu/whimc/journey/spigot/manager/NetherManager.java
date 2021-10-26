@@ -48,16 +48,16 @@ public class NetherManager implements Listener {
 
   private final Map<LocationCell, LocationCell> portalConnections = new ConcurrentHashMap<>();
 
-  public Collection<NetherPort> makeLeaps() {
+  public Collection<NetherPort> makePorts() {
     List<NetherPort> linksUnverified = portalConnections.entrySet().stream()
         .map(entry -> new NetherPort(entry.getKey(), entry.getValue()))
         .collect(Collectors.toList());
     List<NetherPort> linksVerified = new LinkedList<>();
-    for (NetherPort leap : linksUnverified) {
-      if (leap.verify()) {
-        linksVerified.add(leap);
+    for (NetherPort port : linksUnverified) {
+      if (port.verify()) {
+        linksVerified.add(port);
       } else {
-        portalConnections.remove(leap.getOrigin(), leap.getDestination());
+        portalConnections.remove(port.getOrigin(), port.getDestination());
       }
     }
     return linksVerified;

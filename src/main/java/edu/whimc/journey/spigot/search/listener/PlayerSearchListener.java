@@ -23,10 +23,9 @@ package edu.whimc.journey.spigot.search.listener;
 
 import edu.whimc.journey.common.navigation.Itinerary;
 import edu.whimc.journey.common.search.ResultState;
-import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.JourneySpigot;
-import edu.whimc.journey.spigot.journey.PlayerJourney;
 import edu.whimc.journey.spigot.navigation.LocationCell;
+import edu.whimc.journey.spigot.navigation.PlayerJourney;
 import edu.whimc.journey.spigot.search.PlayerSearchSession;
 import edu.whimc.journey.spigot.search.SessionState;
 import edu.whimc.journey.spigot.search.event.SpigotFoundSolutionEvent;
@@ -43,8 +42,18 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class SearchListener implements Listener {
+/**
+ * A listener with a series of event handlers to perform general management operations
+ * of running {@link PlayerSearchSession}s.
+ */
+public class PlayerSearchListener implements Listener {
 
+  /**
+   * Handle the start of search sessions.
+   * The instance must be saved and the last one running has to be stopped.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void startSearchEvent(SpigotStartSearchEvent event) {
     PlayerSearchSession session = getPlayerSession(event);
@@ -64,6 +73,13 @@ public class SearchListener implements Listener {
     }
   }
 
+  /**
+   * Handle the event fired when a new solution is found.
+   * Send the found {@link Itinerary} to the running {@link edu.whimc.journey.common.navigation.Journey}
+   * as a prospective itinerary in case the player wants to use it.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void foundSolutionEvent(SpigotFoundSolutionEvent event) {
     PlayerSearchSession session = getPlayerSession(event);
@@ -85,7 +101,7 @@ public class SearchListener implements Listener {
         player.spigot().sendMessage(Format.info("A faster path to your destination "
             + "was found from your original location."));
         player.spigot().sendMessage(Format.chain(Format.info("Run "),
-            Format.command("/nav accept", "Accept an incoming trail request"),
+            Format.command("/journey accept", "Accept an incoming trail request"),
             Format.textOf(Format.INFO + " to accept.")));
         return;
       }
@@ -98,7 +114,7 @@ public class SearchListener implements Listener {
 
     // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
     PlayerJourney journey = new PlayerJourney(player.getUniqueId(), session, itinerary);
-    journey.illuminateTrail();
+    journey.run();
 
     // Save the journey
     JourneySpigot.getInstance().getSearchManager().putJourney(player.getUniqueId(), journey);
@@ -114,6 +130,12 @@ public class SearchListener implements Listener {
         .getTaskId());
   }
 
+  /**
+   * Handle the stop search event.
+   * We need to remove the instance from memory storage and stop any running tasks.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void stopSearchEvent(SpigotStopSearchEvent event) {
     PlayerSearchSession session = getPlayerSession(event);
@@ -122,8 +144,10 @@ public class SearchListener implements Listener {
       Player player = Bukkit.getPlayer(session.getCallerId());
       if (player != null) {
         switch (session.getState()) {
-          case FAILED -> player.spigot().sendMessage(Format.error("Search ended. There is no path to your destination."));
-          case CANCELED -> player.spigot().sendMessage(Format.info("Search canceled."));
+          case FAILED -> player.spigot().sendMessage(
+              Format.error("Search ended. We couldn't find a path!"));
+          case CANCELED -> player.spigot().sendMessage(
+              Format.info("Search canceled."));
           case SUCCESSFUL -> {
             /* Don't say anything. They were already notified of the successful solutions. */
           }
@@ -136,6 +160,13 @@ public class SearchListener implements Listener {
     }
   }
 
+  /**
+   * Handler for when players move throughout the world.
+   * This allows us to update the last known location so player journeys
+   * know which particles to show.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void onPlayerMove(PlayerMoveEvent event) {
 
@@ -165,15 +196,14 @@ public class SearchListener implements Listener {
     playerJourney.visit(cell);
   }
 
+  /**
+   * Handle the player quit event.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void onQuit(PlayerQuitEvent event) {
-    // Stop the search so we don't waste memory on someone who isn't here anymore
-    SearchSession<LocationCell, World> currentSearch = JourneySpigot.getInstance()
-        .getSearchManager()
-        .getSearch(event.getPlayer().getUniqueId());
-    if (currentSearch != null) {
-      currentSearch.cancel();
-    }
+    // Perform quit logic. Currently nothing.
   }
 
   private PlayerSearchSession getPlayerSession(SpigotSearchEvent<?> event) {

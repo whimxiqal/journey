@@ -1,22 +1,36 @@
 package edu.whimc.journey.common.data.sql;
 
 import edu.whimc.journey.common.data.DataAccessException;
-import edu.whimc.journey.common.data.ServerEndpointManager;
+import edu.whimc.journey.common.data.PublicEndpointManager;
 import edu.whimc.journey.common.navigation.Cell;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class SQLServerEndpointManager<T extends Cell<T, D>, D>
+/**
+ * A public endpoint manager implemented for SQL.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
+public abstract class SqlPublicEndpointManager<T extends Cell<T, D>, D>
     extends SqlEndpointManager<T, D>
-    implements ServerEndpointManager<T, D> {
+    implements PublicEndpointManager<T, D> {
 
-  public SQLServerEndpointManager(SQLConnectionController connectionController, DataConverter<T, D> dataConverter) {
-    super(connectionController, dataConverter);
+  /**
+   * General constructor.
+   *
+   * @param connectionController the connection controller
+   * @param dataAdapter          the data adapter
+   */
+  public SqlPublicEndpointManager(SQLConnectionController connectionController,
+                                  DataAdapter<T, D> dataAdapter) {
+    super(connectionController, dataAdapter);
   }
 
   @Override
-  public void addServerEndpoint(@NotNull T cell, @NotNull String name) throws IllegalArgumentException, DataAccessException {
+  public void addServerEndpoint(@NotNull T cell, @NotNull String name)
+      throws IllegalArgumentException, DataAccessException {
     addEndpoint(null, cell, name);
   }
 
@@ -41,7 +55,7 @@ public abstract class SQLServerEndpointManager<T extends Cell<T, D>, D>
   }
 
   @Override
-  public Map<String, T> getServerEndpoints() throws DataAccessException {
+  public Map<String, T> getPublicEndpoints() throws DataAccessException {
     return getEndpoints(null);
   }
 }

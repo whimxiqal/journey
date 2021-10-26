@@ -26,7 +26,7 @@ public abstract class PlayerCommandNode extends CommandNode {
                                         @NotNull Map<String, String> flags) throws DataAccessException {
     Player player;
     if (!(sender instanceof Player)) {
-      sendCommandError(sender, CommandError.ONLY_PLAYER);
+      sendCommandUsageError(sender, CommandError.ONLY_PLAYER);
       return false;
     }
     player = (Player) sender;

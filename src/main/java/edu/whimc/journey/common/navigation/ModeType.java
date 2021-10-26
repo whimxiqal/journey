@@ -39,7 +39,7 @@ public enum ModeType implements Serializable {
   CLIMB("climb", true, 1 << 9),
   NETHER_PORTAL("netherportal", false, 1 << 10),
   COMMAND("command", true, 1 << 11),
-  LEAP("leap", false, 1 << 12);
+  PORT("port", false, 1 << 12);
 
   @Getter
   private final String id;

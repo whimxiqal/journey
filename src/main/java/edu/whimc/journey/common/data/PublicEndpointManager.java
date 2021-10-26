@@ -5,16 +5,23 @@ import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ServerEndpointManager<T extends Cell<T, D>, D> {
+/**
+ * A manager to handle public endpoints.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
+public interface PublicEndpointManager<T extends Cell<T, D>, D> {
 
   /**
-   * Add a server endpoint
+   * Add a server endpoint.
    *
    * @param cell the cell to add
    * @param name the name of the location
    * @throws IllegalArgumentException for invalid inputs
    */
-  void addServerEndpoint(@NotNull T cell, @NotNull String name) throws IllegalArgumentException, DataAccessException;
+  void addServerEndpoint(@NotNull T cell, @NotNull String name)
+      throws IllegalArgumentException, DataAccessException;
 
   /**
    * Remove a cell. Name is irrelevant. Does nothing if cell isn't saved.
@@ -70,10 +77,10 @@ public interface ServerEndpointManager<T extends Cell<T, D>, D> {
   T getServerEndpoint(@NotNull String name) throws DataAccessException;
 
   /**
-   * Get a list of all saved endpoints
+   * Get a list of all saved endpoints.
    *
    * @return all names of cells mapped to their corresponding cells
    */
-  Map<String, T> getServerEndpoints() throws DataAccessException;
+  Map<String, T> getPublicEndpoints() throws DataAccessException;
 
 }

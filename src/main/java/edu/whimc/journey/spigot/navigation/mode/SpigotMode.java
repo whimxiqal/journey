@@ -22,6 +22,7 @@
 package edu.whimc.journey.spigot.navigation.mode;
 
 import edu.whimc.journey.common.navigation.Mode;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.util.SpigotUtil;
 import java.util.Set;
@@ -29,16 +30,22 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
+/**
+ * A general implementation of modes used in Spigot Minecraft.
+ */
 public abstract class SpigotMode extends Mode<LocationCell, World> {
 
   private final Set<Material> forcePassable;
 
-  public SpigotMode(Set<Material> forcePassable) {
+  /**
+   * General constructor.
+   *
+   * @param session       the session
+   * @param forcePassable the list of passable materials
+   */
+  public SpigotMode(SearchSession<LocationCell, World> session, Set<Material> forcePassable) {
+    super(session);
     this.forcePassable = forcePassable;
-  }
-
-  protected Set<Material> getForcedPassable() {
-    return this.forcePassable;
   }
 
   protected boolean isVerticallyPassable(Block block) {

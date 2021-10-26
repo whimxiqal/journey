@@ -22,18 +22,32 @@
 package edu.whimc.journey.spigot.navigation.mode;
 
 import edu.whimc.journey.common.navigation.ModeType;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.navigation.LocationCell;
+import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implementation of {@link edu.whimc.journey.common.navigation.Mode}
+ * to check the places a player may jump to in Minecraft.
+ */
 public class JumpMode extends SpigotMode {
 
-  public JumpMode(Set<Material> forcePassable) {
-    super(forcePassable);
+  /**
+   * General constructor.
+   *
+   * @param session       the search session
+   * @param forcePassable the set of passable materials
+   */
+  public JumpMode(SearchSession<LocationCell, World> session, Set<Material> forcePassable) {
+    super(session, forcePassable);
   }
 
   @Override
-  public void collectDestinations(LocationCell origin) {
+  public void collectDestinations(LocationCell origin, @NotNull List<Option> options) {
     LocationCell cell;
 
     cell = origin.createLocatableAtOffset(0, -1, 0);
@@ -50,28 +64,30 @@ public class JumpMode extends SpigotMode {
       return;
     }
     // 1 block up
-    accept(origin.createLocatableAtOffset(0, 1, 0), 1.0d);
+    accept(origin.createLocatableAtOffset(0, 1, 0), 1.0d, options);
 
     // 1 block away and up
     for (int offX = -1; offX <= 1; offX++) {
       outerZ:
       for (int offZ = -1; offZ <= 1; offZ++) {
-        for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
-          for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
-            if (offXIn == 0 && offZIn == 0) continue;
+        for (int insideOffX = offX * offX /* normalize sign */; insideOffX >= 0; insideOffX--) {
+          for (int insideOffZ = offZ * offZ /* normalize sign */; insideOffZ >= 0; insideOffZ--) {
+            if (insideOffX == 0 && insideOffZ == 0) {
+              continue;
+            }
             // Check two blocks tall
             cell = origin.createLocatableAtOffset(
-                offXIn * offX /* get sign back */,
+                insideOffX * offX /* get sign back */,
                 1,
-                offZIn * offZ /* get sign back */);
+                insideOffZ * offZ /* get sign back */);
             if (!isLaterallyPassable(cell.getBlock())) {
               reject(cell);
               continue outerZ;
             }
             cell = origin.createLocatableAtOffset(
-                offXIn * offX /* get sign back */,
+                insideOffX * offX /* get sign back */,
                 2,
-                offZIn * offZ /* get sign back */);
+                insideOffZ * offZ /* get sign back */);
             if (!isPassable(cell.getBlock())) {
               reject(cell);
               continue outerZ;
@@ -87,8 +103,7 @@ public class JumpMode extends SpigotMode {
         if (!isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
             && jumpDistance <= 1.2) {
           // Can stand here
-          accept(other, origin.distanceTo(other));
-//          break; I don't think this goes here?
+          accept(other, origin.distanceTo(other), options);
         } else {
           reject(other);
         }
@@ -97,7 +112,7 @@ public class JumpMode extends SpigotMode {
   }
 
   @Override
-  public ModeType getType() {
+  public @NotNull ModeType getType() {
     return ModeType.JUMP;
   }
 }

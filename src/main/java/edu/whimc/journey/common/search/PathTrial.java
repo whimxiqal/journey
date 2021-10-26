@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
@@ -45,6 +46,15 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * An attempt to calculate a {@link Path} encapsulated into an object.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see Path
+ * @see SearchSession
+ * @see ItineraryTrial
+ */
 public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
 
   // TODO bring this max size up to something larger like a million but
@@ -69,7 +79,7 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
   @Getter
   private ResultState state;
   @Getter
-  private final boolean fromCache;
+  private boolean fromCache;
 
   private PathTrial(SearchSession<T, D> session,
                     T origin, T destination,
@@ -90,6 +100,18 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
     this.fromCache = fromCache;
   }
 
+  /**
+   * Get a path trial that is already determined to be successful.
+   * Any attempts will result in success.
+   *
+   * @param session     the session
+   * @param origin      the origin of the path
+   * @param destination the destination of the path
+   * @param path        the path
+   * @param <T>         the location type
+   * @param <D>         the domain type
+   * @return the successful path trial
+   */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> successful(SearchSession<T, D> session,
                                                                      T origin, T destination,
                                                                      Path<T, D> path) {
@@ -98,6 +120,17 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
         ResultState.SUCCESSFUL, false);
   }
 
+  /**
+   * Get a path trial that is already determined to have failed.
+   * Any attempts will result in failure.
+   *
+   * @param session     the session
+   * @param origin      the origin of the path
+   * @param destination the destination of the path
+   * @param <T>         the location type
+   * @param <D>         the domain type
+   * @return the path trial
+   */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> failed(SearchSession<T, D> session,
                                                                  T origin, T destination) {
     return new PathTrial<>(session, origin, destination,
@@ -105,6 +138,19 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
         ResultState.FAILED, false);
   }
 
+  /**
+   * Get a path trial that has not yet been calculated.
+   * We will approximate the result as the cartesian distance between the
+   * origin and destination,
+   * but a more precise answer will be calculated the first time it is attempted.
+   *
+   * @param session     the session
+   * @param origin      the origin
+   * @param destination the destination
+   * @param <T>         the location type
+   * @param <D>         the domain type
+   * @return the path trial
+   */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> approximate(SearchSession<T, D> session,
                                                                       T origin, T destination) {
     return new PathTrial<>(session, origin, destination,
@@ -112,6 +158,17 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
         ResultState.IDLE, false);
   }
 
+  /**
+   * Get a path trial that has some result determined from the cache.
+   *
+   * @param session     the session
+   * @param origin      the origin
+   * @param destination the destination
+   * @param path        the path
+   * @param <T>         the location type
+   * @param <D>         the domain type
+   * @return the path trial
+   */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> cached(SearchSession<T, D> session,
                                                                  T origin, T destination,
                                                                  Path<T, D> path) {
@@ -121,6 +178,36 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
         true);
   }
 
+  private PathTrial.TrialResult<T, D> fail(Collection<Mode<T, D>> modes, boolean cacheIt) {
+    this.state = ResultState.FAILED;
+    this.length = Double.MAX_VALUE;
+    this.fromCache = false;
+    if (cacheIt) {
+      JourneyCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), null);
+    }
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    return new TrialResult<>(Optional.empty(), true);
+  }
+
+  private PathTrial.TrialResult<T, D> succeed(double length,
+                                              List<Step<T, D>> steps,
+                                              Collection<Mode<T, D>> modes) {
+    this.state = ResultState.SUCCESSFUL;
+    this.length = length;
+    this.path = new Path<>(origin, new ArrayList<>(steps), length);
+    this.fromCache = false;
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    JourneyCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), this.path);
+    return new TrialResult<>(Optional.of(this.path), true);
+  }
+
+  /**
+   * Attempt to calculate a path given some modes of transportation.
+   *
+   * @param modes              the modes allowed for the caller
+   * @param useCacheIfPossible whether the cache should be used for retrieving previous results
+   * @return a result object
+   */
   @NotNull
   public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCacheIfPossible) {
     if (!origin.getDomain().equals(destination.getDomain())) {
@@ -152,31 +239,29 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
         origin.distanceTo(destination), 0);
     upcoming.add(originNode);
     visited.put(origin, originNode);
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new VisitationSearchEvent<>(session, originNode.getData()));
+    JourneyCommon.<T, D>getSearchEventDispatcher()
+        .dispatch(new VisitationSearchEvent<>(session, originNode.getData()));
 
     Node current;
     while (!upcoming.isEmpty()) {
 
       if (session.state.isCanceled()) {
         // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
-        this.state = ResultState.FAILED;
-        this.length = Double.MAX_VALUE;
-        return new TrialResult<>(Optional.empty(), true);
+        return fail(modes, false);
       }
 
       if (visited.size() > MAX_SIZE) {
         // We ran out of allocated memory. Let's just call it here and say we failed and cache the failure.
-        this.state = ResultState.FAILED;
-        this.length = Double.MAX_VALUE;
-        JourneyCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), null);
-        return new TrialResult<>(Optional.empty(), true);
+        return fail(modes, true);
       }
 
       current = upcoming.poll();
       assert current != null;
-      JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StepSearchEvent<>(session, originNode.getData()));
+      JourneyCommon.<T, D>getSearchEventDispatcher()
+          .dispatch(new StepSearchEvent<>(session, originNode.getData()));
 
-      if (current.getData().getLocatable().distanceToSquared(destination) <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED) {
+      if (current.getData().getLocatable().distanceToSquared(destination)
+          <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED) {
         // We found it!
         double length = current.getScore();
         LinkedList<Step<T, D>> steps = new LinkedList<>();
@@ -184,47 +269,45 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        this.state = ResultState.SUCCESSFUL;
-        this.length = length;
-        this.path = new Path<>(origin, new ArrayList<>(steps), length);
-        JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
-        JourneyCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), this.path);
-        return new TrialResult<>(Optional.of(this.path), true);
+        return succeed(length, steps, modes);
       }
 
       // Need to keep going
       for (Mode<T, D> mode : modes) {
-        for (Map.Entry<T, Double> next : mode.getDestinations(current.getData().getLocatable(), session).entrySet()) {
-          if (visited.containsKey(next.getKey())) {
+        for (Mode<T, D>.Option option : mode.getDestinations(current.getData().getLocatable())) {
+          if (visited.containsKey(option.getLocation())) {
             // Already visited, but see if it is better to come from this new direction
-            Node that = visited.get(next.getKey());
-            if (current.getScore() + next.getValue() < that.getScore()) {
+            Node that = visited.get(option.getLocation());
+            if (current.getScore() + option.getDistance() < that.getScore()) {
               that.setPrevious(current);
-              that.setScore(current.getScore() + next.getValue());
+              that.setScore(current.getScore() + option.getDistance());
               that.setData(new Step<>(that.getData().getLocatable(), mode.getType()));
             }
           } else {
             // Not visited. Set up node, give it a score, and add it to the system
-            Node nextNode = new Node(new Step<>(next.getKey(), mode.getType()),
+            Node nextNode = new Node(new Step<>(option.getLocation(), mode.getType()),
                 current,
-                next.getKey().distanceTo(destination),
-                current.getScore() + next.getValue());
+                option.getLocation().distanceTo(destination),
+                current.getScore() + option.getDistance());
             upcoming.add(nextNode);
-            visited.put(next.getKey(), nextNode);
-            JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new VisitationSearchEvent<>(session, nextNode.getData()));
+            visited.put(option.getLocation(), nextNode);
+            JourneyCommon.<T, D>getSearchEventDispatcher()
+                .dispatch(new VisitationSearchEvent<>(session, nextNode.getData()));
           }
         }
       }
     }
 
     // We've exhausted all possibilities. Fail.
-    this.state = ResultState.FAILED;
-    this.length = Double.MAX_VALUE;
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
-    JourneyCommon.<T, D>getPathCache().put(origin, destination, ModeTypeGroup.from(modes), null);
-    return new TrialResult<>(Optional.empty(), true);
+    return fail(modes, true);
   }
 
+  /**
+   * A result object to return the result of the {@link #attempt} method.
+   *
+   * @param <T> the location type
+   * @param <D> the domain type
+   */
   public static final record TrialResult<T extends Cell<T, D>, D>(Optional<Path<T, D>> path,
                                                                   boolean changedProblem) {
   }

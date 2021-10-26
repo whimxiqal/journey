@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A manager for storing {@link edu.whimc.journey.common.navigation.Endpoint}s in SQL.
+ * A manager for storing endpoints of search sessions in SQL.
  *
  * @param <T> the cell type
  * @param <D> the domain type
@@ -27,17 +27,17 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
   @Getter
   private final SQLConnectionController connectionController;
   @Getter
-  private final DataConverter<T, D> dataConverter;
+  private final DataAdapter<T, D> dataAdapter;
 
   /**
    * Default constructor.
    *
    * @param connectionController a controller for connecting to a SQL database
-   * @param dataConverter        a conversion controller to serialize and deserialize data from Journey
+   * @param dataAdapter        a conversion controller to serialize and deserialize data from Journey
    */
-  public SqlEndpointManager(SQLConnectionController connectionController, DataConverter<T, D> dataConverter) {
+  public SqlEndpointManager(SQLConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
     this.connectionController = connectionController;
-    this.dataConverter = dataConverter;
+    this.dataAdapter = dataAdapter;
     createTables();
   }
 
@@ -87,7 +87,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
     statement.setString(1, playerUuid == null ? null : playerUuid.toString());
     statement.setString(2, name.toLowerCase());
     statement.setString(3, name);
-    statement.setString(4, dataConverter.getDomainIdentifier(cell.getDomain()));
+    statement.setString(4, dataAdapter.getDomainIdentifier(cell.getDomain()));
     statement.setInt(5, cell.getX());
     statement.setInt(6, cell.getY());
     statement.setInt(7, cell.getZ());
@@ -110,7 +110,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
           "z"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, dataConverter.getDomainIdentifier(cell.getDomain()));
+      statement.setString(2, dataAdapter.getDomainIdentifier(cell.getDomain()));
       statement.setInt(3, cell.getX());
       statement.setInt(4, cell.getY());
       statement.setInt(5, cell.getZ());
@@ -156,7 +156,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
 
       ResultSet resultSet = statement.executeQuery();
       if (resultSet.next()) {
-        return dataConverter.makeCell(resultSet.getInt("x"),
+        return dataAdapter.makeCell(resultSet.getInt("x"),
             resultSet.getInt("y"),
             resultSet.getInt("z"),
             resultSet.getString("world_uuid"));
@@ -183,7 +183,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
           "z"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, dataConverter.getDomainIdentifier(cell.getDomain()));
+      statement.setString(2, dataAdapter.getDomainIdentifier(cell.getDomain()));
       statement.setInt(3, cell.getX());
       statement.setInt(4, cell.getY());
       statement.setInt(5, cell.getZ());
@@ -231,7 +231,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
     Map<String, T> endpoints = new HashMap<>();
     while (resultSet.next()) {
       endpoints.put(resultSet.getString("name"),
-          dataConverter.makeCell(resultSet.getInt("x"),
+          dataAdapter.makeCell(resultSet.getInt("x"),
               resultSet.getInt("y"),
               resultSet.getInt("z"),
               resultSet.getString("world_uuid")));

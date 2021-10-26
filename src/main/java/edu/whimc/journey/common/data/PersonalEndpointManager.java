@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface CustomEndpointManager<T extends Cell<T, D>, D> {
+public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
 
   /**
    * Add a player and a specific cell to the database.
@@ -104,6 +104,6 @@ public interface CustomEndpointManager<T extends Cell<T, D>, D> {
    * @param playerUuid the player's uuid
    * @return all names of cells mapped to their corresponding cells
    */
-  Map<String, T> getCustomEndpoints(@NotNull UUID playerUuid) throws DataAccessException;
+  Map<String, T> getPersonalEndpoints(@NotNull UUID playerUuid) throws DataAccessException;
 
 }

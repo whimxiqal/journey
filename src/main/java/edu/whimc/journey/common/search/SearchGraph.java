@@ -34,6 +34,12 @@ import java.util.Map;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * An implementation of a weighted graph to be used for the overall search algorithm.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
 public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Port<T, D>, PathTrial<T, D>> {
 
   private final SearchSession<T, D> session;
@@ -41,8 +47,16 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
   private final Node originNode;
   private final T destination;
   private final Node destinationNode;
-  private final Map<Port<T, D>, Node> leapToNode = new HashMap<>();
+  private final Map<Port<T, D>, Node> portToNode = new HashMap<>();
 
+  /**
+   * General constructor.
+   *
+   * @param session the search session
+   * @param origin the origin of the entire problem
+   * @param destination the destination of the entire problem
+   * @param ports the ports
+   */
   public SearchGraph(SearchSession<T, D> session, T origin, T destination, Collection<Port<T, D>> ports) {
     this.session = session;
     this.origin = origin;
@@ -50,9 +64,8 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
     this.destination = destination;
     this.destinationNode = new Node(new Port<>(destination, destination, ModeType.NONE, 0));
 
-    ports.forEach(leap -> {
-      Node leapNode = new Node(leap);
-      leapToNode.put(leap, leapNode);
+    ports.forEach(port -> {
+      portToNode.put(port, new Node(port));
     });
   }
 
@@ -65,7 +78,7 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
   }
 
   private Node getLeapNode(Port<T, D> port) {
-    return leapToNode.get(port);
+    return portToNode.get(port);
   }
 
   public void addPathTrialOriginToDestination(ModeTypeGroup modeTypeGroup) {

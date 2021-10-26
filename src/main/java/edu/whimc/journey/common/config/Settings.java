@@ -25,7 +25,7 @@
 
 package edu.whimc.journey.common.config;
 
-import edu.whimc.journey.common.data.DataType;
+import edu.whimc.journey.common.data.StorageMethod;
 
 /**
  * An enumeration of all Settings. No need to register anywhere, that's done dynamically.
@@ -53,11 +53,11 @@ public final class Settings {
   public static final Setting<String> STORAGE_PASSWORD
       = new StringSetting("storage.auth.password", "p@ssword");
 
-  public static final Setting<DataType> CUSTOM_ENDPOINT_STORAGE_TYPE
-      = new EnumSetting<>("storage.custom_endpoint_type", DataType.SQLITE, DataType.class);
+  public static final Setting<StorageMethod> CUSTOM_ENDPOINT_STORAGE_TYPE
+      = new EnumSetting<>("storage.custom_endpoint_type", StorageMethod.SQLITE, StorageMethod.class);
 
-  public static final Setting<DataType> SERVER_ENDPOINT_STORAGE_TYPE
-      = new EnumSetting<>("storage.server_endpoint_type", DataType.SQLITE, DataType.class);
+  public static final Setting<StorageMethod> SERVER_ENDPOINT_STORAGE_TYPE
+      = new EnumSetting<>("storage.server_endpoint_type", StorageMethod.SQLITE, StorageMethod.class);
 
   private Settings() {
   }

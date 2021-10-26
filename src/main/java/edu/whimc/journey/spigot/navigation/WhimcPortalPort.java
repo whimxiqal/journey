@@ -38,7 +38,7 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
   }
 
   private WhimcPortalPort(String name, LocationCell origin, LocationCell destination) {
-    super(origin, destination, ModeType.LEAP, 5);
+    super(origin, destination, ModeType.PORT, 5);
     this.portalName = name;
     World world = origin.getDomain();
   }

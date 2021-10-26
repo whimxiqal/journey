@@ -22,18 +22,32 @@
 package edu.whimc.journey.spigot.navigation.mode;
 
 import edu.whimc.journey.common.navigation.ModeType;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.navigation.LocationCell;
+import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * A mode to determine which nearby locations are reachable
+ * when having the ability to fly.
+ */
 public class FlyMode extends SpigotMode {
 
-  public FlyMode(Set<Material> forcePassable) {
-    super(forcePassable);
+  /**
+   * General constructor.
+   *
+   * @param session       the session
+   * @param forcePassable the set of all passable materials
+   */
+  public FlyMode(SearchSession<LocationCell, World> session, Set<Material> forcePassable) {
+    super(session, forcePassable);
   }
 
   @Override
-  public void collectDestinations(LocationCell origin) {
+  public void collectDestinations(@NotNull LocationCell origin, @NotNull List<Option> options) {
     LocationCell cell;
     // Check every block in a 3x3 grid centered around the current location
     for (int offX = -1; offX <= 1; offX++) {
@@ -44,28 +58,30 @@ public class FlyMode extends SpigotMode {
           // Checks for the block -- checks between the offset block and the original block,
           //  which would be 1 for just 1 offset variable, 4 for 2 offset variables,
           //  and 8 for 3 offset variables.
-          for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
-            for (int offYIn = offY * offY /* normalize sign */; offYIn >= 0; offYIn--) {
-              for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
+          for (int insideOffX = offX * offX /* normalize sign */; insideOffX >= 0; insideOffX--) {
+            for (int insideOffY = offY * offY /* normalize sign */; insideOffY >= 0; insideOffY--) {
+              for (int insideOffZ = offZ * offZ /* normalize sign */; insideOffZ >= 0; insideOffZ--) {
                 // This is the origin, we don't want to move here
-                if (offXIn == 0 && offYIn == 0 && offZIn == 0) continue;
+                if (insideOffX == 0 && insideOffY == 0 && insideOffZ == 0) {
+                  continue;
+                }
                 // Make sure we get the pillar of y values for the player's body
-                cell = origin.createLocatableAtOffset( // Floor
-                    offXIn * offX /* get sign back */,
-                    offYIn * offY /* get sign back */,
-                    offZIn * offZ /* get sign back */);
+                cell = origin.createLocatableAtOffset(// Floor
+                    insideOffX * offX /* get sign back */,
+                    insideOffY * offY /* get sign back */,
+                    insideOffZ * offZ /* get sign back */);
                 if (!isLaterallyPassable(cell.getBlock())) {
                   reject(cell);
                   continue outerZ;
                 }
-                for (int h = 0; h <= offYIn; h++) {
+                for (int h = 0; h <= insideOffY; h++) {
                   // The rest of the pillar above the floor
                   cell = origin.createLocatableAtOffset(
-                      offXIn * offX /* get sign back */,
-                      ((offYIn * offY /* get sign back */ + offYIn) >> 1) /* 1 for positive, 0 for negative */
+                      insideOffX * offX /* get sign back */,
+                      ((insideOffY * offY + insideOffY) >> 1) /* 1 for positive, 0 for negative */
                           + h
-                          + (1 - offYIn) /* for if offYIn is 0 */,
-                      offZIn * offZ /* get sign back */);
+                          + (1 - insideOffY) /* for if offYIn is 0 */,
+                      insideOffZ * offZ /* get sign back */);
                   if (!isPassable(cell.getBlock())) {
                     reject(cell);
                     continue outerZ;
@@ -75,7 +91,7 @@ public class FlyMode extends SpigotMode {
             }
           }
           LocationCell other = origin.createLocatableAtOffset(offX, offY, offZ);
-          accept(other, origin.distanceTo(other));
+          accept(other, origin.distanceTo(other), options);
         }
       }
     }
@@ -83,7 +99,7 @@ public class FlyMode extends SpigotMode {
   }
 
   @Override
-  public ModeType getType() {
+  public @NotNull ModeType getType() {
     return ModeType.FLY;
   }
 }

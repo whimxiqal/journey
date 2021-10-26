@@ -1,6 +1,6 @@
 package edu.whimc.journey.common.data.sql;
 
-import edu.whimc.journey.common.data.CustomEndpointManager;
+import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.data.DataAccessException;
 import edu.whimc.journey.common.navigation.Cell;
 import java.util.Map;
@@ -8,12 +8,12 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class SQLCustomEndpointManager<T extends Cell<T, D>, D>
+public abstract class SQLPersonalEndpointManager<T extends Cell<T, D>, D>
     extends SqlEndpointManager<T, D>
-    implements CustomEndpointManager<T, D> {
+    implements PersonalEndpointManager<T, D> {
 
-  public SQLCustomEndpointManager(SQLConnectionController connectionController, DataConverter<T, D> dataConverter) {
-    super(connectionController, dataConverter);
+  public SQLPersonalEndpointManager(SQLConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
+    super(connectionController, dataAdapter);
   }
 
   @Override
@@ -47,7 +47,7 @@ public abstract class SQLCustomEndpointManager<T extends Cell<T, D>, D>
   }
 
   @Override
-  public Map<String, T> getCustomEndpoints(@NotNull UUID playerUuid) throws DataAccessException {
+  public Map<String, T> getPersonalEndpoints(@NotNull UUID playerUuid) throws DataAccessException {
     return this.getEndpoints(playerUuid);
   }
 }

@@ -17,48 +17,17 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package edu.whimc.journey.common.journey;
-
-import edu.whimc.journey.common.navigation.Locatable;
-import edu.whimc.journey.common.navigation.Step;
-import java.util.Collection;
+package edu.whimc.journey.common.data;
 
 /**
- * Manage information about the traversal of locatables
- * within the game.
- *
- * @param <T> the type of locatable
- * @param <D> the type of domain
+ * An enumeration of all implemented methods of persistent storage.
  */
-public interface Journey<T extends Locatable<T, D>, D> {
+public enum StorageMethod {
 
-  /**
-   * Notify this {@link Journey} that the given {@link Locatable}
-   * has been visited. This may be called very often, so efficiency
-   * is important here.
-   *
-   * @param locatable the visited locatable
-   */
-  void visit(T locatable);
-
-  /**
-   * Give the next locatables to traverse along the journey.
-   *
-   * @param count the number of locatables to get
-   * @return a collection of locatables of size {@code count}
-   */
-  Collection<Step<T, D>> next(int count);
-
-  /**
-   * Should run when the journey is completed or
-   * the journey is otherwise left.
-   */
-  void stop();
-
-  boolean isCompleted();
-
-  T currentPathDestination();
+  MYSQL,
+  SQLITE
 
 }

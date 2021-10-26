@@ -26,6 +26,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
+/**
+ * A description of all step required to move from some arbitrary origin
+ * to some arbitrary destination.
+ *
+ * <p>The result of a {@link edu.whimc.journey.common.search.SearchSession} calculation.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see edu.whimc.journey.common.search.SearchSession
+ * @see edu.whimc.journey.common.search.ItineraryTrial
+ * @see Journey
+ */
 public final class Itinerary<T extends Cell<T, D>, D> {
 
   private final T origin;
@@ -33,25 +45,57 @@ public final class Itinerary<T extends Cell<T, D>, D> {
   private final AlternatingList<Port<T, D>, Path<T, D>, Path<T, D>> stages;
   private final double length;
 
-  public Itinerary(T origin, Collection<Step<T, D>> steps, AlternatingList<Port<T, D>, Path<T, D>, Path<T, D>> stages, double length) {
+  /**
+   * General constructor.
+   *
+   * @param origin the origin of the itinerary
+   * @param steps  the steps to get to the destination
+   * @param stages the list of stages to complete to traverse this itinerary
+   * @param length the length of the entire thing
+   */
+  public Itinerary(T origin,
+                   Collection<Step<T, D>> steps,
+                   AlternatingList<Port<T, D>, Path<T, D>, Path<T, D>> stages,
+                   double length) {
     this.origin = origin;
     this.steps = new ArrayList<>(steps);
     this.stages = stages;
     this.length = length;
   }
 
+  /**
+   * Get the first location of the entire itinerary.
+   *
+   * @return the origin
+   */
   public T getOrigin() {
     return origin;
   }
 
+  /**
+   * Get all the steps to complete the itinerary in list form.
+   *
+   * @return the steps
+   */
   public ArrayList<Step<T, D>> getSteps() {
     return new ArrayList<>(steps);
   }
 
+  /**
+   * Get the stages to complete the itinerary, separating out paths
+   * from their connecting ports.
+   *
+   * @return the stages
+   */
   public AlternatingList<Port<T, D>, Path<T, D>, Path<T, D>> getStages() {
     return stages;
   }
 
+  /**
+   * Get the length of the whole itinerary.
+   *
+   * @return the length
+   */
   public double getLength() {
     return length;
   }

@@ -24,8 +24,8 @@ package edu.whimc.journey.common.search;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Mode;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Step;
 import edu.whimc.journey.common.search.event.StartItinerarySearchEvent;
 import edu.whimc.journey.common.search.event.StopItinerarySearchEvent;
@@ -37,6 +37,16 @@ import java.util.Objects;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * An attempt to calculate an {@link Itinerary} encapsulated into an object.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see Itinerary
+ * @see SearchSession
+ * @see PathTrial
+ * @see #attempt(Collection, boolean)
+ */
 public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
 
   private final SearchSession<T, D> session;
@@ -44,6 +54,13 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
   private final AlternatingList<Port<T, D>, PathTrial<T, D>, Object> alternatingList;
   private ResultState state;
 
+  /**
+   * General constructor.
+   *
+   * @param session         the session
+   * @param origin          the origin of the entire itinerary
+   * @param alternatingList the list of stages
+   */
   public ItineraryTrial(SearchSession<T, D> session, T origin,
                         AlternatingList<Port<T, D>, PathTrial<T, D>, Object> alternatingList) {
     this.session = session;
@@ -52,6 +69,13 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
     this.state = ResultState.IDLE;
   }
 
+  /**
+   * Attempt to calculate an itinerary given some modes of transportation.
+   *
+   * @param modes              the modes allowed for the caller
+   * @param useCacheIfPossible whether the cache should be used for retrieving previous results
+   * @return a result object
+   */
   @NotNull
   public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCacheIfPossible) {
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StartItinerarySearchEvent<>(session, this));
@@ -60,6 +84,11 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
     boolean failed = false;
     boolean changedProblem = false;
     for (PathTrial<T, D> pathTrial : alternatingList.getMinors()) {
+
+      if (session.state.isCanceled()) {
+        return new TrialResult<>(Optional.empty(), false);
+      }
+
       PathTrial.TrialResult<T, D> pathTrialResult = pathTrial.attempt(modes, useCacheIfPossible);
       if (pathTrialResult.changedProblem()) {
         changedProblem = true;
@@ -111,7 +140,16 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
     return this.state;
   }
 
-  public static final record TrialResult<T extends Cell<T, D>, D>(Optional<Itinerary<T, D>> itinerary,
-                                                                  boolean changedProblem) { }
+  /**
+   * A result of a trial attempt.
+   *
+   * @param <T> the location type
+   * @param <D> the domain type
+   * @see #attempt(Collection, boolean)
+   */
+  public static final record TrialResult<T extends Cell<T, D>, D>(
+      @NotNull Optional<Itinerary<T, D>> itinerary,
+      boolean changedProblem) {
+  }
 
 }

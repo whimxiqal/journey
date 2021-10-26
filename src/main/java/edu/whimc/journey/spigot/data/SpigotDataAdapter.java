@@ -1,12 +1,12 @@
 package edu.whimc.journey.spigot.data;
 
-import edu.whimc.journey.common.data.sql.DataConverter;
+import edu.whimc.journey.common.data.sql.DataAdapter;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import java.util.UUID;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
-public class SpigotDataConverter implements DataConverter<LocationCell, World> {
+public class SpigotDataAdapter implements DataAdapter<LocationCell, World> {
 
   @Override
   @NotNull

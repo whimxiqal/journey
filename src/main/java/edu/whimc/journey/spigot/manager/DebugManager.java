@@ -9,6 +9,11 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+/**
+ * A manager for handling transient debug state.
+ * This is meant to be instantiated once and provided along with the plugin instance.
+ * Each player (and the console) can enable debug mode.
+ */
 public class DebugManager {
 
   private final Set<UUID> debugging = ConcurrentHashMap.newKeySet();
@@ -16,32 +21,39 @@ public class DebugManager {
   @Getter
   private boolean consoleDebugging = false;
 
-  @SuppressWarnings("UnusedReturnValue")
-  public boolean startDebugging(UUID playerUuid) {
-    return debugging.add(playerUuid);
+  /**
+   * Enable debugging for a player.
+   *
+   * @param playerUuid the uuid of the player
+   */
+  public void startDebugging(UUID playerUuid) {
+    debugging.add(playerUuid);
   }
 
-  @SuppressWarnings("UnusedReturnValue")
-  public boolean stopDebugging(UUID playerUuid) {
-    return debugging.remove(playerUuid);
+  /**
+   * Disable debugging for a player.
+   *
+   * @param playerUuid the uuid of the player
+   */
+  public void stopDebugging(UUID playerUuid) {
+    debugging.remove(playerUuid);
   }
 
+  /**
+   * Determine whether a player is in debug mode.
+   *
+   * @param playerUuid the uuid of the player
+   * @return true if debugging
+   */
   public boolean isDebugging(UUID playerUuid) {
     return debugging.contains(playerUuid);
   }
 
-  public void broadcastDebugMessage(String message) {
-    debugging.forEach(uuid -> {
-      Player player = Bukkit.getServer().getPlayer(uuid);
-      if (player != null) {
-        player.sendMessage(message);
-      }
-    });
-    if (consoleDebugging) {
-      Bukkit.getConsoleSender().sendMessage(message);
-    }
-  }
-
+  /**
+   * Broadcast a message to everyone in debugging mode.
+   *
+   * @param message the message
+   */
   public void broadcastDebugMessage(BaseComponent[] message) {
     debugging.forEach(uuid -> {
       Player player = Bukkit.getServer().getPlayer(uuid);

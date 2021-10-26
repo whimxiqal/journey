@@ -3,11 +3,20 @@ package edu.whimc.journey.common.util;
 import com.google.common.collect.Lists;
 import java.util.LinkedList;
 
+/**
+ * A utility class to perform "extra" miscellaneous tasks.
+ */
 public final class Extra {
 
   private Extra() {
   }
 
+  /**
+   * Determine if a string is a number.
+   *
+   * @param s the string
+   * @return true if it is a number
+   */
   public static boolean isNumber(String s) {
     for (int c : s.toCharArray()) {
       if (c > '9' || c < '0') {
@@ -17,22 +26,13 @@ public final class Extra {
     return true;
   }
 
-  public static boolean isCommandOffset(String offsetString) {
-    return !offsetString.isEmpty() && offsetString.charAt(0) == '~';
-  }
-
-  public static int calcCommandOffset(int origin, String offsetString) throws IllegalArgumentException {
-    if (offsetString.isEmpty()) {
-      throw new IllegalArgumentException("The offset string may not be empty");
-    }
-    if (!(offsetString.charAt(0) == '~')) {
-      throw new IllegalArgumentException("The offset string must start with a tilde (~)");
-    }
-    String subString = offsetString.substring(1);
-    int offset = subString.isEmpty() ? 0 : Integer.parseInt(offsetString.substring(1));
-    return origin + offset;
-  }
-
+  /**
+   * Combine an array of single-word inputs into another array where the words
+   * surrounded by quotes are combined into singular strings within the array.
+   *
+   * @param input the inputs
+   * @return the combined inputs
+   */
   public static String[] combineQuotedArguments(String[] input) {
     String full = String.join(" ", input);
     LinkedList<String> out = Lists.newLinkedList();
@@ -62,6 +62,12 @@ public final class Extra {
     return out.toArray(new String[0]);
   }
 
+  /**
+   * Place quotes around the input if there is a space in it.
+   *
+   * @param input the input string
+   * @return the new string
+   */
   public static String quoteStringWithSpaces(String input) {
     if (input.contains(" ")) {
       return "\"" + input + "\"";

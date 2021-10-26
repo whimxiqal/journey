@@ -25,34 +25,81 @@ import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.common.search.event.ModeFailureEvent;
 import edu.whimc.journey.common.search.event.ModeSuccessEvent;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * A general mode of transportation which determines whether certain locations can be reached by
+ * a regular humanoid entity.
+ *
+ * @param <T> the location
+ * @param <D> the domain
+ */
 public abstract class Mode<T extends Cell<T, D>, D> {
 
-  private Map<T, Double> map = new HashMap<>();
-  private SearchSession<T, D> session;
+  private final SearchSession<T, D> session;
 
-  public final Map<T, Double> getDestinations(T origin, SearchSession<T, D> session) {
-    this.map = new HashMap<>();
+  /**
+   * General constructor.
+   *
+   * @param session the search session requesting information from this mode
+   */
+  public Mode(@NotNull SearchSession<T, D> session) {
     this.session = session;
-    collectDestinations(origin);
-    return map;
   }
 
-  protected final void accept(T destination, double distance) {
-    this.map.put(destination, distance);
-    delay();
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new ModeSuccessEvent<>(session, destination, getType()));
+  /**
+   * Collect and return all the destinations that are reachable from an original location
+   * based on the implementation of this mode.
+   * The returned value stores all possible movement options.
+   *
+   * @param origin the original (current) location
+   * @return all options
+   */
+  @NotNull
+  public final Collection<Option> getDestinations(@NotNull T origin) {
+    List<Option> options = new LinkedList<>();
+    collectDestinations(origin, options);
+    return options;
   }
 
-  protected final void reject(T destination) {
+  /**
+   * Accept a location and its distance to the list of possible options.
+   * This adds it to the list and performs other somewhat unnecessary management operations.
+   * All implementations of {@link Mode} should use accept instead of adding directly to the option list.
+   *
+   * @param destination the accepted destination
+   * @param distance    the distance to the destination
+   * @param options     the options list, passed from the previous caller
+   */
+  protected final void accept(@NotNull T destination,
+                              double distance,
+                              @NotNull List<Option> options) {
+    options.add(new Option(destination, distance));
     delay();
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new ModeFailureEvent<>(session, destination, getType()));
+    JourneyCommon.<T, D>getSearchEventDispatcher()
+        .dispatch(new ModeSuccessEvent<>(session, destination, getType()));
+  }
+
+  /**
+   * Reject a location and its distance.
+   * This performs somewhat unnecessary management operations.
+   * All implementations of {@link Mode} should use this method if the mode operation
+   * determined that a block is unreachable given the current circumstances.
+   *
+   * @param destination the rejected destination
+   */
+  protected final void reject(@NotNull T destination) {
+    delay();
+    JourneyCommon.<T, D>getSearchEventDispatcher()
+        .dispatch(new ModeFailureEvent<>(session, destination, getType()));
   }
 
   private void delay() {
     // Delay the algorithm, if requested by implementation of search session
+    // (Primarily used in animating the search process)
     if (session.getAlgorithmStepDelay() != 0) {
       try {
         Thread.sleep(session.getAlgorithmStepDelay());
@@ -62,8 +109,54 @@ public abstract class Mode<T extends Cell<T, D>, D> {
     }
   }
 
-  protected abstract void collectDestinations(T origin);
+  protected abstract void collectDestinations(@NotNull T origin,
+                                              @NotNull List<Option> options);
 
+  /**
+   * Get the mode type.
+   *
+   * @return the mode type
+   */
+  @NotNull
   public abstract ModeType getType();
+
+  /**
+   * A record to store a movement option. It just contains a location and a distance to that location.
+   */
+  public class Option {
+
+    final T location;
+    final double distance;
+
+    /**
+     * General constructor.
+     *
+     * @param location the location
+     * @param distance the destination
+     */
+    public Option(@NotNull T location, double distance) {
+      this.location = location;
+      this.distance = distance;
+    }
+
+    /**
+     * Get location.
+     *
+     * @return the location
+     */
+    @NotNull
+    public T getLocation() {
+      return location;
+    }
+
+    /**
+     * Get distance.
+     *
+     * @return the distance
+     */
+    public double getDistance() {
+      return distance;
+    }
+  }
 
 }

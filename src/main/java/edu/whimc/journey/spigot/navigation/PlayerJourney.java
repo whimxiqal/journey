@@ -17,26 +17,25 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package edu.whimc.journey.spigot.journey;
+package edu.whimc.journey.spigot.navigation;
 
-import edu.whimc.journey.common.journey.Journey;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Port;
+import edu.whimc.journey.common.navigation.Journey;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.Path;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Step;
-import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.common.tools.AlternatingList;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.music.Song;
-import edu.whimc.journey.spigot.navigation.LocationCell;
+import edu.whimc.journey.spigot.search.PlayerSearchSession;
 import edu.whimc.journey.spigot.util.Format;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -45,6 +44,9 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A journey given to a {@link Player}.
+ */
 public class PlayerJourney implements Journey<LocationCell, World> {
 
   private static final int ILLUMINATED_COUNT = 64;
@@ -64,10 +66,10 @@ public class PlayerJourney implements Journey<LocationCell, World> {
    */
   private final Set<LocationCell> near = new HashSet<>();
   private final Itinerary<LocationCell, World> itinerary;
-  private final AlternatingList.Traversal<Port<LocationCell, World>,
+  private final PlayerSearchSession session;
+  private AlternatingList.Traversal<Port<LocationCell, World>,
       Path<LocationCell, World>,
       Path<LocationCell, World>> traversal;
-  private final SearchSession<LocationCell, World> session;
   private int stepIndex = 0;
   private boolean completed = false;
   private Runnable stopIllumination;
@@ -76,18 +78,21 @@ public class PlayerJourney implements Journey<LocationCell, World> {
    */
   private Itinerary<LocationCell, World> prospectiveItinerary;
 
+  /**
+   * General constructor.
+   *
+   * @param playerUuid the identifier for the player
+   * @param session    the search session
+   * @param itinerary  the itinerary that determines the path
+   */
   public PlayerJourney(@NotNull final UUID playerUuid,
-                       @NotNull SearchSession<LocationCell, World> session,
+                       @NotNull PlayerSearchSession session,
                        @NotNull final Itinerary<LocationCell, World> itinerary) {
     this.playerUuid = playerUuid;
     this.session = session;
     this.itinerary = itinerary;
     this.traversal = itinerary.getStages().traverse();
     startPath(traversal.next()); // start first trail (move beyond the first "leap")
-  }
-
-  private LocationCell destination() {
-    return itinerary.getSteps().get(itinerary.getSteps().size() - 1).getLocatable();
   }
 
   @Override
@@ -160,17 +165,25 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     return traversal.get().getDestination();
   }
 
+  @Override
+  public void run() {
+    stop();
+    completed = false;
+    traversal = itinerary.getStages().traverse();
+    startPath(traversal.next());
+    illuminateTrail();
+  }
+
   private void startPath(Path<LocationCell, World> path) {
     stepIndex = 0;
     near.clear();
     for (int i = 0; i < Math.min(PROXIMAL_BLOCK_CACHE_SIZE, path.getSteps().size()); i++) {
-      near.add(traversal.get().getSteps().get(i).getLocatable());
+      near.add(path.getSteps().get(i).getLocatable());
     }
   }
 
-  public void illuminateTrail() {
+  private void illuminateTrail() {
     // Set up illumination scheduled task for showing the paths
-    Random rand = new Random();
     int illuminationTaskId = Bukkit.getScheduler().runTaskTimer(JourneySpigot.getInstance(), () -> {
       PlayerJourney journey = JourneySpigot.getInstance()
           .getSearchManager()
@@ -228,14 +241,35 @@ public class PlayerJourney implements Journey<LocationCell, World> {
 
   }
 
-  public SearchSession<LocationCell, World> getSession() {
+  /**
+   * Get the player search session used to calculate this journey.
+   *
+   * @return the session
+   */
+  public PlayerSearchSession getSession() {
     return session;
   }
 
+  /**
+   * Get the prospective itinerary.
+   * This (better) itinerary was calculated by the session after this journey was already prepared
+   * for the user. The user will have the option of using this itinerary if he/she
+   * so chooses and create another journey.
+   *
+   * @return the itinerary
+   */
   public Itinerary<LocationCell, World> getProspectiveItinerary() {
     return prospectiveItinerary;
   }
 
+  /**
+   * Get the prospective itinerary.
+   * This (better) itinerary was calculated by the session after this journey was already prepared
+   * for the user. The user will have the option of using this itinerary if he/she
+   * so chooses and create another journey.
+   *
+   * @param prospectiveItinerary the prospective itinerary
+   */
   public void setProspectiveItinerary(Itinerary<LocationCell, World> prospectiveItinerary) {
     this.prospectiveItinerary = prospectiveItinerary;
   }

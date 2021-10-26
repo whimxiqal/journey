@@ -22,25 +22,39 @@
 package edu.whimc.journey.spigot.navigation.mode;
 
 import edu.whimc.journey.common.navigation.ModeType;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.navigation.LocationCell;
+import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implementation of {@link edu.whimc.journey.common.navigation.Mode}
+ * for normal walking in Minecraft.
+ */
 public class WalkMode extends SpigotMode {
 
-  public WalkMode(Set<Material> forcePassable) {
-    super(forcePassable);
+  /**
+   * General constructor.
+   *
+   * @param session       the session
+   * @param forcePassable list of passable materials
+   */
+  public WalkMode(SearchSession<LocationCell, World> session, Set<Material> forcePassable) {
+    super(session, forcePassable);
   }
 
   @Override
-  public void collectDestinations(LocationCell origin) {
+  public void collectDestinations(LocationCell origin, @NotNull List<Option> options) {
     LocationCell cell;
     LocationCell cell1;
     LocationCell cell2;
     // Can you drop into an inhabitable block?
     cell = origin.createLocatableAtOffset(0, -1, 0);
     if (canStandOn(origin.getBlockAtOffset(0, -2, 0)) && isVerticallyPassable(cell.getBlock())) {
-      accept(cell, 1.0d);
+      accept(cell, 1.0d, options);
     } else {
       reject(cell);
     }
@@ -56,12 +70,16 @@ public class WalkMode extends SpigotMode {
       outerZ:
       for (int offZ = -1; offZ <= 1; offZ++) {
         // For the diagonal points, check that the path is clear in both
-        //  lateral directions as well as diagonally
-        for (int offXIn = offX * offX /* normalize sign */; offXIn >= 0; offXIn--) {
-          for (int offZIn = offZ * offZ /* normalize sign */; offZIn >= 0; offZIn--) {
-            if (offXIn == 0 && offZIn == 0) continue;
+        //  lateral directions and diagonally
+        for (int insideOffX = offX * offX /* normalize sign */; insideOffX >= 0; insideOffX--) {
+          for (int insideOffZ = offZ * offZ /* normalize sign */; insideOffZ >= 0; insideOffZ--) {
+            if (insideOffX == 0 && insideOffZ == 0) {
+              continue;
+            }
             for (int offY = 0; offY <= 1; offY++) { // Check two blocks tall
-              cell = origin.createLocatableAtOffset(offXIn * offX /* get sign back */, offY, offZIn * offZ);
+              cell = origin.createLocatableAtOffset(insideOffX * offX /* get sign back */,
+                  offY,
+                  insideOffZ * offZ /*get sign back */);
               if (!isLaterallyPassable(cell.getBlock())) {
                 reject(cell);
                 continue outerZ;  // Barrier - invalid move
@@ -74,7 +92,7 @@ public class WalkMode extends SpigotMode {
         cell = origin.createLocatableAtOffset(offX, 0, offZ);
         if (!isVerticallyPassable(cell.getBlock())) {
           // We can just stand right here (carpets, slabs, etc.)
-          accept(cell, origin.distanceTo(cell));
+          accept(cell, origin.distanceTo(cell), options);
         } else {
           reject(cell);
         }
@@ -87,7 +105,7 @@ public class WalkMode extends SpigotMode {
             if (cell2.getBlock().getType().equals(Material.WATER)) {
               reject(cell1); // Water (drowning) - invalid destination
             } else {
-              accept(cell1, origin.distanceTo(cell1));
+              accept(cell1, origin.distanceTo(cell1), options);
             }
             break;
           } else {
@@ -99,7 +117,7 @@ public class WalkMode extends SpigotMode {
   }
 
   @Override
-  public ModeType getType() {
+  public @NotNull ModeType getType() {
     return ModeType.WALK;
   }
 }

@@ -1,22 +1,38 @@
 package edu.whimc.journey.spigot.navigation.mode;
 
 import edu.whimc.journey.common.navigation.ModeType;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.util.MaterialGroups;
+import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Door;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * The movement mode to handle if players can move through doors.
+ *
+ * @see edu.whimc.journey.common.search.SearchSession
+ */
 public final class DoorMode extends SpigotMode {
 
-  public DoorMode(Set<Material> forcePassable) {
-    super(forcePassable);
+  /**
+   * Default constructor.
+   *
+   * @param forcePassable set of materials that we can always pass through
+   */
+  public DoorMode(SearchSession<LocationCell, World> session, Set<Material> forcePassable) {
+    super(session, forcePassable);
   }
 
   @Override
-  public void collectDestinations(LocationCell origin) {
+  public void collectDestinations(LocationCell origin, @NotNull List<Option> options) {
+    // TODO check if there are buttons or levers nearby that may open the door
+
     LocationCell cell;
     Block block;
     // Pos X - East
@@ -33,14 +49,12 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d);
+            accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d);
-            } else if (false) {
-              // TODO Find any buttons or levers nearby
+              accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d, options);
             } else {
               reject(origin.createLocatableAtOffset(1, 0, 0));
             }
@@ -48,7 +62,7 @@ public final class DoorMode extends SpigotMode {
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(1, 0, 0), 1d);
+          accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d, options);
         }
       } else {
         reject(origin.createLocatableAtOffset(1, -1, 0));
@@ -71,25 +85,23 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.WEST)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d);
+            accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d);
-            } else if (false) {
-              // TODO Find any buttons or levers nearby
+              accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d, options);
             } else {
-              reject(origin.createLocatableAtOffset(1, 0, 0));
+              reject(origin.createLocatableAtOffset(0, 0, 1));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(0, 0, 1), 1d);
+          accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d, options);
         }
       } else {
-        reject(origin.createLocatableAtOffset(1, -1, 0));
+        reject(origin.createLocatableAtOffset(0, -1, 1));
       }
     } else {
       reject(new LocationCell(block.getLocation()));
@@ -109,25 +121,23 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d);
+            accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d);
-            } else if (false) {
-              // TODO Find any buttons or levers nearby
+              accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d, options);
             } else {
-              reject(origin.createLocatableAtOffset(1, 0, 0));
+              reject(origin.createLocatableAtOffset(-1, 0, 0));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(-1, 0, 0), 1d);
+          accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d, options);
         }
       } else {
-        reject(origin.createLocatableAtOffset(1, -1, 0));
+        reject(origin.createLocatableAtOffset(-1, -1, 0));
       }
     } else {
       reject(new LocationCell(block.getLocation()));
@@ -147,25 +157,23 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.WEST)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d);
+            accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d);
-            } else if (false) {
-              // TODO Find any buttons or levers nearby
+              accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d, options);
             } else {
-              reject(origin.createLocatableAtOffset(1, 0, 0));
+              reject(origin.createLocatableAtOffset(0, 0, -1));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(0, 0, -1), 1d);
+          accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d, options);
         }
       } else {
-        reject(origin.createLocatableAtOffset(1, -1, 0));
+        reject(origin.createLocatableAtOffset(0, -1, -1));
       }
     } else {
       reject(new LocationCell(block.getLocation()));
@@ -174,7 +182,7 @@ public final class DoorMode extends SpigotMode {
   }
 
   @Override
-  public ModeType getType() {
+  public @NotNull ModeType getType() {
     return ModeType.DOOR;
   }
 }

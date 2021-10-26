@@ -3,6 +3,11 @@ package edu.whimc.journey.common.config;
 import com.google.common.base.Enums;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A setting that holds an enum value.
+ *
+ * @param <E> the enum type
+ */
 public class EnumSetting<E extends Enum<E>> extends Setting<E> {
   EnumSetting(@NotNull String path, @NotNull E defaultValue, @NotNull Class<E> clazz) {
     super(path, defaultValue, clazz);
