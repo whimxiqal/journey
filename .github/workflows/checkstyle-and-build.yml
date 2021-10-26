@@ -21,7 +21,7 @@ jobs:
           level: error
           filter_mode: nofilter
           checkstyle_config: checkstyle.xml
-          checkstyle_version: 9.0
+          checkstyle_version: 9.0.1
 
   build:
     runs-on: ubuntu-latest
