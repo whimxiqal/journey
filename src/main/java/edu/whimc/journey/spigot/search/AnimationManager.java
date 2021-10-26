@@ -118,7 +118,8 @@ public class AnimationManager {
       return false;
     }
     Player player = getPlayer();
-    if (cell.getDomain() != player.getWorld() || cell.distanceToSquared(new LocationCell(player.getLocation())) > 10000) {
+    if (cell.getDomain() != player.getWorld()
+        || cell.distanceToSquared(new LocationCell(player.getLocation())) > 10000) {
       return false;
     }
     player.sendBlockChange(cell.getBlock().getLocation(), blockData);

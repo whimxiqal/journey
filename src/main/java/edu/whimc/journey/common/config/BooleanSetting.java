@@ -23,7 +23,11 @@ package edu.whimc.journey.common.config;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A setting to ultimately store some boolean.
+ */
 public class BooleanSetting extends Setting<Boolean> {
+
   BooleanSetting(@NotNull String path, @NotNull Boolean defaultValue) {
     super(path, defaultValue, Boolean.class);
   }
@@ -38,4 +42,5 @@ public class BooleanSetting extends Setting<Boolean> {
   public String printValue() {
     return getValue().toString();
   }
+
 }

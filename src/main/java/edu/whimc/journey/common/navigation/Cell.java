@@ -41,6 +41,15 @@ public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D>, 
   protected final Function<String, D> domainFunction;
   private transient D domain;
 
+  /**
+   * General constructor.
+   *
+   * @param x              the X coordinate
+   * @param y              the Y coordinate
+   * @param z              the Z coordinate
+   * @param domainId       the identifier for the domain
+   * @param domainFunction the function that converts an identifier into a domain object
+   */
   public Cell(int x, int y, int z, @NotNull String domainId, @NotNull Function<String, D> domainFunction) {
     this.coordinateX = x;
     this.coordinateY = y;
@@ -50,7 +59,7 @@ public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D>, 
   }
 
   @Override
-  abstract public double distanceToSquared(T other);
+  public abstract double distanceToSquared(T other);
 
   /**
    * Get X coordinate.

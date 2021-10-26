@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -92,7 +93,7 @@ class SearchTest {
     List<Port<Point3D, Domain>> links = Lists.newLinkedList();
     links.add(new TestLink(board1[8][4], board2[3][6]));
     links.add(new TestLink(board2[7][7], board1[8][8]));
-    links.forEach(session::registerLeap);
+    links.forEach(session::registerPort);
 
     Point3D origin = board1[4][4];
     Point3D destination = board1[4][8];
@@ -104,7 +105,7 @@ class SearchTest {
     // Clear printer board
     clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
 
-    session.registerMode(new StepMode());
+    session.registerMode(new StepMode(session));
 
     // Solve path
     Thread thread = new Thread(() -> {
@@ -262,7 +263,7 @@ class SearchTest {
   public static class TestLink extends Port<Point3D, Domain> {
 
     public TestLink(Point3D origin, Point3D destination) {
-      super(origin, destination, ModeType.LEAP, 1);
+      super(origin, destination, ModeType.PORT, 1);
     }
 
     @Override
@@ -275,8 +276,17 @@ class SearchTest {
 
   public class StepMode extends Mode<Point3D, Domain> {
 
+    /**
+     * General constructor.
+     *
+     * @param session the search session requesting information from this mode
+     */
+    public StepMode(SearchSession<Point3D, Domain> session) {
+      super(session);
+    }
+
     @Override
-    public void collectDestinations(Point3D origin) {
+    public void collectDestinations(@NotNull Point3D origin, @NotNull List<Option> options) {
       for (int i = -1; i <= 1; i++) {
         for (int j = -1; j <= 1; j++) {
           if (i == 0 && j == 0) {
@@ -314,14 +324,14 @@ class SearchTest {
             adding = board2[origin.getX() + i][origin.getY() + j];
           }
           if (adding != null) {
-            accept(adding, origin.distanceTo(adding));
+            accept(adding, origin.distanceTo(adding), options);
           }
         }
       }
     }
 
     @Override
-    public ModeType getType() {
+    public @NotNull ModeType getType() {
       return ModeType.WALK;
     }
   }

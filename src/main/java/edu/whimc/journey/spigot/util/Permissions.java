@@ -23,12 +23,18 @@ package edu.whimc.journey.spigot.util;
 
 import org.bukkit.permissions.Permission;
 
+/**
+ * Utility class to enumerate {@link Permission}s.
+ */
 public final class Permissions {
 
-  public static final Permission JOURNEY_PERMISSION = new Permission("journey.journey");
-  public static final Permission ADMIN_PERMISSION = new Permission("journey.admin");
-  public static final Permission NAV_USE_PERMISSION = new Permission("journey.nav.use");
-  public static final Permission NAV_MANAGE_PERMISSION = new Permission("journey.nav.manage");
+  public static final Permission ADMIN = new Permission("journey.command.admin");
+  public static final Permission JOURNEY_USE = new Permission("journey.command.use");
+  public static final Permission JOURNEY_TO_CUSTOM_USE = new Permission("journey.command.to.custom.use");
+  public static final Permission JOURNEY_TO_SURFACE_USE = new Permission("journey.command.to.surface.use");
+  public static final Permission JOURNEY_TO_QUEST_USE = new Permission("journey.command.to.quest.use");
+  public static final Permission JOURNEY_TO_PUBLIC_USE = new Permission("journey.command.to.public.use");
+  public static final Permission JOURNEY_TO_PUBLIC_EDIT = new Permission("journey.command.to.public.edit");
 
   private Permissions() {
   }

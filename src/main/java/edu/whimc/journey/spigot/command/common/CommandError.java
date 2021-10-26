@@ -23,6 +23,9 @@ package edu.whimc.journey.spigot.command.common;
 
 import lombok.Getter;
 
+/**
+ * An enumeration of some errors that arise when Minecraft commands are sent incorrectly.
+ */
 public enum CommandError {
 
   FEW_ARGUMENTS("Too few arguments!"),

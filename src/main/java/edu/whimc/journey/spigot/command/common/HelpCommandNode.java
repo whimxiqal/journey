@@ -53,15 +53,19 @@ final class HelpCommandNode extends CommandNode {
                                   @NotNull Map<String, String> flags) {
     CommandNode parent = Objects.requireNonNull(this.getParent());
     sender.spigot().sendMessage(Format.success(
-        "Command: "
+        "Command: ["
             + ChatColor.GRAY
-            + parent.getFullCommand()));
+            + parent.getFullCommand() + "]"));
+    sender.spigot().sendMessage(Format.success(
+        "Description: "
+        + ChatColor.GRAY
+        + parent.getDescription()));
     for (CommandNode node : parent.getChildren()) {
       if (node.getPermission().map(sender::hasPermission).orElse(true)) {
         ComponentBuilder builder = new ComponentBuilder();
         builder.append(ChatColor.GRAY + "> " + parent.getPrimaryAlias() + " ")
             .append(ChatColor.AQUA + node.getPrimaryAlias());
-        if (node.getChildren().size() > 1 || !node.getParameters().isEmpty()) {
+        if (node.getChildren().size() > 1 || !node.getSubcommands().isEmpty()) {
           builder.append(" [ . . . ]");
           if (node.getHelpCommand() != null) {
             builder.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getHelpCommand().getFullCommand()))
@@ -75,7 +79,7 @@ final class HelpCommandNode extends CommandNode {
         sender.spigot().sendMessage(builder.create());
       }
     }
-    for (Parameter parameter : parent.getParameters()) {
+    for (Parameter parameter : parent.getSubcommands()) {
       if (parameter.getPermission().map(sender::hasPermission).orElse(true)) {
         parameter.getFullUsage(sender).ifPresent(usage -> {
           StringBuilder builder = new StringBuilder();
@@ -96,7 +100,7 @@ final class HelpCommandNode extends CommandNode {
               .append("]"));
           builder.append("  ")
               .append(ChatColor.WHITE)
-              .append(parent.getParameterDescription(parameter));
+              .append(parent.getSubcommandDescription(parameter));
 
           sender.sendMessage(builder.toString());
         });

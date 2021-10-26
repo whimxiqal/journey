@@ -1,4 +1,4 @@
-package edu.whimc.journey.spigot.command;
+package edu.whimc.journey.spigot.command.admin;
 
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.spigot.command.common.CommandNode;
@@ -10,10 +10,10 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JourneyInvalidateCommand extends CommandNode {
+public class JourneyAdminInvalidateCommand extends CommandNode {
 
-  public JourneyInvalidateCommand(@Nullable CommandNode parent) {
-    super(parent, Permissions.ADMIN_PERMISSION,
+  public JourneyAdminInvalidateCommand(@Nullable CommandNode parent) {
+    super(parent, Permissions.ADMIN,
         "Clear the internal Journey cache",
         "invalidate");
   }

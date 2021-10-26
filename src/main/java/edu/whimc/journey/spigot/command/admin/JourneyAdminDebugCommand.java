@@ -19,7 +19,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.whimc.journey.spigot.command;
+package edu.whimc.journey.spigot.command.admin;
 
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.manager.DebugManager;
@@ -36,11 +36,11 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JourneyDebugCommand extends CommandNode {
+public class JourneyAdminDebugCommand extends CommandNode {
 
-  public JourneyDebugCommand(@Nullable CommandNode parent) {
+  public JourneyAdminDebugCommand(@Nullable CommandNode parent) {
     super(parent,
-        Permissions.ADMIN_PERMISSION,
+        Permissions.ADMIN,
         "Enable or disable debug mode",
         "debug");
     setCanBypassInvalid(true);
@@ -65,7 +65,7 @@ public class JourneyDebugCommand extends CommandNode {
           enabled = true;
         }
       } else {
-        sendCommandError(sender, CommandError.NO_PLAYER);
+        sendCommandUsageError(sender, CommandError.NO_PLAYER);
         return false;
       }
     } else {

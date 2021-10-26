@@ -1,5 +1,5 @@
 name: Journey
-version: 0.0.0-beta
+version: 0.0.2-beta
 main: edu.whimc.journey.spigot.JourneySpigot
 api-version: 1.17
 authors:
@@ -10,26 +10,29 @@ softdepend:
   - WHIMC-Portals
   - Quests
 permissions:
-  journey.journey:
+  journey.command.admin:
     default: false
-    description: Root command for journey subcommands
-  journey.debug:
+    description: Use all journey admin commands
+  journey.command.use:
+    default: true
+    description: Use all journey commands
+  journey.command.to.custom.use:
+    default: true
+    description: Use all commands pertaining to custom destinations
+  journey.command.to.surface.use:
+    default: true
+    description: Use surface command to navigate to the surface of overworld type worlds
+  journey.command.to.quest.use:
+    default: true
+    description: Use quest command to navigate to the next quest destination
+  journey.command.to.public.use:
+    default: true
+    description: Use all commands pertaining to public destinations
+  journey.command.to.public.edit:
     default: false
-    description: Turn on debug mode
-  journey.nav:
-    default: false
-  journey.nav.use:
-    default: false
-    description: Allows the use of trails
-  journey.nav.manage:
-    default: false
-    description: Allows the management of trails
+    description: Use commands that edit public destinations
 commands:
   journey:
-    description: Root Journey command
-  nav:
-    description: Shows a player a trail to their destination
-  endpoint:
-    description: Sets an endpoint for a player's trail
+    description: Root of all Journey commands
 
 

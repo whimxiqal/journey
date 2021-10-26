@@ -68,7 +68,7 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
    * this method only tells the class that it should be canceling itself.
    */
   public final void cancel() {
-    if (!state.isSuccessful() && !state.isCanceled()) {
+    if (!state.hasFinished()) {
       this.state = ResultState.CANCELING;
     }
   }
@@ -78,7 +78,7 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
     return state;
   }
 
-  public final void registerLeap(Port<T, D> port) {
+  public final void registerPort(Port<T, D> port) {
     this.ports.add(port);
   }
 

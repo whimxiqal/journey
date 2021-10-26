@@ -23,9 +23,9 @@ package edu.whimc.journey.spigot.command.common;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.common.data.DataAccessException;
 import edu.whimc.journey.common.util.Extra;
+import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.util.Format;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,6 +46,9 @@ import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A node within the Minecraft command tree structure.
+ */
 public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
   public static final int ARG_MAX_LENGTH = 32;
@@ -108,46 +111,97 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
 
   // Getters and Setters
 
+  /**
+   * Return an optional of the permission.
+   * If the permission is empty, that means that anyone can use it.
+   *
+   * @return the permission
+   */
   @NotNull
   public final Optional<Permission> getPermission() {
     return Optional.ofNullable(permission);
   }
 
+  /**
+   * Get the description of the command.
+   *
+   * @return the description
+   */
   @NotNull
   public final String getDescription() {
     return description;
   }
 
+  /**
+   * Get the primary alias of the command.
+   *
+   * @return the alias
+   */
   @NotNull
   public final String getPrimaryAlias() {
     return aliases.get(0);
   }
 
+  /**
+   * Return all the aliases used for the command.
+   *
+   * @return all aliases
+   */
   @NotNull
   @SuppressWarnings("unused")
   public final List<String> getAliases() {
     return aliases;
   }
 
+  /**
+   * Add any amount of new aliases to this command.
+   *
+   * @param aliases the aliases
+   */
   public final void addAliases(@NotNull String... aliases) {
     this.aliases.addAll(Arrays.asList(aliases));
   }
 
+  /**
+   * Get the {@link Parameter}s that can be used on top of this command as a subcommand.
+   *
+   * @return a parameter
+   */
   @NotNull
-  public final List<Parameter> getParameters() {
+  public final List<Parameter> getSubcommands() {
     return Lists.newLinkedList(parameters.keySet());
   }
 
+  /**
+   * Get the description for a subcommand.
+   *
+   * @param parameter a subcommand
+   * @return the description
+   */
   @NotNull
-  public final String getParameterDescription(@NotNull Parameter parameter) {
+  public final String getSubcommandDescription(@NotNull Parameter parameter) {
     return parameters.get(parameter);
   }
 
+  /**
+   * Add a subcommand to perform some extra functionality with this command.
+   * This is similar to a child command, but is considered simply a "flavor"
+   * of the base command rather than an entirely different command.
+   *
+   * @param parameter   the subcommand
+   * @param description the description of the subcommand
+   */
   @SuppressWarnings("SameParameterValue")
   protected final void addSubcommand(@NotNull Parameter parameter, @NotNull String description) {
     this.parameters.put(parameter, description);
   }
 
+  /**
+   * Get the full command string. This is useful for explaining how to run
+   * this command. It doesn't include the leading forward slash.
+   *
+   * @return the command
+   */
   @NotNull
   public final String getFullCommand() {
     StringBuilder command = new StringBuilder(getPrimaryAlias());
@@ -159,20 +213,46 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
     return command.toString();
   }
 
+  /**
+   * Add some number of children commands. The children commands
+   * will be runnable by following this command with any of the child's
+   * aliases.
+   *
+   * @param nodes the children
+   */
   protected final void addChildren(CommandNode... nodes) {
     this.children.addAll(Arrays.asList(nodes));
   }
 
+  /**
+   * Get all the saved children nodes.
+   *
+   * @return all children
+   */
   @NotNull
   public final List<CommandNode> getChildren() {
     return children;
   }
 
+  /**
+   * Determine if this command is a root command. In other words,
+   * true if this command has no parent.
+   *
+   * @return true if root
+   */
   public final boolean isRoot() {
     return parent == null;
   }
 
-  public final void sendCommandError(CommandSender sender, String error) {
+  /**
+   * Send a command error to the sender. This is best used
+   * when the sender uses the command incorrectly, because
+   * the returned message includes a clickable help command option.
+   *
+   * @param sender the command sender
+   * @param error  the error message
+   */
+  public final void sendCommandUsageError(CommandSender sender, String error) {
     sender.spigot().sendMessage(Format.error(error));
     // TODO figure out why this method has no hover/click event
     sender.spigot().sendMessage(Format.chain(Format.textOf(Format.PREFIX),
@@ -180,8 +260,15 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
             Format.DEFAULT + "Run help command")));
   }
 
-  public final void sendCommandError(CommandSender sender, CommandError error) {
-    sendCommandError(sender, error.getMessage());
+  /**
+   * See {@link #sendCommandUsageError(CommandSender, String)},
+   * but use a {@link CommandError} instead of a string message.
+   *
+   * @param sender the sender
+   * @param error  the error
+   */
+  public final void sendCommandUsageError(CommandSender sender, CommandError error) {
+    sendCommandUsageError(sender, error.getMessage());
   }
 
   @Override
@@ -202,10 +289,14 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
     Map<String, String> flags = new HashMap<>();
     String[] flagSplit;
     for (String arg : argsCombined) {
-      if (arg.isEmpty()) continue;
+      if (arg.isEmpty()) {
+        continue;
+      }
       if (arg.charAt(0) == '-') {
         flagSplit = arg.substring(1).split(":", 2);
-        if (flagSplit.length == 0) continue;
+        if (flagSplit.length == 0) {
+          continue;
+        }
         if (!Extra.isNumber(flagSplit[0])) {
           if (flagSplit.length > 1) {
             flags.put(flagSplit[0].toLowerCase(), flagSplit[1]);
@@ -267,8 +358,8 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
    * This command already filters for permission status and
    * traverses the command tree to give just the elements of the subcommand,
    * if it is not the root.
-   * <p>
-   * If false is returned, then the "usage" plugin.yml entry for this command
+   *
+   * <p>If false is returned, then the "usage" plugin.yml entry for this command
    * (if defined) will be sent to the player.
    *
    * @param sender  the command sender

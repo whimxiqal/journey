@@ -27,7 +27,6 @@ import edu.whimc.journey.common.data.DataManager;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
 import edu.whimc.journey.spigot.command.JourneyCommand;
-import edu.whimc.journey.spigot.command.NavCommand;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.config.SpigotConfigManager;
 import edu.whimc.journey.spigot.data.SpigotDataManager;
@@ -48,7 +47,7 @@ import edu.whimc.journey.spigot.search.event.SpigotStopSearchEvent;
 import edu.whimc.journey.spigot.search.event.SpigotVisitationSearchEvent;
 import edu.whimc.journey.spigot.search.listener.AnimationListener;
 import edu.whimc.journey.spigot.search.listener.DataStorageListener;
-import edu.whimc.journey.spigot.search.listener.SearchListener;
+import edu.whimc.journey.spigot.search.listener.PlayerSearchListener;
 import edu.whimc.journey.spigot.util.LoggerSpigot;
 import java.io.File;
 import java.io.FileInputStream;
@@ -130,21 +129,21 @@ public final class JourneySpigot extends JavaPlugin {
     // Set up data manager
     this.dataManager = new SpigotDataManager();
 
-    // Register commands
-    for (CommandNode root : new CommandNode[]{new JourneyCommand(), new NavCommand()}) {
-      PluginCommand command = getCommand(root.getPrimaryAlias());
-      if (command == null) {
-        throw new NullPointerException("You must register command " + root.getPrimaryAlias() + " in the plugin.yml");
-      }
-      command.setExecutor(root);
-      command.setTabCompleter(root);
-      root.getPermission().map(Permission::getName).ifPresent(command::setPermission);
+    // Register command
+    CommandNode root = new JourneyCommand();
+    PluginCommand command = getCommand(root.getPrimaryAlias());
+    if (command == null) {
+      throw new NullPointerException("You must register command " + root.getPrimaryAlias() + " in the plugin.yml");
     }
+    command.setExecutor(root);
+    command.setTabCompleter(root);
+    root.getPermission().map(Permission::getName).ifPresent(command::setPermission);
+
     // Register listeners
     Bukkit.getPluginManager().registerEvents(netherManager, this);
     Bukkit.getPluginManager().registerEvents(new AnimationListener(), this);
     Bukkit.getPluginManager().registerEvents(new DataStorageListener(), this);
-    Bukkit.getPluginManager().registerEvents(new SearchListener(), this);
+    Bukkit.getPluginManager().registerEvents(new PlayerSearchListener(), this);
 
 
     // Start doing a bunch of searches for common use cases
@@ -158,6 +157,7 @@ public final class JourneySpigot extends JavaPlugin {
   @Override
   public void onDisable() {
     // Plugin shutdown logic
+    getSearchManager().cancelAllSearches();
     getSearchManager().stopAllJourneys();
     serializeCaches();
   }

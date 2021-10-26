@@ -22,8 +22,8 @@
 package edu.whimc.journey.spigot.search;
 
 import edu.whimc.journey.common.navigation.Port;
-import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.common.search.ReverseSearchSession;
+import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.navigation.WhimcPortalPort;
 import edu.whimc.journey.spigot.navigation.mode.ClimbMode;
@@ -48,6 +48,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A search session designed to be used for all players.
+ */
 public class PlayerSearchSession extends ReverseSearchSession<LocationCell, World> {
 
   @Getter
@@ -55,6 +58,15 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
   @Getter
   private final AnimationManager animationManager;
 
+  /**
+   * General constructor.
+   *
+   * <p>The algorithm step delay is primarily used for animation.
+   *
+   * @param player             the player
+   * @param flags              any search flags, each of which may alter the search algorithm
+   * @param algorithmStepDelay how long to wait between every search step
+   */
   public PlayerSearchSession(Player player, Set<SearchFlag> flags, int algorithmStepDelay) {
     super(player.getUniqueId(), Caller.PLAYER);
     this.sessionInfo = new SessionState();
@@ -64,26 +76,22 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
     // Modes - in order of preference
     Set<Material> passableBlocks = collectPassableBlocks(flags);
     if (player.getAllowFlight() && !flags.contains(SearchFlag.NOFLY)) {
-      registerMode(new FlyMode(passableBlocks));
+      registerMode(new FlyMode(this, passableBlocks));
     } else {
-      registerMode(new WalkMode(passableBlocks));
-      registerMode(new JumpMode(passableBlocks));
-      registerMode(new SwimMode(passableBlocks));
+      registerMode(new WalkMode(this, passableBlocks));
+      registerMode(new JumpMode(this, passableBlocks));
+      registerMode(new SwimMode(this, passableBlocks));
     }
-    registerMode(new DoorMode(passableBlocks));
-    registerMode(new ClimbMode(passableBlocks));
+    registerMode(new DoorMode(this, passableBlocks));
+    registerMode(new ClimbMode(this, passableBlocks));
 
     // Links
-    registerLeaps(player::hasPermission, player);
+    registerPorts(player::hasPermission, player);
   }
 
-  private void registerLeaps(Predicate<String> permissionSupplier) {
-    this.registerLeaps(permissionSupplier, null);
-  }
-
-  private void registerLeaps(Predicate<String> permissionSupplier, @Nullable Player player) {
+  private void registerPorts(Predicate<String> permissionSupplier, @Nullable Player player) {
     // Links - Nether
-    JourneySpigot.getInstance().getNetherManager().makeLeaps().forEach(this::registerLeap);
+    JourneySpigot.getInstance().getNetherManager().makePorts().forEach(this::registerPort);
 
     // Links - Portals plugin
     Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
@@ -104,19 +112,19 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
           .filter(Objects::nonNull)
           .forEach(link -> {
             if (player == null) {
-              registerLeap(link);
+              registerPort(link);
             } else {
-              registerLinkVerbose(player, link);
+              registerPortVerbose(player, link);
             }
           });
     }
   }
 
-  private void registerLinkVerbose(Player player, Port<LocationCell, World> link) {
+  private void registerPortVerbose(Player player, Port<LocationCell, World> link) {
     if (JourneySpigot.getInstance().getDebugManager().isDebugging(player.getUniqueId())) {
       player.spigot().sendMessage(Format.debug("Registering Link: " + link.toString()));
     }
-    super.registerLeap(link);
+    super.registerPort(link);
   }
 
   private Set<Material> collectPassableBlocks(Set<SearchFlag> flags) {

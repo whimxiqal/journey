@@ -40,6 +40,12 @@ import org.bukkit.event.Listener;
  */
 public class AnimationListener implements Listener {
 
+  /**
+   * A handler animating the case where the algorithm finds that a certain block is accessible
+   * during algorithm execution.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void successModeEvent(SpigotModeSuccessEvent event) {
     AnimationManager manager = getAnimationManager(event);
@@ -48,6 +54,12 @@ public class AnimationListener implements Listener {
     }
   }
 
+  /**
+   * A handler animating the case where the algorithm finds that a certain block is inaccessible
+   * during algorithm execution.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void failModeEvent(SpigotModeFailureEvent event) {
     AnimationManager manager = getAnimationManager(event);
