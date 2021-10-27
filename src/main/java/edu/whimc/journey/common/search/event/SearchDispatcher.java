@@ -27,22 +27,48 @@ import java.util.Map;
 import java.util.function.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unchecked")
+/**
+ * A dispatcher of events used during the execution of a
+ * {@link edu.whimc.journey.common.search.SearchSession}.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @param <E> the event type that is ultimately dispatched by the Minecraft implementation
+ */
 public class SearchDispatcher<T extends Cell<T, D>, D, E> {
 
   protected final Map<SearchEvent.EventType, SearchEventConversion<?, E>> events = new HashMap<>();
   private final Consumer<E> externalDispatcher;
 
+  /**
+   * General constructor.
+   *
+   * @param externalDispatcher the external dispatcher.
+   *                           This method uses the Minecraft platform event manager to dispatch
+   *                           the event.
+   */
   public SearchDispatcher(@NotNull Consumer<E> externalDispatcher) {
     this.externalDispatcher = externalDispatcher;
   }
 
+  /**
+   * Register an event.
+   * When dispatching, the common Journey event being dispatched must be converted
+   * into an event understandable by the Minecraft event manager (of type E).
+   *
+   * @param eventConversion the description of how to convert from a general event type to
+   *                        a Minecraft-implementation event type
+   * @param eventType       the general event type enum
+   * @param <S>             the general event type class
+   */
   public final <S extends SearchEvent<T, D>> void registerEvent(SearchEventConversion<S, E> eventConversion,
                                                                 SearchEvent.EventType eventType) {
     events.put(eventType, eventConversion);
   }
 
-  private <S extends SearchEvent<T, D>> SearchEventConversion<S, E> getEventConversion(SearchEvent.EventType eventType) {
+  @SuppressWarnings("unchecked")
+  private <S extends SearchEvent<T, D>> SearchEventConversion<S, E> getEventConversion(
+      SearchEvent.EventType eventType) {
     return (SearchEventConversion<S, E>) events.get(eventType);
   }
 
@@ -52,8 +78,8 @@ public class SearchDispatcher<T extends Cell<T, D>, D, E> {
    * event will be dispatched to the appropriate event handling system implemented
    * in a given Minecraft mod, e.g. Bukkit/Spigot's event handling system.
    *
-   * @param event      a search event
-   * @param <S>        the type of event
+   * @param event a search event
+   * @param <S>   the type of event
    */
   public final <S extends SearchEvent<T, D>> void dispatch(S event) {
     if (events.containsKey(event.type())) {

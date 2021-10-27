@@ -5,9 +5,9 @@ import edu.whimc.journey.common.data.DataManager;
 import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.data.PublicEndpointManager;
 import edu.whimc.journey.spigot.JourneySpigot;
-import edu.whimc.journey.spigot.data.sql.mysql.SpigotMySQLPersonalEndpointManager;
+import edu.whimc.journey.spigot.data.sql.mysql.SpigotMySqlPersonalEndpointManager;
 import edu.whimc.journey.spigot.data.sql.mysql.SpigotMySqlPublicEndpointManager;
-import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSQLitePersonalEndpointManager;
+import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePersonalEndpointManager;
 import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePublicEndpointManager;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import org.bukkit.World;
@@ -28,15 +28,15 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
         .getDataFolder()
         .getPath() + "/journey.db";
     switch (Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()) {
-      case SQLITE -> personalEndpointManager = new SpigotSQLitePersonalEndpointManager(sqliteAddress);
-      case MYSQL -> personalEndpointManager = new SpigotMySQLPersonalEndpointManager();
+      case SQLITE -> personalEndpointManager = new SpigotSqlitePersonalEndpointManager(sqliteAddress);
+      case MYSQL -> personalEndpointManager = new SpigotMySqlPersonalEndpointManager();
       default -> {
         JourneySpigot.getInstance()
             .getLogger()
             .severe("This type of custom endpoint storage type is not supported: "
                 + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
                 + ". Defaulting to SQLite storage.");
-        personalEndpointManager = new SpigotSQLitePersonalEndpointManager(sqliteAddress);
+        personalEndpointManager = new SpigotSqlitePersonalEndpointManager(sqliteAddress);
       }
     }
 

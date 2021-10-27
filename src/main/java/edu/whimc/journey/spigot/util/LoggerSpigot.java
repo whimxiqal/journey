@@ -24,6 +24,9 @@ package edu.whimc.journey.spigot.util;
 import edu.whimc.journey.common.util.LoggerCommon;
 import edu.whimc.journey.spigot.JourneySpigot;
 
+/**
+ * An implementation the simple common Journey logger.
+ */
 public class LoggerSpigot implements LoggerCommon {
   @Override
   public void info(String message) {

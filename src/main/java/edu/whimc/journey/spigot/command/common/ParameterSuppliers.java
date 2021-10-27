@@ -30,6 +30,10 @@ import org.bukkit.Registry;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+/**
+ * An enumeration utility class to enumerate out common
+ * {@link edu.whimc.journey.spigot.command.common.Parameter.ParameterSupplier}s.
+ */
 public final class ParameterSuppliers {
 
   public static final Parameter.ParameterSupplier NONE = Parameter.ParameterSupplier.builder()
@@ -43,7 +47,8 @@ public final class ParameterSuppliers {
       .strict(false)
       .build();
   public static final Parameter.ParameterSupplier WORLD = Parameter.ParameterSupplier.builder()
-      .allowedEntries((src, prev) -> Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()))
+      .allowedEntries((src, prev) ->
+          Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()))
       .usage("<world>")
       .strict(true)
       .build();

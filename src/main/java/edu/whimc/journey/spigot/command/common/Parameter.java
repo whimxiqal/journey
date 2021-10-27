@@ -36,6 +36,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A well-formed command parameter.
+ */
 @Builder
 public class Parameter {
 
@@ -50,6 +53,13 @@ public class Parameter {
   private final Permission permission;
   private Parameter next;
 
+  /**
+   * Create a really simple parameter.
+   * It just a simple usage so tab completion and descriptions work correctly.
+   *
+   * @param usage the usage
+   * @return the Parameter
+   */
   public static Parameter basic(String usage) {
     return Parameter.builder()
         .supplier(ParameterSupplier.builder().usage(usage).build())
@@ -78,6 +88,12 @@ public class Parameter {
     return parameters.get(0);
   }
 
+  /**
+   * Get the permission for this parameter.
+   * The permission must be matched by the command caller to work correctly.
+   *
+   * @return the permission of this parameter
+   */
   public Optional<Permission> getPermission() {
     return Optional.ofNullable(permission);
   }
@@ -143,11 +159,15 @@ public class Parameter {
     return Optional.of(builder.toString());
   }
 
+  /**
+   * An object that helps {@link Parameter}s by supplying the content accepted by the parameter.
+   */
   @Builder
   public static class ParameterSupplier {
 
     @Builder.Default
-    private final BiFunction<CommandSender, List<String>, List<String>> allowedEntries = (src, prev) -> Lists.newLinkedList();
+    private final BiFunction<CommandSender, List<String>, List<String>> allowedEntries = (src, prev) ->
+        Lists.newLinkedList();
     @Getter
     @Builder.Default
     private final String usage = "";
@@ -156,13 +176,33 @@ public class Parameter {
     @Builder.Default
     private final boolean strict = true;
 
+    /**
+     * Get all the allowed entries for this supplier, given the person who is calling the command
+     * and the parameters directly before this one.
+     * The previous parameters may affect the behavior of this parameter with this supplier.
+     *
+     * @param sender             the sender
+     * @param previousParameters the previous parameters in the invoked command.
+     * @return the allowed entries, used for tab completion
+     */
     public Collection<String> getAllowedEntries(CommandSender sender, List<String> previousParameters) {
       return allowedEntries.apply(sender, previousParameters);
     }
 
+    /**
+     * Check whether an input matches an allowed entry.
+     *
+     * @param sender             the command sender
+     * @param previousParameters the previous parameters in the invoked command.
+     * @param input              string, to check against
+     * @return true if the input matches
+     * @see #getAllowedEntries(CommandSender, List)
+     */
     public boolean matches(CommandSender sender, List<String> previousParameters, String input) {
       List<String> allowedEntriesApplied = allowedEntries.apply(sender, previousParameters);
-      return !strict || allowedEntriesApplied.isEmpty() || allowedEntriesApplied.stream().anyMatch(allowed -> allowed.equalsIgnoreCase(input));
+      return !strict
+          || allowedEntriesApplied.isEmpty()
+          || allowedEntriesApplied.stream().anyMatch(allowed -> allowed.equalsIgnoreCase(input));
     }
 
   }

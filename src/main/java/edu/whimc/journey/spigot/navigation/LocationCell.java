@@ -33,6 +33,12 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * The Spigot Minecraft implementation of a {@link Cell}.
+ * This, along with {@link World} as the domain,
+ * allows the general spigot implementation to use all the generified
+ * common Journey packages.
+ */
 public class LocationCell extends Cell<LocationCell, World> {
 
   /**
@@ -41,14 +47,38 @@ public class LocationCell extends Cell<LocationCell, World> {
   @Getter
   private final double heightOffset;
 
+  /**
+   * Constructor using all necessary raw data with a given domain object (world).
+   *
+   * @param x     the x coordinate
+   * @param y     the y coordinate
+   * @param z     the z coordinate
+   * @param world the domain
+   */
   public LocationCell(int x, double y, int z, @NotNull World world) {
     this(x, y, z, world.getUID());
   }
 
+  /**
+   * Constructor using a Spigot location.
+   *
+   * @param location the location
+   */
   public LocationCell(Location location) {
-    this(location.getBlockX(), location.getBlockY(), location.getBlockZ(), Objects.requireNonNull(location.getWorld()));
+    this(location.getBlockX(),
+        location.getBlockY(),
+        location.getBlockZ(),
+        Objects.requireNonNull(location.getWorld()));
   }
 
+  /**
+   * Constructor using all necessary raw data with a given identifier of the domain (world).
+   *
+   * @param x         the x coordinate
+   * @param y         the y coordinate
+   * @param z         the z coordinate
+   * @param worldUuid the identifier of the world
+   */
   public LocationCell(int x, double y, int z, @NotNull UUID worldUuid) {
     super(x, (int) y, z, worldUuid.toString(), new UuidToWorld());
     this.heightOffset = y - this.getY();
@@ -61,20 +91,40 @@ public class LocationCell extends Cell<LocationCell, World> {
         this.coordinateZ - other.coordinateZ);
   }
 
+  /**
+   * Get the Minecraft block at this location.
+   *
+   * @return the block
+   */
   public Block getBlock() {
     return this.getDomain().getBlockAt(this.coordinateX, this.coordinateY, this.coordinateZ);
   }
 
+  /**
+   * Get the Minecraft block at some location offset from this location.
+   *
+   * @param x the x coordinate offset
+   * @param y the y coordinate offset
+   * @param z the z coordinate offset
+   * @return the block
+   */
   public Block getBlockAtOffset(int x, int y, int z) {
     return this.getDomain().getBlockAt(this.coordinateX + x, this.coordinateY + y, this.coordinateZ + z);
   }
 
-  public LocationCell createLocatableAtOffset(int x, double y, int z) {
-    return new LocationCell(this.coordinateX + x, this.coordinateY + heightOffset + y, this.coordinateZ + z, this.getDomain());
-  }
-
-  public boolean hasHeightOffset() {
-    return heightOffset != 0;
+  /**
+   * Create another location cell at an offset.
+   *
+   * @param x the x coordinate offset
+   * @param y the y coordinate offset
+   * @param z the z coordinate offset
+   * @return the offset location cell
+   */
+  public LocationCell createCellAtOffset(int x, double y, int z) {
+    return new LocationCell(this.coordinateX + x,
+        this.coordinateY + heightOffset + y,
+        this.coordinateZ + z,
+        this.getDomain());
   }
 
   private double vectorSizeSquared(int distX, int distY, int distZ) {
@@ -83,15 +133,24 @@ public class LocationCell extends Cell<LocationCell, World> {
 
   @Override
   public String toString() {
-    return String.format("(%d, %d, %d) in %s", this.coordinateX, this.coordinateY, this.coordinateZ, this.getDomain().getName());
+    return String.format("(%d, %d, %d) in %s",
+        this.coordinateX, this.coordinateY, this.coordinateZ,
+        this.getDomain().getName());
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     LocationCell that = (LocationCell) o;
-    return this.coordinateX == that.coordinateX && this.coordinateY == that.coordinateY && this.coordinateZ == that.coordinateZ && this.getDomain().equals(that.getDomain());
+    return this.coordinateX == that.coordinateX
+        && this.coordinateY == that.coordinateY
+        && this.coordinateZ == that.coordinateZ
+        && this.getDomain().equals(that.getDomain());
   }
 
   @Override
@@ -99,6 +158,10 @@ public class LocationCell extends Cell<LocationCell, World> {
     return Objects.hash(this.coordinateX, this.coordinateY, this.coordinateZ, this.getDomain());
   }
 
+  /**
+   * A serializable class that computes a string version of a Spigot World identifier
+   * to a Spigot World java object.
+   */
   public static class UuidToWorld implements Function<String, World>, Serializable {
 
     @Override

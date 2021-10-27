@@ -19,8 +19,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
 package edu.whimc.journey.spigot.search;
 
+/**
+ * An enumeration of possible flags used to alter
+ * the effects of the operation of a {@link edu.whimc.journey.common.search.SearchSession}.
+ */
 public enum SearchFlag {
   NOFLY,
   ANIMATE,

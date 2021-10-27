@@ -23,7 +23,7 @@ public abstract class SqlPublicEndpointManager<T extends Cell<T, D>, D>
    * @param connectionController the connection controller
    * @param dataAdapter          the data adapter
    */
-  public SqlPublicEndpointManager(SQLConnectionController connectionController,
+  public SqlPublicEndpointManager(SqlConnectionController connectionController,
                                   DataAdapter<T, D> dataAdapter) {
     super(connectionController, dataAdapter);
   }

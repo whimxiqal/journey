@@ -7,7 +7,16 @@ import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
 import edu.whimc.journey.spigot.util.Permissions;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to provide admin commands.
+ */
 public class JourneyAdminCommand extends FunctionlessCommandNode {
+
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneyAdminCommand(@Nullable CommandNode parent) {
     super(parent, Permissions.ADMIN,
         "All administrative commands",
@@ -15,4 +24,5 @@ public class JourneyAdminCommand extends FunctionlessCommandNode {
     addChildren(new JourneyAdminDebugCommand(this));
     addChildren(new JourneyAdminInvalidateCommand(this));
   }
+
 }

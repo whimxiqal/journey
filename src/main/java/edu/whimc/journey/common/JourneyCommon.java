@@ -29,23 +29,34 @@ import edu.whimc.journey.common.util.LoggerCommon;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * The central utility class to provide methods for all platform
+ * implementations of the Journey plugin.
+ */
 public final class JourneyCommon {
 
-  private JourneyCommon() {
-  }
-
   private static SearchDispatcher<?, ?, ?> searchEventDispatcher;
-
-  @Getter @Setter
+  @Getter
+  @Setter
   private static ConfigManager configManager;
-
   private static LoggerCommon logger;
-
   /**
    * A cache of all previously calculated paths.
    */
   private static PathCache<?, ?> pathCache;
 
+  private JourneyCommon() {
+  }
+
+  /**
+   * Get the event dispatcher used in a {@link edu.whimc.journey.common.search.SearchSession}.
+   * It is up to the caller of this method to use the same generics used when
+   * instantiating the event dispatcher at start-up.
+   *
+   * @param <T> the location type
+   * @param <D> the domain type
+   * @return the dispatcher
+   */
   @SuppressWarnings("unchecked")
   public static <T extends Cell<T, D>, D> SearchDispatcher<T, D, ?> getSearchEventDispatcher() {
     if (searchEventDispatcher == null) {
@@ -54,11 +65,26 @@ public final class JourneyCommon {
     return (SearchDispatcher<T, D, ?>) searchEventDispatcher;
   }
 
-  @SuppressWarnings("unchecked")
-  public static <T extends Cell<T, D>, D, E> void setSearchEventDispatcher(SearchDispatcher<T, D, E> dispatcher) {
+  /**
+   * Set the search dispatcher used in a {@link edu.whimc.journey.common.search.SearchSession}.
+   *
+   * @param dispatcher the dispatcher
+   * @param <T>        the location type
+   * @param <D>        the domain type
+   * @param <E>        the event type ultimately used to catch the events.
+   */
+  public static <T extends Cell<T, D>, D, E> void setSearchEventDispatcher(
+      SearchDispatcher<T, D, E> dispatcher) {
     JourneyCommon.searchEventDispatcher = dispatcher;
   }
 
+  /**
+   * Get the cache of all memoized paths.
+   *
+   * @param <T> the location type
+   * @param <D> the domain type
+   * @return the cache
+   */
   @SuppressWarnings("unchecked")
   public static <T extends Cell<T, D>, D> PathCache<T, D> getPathCache() {
     if (pathCache == null) {
@@ -67,17 +93,33 @@ public final class JourneyCommon {
     return (PathCache<T, D>) pathCache;
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * Set the path cache.
+   *
+   * @param pathCache the path cache
+   * @param <T>       the location type
+   * @param <D>       the domain type
+   */
   public static <T extends Cell<T, D>, D> void setPathCache(PathCache<T, D> pathCache) {
     JourneyCommon.pathCache = pathCache;
   }
 
-  public static void setLogger(LoggerCommon logger) {
-    JourneyCommon.logger = logger;
-  }
-
+  /**
+   * Get a simple logger, which can be used anywhere in common files.
+   *
+   * @return the logger
+   */
   public static LoggerCommon getLogger() {
     return logger;
+  }
+
+  /**
+   * Set the simple logger, implemented using the implementation platform's logger.
+   *
+   * @param logger the logger
+   */
+  public static void setLogger(LoggerCommon logger) {
+    JourneyCommon.logger = logger;
   }
 
 }

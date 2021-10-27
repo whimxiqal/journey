@@ -9,13 +9,24 @@ import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * An abstract class describing a command node that must be invoked by an in-game player.
+ */
 public abstract class PlayerCommandNode extends CommandNode {
-  public PlayerCommandNode(@Nullable CommandNode parent, @Nullable Permission permission, @NotNull String description, @NotNull String primaryAlias) {
-    super(parent, permission, description, primaryAlias);
-  }
 
-  public PlayerCommandNode(@Nullable CommandNode parent, @Nullable Permission permission, @NotNull String description, @NotNull String primaryAlias, boolean addHelp) {
-    super(parent, permission, description, primaryAlias, addHelp);
+  /**
+   * General constructor.
+   *
+   * @param parent       the parent command
+   * @param permission   the permission
+   * @param description  the description
+   * @param primaryAlias primary alias of this command
+   */
+  public PlayerCommandNode(@Nullable CommandNode parent,
+                           @Nullable Permission permission,
+                           @NotNull String description,
+                           @NotNull String primaryAlias) {
+    super(parent, permission, description, primaryAlias);
   }
 
   @Override
@@ -33,9 +44,22 @@ public abstract class PlayerCommandNode extends CommandNode {
     return onWrappedPlayerCommand(player, command, label, args, flags);
   }
 
+  /**
+   * The same as {@link #onWrappedCommand(CommandSender, Command, String, String[], Map)},
+   * but gives the player because this command must be executed by a player.
+   *
+   * @param player  the player
+   * @param command the command
+   * @param label   the label (root command)
+   * @param args    the arguments after the root command
+   * @param flags   the flags (arguments starting with "-")
+   * @return true if successful
+   * @throws DataAccessException a data access exception
+   */
   public abstract boolean onWrappedPlayerCommand(@NotNull Player player,
                                                  @NotNull Command command,
                                                  @NotNull String label,
                                                  @NotNull String[] args,
-                                                 @NotNull Map<String, String> flags) throws DataAccessException;
+                                                 @NotNull Map<String, String> flags)
+      throws DataAccessException;
 }

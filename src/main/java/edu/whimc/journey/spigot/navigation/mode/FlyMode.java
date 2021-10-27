@@ -66,7 +66,7 @@ public class FlyMode extends SpigotMode {
                   continue;
                 }
                 // Make sure we get the pillar of y values for the player's body
-                cell = origin.createLocatableAtOffset(// Floor
+                cell = origin.createCellAtOffset(// Floor
                     insideOffX * offX /* get sign back */,
                     insideOffY * offY /* get sign back */,
                     insideOffZ * offZ /* get sign back */);
@@ -76,7 +76,7 @@ public class FlyMode extends SpigotMode {
                 }
                 for (int h = 0; h <= insideOffY; h++) {
                   // The rest of the pillar above the floor
-                  cell = origin.createLocatableAtOffset(
+                  cell = origin.createCellAtOffset(
                       insideOffX * offX /* get sign back */,
                       ((insideOffY * offY + insideOffY) >> 1) /* 1 for positive, 0 for negative */
                           + h
@@ -90,7 +90,7 @@ public class FlyMode extends SpigotMode {
               }
             }
           }
-          LocationCell other = origin.createLocatableAtOffset(offX, offY, offZ);
+          LocationCell other = origin.createCellAtOffset(offX, offY, offZ);
           accept(other, origin.distanceTo(other), options);
         }
       }

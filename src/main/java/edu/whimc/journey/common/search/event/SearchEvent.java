@@ -25,26 +25,53 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.SearchSession;
 import java.util.Date;
 
+/**
+ * A search event. These are the events that are dispatched from the
+ * execution of a {@link SearchSession} using the {@link SearchDispatcher}.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
 public abstract class SearchEvent<T extends Cell<T, D>, D> {
 
   public static int ID = 4;
-  private SearchSession<T, D> session;
-  private Date date = new Date();
+  private final SearchSession<T, D> session;
+  private final Date date = new Date();
 
+  /**
+   * General constructor.
+   *
+   * @param session the session that caused this event
+   */
   public SearchEvent(SearchSession<T, D> session) {
     this.session = session;
   }
 
+  /**
+   * Get the session causing this event.
+   *
+   * @return the search session
+   */
   public SearchSession<T, D> getSession() {
     return session;
   }
 
+  /**
+   * Get the date the event was created and dispatched. This is useful for data storage.
+   *
+   * @return the date
+   */
   public Date getDate() {
     return date;
   }
 
   abstract EventType type();
 
+  /**
+   * An enumeration of all possible event types.
+   * Every search event must have a unique type, found in this enumeration.
+   * This value is used for keying purposes upon registration.
+   */
   public enum EventType {
     FOUND_SOLUTION,
     MODE_FAILURE,

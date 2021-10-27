@@ -27,7 +27,7 @@ import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.navigation.PlayerJourney;
 import edu.whimc.journey.spigot.search.PlayerSearchSession;
-import edu.whimc.journey.spigot.search.SessionState;
+import edu.whimc.journey.spigot.search.PlayerSessionState;
 import edu.whimc.journey.spigot.search.event.SpigotFoundSolutionEvent;
 import edu.whimc.journey.spigot.search.event.SpigotSearchEvent;
 import edu.whimc.journey.spigot.search.event.SpigotStartSearchEvent;
@@ -86,7 +86,9 @@ public class PlayerSearchListener implements Listener {
     if (session == null) {
       return;
     }
-    SessionState sessionState = session.getSessionInfo();
+
+    // Need to update the session state
+    PlayerSessionState playerSessionState = session.getSessionInfo();
 
     Player player = Bukkit.getPlayer(session.getCallerId());
     if (player == null) {
@@ -94,7 +96,7 @@ public class PlayerSearchListener implements Listener {
     }
 
     Itinerary<LocationCell, World> itinerary = event.getSearchEvent().getItinerary();
-    if (sessionState.wasSolutionPresented()) {
+    if (playerSessionState.wasSolutionPresented()) {
       PlayerJourney journey = JourneySpigot.getInstance().getSearchManager().getJourney(player.getUniqueId());
       if (journey != null) {
         journey.setProspectiveItinerary(itinerary);
@@ -107,10 +109,10 @@ public class PlayerSearchListener implements Listener {
       }
     }
 
-    if (sessionState.wasSolved()) {
-      Bukkit.getScheduler().cancelTask(sessionState.getSuccessNotificationTaskId());
+    if (playerSessionState.wasSolved()) {
+      Bukkit.getScheduler().cancelTask(playerSessionState.getSuccessNotificationTaskId());
     }
-    sessionState.setSolved(true);
+    playerSessionState.setSolved(true);
 
     // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
     PlayerJourney journey = new PlayerJourney(player.getUniqueId(), session, itinerary);
@@ -120,11 +122,11 @@ public class PlayerSearchListener implements Listener {
     JourneySpigot.getInstance().getSearchManager().putJourney(player.getUniqueId(), journey);
 
     // Set up a success notification that will be cancelled if a better one is found in some amount of time
-    sessionState.setSuccessNotificationTaskId(Bukkit.getScheduler()
+    playerSessionState.setSuccessNotificationTaskId(Bukkit.getScheduler()
         .runTaskLater(JourneySpigot.getInstance(),
             () -> {
               player.spigot().sendMessage(Format.success("Showing a particle trail!"));
-              sessionState.setSolutionPresented(true);
+              playerSessionState.setSolutionPresented(true);
             },
             20 /* one second (20 ticks) */)
         .getTaskId());

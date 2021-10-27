@@ -28,7 +28,7 @@ public final class ClimbMode extends SpigotMode {
   }
 
   @Override
-  protected void collectDestinations(LocationCell origin, @NotNull List<Option> options) {
+  protected void collectDestinations(@NotNull LocationCell origin, @NotNull List<Option> options) {
 
     // TODO we have to make sure that the ladders and vines are oriented correctly
     //  and that the vines have a solid block behind it
@@ -42,9 +42,9 @@ public final class ClimbMode extends SpigotMode {
     if (climbable.contains(origin.getBlock().getType())) {
       if (isVerticallyPassable(origin.getBlockAtOffset(0, 1, 0))
           && isVerticallyPassable(origin.getBlockAtOffset(0, 2, 0))) {
-        accept(origin.createLocatableAtOffset(0, 1, 0), 1.0d, options);
+        accept(origin.createCellAtOffset(0, 1, 0), 1.0d, options);
       } else {
-        reject(origin.createLocatableAtOffset(0, 1, 0));
+        reject(origin.createCellAtOffset(0, 1, 0));
       }
     }
 

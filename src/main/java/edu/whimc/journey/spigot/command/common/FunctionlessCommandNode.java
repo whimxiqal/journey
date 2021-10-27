@@ -28,8 +28,20 @@ import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command node within the command tree structure which has no unique behavior of its own.
+ * This is almost always used as a command node to simply provide a list of children commands.
+ */
 public abstract class FunctionlessCommandNode extends CommandNode {
 
+  /**
+   * General constructor.
+   *
+   * @param parent       the parent command
+   * @param permission   the permission
+   * @param description  the description of the command
+   * @param primaryAlias the primary alias used to access this command
+   */
   public FunctionlessCommandNode(@Nullable CommandNode parent,
                                  @Nullable Permission permission,
                                  @NotNull String description,

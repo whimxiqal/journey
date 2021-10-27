@@ -1,7 +1,7 @@
 package edu.whimc.journey.spigot.command.save;
 
-import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.data.DataAccessException;
+import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.util.Validator;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandError;
@@ -18,8 +18,16 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to allow saving a new personal search endpoint.
+ */
 public class JourneySaveMyCommand extends PlayerCommandNode {
 
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneySaveMyCommand(@Nullable CommandNode parent) {
     super(parent,
         Permissions.JOURNEY_TO_CUSTOM_USE,
@@ -55,7 +63,8 @@ public class JourneySaveMyCommand extends PlayerCommandNode {
         .getDataManager()
         .getPersonalEndpointManager();
 
-    String existingName = personalEndpointManager.getCustomEndpointName(player.getUniqueId(), new LocationCell(player.getLocation()));
+    String existingName = personalEndpointManager.getCustomEndpointName(player.getUniqueId(),
+        new LocationCell(player.getLocation()));
     if (existingName != null) {
       player.spigot().sendMessage(Format.error("Custom location ",
           Format.toPlain(Format.note(existingName)),
@@ -71,8 +80,11 @@ public class JourneySaveMyCommand extends PlayerCommandNode {
       return false;
     }
 
-    personalEndpointManager.addCustomEndpoint(player.getUniqueId(), new LocationCell(player.getLocation()), name);
-    player.spigot().sendMessage(Format.success("Added custom location named ", Format.toPlain(Format.note(name)), "."));
+    personalEndpointManager.addCustomEndpoint(player.getUniqueId(),
+        new LocationCell(player.getLocation()), name);
+    player.spigot().sendMessage(Format.success("Added custom location named ",
+        Format.toPlain(Format.note(name)),
+        "."));
     return true;
   }
 }

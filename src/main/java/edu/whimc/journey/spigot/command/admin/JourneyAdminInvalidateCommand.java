@@ -10,8 +10,18 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to invalidate the internal path cache.
+ *
+ * @see edu.whimc.journey.common.cache.PathCache
+ */
 public class JourneyAdminInvalidateCommand extends CommandNode {
 
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneyAdminInvalidateCommand(@Nullable CommandNode parent) {
     super(parent, Permissions.ADMIN,
         "Clear the internal Journey cache",

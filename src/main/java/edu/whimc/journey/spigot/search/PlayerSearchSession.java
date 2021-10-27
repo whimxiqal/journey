@@ -54,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
 public class PlayerSearchSession extends ReverseSearchSession<LocationCell, World> {
 
   @Getter
-  private final SessionState sessionInfo;
+  private final PlayerSessionState sessionInfo;
   @Getter
   private final AnimationManager animationManager;
 
@@ -69,7 +69,7 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
    */
   public PlayerSearchSession(Player player, Set<SearchFlag> flags, int algorithmStepDelay) {
     super(player.getUniqueId(), Caller.PLAYER);
-    this.sessionInfo = new SessionState();
+    this.sessionInfo = new PlayerSessionState();
     this.animationManager = new AnimationManager(this);
     animationManager.setAnimating(flags.contains(SearchFlag.ANIMATE));
     setAlgorithmStepDelay(algorithmStepDelay);

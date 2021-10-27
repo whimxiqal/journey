@@ -22,9 +22,9 @@
 package edu.whimc.journey.spigot.command.admin;
 
 import edu.whimc.journey.spigot.JourneySpigot;
-import edu.whimc.journey.spigot.manager.DebugManager;
 import edu.whimc.journey.spigot.command.common.CommandError;
 import edu.whimc.journey.spigot.command.common.CommandNode;
+import edu.whimc.journey.spigot.manager.DebugManager;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
 import java.util.Map;
@@ -36,8 +36,16 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to enable debugging mode.
+ */
 public class JourneyAdminDebugCommand extends CommandNode {
 
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneyAdminDebugCommand(@Nullable CommandNode parent) {
     super(parent,
         Permissions.ADMIN,

@@ -25,21 +25,45 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An event dispatched by the search process when a mode is found to be successful
+ * in stepping a new location.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
 public class ModeSuccessEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final T cell;
   private final ModeType modeType;
 
+  /**
+   * General constructor.
+   *
+   * @param session  the search session
+   * @param cell     the location
+   * @param modeType the type of mode
+   */
   public ModeSuccessEvent(SearchSession<T, D> session, T cell, ModeType modeType) {
     super(session);
     this.cell = cell;
     this.modeType = modeType;
   }
 
+  /**
+   * Get the cell that we can reach.
+   *
+   * @return the cell
+   */
   public T getCell() {
     return cell;
   }
 
+  /**
+   * Get the type of mode.
+   *
+   * @return the mode type
+   */
   public ModeType getModeType() {
     return modeType;
   }

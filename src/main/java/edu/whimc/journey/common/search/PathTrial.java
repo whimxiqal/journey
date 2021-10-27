@@ -220,12 +220,16 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
     // Return the saved states, but only if we want that result.
     //  If we don't want to use the cache, but this result is from the cache,
     //  then don't return this.
-    if (this.state == ResultState.SUCCESSFUL && (useCacheIfPossible || !this.fromCache)) {
-      return new TrialResult<>(Optional.of(path), false);
-    }
-
-    if (this.state == ResultState.FAILED && (useCacheIfPossible || !this.fromCache)) {
-      return new TrialResult<>(Optional.empty(), false);
+    if (!this.fromCache || useCacheIfPossible) {
+      if (this.state == ResultState.SUCCESSFUL) {
+        if (path.test(modes)) {
+          // The path was cached, it was successful when cached, and we verified it to still be valid.
+          return new TrialResult<>(Optional.of(path), false);
+        }
+        // It was cached as successful but it no longer works... calculate again!
+      } else if (this.state == ResultState.FAILED) {
+        return new TrialResult<>(Optional.empty(), false);
+      }
     }
 
     // Dispatch a starting event
@@ -260,7 +264,7 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
       JourneyCommon.<T, D>getSearchEventDispatcher()
           .dispatch(new StepSearchEvent<>(session, originNode.getData()));
 
-      if (current.getData().getLocatable().distanceToSquared(destination)
+      if (current.getData().location().distanceToSquared(destination)
           <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED) {
         // We found it!
         double length = current.getScore();
@@ -274,14 +278,14 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
 
       // Need to keep going
       for (Mode<T, D> mode : modes) {
-        for (Mode<T, D>.Option option : mode.getDestinations(current.getData().getLocatable())) {
+        for (Mode<T, D>.Option option : mode.getDestinations(current.getData().location())) {
           if (visited.containsKey(option.getLocation())) {
             // Already visited, but see if it is better to come from this new direction
             Node that = visited.get(option.getLocation());
             if (current.getScore() + option.getDistance() < that.getScore()) {
               that.setPrevious(current);
               that.setScore(current.getScore() + option.getDistance());
-              that.setData(new Step<>(that.getData().getLocatable(), mode.getType()));
+              that.setData(new Step<>(that.getData().location(), mode.getType()));
             }
           } else {
             // Not visited. Set up node, give it a score, and add it to the system

@@ -44,10 +44,18 @@ import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.world.PortalCreateEvent;
 
+/**
+ * A manager for all nether portals.
+ */
 public class NetherManager implements Listener {
 
   private final Map<LocationCell, LocationCell> portalConnections = new ConcurrentHashMap<>();
 
+  /**
+   * Create ports specifically representing all nether portals in the world.
+   *
+   * @return all nether ports
+   */
   public Collection<NetherPort> makePorts() {
     List<NetherPort> linksUnverified = portalConnections.entrySet().stream()
         .map(entry -> new NetherPort(entry.getKey(), entry.getValue()))
@@ -63,23 +71,43 @@ public class NetherManager implements Listener {
     return linksVerified;
   }
 
+  /**
+   * An event handler for when portals are created.
+   * Links should be cached if the calculator determines a match has been found.
+   *
+   * @param e the event
+   */
   @EventHandler(priority = EventPriority.LOW)
   public void onPortalCreate(PortalCreateEvent e) {
     // TODO implement a way to create link here
   }
 
+  /**
+   * An event handler for when an entity goes through a portal.
+   * In this case, we know for sure how a portal is linked, and it can be saved.
+   *
+   * @param e the event
+   */
   @EventHandler(priority = EventPriority.LOW)
   public void onEntityPortal(EntityPortalEvent e) {
     onPortal(e.getFrom(), e.getTo(), e.getEntity());
   }
 
+  /**
+   * An event handler for when a player goes through a portal.
+   * In this case, we know for sure how a portal is linked, and it can be saved.
+   *
+   * @param e the event
+   */
   @EventHandler(priority = EventPriority.LOW)
   public void onPlayerPortal(PlayerPortalEvent e) {
     onPortal(e.getFrom(), e.getTo(), e.getPlayer());
   }
 
   private void onPortal(Location from, Location to, Entity entity) {
-    if (to == null) return;
+    if (to == null) {
+      return;
+    }
 
     LocationCell origin = new LocationCell(from);
 
@@ -96,7 +124,9 @@ public class NetherManager implements Listener {
           .stream()
           .min(Comparator.comparingDouble(group ->
               group.port().distanceToSquared(new LocationCell(from))));
-      if (!originGroup.isPresent()) return;  // We can't find the origin portal
+      if (originGroup.isEmpty()) {
+        return;  // We can't find the origin portal
+      }
 
       // Destination Portal
       Optional<NetherUtil.PortalGroup> destinationGroup = NetherUtil
@@ -107,7 +137,9 @@ public class NetherManager implements Listener {
           .stream()
           .min(Comparator.comparingDouble(group ->
               group.port().distanceToSquared(new LocationCell(to))));
-      if (!destinationGroup.isPresent()) return;  // We can't find the destination portal
+      if (destinationGroup.isEmpty()) {
+        return;  // We can't find the destination portal
+      }
 
       List<LocationCell> linkedOrigins = new LinkedList<>();
       for (LocationCell originCell : originGroup.get().getBlocks()) {
@@ -122,7 +154,7 @@ public class NetherManager implements Listener {
         }
       }
 
-      // We don't have this portal link set up yet
+      /* We don't have this portal link set up yet */
 
       // Remove any connections with this origin (the portal link changed)
       linkedOrigins.forEach(portalConnections::remove);

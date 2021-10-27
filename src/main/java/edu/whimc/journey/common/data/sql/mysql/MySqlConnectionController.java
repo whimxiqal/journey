@@ -2,13 +2,16 @@ package edu.whimc.journey.common.data.sql.mysql;
 
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.config.Settings;
-import edu.whimc.journey.common.data.sql.SQLConnectionController;
+import edu.whimc.journey.common.data.sql.SqlConnectionController;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class MySqlConnectionController implements SQLConnectionController {
+/**
+ * MySQL-implementation of the SQL connection controller.
+ */
+public class MySqlConnectionController implements SqlConnectionController {
 
   private final String address = String.format("jdbc:mysql://%s/%s",
       Settings.STORAGE_ADDRESS.getValue(),

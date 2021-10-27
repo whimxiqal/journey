@@ -58,16 +58,24 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Paths;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Event;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * The base plugin class of the Spigot implementation of Journey.
+ * Used in tandem with {@link JourneyCommon} throughout the plugin.
+ *
+ * @see JourneyCommon
+ */
 public final class JourneySpigot extends JavaPlugin {
 
   private static final String SERIALIZED_PATH_CACHE_FILENAME = "paths.ser";
   private static JourneySpigot instance;
+
   // Caches
   @Getter
   private NetherManager netherManager;
@@ -82,6 +90,11 @@ public final class JourneySpigot extends JavaPlugin {
   @Getter
   private DataManager<LocationCell, World> dataManager;
 
+  /**
+   * Get the instance that is currently run on the Spigot server.
+   *
+   * @return the instance
+   */
   public static JourneySpigot getInstance() {
     return instance;
   }
@@ -133,7 +146,9 @@ public final class JourneySpigot extends JavaPlugin {
     CommandNode root = new JourneyCommand();
     PluginCommand command = getCommand(root.getPrimaryAlias());
     if (command == null) {
-      throw new NullPointerException("You must register command " + root.getPrimaryAlias() + " in the plugin.yml");
+      throw new NullPointerException("You must register command "
+          + root.getPrimaryAlias()
+          + " in the plugin.yml");
     }
     command.setExecutor(root);
     command.setTabCompleter(root);
@@ -163,23 +178,24 @@ public final class JourneySpigot extends JavaPlugin {
   }
 
   @SuppressWarnings("unchecked")
-  private boolean deserializeCaches() {
+  private void deserializeCaches() {
     File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_PATH_CACHE_FILENAME).toFile();
-    if (!file.exists()) return false;
+    if (!file.exists()) {
+      return;
+    }
     try (FileInputStream fileStream = new FileInputStream(file);
          ObjectInputStream in = new ObjectInputStream(fileStream)) {
 
       JourneyCommon.setPathCache((PathCache<LocationCell, World>) in.readObject());
-      JourneySpigot.getInstance().getLogger().info("Deserialized trail cache (" + JourneyCommon.getPathCache().size() + " trails)");
-      return true;
-
+      JourneySpigot.getInstance().getLogger().info("Deserialized trail cache ("
+          + JourneyCommon.getPathCache().size()
+          + " trails)");
     } catch (IOException | ClassNotFoundException e) {
       JourneySpigot.getInstance().getLogger().severe("Could not deserialize trail caches!");
-      return false;
     }
   }
 
-  private boolean serializeCaches() {
+  private void serializeCaches() {
     File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_PATH_CACHE_FILENAME).toFile();
     try {
       //noinspection ResultOfMethodCallIgnored
@@ -189,7 +205,7 @@ public final class JourneySpigot extends JavaPlugin {
       }
     } catch (IOException e) {
       JourneySpigot.getInstance().getLogger().severe("Could not create serialization file");
-      return false;
+      return;
     }
 
     try (FileOutputStream fileStream = new FileOutputStream(Paths.get(
@@ -200,12 +216,10 @@ public final class JourneySpigot extends JavaPlugin {
       out.writeObject(JourneyCommon.getPathCache());
       JourneySpigot.getInstance().getLogger().info("Serialized trail cache ("
           + JourneyCommon.getPathCache().size() + " trails)");
-      return true;
 
     } catch (IOException e) {
       JourneySpigot.getInstance().getLogger().severe("Could not serialize trail caches");
       e.printStackTrace();
-      return false;
     }
   }
 

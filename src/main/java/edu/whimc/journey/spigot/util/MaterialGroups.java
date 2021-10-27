@@ -4,6 +4,9 @@ import com.google.common.collect.Sets;
 import java.util.Set;
 import org.bukkit.Material;
 
+/**
+ * A utility class to enumerate out groups of materials for classification purposes.
+ */
 public final class MaterialGroups {
 
   /**

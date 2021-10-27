@@ -33,6 +33,12 @@ public class JourneyToQuestCommand extends PlayerCommandNode {
 
   private final Quests quests;
 
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   * @param quests the quests plugin
+   */
   public JourneyToQuestCommand(@Nullable CommandNode parent, @NotNull Quests quests) {
     super(parent, Permissions.JOURNEY_TO_QUEST_USE,
         "Blaze trails to your quest objectives",
@@ -88,7 +94,8 @@ public class JourneyToQuestCommand extends PlayerCommandNode {
       return false;
     }
 
-    LinkedList<Location> locationsToReach = quests.getQuester(player.getUniqueId()).getCurrentStage(quest).getLocationsToReach();
+    LinkedList<Location> locationsToReach = quests.getQuester(player.getUniqueId())
+        .getCurrentStage(quest).getLocationsToReach();
     if (locationsToReach.isEmpty()) {
       player.spigot().sendMessage(Format.error("That quest has no destination."));
       return false;

@@ -47,24 +47,24 @@ public class JumpMode extends SpigotMode {
   }
 
   @Override
-  public void collectDestinations(LocationCell origin, @NotNull List<Option> options) {
+  public void collectDestinations(@NotNull LocationCell origin, @NotNull List<Option> options) {
     LocationCell cell;
 
-    cell = origin.createLocatableAtOffset(0, -1, 0);
+    cell = origin.createCellAtOffset(0, -1, 0);
     if (isVerticallyPassable(cell.getBlock())) {
       // Nothing to jump off of
       reject(cell);
       return;
     }
 
-    cell = origin.createLocatableAtOffset(0, 2, 0);
+    cell = origin.createCellAtOffset(0, 2, 0);
     if (!isVerticallyPassable(cell.getBlock())) {
       // No room to jump
       reject(cell);
       return;
     }
     // 1 block up
-    accept(origin.createLocatableAtOffset(0, 1, 0), 1.0d, options);
+    accept(origin.createCellAtOffset(0, 1, 0), 1.0d, options);
 
     // 1 block away and up
     for (int offX = -1; offX <= 1; offX++) {
@@ -76,7 +76,7 @@ public class JumpMode extends SpigotMode {
               continue;
             }
             // Check two blocks tall
-            cell = origin.createLocatableAtOffset(
+            cell = origin.createCellAtOffset(
                 insideOffX * offX /* get sign back */,
                 1,
                 insideOffZ * offZ /* get sign back */);
@@ -84,7 +84,7 @@ public class JumpMode extends SpigotMode {
               reject(cell);
               continue outerZ;
             }
-            cell = origin.createLocatableAtOffset(
+            cell = origin.createCellAtOffset(
                 insideOffX * offX /* get sign back */,
                 2,
                 insideOffZ * offZ /* get sign back */);
@@ -99,7 +99,7 @@ public class JumpMode extends SpigotMode {
             - (origin.getBlockAtOffset(0, 0, 0).isPassable()
             ? origin.getBlockAtOffset(0, -1, 0).getBoundingBox().getMaxY() - 1
             : origin.getBlockAtOffset(0, 0, 0).getBoundingBox().getMaxY()));
-        LocationCell other = origin.createLocatableAtOffset(offX, 1, offZ);
+        LocationCell other = origin.createCellAtOffset(offX, 1, offZ);
         if (!isVerticallyPassable(origin.getBlockAtOffset(offX, 0, offZ))
             && jumpDistance <= 1.2) {
           // Can stand here

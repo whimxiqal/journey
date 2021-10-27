@@ -23,9 +23,9 @@ package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
-import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.ModeTypeGroup;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.search.graph.WeightedGraph;
 import edu.whimc.journey.common.tools.AlternatingList;
 import java.util.Collection;
@@ -52,10 +52,10 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
   /**
    * General constructor.
    *
-   * @param session the search session
-   * @param origin the origin of the entire problem
+   * @param session     the search session
+   * @param origin      the origin of the entire problem
    * @param destination the destination of the entire problem
-   * @param ports the ports
+   * @param ports       the ports
    */
   public SearchGraph(SearchSession<T, D> session, T origin, T destination, Collection<Port<T, D>> ports) {
     this.session = session;
@@ -64,9 +64,7 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
     this.destination = destination;
     this.destinationNode = new Node(new Port<>(destination, destination, ModeType.NONE, 0));
 
-    ports.forEach(port -> {
-      portToNode.put(port, new Node(port));
-    });
+    ports.forEach(port -> portToNode.put(port, new Node(port)));
   }
 
   private Node getOriginNode() {
@@ -81,10 +79,24 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
     return portToNode.get(port);
   }
 
+  /**
+   * Add a path trial to the search graph that supposedly goes
+   * directly from the origin to the destination.
+   *
+   * @param modeTypeGroup the mode types to supposedly get from the origin to the destination
+   */
   public void addPathTrialOriginToDestination(ModeTypeGroup modeTypeGroup) {
     addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modeTypeGroup);
   }
 
+  /**
+   * Add a path trial to the search graph that supposedly goes
+   * from the origin of the entire search to a port.
+   * The endpoint of the path, then, would be the origin of the port.
+   *
+   * @param end           the end of the path trial
+   * @param modeTypeGroup the mode types used to traverse the path
+   */
   public void addPathTrialOriginToLeap(Port<T, D> end, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session,
         origin, end.getOrigin(),
@@ -92,6 +104,14 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
         modeTypeGroup);
   }
 
+  /**
+   * Add a path trial to the search graph that supposedly goes
+   * from a port to the destination of the entire search
+   * The origin of the path, then, would be the destination of the port.
+   *
+   * @param start         the start of the path trial
+   * @param modeTypeGroup the mode types used to traverse the path
+   */
   public void addPathTrialLeapToDestination(Port<T, D> start, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session,
         start.getDestination(), destination,
@@ -99,7 +119,17 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
         modeTypeGroup);
   }
 
-  public void addPathTrialLeapToLeap(Port<T, D> start, Port<T, D> end, ModeTypeGroup modeTypeGroup) {
+  /**
+   * Add a path trial to the search graph that goes from a port to
+   * another port.
+   * The destination of the start port is the origin of this path trial,
+   * and the origin of the end port is the destination of this path trial.
+   *
+   * @param start         the starting port
+   * @param end           the ending port
+   * @param modeTypeGroup the mode types used to traverse the path
+   */
+  public void addPathTrialPortToPort(Port<T, D> start, Port<T, D> end, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session, start.getDestination(), end.getOrigin(),
         getLeapNode(start), getLeapNode(end), modeTypeGroup);
   }
@@ -122,6 +152,12 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
     addEdge(start, end, trial);
   }
 
+  /**
+   * Calculate an itinerary trial using this graph.
+   * If none is found, then return null.
+   *
+   * @return the itinerary trial
+   */
   @Nullable
   public ItineraryTrial<T, D> calculate() {
     AlternatingList<Node, PathTrial<T, D>, Object> graphPath = findMinimumPath(originNode, destinationNode);

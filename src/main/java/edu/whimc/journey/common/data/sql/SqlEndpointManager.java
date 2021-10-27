@@ -25,7 +25,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
   private static final String ENDPOINT_TABLE_NAME = "journey_endpoints";
 
   @Getter
-  private final SQLConnectionController connectionController;
+  private final SqlConnectionController connectionController;
   @Getter
   private final DataAdapter<T, D> dataAdapter;
 
@@ -35,7 +35,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
    * @param connectionController a controller for connecting to a SQL database
    * @param dataAdapter        a conversion controller to serialize and deserialize data from Journey
    */
-  public SqlEndpointManager(SQLConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
+  public SqlEndpointManager(SqlConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
     this.connectionController = connectionController;
     this.dataAdapter = dataAdapter;
     createTables();

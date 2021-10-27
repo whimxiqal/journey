@@ -18,8 +18,16 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to allow saving of new public search endpoints.
+ */
 public class JourneySavePublicCommand extends PlayerCommandNode {
 
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneySavePublicCommand(@Nullable CommandNode parent) {
     super(parent,
         Permissions.JOURNEY_TO_PUBLIC_EDIT,

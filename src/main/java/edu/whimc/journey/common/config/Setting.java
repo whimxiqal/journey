@@ -29,6 +29,11 @@ import edu.whimc.journey.common.JourneyCommon;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A setting, generally used as a key-value pair from a configuration file.
+ *
+ * @param <T> the data type stored in the setting
+ */
 public abstract class Setting<T> {
 
   protected final Class<T> clazz;
@@ -46,16 +51,31 @@ public abstract class Setting<T> {
     this.clazz = clazz;
   }
 
+  /**
+   * Return the configuration path of the setting.
+   *
+   * @return the path
+   */
   @NotNull
   public String getPath() {
     return path;
   }
 
+  /**
+   * Get the default value stored in this setting.
+   *
+   * @return the default value
+   */
   @NotNull
   public T getDefaultValue() {
     return clazz.cast(defaultValue);
   }
 
+  /**
+   * Get the value stored in this setting.
+   *
+   * @return the setting value
+   */
   @NotNull
   public T getValue() {
     if (!initialized) {
@@ -66,13 +86,29 @@ public abstract class Setting<T> {
     return value;
   }
 
+  /**
+   * Set the value for this setting.
+   *
+   * @param value the value
+   */
   public void setValue(@NotNull T value) {
     this.value = Objects.requireNonNull(value);
     this.initialized = true;
   }
 
+  /**
+   * Parse a string into a value accepted by this setting.
+   *
+   * @param string the serialized value string
+   * @return the value
+   */
   public abstract T parseValue(@NotNull String string);
 
+  /**
+   * Print the value stored in this setting into a serialized format.
+   *
+   * @return the string (serialized) form of the value
+   */
   @NotNull
   public abstract String printValue();
 

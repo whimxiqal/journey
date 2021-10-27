@@ -68,7 +68,8 @@ final class HelpCommandNode extends CommandNode {
         if (node.getChildren().size() > 1 || !node.getSubcommands().isEmpty()) {
           builder.append(" [ . . . ]");
           if (node.getHelpCommand() != null) {
-            builder.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + node.getHelpCommand().getFullCommand()))
+            builder.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    "/" + node.getHelpCommand().getFullCommand()))
                 .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                     new Text(node.getDescription().isEmpty()
                         ? node.getFullCommand()

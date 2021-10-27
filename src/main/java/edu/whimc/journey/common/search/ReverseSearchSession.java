@@ -24,8 +24,8 @@ package edu.whimc.journey.common.search;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.ModeTypeGroup;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.search.event.FoundSolutionEvent;
 import edu.whimc.journey.common.search.event.StartSearchEvent;
 import edu.whimc.journey.common.search.event.StopSearchEvent;
@@ -43,12 +43,17 @@ import java.util.UUID;
  *
  * <p>First, all possible paths will be collected into a series of {@link PathTrial}s.
  *
- *
  * @param <T> the cell type
  * @param <D> the domain type
  */
 public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends SearchSession<T, D> {
 
+  /**
+   * General constructor.
+   *
+   * @param callerId   the identifier for the caller
+   * @param callerType the type of caller
+   */
   public ReverseSearchSession(UUID callerId, Caller callerType) {
     super(callerId, callerType);
   }
@@ -92,7 +97,7 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
     for (D domain : allDomains) {
       for (Port<T, D> pathTrialOriginPort : leapsByDestinationDomain.get(domain)) {
         for (Port<T, D> pathTrialDestinationPort : leapsByOriginDomain.get(domain)) {
-          graph.addPathTrialLeapToLeap(
+          graph.addPathTrialPortToPort(
               pathTrialOriginPort,
               pathTrialDestinationPort,
               modeTypeGroup);

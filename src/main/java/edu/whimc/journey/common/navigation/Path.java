@@ -26,49 +26,118 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class Path<T extends Locatable<T, D>, D> implements Serializable {
+/**
+ * A series of steps that determine a possible path through a Minecraft world.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
+public class Path<T extends Cell<T, D>, D> implements Serializable {
 
   private final T origin;
   private final ArrayList<Step<T, D>> steps;
   private final double length;
 
+  /**
+   * General constructor.
+   *
+   * @param origin the origin of the whole path
+   * @param steps  the steps required to get there
+   * @param length the length of the path
+   */
   public Path(T origin, @NotNull Collection<Step<T, D>> steps, double length) {
     this.origin = origin;
     this.steps = new ArrayList<>(steps);
     this.length = length;
   }
 
-  public static <A extends Locatable<A, B>, B> Path<A, B> invalid() {
+  /**
+   * Create an invalid path.
+   *
+   * @param <A> the location type
+   * @param <B> the domain type
+   * @return an invalid path (infinite length)
+   */
+  @NotNull
+  public static <A extends Cell<A, B>, B> Path<A, B> invalid() {
     return new Path<>(null, Lists.newArrayList(), Double.MAX_VALUE);
   }
 
-  public static <A extends Locatable<A, B>, B> boolean isValid(@Nullable Path<A, B> path) {
-    return path != null && Double.compare(path.getLength(), Double.MAX_VALUE) < 0;
-  }
-
-  public T getOrigin() {
+  /**
+   * Get the origin of the path.
+   *
+   * @return the origin location
+   */
+  @NotNull
+  public final T getOrigin() {
     return origin;
   }
 
-  public T getDestination() {
+  /**
+   * Get the destination of the path.
+   *
+   * @return the destination location
+   */
+  @NotNull
+  public final T getDestination() {
     if (steps.isEmpty()) {
-      return null;
+      throw new IllegalStateException("There is no destination for a path with no steps.");
     }
-    return steps.get(steps.size() - 1).getLocatable();
+    return steps.get(steps.size() - 1).location();
   }
 
-  public ArrayList<Step<T, D>> getSteps() {
+  /**
+   * Get a copy of all the steps in this path.
+   *
+   * @return the steps
+   */
+  @NotNull
+  public final ArrayList<Step<T, D>> getSteps() {
     return new ArrayList<>(steps);
   }
 
-  public double getLength() {
+  /**
+   * Get the length of the path.
+   *
+   * @return the path length
+   */
+  public final double getLength() {
     return length;
   }
 
+  /**
+   * Check if the existing at the given location constitutes the completion
+   * of this path if traversed by some entity.
+   * For example, if a player was walking along a path, they would be considered
+   * to have reached the end if this returned true with their current location input.
+   *
+   * @param location the location to test
+   * @return true if the path has been completed
+   */
   public boolean completeWith(T location) {
     return location.distanceToSquared(getDestination()) < 4;
   }
 
+  /**
+   * Verify if the path is still valid and traversable with the given mode collection.
+   *
+   * @param modes all modes
+   * @return true if the path can be traversed, or false if it is impassable
+   */
+  public boolean test(Collection<Mode<T, D>> modes) {
+    stepLoop:
+    for (int i = 0; i < steps.size() - 1; i++) {
+      for (Mode<T, D> mode : modes) {
+        for (Mode<T, D>.Option option : mode.getDestinations(steps.get(i).location())) {
+          if (steps.get(i + 1).location().equals(option.getLocation())) {
+            continue stepLoop;  // we found a mode that gave us a fitting option. Continue to the next step.
+          }
+        }
+      }
+      // We've exhausted all modes (and each mode's options) for this step, so fail.
+      return false;
+    }
+    return true;
+  }
 }

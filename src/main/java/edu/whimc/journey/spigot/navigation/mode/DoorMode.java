@@ -30,13 +30,13 @@ public final class DoorMode extends SpigotMode {
   }
 
   @Override
-  public void collectDestinations(LocationCell origin, @NotNull List<Option> options) {
+  public void collectDestinations(@NotNull LocationCell origin, @NotNull List<Option> options) {
     // TODO check if there are buttons or levers nearby that may open the door
 
     LocationCell cell;
     Block block;
     // Pos X - East
-    cell = origin.createLocatableAtOffset(1, 0, 0);
+    cell = origin.createCellAtOffset(1, 0, 0);
     block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
@@ -49,30 +49,30 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d, options);
+            accept(origin.createCellAtOffset(1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d, options);
+              accept(origin.createCellAtOffset(1, 0, 0), 1.0d, options);
             } else {
-              reject(origin.createLocatableAtOffset(1, 0, 0));
+              reject(origin.createCellAtOffset(1, 0, 0));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(1, 0, 0), 1.0d, options);
+          accept(origin.createCellAtOffset(1, 0, 0), 1.0d, options);
         }
       } else {
-        reject(origin.createLocatableAtOffset(1, -1, 0));
+        reject(origin.createCellAtOffset(1, -1, 0));
       }
     } else {
       reject(new LocationCell(block.getLocation()));
     }
 
     // Pos Z - North
-    cell = origin.createLocatableAtOffset(0, 0, 1);
+    cell = origin.createCellAtOffset(0, 0, 1);
     block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
@@ -85,30 +85,30 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.WEST)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d, options);
+            accept(origin.createCellAtOffset(0, 0, 1), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d, options);
+              accept(origin.createCellAtOffset(0, 0, 1), 1.0d, options);
             } else {
-              reject(origin.createLocatableAtOffset(0, 0, 1));
+              reject(origin.createCellAtOffset(0, 0, 1));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(0, 0, 1), 1.0d, options);
+          accept(origin.createCellAtOffset(0, 0, 1), 1.0d, options);
         }
       } else {
-        reject(origin.createLocatableAtOffset(0, -1, 1));
+        reject(origin.createCellAtOffset(0, -1, 1));
       }
     } else {
       reject(new LocationCell(block.getLocation()));
     }
 
     // Neg X - West
-    cell = origin.createLocatableAtOffset(-1, 0, 0);
+    cell = origin.createCellAtOffset(-1, 0, 0);
     block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
@@ -121,30 +121,30 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d, options);
+            accept(origin.createCellAtOffset(-1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d, options);
+              accept(origin.createCellAtOffset(-1, 0, 0), 1.0d, options);
             } else {
-              reject(origin.createLocatableAtOffset(-1, 0, 0));
+              reject(origin.createCellAtOffset(-1, 0, 0));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(-1, 0, 0), 1.0d, options);
+          accept(origin.createCellAtOffset(-1, 0, 0), 1.0d, options);
         }
       } else {
-        reject(origin.createLocatableAtOffset(-1, -1, 0));
+        reject(origin.createCellAtOffset(-1, -1, 0));
       }
     } else {
       reject(new LocationCell(block.getLocation()));
     }
 
     // Neg Z - South
-    cell = origin.createLocatableAtOffset(0, 0, -1);
+    cell = origin.createCellAtOffset(0, 0, -1);
     block = cell.getBlock();
     // Check if we found a door
     if (block.getBlockData() instanceof Door) {
@@ -157,23 +157,23 @@ public final class DoorMode extends SpigotMode {
               || doorBlock.getFacing().equals(BlockFace.WEST)
               || doorBlock.isOpen()) {
             // Nothing blocking
-            accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d, options);
+            accept(origin.createCellAtOffset(0, 0, -1), 1.0d, options);
           } else {
             // We need to be able to open the door
             if (MaterialGroups.PRESSURE_PLATES.contains(origin.getBlock().getType())) {
               // We can step on a pressure plate to open it
-              accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d, options);
+              accept(origin.createCellAtOffset(0, 0, -1), 1.0d, options);
             } else {
-              reject(origin.createLocatableAtOffset(0, 0, -1));
+              reject(origin.createCellAtOffset(0, 0, -1));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.createLocatableAtOffset(0, 0, -1), 1.0d, options);
+          accept(origin.createCellAtOffset(0, 0, -1), 1.0d, options);
         }
       } else {
-        reject(origin.createLocatableAtOffset(0, -1, -1));
+        reject(origin.createCellAtOffset(0, -1, -1));
       }
     } else {
       reject(new LocationCell(block.getLocation()));

@@ -21,8 +21,18 @@
 
 package edu.whimc.journey.common.search;
 
+/**
+ * An interface for objects that have some running-operation result state.
+ *
+ * @see ResultState
+ */
 public interface Resulted {
 
+  /**
+   * Get the execution state.
+   *
+   * @return the state
+   */
   ResultState getState();
 
 }

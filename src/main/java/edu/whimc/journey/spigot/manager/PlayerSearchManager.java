@@ -30,5 +30,6 @@ import org.bukkit.World;
 /**
  * A search manager specifically for Spigot players.
  */
-public class PlayerSearchManager extends SearchManager<LocationCell, World, PlayerSearchSession, PlayerJourney> {
+public class PlayerSearchManager extends SearchManager<LocationCell, World,
+    PlayerSearchSession, PlayerJourney> {
 }

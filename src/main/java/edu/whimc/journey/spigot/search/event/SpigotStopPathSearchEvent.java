@@ -27,21 +27,34 @@ import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * The Spigot implementation for the {@link StopPathSearchEvent}.
+ */
 public class SpigotStopPathSearchEvent extends SpigotSearchEvent<StopPathSearchEvent<LocationCell, World>> {
 
   private static final HandlerList handlers = new HandlerList();
 
+  /**
+   * General constructor.
+   *
+   * @param event the common event
+   */
   public SpigotStopPathSearchEvent(StopPathSearchEvent<LocationCell, World> event) {
     super(event);
+  }
+
+  /**
+   * Get handler list. Spigot standard.
+   *
+   * @return the handler list
+   */
+  public static HandlerList getHandlerList() {
+    return handlers;
   }
 
   @Override
   @NotNull
   public HandlerList getHandlers() {
-    return handlers;
-  }
-
-  public static HandlerList getHandlerList() {
     return handlers;
   }
 

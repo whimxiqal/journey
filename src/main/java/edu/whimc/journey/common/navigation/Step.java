@@ -22,8 +22,8 @@
 package edu.whimc.journey.common.navigation;
 
 import java.io.Serializable;
-import lombok.Data;
 import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A representation of a movement step between {@link Locatable}s on a {@link Path}.
@@ -31,17 +31,10 @@ import lombok.NonNull;
  * @param <T> The locatable type
  * @param <D> The domain type
  */
-@Data
-public final class Step<T extends Locatable<T, D>, D> implements Serializable, Moded {
-  /**
-   * An object to identify location.
-   */
-  @NonNull
-  private final T locatable;
-
-  /**
-   * The type of {@link Mode} that was used to get to the stored locatable.
-   */
-  @NonNull
-  private final ModeType modeType;
+public record Step<T extends Cell<T, D>, D>(@NonNull T location,
+                                            @NonNull ModeType modeType) implements Serializable, Moded {
+  @Override
+  public @NotNull ModeType getModeType() {
+    return modeType;
+  }
 }

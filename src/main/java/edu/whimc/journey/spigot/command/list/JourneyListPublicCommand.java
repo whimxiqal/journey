@@ -18,9 +18,16 @@ import org.bukkit.util.ChatPaginator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to list public search endpoints.
+ */
 public class JourneyListPublicCommand extends PlayerCommandNode {
 
-
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneyListPublicCommand(@Nullable CommandNode parent) {
     super(parent,
         Permissions.JOURNEY_TO_PUBLIC_USE,

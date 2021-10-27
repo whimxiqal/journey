@@ -5,12 +5,15 @@ import edu.whimc.journey.spigot.data.SpigotDataAdapter;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import org.bukkit.World;
 
-public class SpigotSQLitePersonalEndpointManager extends SqlitePersonalEndpointManager<LocationCell, World> {
+/**
+ * The Spigot implementation of the {@link SqlitePersonalEndpointManager}.
+ */
+public class SpigotSqlitePersonalEndpointManager extends SqlitePersonalEndpointManager<LocationCell, World> {
 
   /**
    * General constructor.
    */
-  public SpigotSQLitePersonalEndpointManager(String address) {
+  public SpigotSqlitePersonalEndpointManager(String address) {
     super(address, new SpigotDataAdapter());
   }
 }

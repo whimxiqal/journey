@@ -23,6 +23,9 @@ package edu.whimc.journey.spigot.util;
 
 import edu.whimc.journey.spigot.navigation.LocationCell;
 
+/**
+ * A utility class to calculate properties about locations in a grid space.
+ */
 public final class LocationUtil {
 
   private LocationUtil() {
@@ -32,30 +35,34 @@ public final class LocationUtil {
    * Determine if the user can step from the given block to a
    * block one block away in the X or Z direction and some
    * amount of blocks up or down.
-   * <p>
-   * Does no checks for whether a player can stand at the given
+   *
+   * <p>Does no checks for whether a player can stand at the given
    * origin points.
    *
    * @param cell       the cell to check against
    * @param offY       the offset of the step in y
-   * @param xStep      which a axis a step is being taken: x if true, z if false
+   * @param stepX      which axis a step is being taken: x if true, z if false
    * @param isPositive which direction a step is being taken:
    *                   positive if true, negative if false
    * @return true if a player can step there
    */
   private static boolean canStep(LocationCell cell, int offY,
-                                 boolean xStep, boolean isPositive) {
-    if (offY > 1 || offY < -3) return false;  // Too high to jump, too low to fall
+                                 boolean stepX, boolean isPositive) {
+    if (offY > 1 || offY < -3) {
+      return false;  // Too high to jump, too low to fall
+    }
 
-    int floorX = cell.getX() + (xStep ? 1 : 0) * (isPositive ? 1 : -1);
+    int floorX = cell.getX() + (stepX ? 1 : 0) * (isPositive ? 1 : -1);
     int floorY = cell.getY() - 1 + offY;
-    int floorZ = cell.getZ() + (xStep ? 0 : 1) * (isPositive ? 1 : -1);
+    int floorZ = cell.getZ() + (stepX ? 0 : 1) * (isPositive ? 1 : -1);
 
     if (cell.getDomain().getBlockAt(floorX, floorY, floorZ).isPassable()) {
       return false;  // There is no floor
     }
 
-    for (int columnY = Math.min(floorY, cell.getY()) + 1; columnY <= Math.max(floorY, cell.getY()) + 1; columnY++) {
+    for (int columnY = Math.min(floorY, cell.getY()) + 1;
+         columnY <= Math.max(floorY, cell.getY()) + 1;
+         columnY++) {
       if (!cell.getDomain().getBlockAt(floorX, columnY, floorY).isPassable()) {
         return false;
       }
@@ -64,19 +71,19 @@ public final class LocationUtil {
     return true;
   }
 
-  public static boolean canStepXPos(LocationCell cell, int offY) {
+  private static boolean canStepPosX(LocationCell cell, int offY) {
     return canStep(cell, offY, true, true);
   }
 
-  public static boolean canStepXNeg(LocationCell cell, int offY) {
+  private static boolean canStepNegX(LocationCell cell, int offY) {
     return canStep(cell, offY, true, false);
   }
 
-  public static boolean canStepZPos(LocationCell cell, int offY) {
+  private static boolean canStepPosZ(LocationCell cell, int offY) {
     return canStep(cell, offY, false, true);
   }
 
-  public static boolean canStepZNeg(LocationCell cell, int offY) {
+  private static boolean canStepNegZ(LocationCell cell, int offY) {
     return canStep(cell, offY, false, false);
   }
 

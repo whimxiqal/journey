@@ -47,12 +47,12 @@ public class WalkMode extends SpigotMode {
   }
 
   @Override
-  public void collectDestinations(LocationCell origin, @NotNull List<Option> options) {
+  public void collectDestinations(@NotNull LocationCell origin, @NotNull List<Option> options) {
     LocationCell cell;
     LocationCell cell1;
     LocationCell cell2;
     // Can you drop into an inhabitable block?
-    cell = origin.createLocatableAtOffset(0, -1, 0);
+    cell = origin.createCellAtOffset(0, -1, 0);
     if (canStandOn(origin.getBlockAtOffset(0, -2, 0)) && isVerticallyPassable(cell.getBlock())) {
       accept(cell, 1.0d, options);
     } else {
@@ -77,7 +77,7 @@ public class WalkMode extends SpigotMode {
               continue;
             }
             for (int offY = 0; offY <= 1; offY++) { // Check two blocks tall
-              cell = origin.createLocatableAtOffset(insideOffX * offX /* get sign back */,
+              cell = origin.createCellAtOffset(insideOffX * offX /* get sign back */,
                   offY,
                   insideOffZ * offZ /*get sign back */);
               if (!isLaterallyPassable(cell.getBlock())) {
@@ -89,7 +89,7 @@ public class WalkMode extends SpigotMode {
         }
 
         // We can move to offX and offY laterally
-        cell = origin.createLocatableAtOffset(offX, 0, offZ);
+        cell = origin.createCellAtOffset(offX, 0, offZ);
         if (!isVerticallyPassable(cell.getBlock())) {
           // We can just stand right here (carpets, slabs, etc.)
           accept(cell, origin.distanceTo(cell), options);
@@ -98,10 +98,10 @@ public class WalkMode extends SpigotMode {
         }
 
         for (int offY = -1; offY >= -4; offY--) {  // Check for floor anywhere up to a 3 block fall
-          cell = origin.createLocatableAtOffset(offX, offY, offZ);
-          cell1 = cell.createLocatableAtOffset(0, 1, 0);
+          cell = origin.createCellAtOffset(offX, offY, offZ);
+          cell1 = cell.createCellAtOffset(0, 1, 0);
           if (canStandOn(cell.getBlock())) {
-            cell2 = cell.createLocatableAtOffset(0, 2, 0);
+            cell2 = cell.createCellAtOffset(0, 2, 0);
             if (cell2.getBlock().getType().equals(Material.WATER)) {
               reject(cell1); // Water (drowning) - invalid destination
             } else {

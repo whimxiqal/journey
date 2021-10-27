@@ -125,14 +125,14 @@ class SearchTest {
       // Put in path
       solution.get().getSteps().forEach(step -> {
         char[][] printer;
-        if (step.getLocatable().getDomain().equals(domain1)) {
+        if (step.location().getDomain().equals(domain1)) {
           printer = printer1;
         } else {
           printer = printer2;
         }
 
-        if (printer[step.getLocatable().getX()][step.getLocatable().getY()] == ' ') {
-          printer[step.getLocatable().getX()][step.getLocatable().getY()] = '+';
+        if (printer[step.location().getX()][step.location().getY()] == ' ') {
+          printer[step.location().getX()][step.location().getY()] = '+';
         }
       });
 

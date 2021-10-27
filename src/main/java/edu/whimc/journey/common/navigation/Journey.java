@@ -31,7 +31,7 @@ import java.util.Collection;
  * @param <T> the type of locatable
  * @param <D> the type of domain
  */
-public interface Journey<T extends Locatable<T, D>, D> extends Runnable {
+public interface Journey<T extends Cell<T, D>, D> extends Runnable {
 
   /**
    * Notify this {@link Journey} that the given {@link Locatable}

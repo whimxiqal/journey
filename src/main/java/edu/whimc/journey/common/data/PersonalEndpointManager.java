@@ -6,6 +6,13 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A general description of how to handle storage for personal search endpoints.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see edu.whimc.journey.common.search.SearchSession
+ */
 public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
 
   /**
@@ -53,7 +60,7 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
                             @NotNull String name) throws DataAccessException;
 
   /**
-   * Check if a player has a custom endpoint at the certain cell location
+   * Check if a player has a custom endpoint at the certain cell location.
    *
    * @param playerUuid the player's uuid
    * @param cell       the cell location
@@ -65,7 +72,7 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
   }
 
   /**
-   * Check if a player has a certain named custom endpoint
+   * Check if a player has a certain named custom endpoint.
    *
    * @param playerUuid the player's uuid
    * @param name       the cell name
@@ -77,7 +84,7 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
   }
 
   /**
-   * Get the name of a custom location with a given unique player and cell
+   * Get the name of a custom location with a given unique player and cell.
    *
    * @param playerUuid the player's uuid
    * @param cell       the custom location
@@ -88,7 +95,7 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
                                @NotNull T cell) throws DataAccessException;
 
   /**
-   * Get a specific cell with a given unique player and name combination
+   * Get a specific cell with a given unique player and name combination.
    *
    * @param playerUuid the player's uuid
    * @param name       the cell name
@@ -99,7 +106,7 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
                       @NotNull String name) throws DataAccessException;
 
   /**
-   * Get a list of all custom endpoints for a player
+   * Get a list of all custom endpoints for a player.
    *
    * @param playerUuid the player's uuid
    * @return all names of cells mapped to their corresponding cells

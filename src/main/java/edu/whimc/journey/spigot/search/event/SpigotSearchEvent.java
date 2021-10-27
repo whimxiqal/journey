@@ -26,15 +26,31 @@ import edu.whimc.journey.spigot.navigation.LocationCell;
 import org.bukkit.World;
 import org.bukkit.event.Event;
 
+/**
+ * The general Spigot implementation of a {@link SearchEvent}.
+ *
+ * @param <S> the type of common event that an instantiation of this class
+ *            would encapsulate
+ */
 public abstract class SpigotSearchEvent<S extends SearchEvent<LocationCell, World>> extends Event {
 
   private final S searchEvent;
 
+  /**
+   * General constructor.
+   *
+   * @param event the common event
+   */
   public SpigotSearchEvent(S event) {
     super(true);
     this.searchEvent = event;
   }
 
+  /**
+   * Get the common search event for this event.
+   *
+   * @return the common event
+   */
   public S getSearchEvent() {
     return searchEvent;
   }

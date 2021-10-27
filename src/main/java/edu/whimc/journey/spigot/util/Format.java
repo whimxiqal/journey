@@ -33,6 +33,10 @@ import org.bukkit.ChatColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A utility class for supplying all general Journey messages
+ * specifically for Spigot Minecraft.
+ */
 public final class Format {
 
   public static final ChatColor THEME = ChatColor.LIGHT_PURPLE;
@@ -49,6 +53,12 @@ public final class Format {
   private Format() {
   }
 
+  /**
+   * Convert a Spigot text object into a plain string.
+   *
+   * @param text the text
+   * @return the string
+   */
   public static String toPlain(BaseComponent[] text) {
     StringBuilder builder = new StringBuilder();
     for (BaseComponent component : text) {
@@ -57,10 +67,24 @@ public final class Format {
     return builder.toString();
   }
 
+  /**
+   * Build Spigot text from a string message.
+   *
+   * @param single the string
+   * @return the text
+   */
   public static BaseComponent[] textOf(String single) {
     return new BaseComponent[]{new TextComponent(single)};
   }
 
+  /**
+   * Apply a chat color to every message in the sequence and return a
+   * Spigot text object.
+   *
+   * @param color   the color
+   * @param message the strings
+   * @return the text
+   */
   public static BaseComponent[] applyColorToAllOf(ChatColor color, String... message) {
     StringBuilder builder = new StringBuilder();
     for (Object m : message) {
@@ -69,30 +93,76 @@ public final class Format {
     return textOf(builder.toString());
   }
 
+  /**
+   * Returns text that signifies some successful state.
+   *
+   * @param message the strings of the message
+   * @return the Spigot text
+   */
   public static BaseComponent[] success(String... message) {
     return chain(textOf(PREFIX), applyColorToAllOf(SUCCESS, message));
   }
 
+  /**
+   * Returns text that signifies the content is solely informative.
+   *
+   * @param message the strings of the message
+   * @return the Spigot text
+   */
   public static BaseComponent[] info(String... message) {
     return chain(textOf(PREFIX), applyColorToAllOf(INFO, message));
   }
 
+  /**
+   * Returns text that signifies some warning state.
+   *
+   * @param message the strings of the message
+   * @return the Spigot text
+   */
   public static BaseComponent[] warn(String... message) {
     return chain(textOf(PREFIX), applyColorToAllOf(WARN, message));
   }
 
+  /**
+   * Returns text that signifies some error state.
+   *
+   * @param message the strings of the message
+   * @return the Spigot text
+   */
   public static BaseComponent[] error(String... message) {
     return chain(textOf(PREFIX), applyColorToAllOf(ERROR, message));
   }
 
+  /**
+   * Returns text that signifies the content is solely informative
+   * when debugging.
+   *
+   * @param message the strings of the message
+   * @return the Spigot text-
+   */
   public static BaseComponent[] debug(String... message) {
     return chain(textOf(PREFIX), applyColorToAllOf(DEBUG, message));
   }
 
+  /**
+   * Creates a Spigot object from a string that is colored the default
+   * chat color. This signifies the content to be a small piece of
+   * information, like a note.
+   *
+   * @param message the strings of the message
+   * @return the text object
+   */
   public static BaseComponent[] note(String... message) {
     return applyColorToAllOf(DEFAULT, message);
   }
 
+  /**
+   * Create a formatted Spigot text object from a location.
+   *
+   * @param cell         the location
+   * @param defaultColor the primary color of the characters within the returned text
+   * @return the text
+   */
   public static BaseComponent[] locationCell(LocationCell cell, ChatColor defaultColor) {
     return applyColorToAllOf(defaultColor,
         "[",
@@ -106,17 +176,42 @@ public final class Format {
         "]");
   }
 
+  /**
+   * Chain otherwise-unrelated Spigot text objects together
+   * into one larger text object.
+   *
+   * @param arrays the text objects
+   * @return the final text object
+   */
   public static BaseComponent[] chain(BaseComponent[]... arrays) {
     return Arrays.stream(arrays)
         .flatMap(Arrays::stream)
         .toArray(BaseComponent[]::new);
   }
 
+  /**
+   * See {@link #command(String, String, String)}, but it uses the command as the label.
+   *
+   * @param command     the command
+   * @param description the description
+   * @return the Spigot text object
+   */
   public static BaseComponent[] command(@NotNull String command, @Nullable String description) {
     return command(command, command, description);
   }
 
-  public static BaseComponent[] command(@NotNull String label, @NotNull String command, @Nullable String description) {
+  /**
+   * Create a spigot text object that allows the user to run the command
+   * when the text is clicked in chat.
+   *
+   * @param label       the display name of the text component
+   * @param command     the command to run
+   * @param description the description of the command and its behavior
+   * @return the Spigot text object
+   */
+  public static BaseComponent[] command(@NotNull String label,
+                                        @NotNull String command,
+                                        @Nullable String description) {
     return new ComponentBuilder()
         .append(Format.INFO + "[")
         .append(Format.ACCENT + label)

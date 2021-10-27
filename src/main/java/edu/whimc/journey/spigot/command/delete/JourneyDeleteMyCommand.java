@@ -1,7 +1,7 @@
 package edu.whimc.journey.spigot.command.delete;
 
-import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.data.DataAccessException;
+import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.tools.BufferedFunction;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.JourneyCommand;
@@ -21,13 +21,23 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to delete a personal search endpoint.
+ */
 public class JourneyDeleteMyCommand extends PlayerCommandNode {
+
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneyDeleteMyCommand(@Nullable CommandNode parent) {
     super(parent, Permissions.JOURNEY_TO_CUSTOM_USE,
         "Delete a saved personal location",
         "my");
 
-    BufferedFunction<Player, List<String>> customLocationsFunction = JourneyCommand.bufferedPersonalEndpointFunction();
+    BufferedFunction<Player, List<String>> customLocationsFunction
+        = JourneyCommand.bufferedPersonalEndpointFunction();
     addSubcommand(Parameter.builder()
         .supplier(Parameter.ParameterSupplier.builder()
             .usage("<name>")
@@ -56,7 +66,9 @@ public class JourneyDeleteMyCommand extends PlayerCommandNode {
         .getDataManager()
         .getPersonalEndpointManager();
     if (endpointManager.hasCustomEndpoint(player.getUniqueId(), args[0])) {
-      JourneySpigot.getInstance().getDataManager().getPersonalEndpointManager().removeCustomEndpoint(player.getUniqueId(), args[0]);
+      JourneySpigot.getInstance().getDataManager()
+          .getPersonalEndpointManager()
+          .removeCustomEndpoint(player.getUniqueId(), args[0]);
       player.spigot().sendMessage(Format.success("The custom location ",
           Format.toPlain(Format.note(args[0])), " has been removed."));
       return true;

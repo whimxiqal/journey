@@ -21,21 +21,29 @@
 
 package edu.whimc.journey.spigot.navigation;
 
-import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.ModeType;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.tools.Verifiable;
 import edu.whimc.journey.spigot.util.NetherUtil;
 import java.util.Objects;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A port that represents a Minecraft Nether Portal.
+ */
 public final class NetherPort extends Port<LocationCell, World> implements Verifiable {
 
   public static final int NETHER_PORT_LENGTH = 16;
   private final LocationCell origin;
   private final LocationCell destination;
-  private LocationCell currentLocation;
 
+  /**
+   * General constructor.
+   *
+   * @param origin      the origin of the portal
+   * @param destination the destination of the portal
+   */
   public NetherPort(@NotNull final LocationCell origin, @NotNull final LocationCell destination) {
     super(origin, destination, ModeType.NETHER_PORTAL, NETHER_PORT_LENGTH);
     this.origin = origin;
@@ -50,8 +58,12 @@ public final class NetherPort extends Port<LocationCell, World> implements Verif
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     NetherPort that = (NetherPort) o;
     return getOrigin().equals(that.getOrigin()) && getDestination().equals(that.getDestination());
   }
@@ -66,10 +78,6 @@ public final class NetherPort extends Port<LocationCell, World> implements Verif
     return "NetherLink: "
         + origin + " -> "
         + destination;
-  }
-
-  public void updateLocation(LocationCell location) {
-    this.currentLocation = location;
   }
 
 }

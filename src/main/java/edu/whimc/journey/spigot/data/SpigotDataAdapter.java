@@ -6,6 +6,9 @@ import java.util.UUID;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A data adapter specifically for Spigot Minecraft.
+ */
 public class SpigotDataAdapter implements DataAdapter<LocationCell, World> {
 
   @Override

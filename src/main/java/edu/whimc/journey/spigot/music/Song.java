@@ -28,30 +28,47 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
+/**
+ * A class for defining some music to be played to players in Minecraft.
+ */
 public class Song {
 
+  /**
+   * A single arpeggio to symbolize success.
+   */
   public static final Song SUCCESS_CHORD = new Song(List.of(
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1),
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.75f, 3),
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 5),
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 1.1f, 7),
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 1.33f, 9)
-      ));
+  ));
 
   private final List<Note> notes = new LinkedList<>();
 
-  public Song() {
-
-  }
-
+  /**
+   * General constructor that takes some list of notes.
+   *
+   * @param notes the notes of the song
+   */
   public Song(List<Note> notes) {
     this.notes.addAll(notes);
   }
 
+  /**
+   * Add a note to the song.
+   *
+   * @param note the note
+   */
   public void addNode(Note note) {
     this.notes.add(note);
   }
 
+  /**
+   * Play the song for a Minecraft player.
+   *
+   * @param player the player
+   */
   public void play(Player player) {
     for (int i = 0; i < notes.size(); i++) {
       playNote(player, i);
@@ -60,11 +77,15 @@ public class Song {
 
   private void playNote(Player player, int index) {
     Bukkit.getScheduler().scheduleSyncDelayedTask(JourneySpigot.getInstance(), () ->
-        player.playSound(player.getLocation(), this.notes.get(index).sound,
-            1, this.notes.get(index).pitch),
+            player.playSound(player.getLocation(), this.notes.get(index).sound,
+                1, this.notes.get(index).pitch),
         this.notes.get(index).delay);
   }
 
-  public record Note(Sound sound, float pitch, int delay) { }
+  /**
+   * A single sound (note) that can be strung together into a {@link Song}.
+   */
+  public record Note(Sound sound, float pitch, int delay) {
+  }
 
 }

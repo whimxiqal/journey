@@ -7,6 +7,9 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Slab;
 
+/**
+ * A utility class to handle general odd Spigot Minecraft-related operations.
+ */
 public final class SpigotUtil {
 
   public static final double STEVE_HEIGHT = 1.8;
@@ -17,6 +20,13 @@ public final class SpigotUtil {
 
   public static final double STEP_HEIGHT = 0.5;
 
+  /**
+   * Return true if the given block can be possibly passed through vertically,
+   * like falling through or flying upwards through.
+   *
+   * @param block the block
+   * @return true if it can be passed
+   */
   public static boolean isVerticallyPassable(Block block) {
     return isVerticallyPassable(block, Collections.emptySet());
   }
@@ -34,6 +44,13 @@ public final class SpigotUtil {
     return MaterialGroups.VERTICALLY_PASSABLE.contains(block.getType());
   }
 
+  /**
+   * Determine if a block can be laterally passed through, as in,
+   * can the entity move in a lateral direction and go through that
+   * block location.
+   * @param block the block
+   * @return true if passable
+   */
   public static boolean isLaterallyPassable(Block block) {
     return isVerticallyPassable(block, Collections.emptySet());
   }
@@ -51,6 +68,11 @@ public final class SpigotUtil {
     return MaterialGroups.LATERALLY_PASSABLE.contains(block.getType());
   }
 
+  /**
+   * Determine if this block is generally passable.
+   * @param block the block
+   * @return true if passable
+   */
   public static boolean isPassable(Block block) {
     return isPassable(block, Collections.emptySet());
   }
@@ -92,15 +114,6 @@ public final class SpigotUtil {
   public static boolean canStandIn(Block block, Set<Material> forcePassable) {
     return isLaterallyPassable(block, forcePassable)
         && !isVerticallyPassable(block, forcePassable);
-  }
-
-  public static Slab setSlabType(BlockData blockData, Slab.Type type) {
-    if (blockData instanceof Slab slab) {
-      slab.setType(type);
-      return slab;
-    } else {
-      throw new IllegalArgumentException("You may only pass Slab block data!");
-    }
   }
 
 }

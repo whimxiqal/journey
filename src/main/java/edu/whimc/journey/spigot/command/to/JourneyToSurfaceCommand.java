@@ -11,8 +11,17 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to allow a user to calculate a path up to the surface of the world,
+ * to be used if they are lost underground.
+ */
 public class JourneyToSurfaceCommand extends PlayerCommandNode {
 
+  /**
+   * General constructor.
+   *
+   * @param parent the parent command
+   */
   public JourneyToSurfaceCommand(@Nullable CommandNode parent) {
     super(parent, Permissions.JOURNEY_TO_SURFACE_USE,
         "Journey to the surface, if you are in the overworld",

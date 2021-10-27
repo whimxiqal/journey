@@ -25,15 +25,34 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An event that is dispatched when a new solution is found during a path search.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see SearchSession
+ * @see SearchDispatcher
+ */
 public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final Itinerary<T, D> itinerary;
 
+  /**
+   * General constructor.
+   *
+   * @param session   the session
+   * @param itinerary the solution to the search
+   */
   public FoundSolutionEvent(SearchSession<T, D> session, Itinerary<T, D> itinerary) {
     super(session);
     this.itinerary = itinerary;
   }
 
+  /**
+   * Get the solution to the search.
+   *
+   * @return the solution
+   */
   public Itinerary<T, D> getItinerary() {
     return this.itinerary;
   }

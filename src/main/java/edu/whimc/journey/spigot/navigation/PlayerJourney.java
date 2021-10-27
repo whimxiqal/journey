@@ -123,14 +123,14 @@ public class PlayerJourney implements Journey<LocationCell, World> {
       int originalStepIndex = stepIndex;
       LocationCell removing;
       do {
-        removing = traversal.get().getSteps().get(stepIndex).getLocatable();
+        removing = traversal.get().getSteps().get(stepIndex).location();
         near.remove(removing);
         stepIndex++;
       } while (!locatable.equals(removing));
       for (int i = originalStepIndex + PROXIMAL_BLOCK_CACHE_SIZE;
            i < Math.min(stepIndex + PROXIMAL_BLOCK_CACHE_SIZE, traversal.get().getSteps().size());
            i++) {
-        near.add(traversal.get().getSteps().get(i).getLocatable());
+        near.add(traversal.get().getSteps().get(i).location());
       }
     }
   }
@@ -178,7 +178,7 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     stepIndex = 0;
     near.clear();
     for (int i = 0; i < Math.min(PROXIMAL_BLOCK_CACHE_SIZE, path.getSteps().size()); i++) {
-      near.add(path.getSteps().get(i).getLocatable());
+      near.add(path.getSteps().get(i).location());
     }
   }
 
@@ -215,21 +215,21 @@ public class PlayerJourney implements Journey<LocationCell, World> {
           particle = Particle.GLOW;
         }
 
-        step.getLocatable().getDomain().spawnParticle(particle,
-            step.getLocatable().getX() + 0.5,
-            step.getLocatable().getY() + 0.4f,
-            step.getLocatable().getZ() + 0.5,
+        step.location().getDomain().spawnParticle(particle,
+            step.location().getX() + 0.5,
+            step.location().getY() + 0.4f,
+            step.location().getZ() + 0.5,
             PARTICLE_CYCLE_COUNT,
             PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY,
             0);
 
         // Check if we need to "hint" where the trail is because the water obscures the particle
-        if (step.getLocatable().getBlock().isLiquid()
-            && !step.getLocatable().getBlockAtOffset(0, 1, 0).isLiquid()) {
-          step.getLocatable().getDomain().spawnParticle(particle,
-              step.getLocatable().getX() + 0.5f,
-              step.getLocatable().getY() + 1.4f,
-              step.getLocatable().getZ() + 0.5f,
+        if (step.location().getBlock().isLiquid()
+            && !step.location().getBlockAtOffset(0, 1, 0).isLiquid()) {
+          step.location().getDomain().spawnParticle(particle,
+              step.location().getX() + 0.5f,
+              step.location().getY() + 1.4f,
+              step.location().getZ() + 0.5f,
               PARTICLE_CYCLE_COUNT,
               PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY, PARTICLE_SPAWN_DENSITY,
               0);

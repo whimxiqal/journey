@@ -1,11 +1,11 @@
 package edu.whimc.journey.common.data.sql.sqlite;
 
-import edu.whimc.journey.common.data.sql.SQLConnectionController;
+import edu.whimc.journey.common.data.sql.SqlConnectionController;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class SqliteConnectionController implements SQLConnectionController {
+public class SqliteConnectionController implements SqlConnectionController {
 
   private final String address;
 

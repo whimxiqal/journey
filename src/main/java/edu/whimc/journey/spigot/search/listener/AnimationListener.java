@@ -79,7 +79,7 @@ public class AnimationListener implements Listener {
   public void stepSearchEvent(SpigotStepSearchEvent event) {
     AnimationManager manager = getAnimationManager(event);
     if (manager != null) {
-      manager.showStep(event.getSearchEvent().getStep().getLocatable());
+      manager.showStep(event.getSearchEvent().getStep().location());
     }
   }
 
