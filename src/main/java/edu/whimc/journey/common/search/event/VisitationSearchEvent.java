@@ -24,18 +24,46 @@ package edu.whimc.journey.common.search.event;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Step;
 import edu.whimc.journey.common.search.SearchSession;
+import java.util.Collection;
 
+/**
+ * An event dispatched when a location has been "visited" by the
+ * {@link SearchSession} algorithm in the execution of a
+ * {@link edu.whimc.journey.common.search.PathTrial}.
+ * The visitation represents when a location is saved for possible later review
+ * when deciding which visited block locations have the best chance of being useful
+ * on the optimal path.
+ *
+ * @param <T> the location type
+ * @param <D> the destination type
+ * @see StepSearchEvent
+ * @see SearchDispatcher
+ * @see edu.whimc.journey.common.search.PathTrial#attempt(Collection, boolean)
+ */
 public class VisitationSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
-  private final Step<T, D> step;
+  private final Step<T, D> prospectiveStep;
 
-  public VisitationSearchEvent(SearchSession<T, D> session, Step<T, D> step) {
+  /**
+   * General constructor.
+   *
+   * @param session         the session
+   * @param prospectiveStep the step that would be taken if this visited block was chosen
+   *                        as the best next-location to move into.
+   */
+  public VisitationSearchEvent(SearchSession<T, D> session, Step<T, D> prospectiveStep) {
     super(session);
-    this.step = step;
+    this.prospectiveStep = prospectiveStep;
   }
 
-  public Step<T, D> getStep() {
-    return step;
+  /**
+   * Get the prospective step that would be taken if this block
+   * were to be chosen by the algorithm as the next-best location.
+   *
+   * @return the step
+   */
+  public Step<T, D> getProspectiveStep() {
+    return prospectiveStep;
   }
 
   @Override

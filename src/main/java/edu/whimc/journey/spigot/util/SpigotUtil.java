@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.type.Slab;
 
 /**
  * A utility class to handle general odd Spigot Minecraft-related operations.
@@ -48,6 +46,7 @@ public final class SpigotUtil {
    * Determine if a block can be laterally passed through, as in,
    * can the entity move in a lateral direction and go through that
    * block location.
+   *
    * @param block the block
    * @return true if passable
    */
@@ -70,6 +69,7 @@ public final class SpigotUtil {
 
   /**
    * Determine if this block is generally passable.
+   *
    * @param block the block
    * @return true if passable
    */

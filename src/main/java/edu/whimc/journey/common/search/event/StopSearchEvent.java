@@ -24,8 +24,22 @@ package edu.whimc.journey.common.search.event;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An event dispatched when a {@link SearchSession} stops running.
+ * This happens when the search event stops naturally because of a
+ * successful or failed result, or if the session was canceled before
+ * completion.
+ *
+ * @param <T> the location type
+ * @param <D> the destination type
+ */
 public class StopSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
+  /**
+   * General constructor.
+   *
+   * @param session the session
+   */
   public StopSearchEvent(SearchSession<T, D> session) {
     super(session);
   }

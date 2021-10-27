@@ -69,7 +69,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
                            @NotNull String name,
                            @NotNull Connection connection,
                            boolean forceValidName) throws SQLException {
-    if (!forceValidName && !Validator.isValidDataName(name)) {
+    if (!forceValidName && Validator.isInvalidDataName(name)) {
       throw new IllegalArgumentException("The given name is not valid: " + name);
     }
     PreparedStatement statement = connection.prepareStatement(String.format(

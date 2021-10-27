@@ -96,7 +96,7 @@ public class JourneyToMyCommand extends PlayerCommandNode {
         player.spigot().sendMessage(Format.error("A custom location already exists with that name!"));
         return false;
       }
-      if (!Validator.isValidDataName(args[5])) {
+      if (Validator.isInvalidDataName(args[5])) {
         player.spigot().sendMessage(Format.error("Your custom name ",
             Format.toPlain(Format.note(args[4])),
             " contains illegal characters."));

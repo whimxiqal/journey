@@ -24,16 +24,39 @@ package edu.whimc.journey.common.search.event;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.ItineraryTrial;
 import edu.whimc.journey.common.search.SearchSession;
+import java.util.Collection;
 
+/**
+ * An event dispatched when a new itinerary is being searched for
+ * in an {@link ItineraryTrial}.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see SearchSession
+ * @see ItineraryTrial#attempt(Collection, boolean)
+ * @see SearchDispatcher
+ */
 public class StartItinerarySearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final ItineraryTrial<T, D> itineraryTrial;
 
+  /**
+   * General constructor.
+   *
+   * @param session        the session
+   * @param itineraryTrial the itinerary trial which is being used to search
+   */
   public StartItinerarySearchEvent(SearchSession<T, D> session, ItineraryTrial<T, D> itineraryTrial) {
     super(session);
     this.itineraryTrial = itineraryTrial;
   }
 
+  /**
+   * Get the itinerary trial which is being used to search for
+   * a valid itinerary.
+   *
+   * @return the itinerary trial
+   */
   public ItineraryTrial<T, D> getItineraryTrial() {
     return itineraryTrial;
   }

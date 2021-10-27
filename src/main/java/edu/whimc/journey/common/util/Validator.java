@@ -2,6 +2,9 @@ package edu.whimc.journey.common.util;
 
 import java.util.regex.Pattern;
 
+/**
+ * A utility class used to manage static classes that validate input.
+ */
 public final class Validator {
 
   private Validator() {
@@ -15,9 +18,11 @@ public final class Validator {
    * @param name the name to check
    * @return true if it is valid
    */
-  public static boolean isValidDataName(String name) {
-    if (name.equalsIgnoreCase("help")) return false;
-    return Pattern.matches("^[a-zA-Z][a-zA-Z0-9 -]{1,30}[a-zA-Z0-9]$", name);
+  public static boolean isInvalidDataName(String name) {
+    if (name.equalsIgnoreCase("help")) {
+      return true;
+    }
+    return !Pattern.matches("^[a-zA-Z][a-zA-Z0-9 -]{1,30}[a-zA-Z0-9]$", name);
   }
 
 }

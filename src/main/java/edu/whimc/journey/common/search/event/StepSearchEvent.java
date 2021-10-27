@@ -25,15 +25,34 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Step;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An even to be dispatched when the operation of a
+ * {@link edu.whimc.journey.common.search.PathTrial}
+ * takes the next-best location in an attempt to calculate the best path.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
 public class StepSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final Step<T, D> step;
 
+  /**
+   * General constructor.
+   *
+   * @param session the session
+   * @param step    the step in the algorithm taken as this event was dispatched
+   */
   public StepSearchEvent(SearchSession<T, D> session, Step<T, D> step) {
     super(session);
     this.step = step;
   }
 
+  /**
+   * Get the step of this event.
+   *
+   * @return the step
+   */
   public Step<T, D> getStep() {
     return step;
   }

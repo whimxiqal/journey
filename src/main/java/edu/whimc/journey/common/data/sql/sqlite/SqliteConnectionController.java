@@ -5,16 +5,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class SqliteConnectionController implements SqlConnectionController {
-
-  private final String address;
-
-  public SqliteConnectionController(String address) {
-    this.address = address;
-  }
+/**
+ * An SQL connection controller designed for the SQLite engine.
+ */
+public record SqliteConnectionController(String address) implements SqlConnectionController {
 
   @Override
-  public final Connection establishConnection() throws SQLException {
+  public Connection establishConnection() throws SQLException {
     return DriverManager.getConnection(address);
   }
 

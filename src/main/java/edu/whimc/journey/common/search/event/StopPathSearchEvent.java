@@ -25,15 +25,35 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.PathTrial;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An event dispatched when a {@link PathTrial} stops searching
+ * for a {@link edu.whimc.journey.common.navigation.Path}.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see SearchDispatcher
+ * @see SearchSession
+ */
 public class StopPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final PathTrial<T, D> pathTrial;
 
+  /**
+   * General constructor.
+   *
+   * @param session   the session
+   * @param pathTrial the path trial causing this event
+   */
   public StopPathSearchEvent(SearchSession<T, D> session, PathTrial<T, D> pathTrial) {
     super(session);
     this.pathTrial = pathTrial;
   }
 
+  /**
+   * The path trial being run when this event was dispatched.
+   *
+   * @return the path trial
+   */
   public PathTrial<T, D> getPathTrial() {
     return pathTrial;
   }

@@ -25,15 +25,36 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.PathTrial;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An event dispatched when a path is about to be searched for
+ * in a {@link PathTrial}.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see SearchSession
+ * @see edu.whimc.journey.common.search.PathTrial#attempt(java.util.Collection, boolean)
+ * @see SearchDispatcher
+ */
 public class StartPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final PathTrial<T, D> pathTrial;
 
+  /**
+   * General constructor.
+   *
+   * @param session   the session
+   * @param pathTrial the path trial being executed to cause this event
+   */
   public StartPathSearchEvent(SearchSession<T, D> session, PathTrial<T, D> pathTrial) {
     super(session);
     this.pathTrial = pathTrial;
   }
 
+  /**
+   * Get the path trial being executed to cause this event.
+   *
+   * @return the path trial
+   */
   public PathTrial<T, D> getPathTrial() {
     return pathTrial;
   }

@@ -32,11 +32,30 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * An implementation of a weighted uni-directional graph.
+ * That means each edge (and node, in this case) has a weight (or length)
+ * assigned to it, which together determine the size of any path found as a solution
+ * to the graph when traversing from one node to another.
+ * The solution of any solved path is one which minimized the distance between the nodes.
+ *
+ * <p>The {@link #findMinimumPath} method uses Dijkstra's algorithm.
+ *
+ * @param <N> the graph node type
+ * @param <E> the graph edge type
+ */
 public abstract class WeightedGraph<N, E> {
 
   private final Set<Node> nodes = new HashSet<>();
   private final Table<Node, Node, E> edges = HashBasedTable.create();
 
+  /**
+   * Add an edge to the graph.
+   *
+   * @param origin      the origin node of the edge
+   * @param destination the destination node of the edge
+   * @param edge        the edge itself
+   */
   public void addEdge(@NotNull Node origin, @NotNull Node destination, @NotNull E edge) {
     this.nodes.add(origin);
     this.nodes.add(destination);
@@ -80,7 +99,9 @@ public abstract class WeightedGraph<N, E> {
             // A better path for this node would be to come from current.
             // We can assume that is already queued. Remove from waiting queue to update.
             toVisit.remove(outlet.getKey());
-            outlet.getKey().setDistance(current.getDistance() + edgeLength(outlet.getValue()) + nodeWeight(outlet.getKey().getData()));
+            outlet.getKey().setDistance(current.getDistance()
+                + edgeLength(outlet.getValue())
+                + nodeWeight(outlet.getKey().getData()));
             outlet.getKey().setPrevious(current);
             toVisit.add(outlet.getKey());
           }
@@ -104,39 +125,81 @@ public abstract class WeightedGraph<N, E> {
 
   protected abstract double edgeLength(E edge);
 
+  /**
+   * A node of this {@link WeightedGraph}.
+   * This node acts as a wrapper around some important data which this
+   * graph is wrapping to organize a path from the internal data piece,
+   * intermittently using edges to get there.
+   */
   public class Node {
 
     private final N data;
     private double distance = Double.MAX_VALUE;
     private Node previous = null;
 
+    /**
+     * General constructor.
+     *
+     * @param data the content of the node
+     */
     public Node(N data) {
       this.data = data;
     }
 
+    /**
+     * Get the data wrapped into this node.
+     *
+     * @return the data
+     */
     public N getData() {
       return data;
     }
 
-    public void setDistance(double distance) {
-      this.distance = distance;
-    }
-
+    /**
+     * Get the current total distance of this node from the origin.
+     *
+     * @return the distance
+     */
     public double getDistance() {
       return distance;
     }
 
-    public void setPrevious(Node previous) {
-      this.previous = previous;
+    /**
+     * Set the current total distance of this node from the origin.
+     *
+     * @param distance the distance
+     */
+    public void setDistance(double distance) {
+      this.distance = distance;
     }
 
+    /**
+     * Get the node previous to this one in the current operation
+     * trying to solve the graph.
+     *
+     * @return the previous node
+     */
     public Node getPrevious() {
       return previous;
     }
 
+    /**
+     * Set the node previous to this one in the current operation
+     * trying to solve the graph.
+     *
+     * @param previous set the previous node
+     */
+    public void setPrevious(Node previous) {
+      this.previous = previous;
+    }
+
     @Override
     public String toString() {
-      return String.format("Node: {data: %s, distance: %s, weight: %f}", data.hashCode(), distance > Double.MAX_VALUE * .9 ? "inf" : distance, nodeWeight(data));
+      return String.format("Node: {data: %s, distance: %s, weight: %f}",
+          data.hashCode(),
+          distance > Double.MAX_VALUE * .9
+              ? "inf"
+              : distance, nodeWeight(data));
     }
   }
 

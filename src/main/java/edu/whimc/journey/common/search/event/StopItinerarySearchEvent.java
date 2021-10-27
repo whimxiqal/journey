@@ -25,15 +25,36 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.ItineraryTrial;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An event dispatched when an {@link ItineraryTrial} stops searching
+ * for an {@link edu.whimc.journey.common.navigation.Itinerary}, no matter if
+ * the result was successful, a failure, or canceled.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see SearchSession
+ * @see SearchDispatcher
+ */
 public class StopItinerarySearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final ItineraryTrial<T, D> itineraryTrial;
 
+  /**
+   * General constructor.
+   *
+   * @param session        the session
+   * @param itineraryTrial the itinerary trial
+   */
   public StopItinerarySearchEvent(SearchSession<T, D> session, ItineraryTrial<T, D> itineraryTrial) {
     super(session);
     this.itineraryTrial = itineraryTrial;
   }
 
+  /**
+   * The itinerary trial that caused this event.
+   *
+   * @return the itinerary trial
+   */
   public ItineraryTrial<T, D> getItineraryTrial() {
     return itineraryTrial;
   }

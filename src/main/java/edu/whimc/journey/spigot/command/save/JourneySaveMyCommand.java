@@ -54,7 +54,7 @@ public class JourneySaveMyCommand extends PlayerCommandNode {
     }
 
     String name = args[0];
-    if (!Validator.isValidDataName(name)) {
+    if (Validator.isInvalidDataName(name)) {
       player.spigot().sendMessage(Format.error("That name is invalid."));
       return false;
     }

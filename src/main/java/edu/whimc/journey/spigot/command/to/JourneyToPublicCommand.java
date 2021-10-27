@@ -89,7 +89,7 @@ public class JourneyToPublicCommand extends PlayerCommandNode {
         player.spigot().sendMessage(Format.error("A server location already exists with that name!"));
         return false;
       }
-      if (!Validator.isValidDataName(args[4])) {
+      if (Validator.isInvalidDataName(args[4])) {
         player.spigot().sendMessage(Format.error("Your server name ",
             Format.toPlain(Format.note(args[4])),
             " contains illegal characters."));

@@ -24,8 +24,22 @@ package edu.whimc.journey.common.search.event;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.SearchSession;
 
+/**
+ * An event to be dispatched when an overall {@link SearchSession}
+ * is about to be executed.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see SearchDispatcher
+ */
 public class StartSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
+  /**
+   * General constructor.
+   *
+   * @param session the session
+   *
+   */
   public StartSearchEvent(SearchSession<T, D> session) {
     super(session);
   }
