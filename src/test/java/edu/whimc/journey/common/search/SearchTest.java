@@ -5,9 +5,9 @@ import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.ModeType;
+import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.search.event.FoundSolutionEvent;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
@@ -272,7 +272,8 @@ class SearchTest {
     }
   }
 
-  public record Domain(@NonNull @Getter String name) { }
+  public record Domain(@NonNull @Getter String name) {
+  }
 
   public class StepMode extends Mode<Point3D, Domain> {
 
