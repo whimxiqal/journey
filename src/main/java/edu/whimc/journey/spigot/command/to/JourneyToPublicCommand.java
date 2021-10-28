@@ -64,7 +64,7 @@ public class JourneyToPublicCommand extends PlayerCommandNode {
         .getDataManager()
         .getPublicEndpointManager();
     try {
-      endLocation = publicEndpointManager.getServerEndpoint(args[0]);
+      endLocation = publicEndpointManager.getPublicEndpoint(args[0]);
 
       if (endLocation == null) {
         player.spigot().sendMessage(Format.error("The server location ",
@@ -81,11 +81,11 @@ public class JourneyToPublicCommand extends PlayerCommandNode {
 
     // Check if we should save a server endpoint
     if (args.length >= 5) {
-      if (publicEndpointManager.hasServerEndpoint(endLocation)) {
+      if (publicEndpointManager.hasPublicEndpoint(endLocation)) {
         player.spigot().sendMessage(Format.error("A server location already exists at that location!"));
         return false;
       }
-      if (publicEndpointManager.hasServerEndpoint(args[4])) {
+      if (publicEndpointManager.hasPublicEndpoint(args[4])) {
         player.spigot().sendMessage(Format.error("A server location already exists with that name!"));
         return false;
       }
@@ -96,7 +96,7 @@ public class JourneyToPublicCommand extends PlayerCommandNode {
         return false;
       }
       // Save it!
-      publicEndpointManager.addServerEndpoint(endLocation, args[4]);
+      publicEndpointManager.addPublicEndpoint(endLocation, args[4]);
       player.spigot().sendMessage(Format.success("Saved your server location with name ",
           Format.toPlain(Format.note(args[4])),
           "!"));

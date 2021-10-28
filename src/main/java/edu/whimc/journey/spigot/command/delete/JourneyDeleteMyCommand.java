@@ -65,10 +65,10 @@ public class JourneyDeleteMyCommand extends PlayerCommandNode {
     PersonalEndpointManager<LocationCell, World> endpointManager = JourneySpigot.getInstance()
         .getDataManager()
         .getPersonalEndpointManager();
-    if (endpointManager.hasCustomEndpoint(player.getUniqueId(), args[0])) {
+    if (endpointManager.hasPersonalEndpoint(player.getUniqueId(), args[0])) {
       JourneySpigot.getInstance().getDataManager()
           .getPersonalEndpointManager()
-          .removeCustomEndpoint(player.getUniqueId(), args[0]);
+          .removePersonalEndpoint(player.getUniqueId(), args[0]);
       player.spigot().sendMessage(Format.success("The custom location ",
           Format.toPlain(Format.note(args[0])), " has been removed."));
       return true;

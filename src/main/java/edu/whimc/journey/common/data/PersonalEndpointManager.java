@@ -23,8 +23,8 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
    * @param cell       the cell to add
    * @throws IllegalArgumentException if the player and cell are not a unique combination
    */
-  void addCustomEndpoint(@NotNull UUID playerUuid,
-                         @NotNull T cell) throws IllegalArgumentException, DataAccessException;
+  void addPersonalEndpoint(@NotNull UUID playerUuid,
+                           @NotNull T cell) throws IllegalArgumentException, DataAccessException;
 
   /**
    * Add a player to a specific cell to the database with a unique name.
@@ -35,9 +35,9 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
    * @throws IllegalArgumentException if the player and cell are not a unique combination
    *                                  or if the player and name are not a unique combination
    */
-  void addCustomEndpoint(@NotNull UUID playerUuid,
-                         @NotNull T cell,
-                         @NotNull String name) throws IllegalArgumentException, DataAccessException;
+  void addPersonalEndpoint(@NotNull UUID playerUuid,
+                           @NotNull T cell,
+                           @NotNull String name) throws IllegalArgumentException, DataAccessException;
 
   /**
    * Remove a player and a cell from the database. Name is irrelevant.
@@ -46,8 +46,8 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
    * @param playerUuid the player's uuid
    * @param cell       the cell location
    */
-  void removeCustomEndpoint(@NotNull UUID playerUuid,
-                            @NotNull T cell) throws DataAccessException;
+  void removePersonalEndpoint(@NotNull UUID playerUuid,
+                              @NotNull T cell) throws DataAccessException;
 
   /**
    * Remove a player and a named cell from the database. Cell location is irrelevant.
@@ -56,43 +56,43 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
    * @param playerUuid the player's uuid
    * @param name       the name of the location
    */
-  void removeCustomEndpoint(@NotNull UUID playerUuid,
-                            @NotNull String name) throws DataAccessException;
+  void removePersonalEndpoint(@NotNull UUID playerUuid,
+                              @NotNull String name) throws DataAccessException;
 
   /**
-   * Check if a player has a custom endpoint at the certain cell location.
+   * Check if a player has a personal endpoint at the certain cell location.
    *
    * @param playerUuid the player's uuid
    * @param cell       the cell location
    * @return true if the cell exists for the given player
    */
-  default boolean hasCustomEndpoint(@NotNull UUID playerUuid,
-                                    @NotNull T cell) throws DataAccessException {
-    return getCustomEndpointName(playerUuid, cell) != null;
+  default boolean hasPersonalEndpoint(@NotNull UUID playerUuid,
+                                      @NotNull T cell) throws DataAccessException {
+    return getPersonalEndpointName(playerUuid, cell) != null;
   }
 
   /**
-   * Check if a player has a certain named custom endpoint.
+   * Check if a player has a certain named personal endpoint.
    *
    * @param playerUuid the player's uuid
    * @param name       the cell name
    * @return true if the cell exists for the given player
    */
-  default boolean hasCustomEndpoint(@NotNull UUID playerUuid,
-                                    @NotNull String name) throws DataAccessException {
-    return getCustomEndpoint(playerUuid, name) != null;
+  default boolean hasPersonalEndpoint(@NotNull UUID playerUuid,
+                                      @NotNull String name) throws DataAccessException {
+    return getPersonalEndpoint(playerUuid, name) != null;
   }
 
   /**
-   * Get the name of a custom location with a given unique player and cell.
+   * Get the name of a personal location with a given unique player and cell.
    *
    * @param playerUuid the player's uuid
-   * @param cell       the custom location
+   * @param cell       the personal location
    * @return the cell's name, or null if it doesn't exist
    */
   @Nullable
-  String getCustomEndpointName(@NotNull UUID playerUuid,
-                               @NotNull T cell) throws DataAccessException;
+  String getPersonalEndpointName(@NotNull UUID playerUuid,
+                                 @NotNull T cell) throws DataAccessException;
 
   /**
    * Get a specific cell with a given unique player and name combination.
@@ -102,11 +102,11 @@ public interface PersonalEndpointManager<T extends Cell<T, D>, D> {
    * @return the cell, or null if it doesn't
    */
   @Nullable
-  T getCustomEndpoint(@NotNull UUID playerUuid,
-                      @NotNull String name) throws DataAccessException;
+  T getPersonalEndpoint(@NotNull UUID playerUuid,
+                        @NotNull String name) throws DataAccessException;
 
   /**
-   * Get a list of all custom endpoints for a player.
+   * Get a list of all personal endpoints for a player.
    *
    * @param playerUuid the player's uuid
    * @return all names of cells mapped to their corresponding cells

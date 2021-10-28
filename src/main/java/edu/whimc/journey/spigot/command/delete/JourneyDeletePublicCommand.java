@@ -59,8 +59,8 @@ public class JourneyDeletePublicCommand extends PlayerCommandNode {
     PublicEndpointManager<LocationCell, World> endpointManager = JourneySpigot.getInstance()
         .getDataManager()
         .getPublicEndpointManager();
-    if (endpointManager.hasServerEndpoint(args[0])) {
-      JourneySpigot.getInstance().getDataManager().getPublicEndpointManager().removeServerEndpoint(args[0]);
+    if (endpointManager.hasPublicEndpoint(args[0])) {
+      JourneySpigot.getInstance().getDataManager().getPublicEndpointManager().removePublicEndpoint(args[0]);
       player.spigot().sendMessage(Format.success("The server location ",
           Format.toPlain(Format.note(args[0])),
           " has been removed."));

@@ -29,28 +29,28 @@ public abstract class SqlPublicEndpointManager<T extends Cell<T, D>, D>
   }
 
   @Override
-  public void addServerEndpoint(@NotNull T cell, @NotNull String name)
+  public void addPublicEndpoint(@NotNull T cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException {
     addEndpoint(null, cell, name);
   }
 
   @Override
-  public void removeServerEndpoint(@NotNull T cell) throws DataAccessException {
+  public void removePublicEndpoint(@NotNull T cell) throws DataAccessException {
     removeEndpoint(null, cell);
   }
 
   @Override
-  public void removeServerEndpoint(@NotNull String name) throws DataAccessException {
+  public void removePublicEndpoint(@NotNull String name) throws DataAccessException {
     removeEndpoint(null, name);
   }
 
   @Override
-  public @Nullable String getServerEndpointName(@NotNull T cell) throws DataAccessException {
+  public @Nullable String getPublicEndpointName(@NotNull T cell) throws DataAccessException {
     return getEndpointName(null, cell);
   }
 
   @Override
-  public @Nullable T getServerEndpoint(@NotNull String name) throws DataAccessException {
+  public @Nullable T getPublicEndpoint(@NotNull String name) throws DataAccessException {
     return getEndpoint(null, name);
   }
 

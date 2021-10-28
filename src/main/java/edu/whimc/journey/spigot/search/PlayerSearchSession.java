@@ -22,7 +22,6 @@
 package edu.whimc.journey.spigot.search;
 
 import edu.whimc.journey.common.navigation.Port;
-import edu.whimc.journey.common.search.ReverseSearchSession;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.navigation.WhimcPortalPort;
@@ -51,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A search session designed to be used for all players.
  */
-public class PlayerSearchSession extends ReverseSearchSession<LocationCell, World> {
+public class PlayerSearchSession extends SpigotSearchSession {
 
   @Getter
   private final PlayerSessionState sessionInfo;
@@ -73,82 +72,14 @@ public class PlayerSearchSession extends ReverseSearchSession<LocationCell, Worl
     this.animationManager = new AnimationManager(this);
     animationManager.setAnimating(flags.contains(SearchFlag.ANIMATE));
     setAlgorithmStepDelay(algorithmStepDelay);
-    // Modes - in order of preference
-    Set<Material> passableBlocks = collectPassableBlocks(flags);
-    if (player.getAllowFlight() && !flags.contains(SearchFlag.NOFLY)) {
-      registerMode(new FlyMode(this, passableBlocks));
-    } else {
-      registerMode(new WalkMode(this, passableBlocks));
-      registerMode(new JumpMode(this, passableBlocks));
-      registerMode(new SwimMode(this, passableBlocks));
-    }
-    registerMode(new DoorMode(this, passableBlocks));
-    registerMode(new ClimbMode(this, passableBlocks));
 
-    // Links
-    registerPorts(player::hasPermission, player);
+    // Modes
+    registerModes(player, flags);
+
+    // Ports
+    registerNetherPorts();
+    registerWhimcPortalPorts(player::hasPermission);
   }
 
-  private void registerPorts(Predicate<String> permissionSupplier, @Nullable Player player) {
-    // Links - Nether
-    JourneySpigot.getInstance().getNetherManager().makePorts().forEach(this::registerPort);
-
-    // Links - Portals plugin
-    Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
-    if (plugin instanceof Main) {
-      Portal.getPortals().stream()
-          .filter(portal -> portal.getDestination() != null)
-          .filter(portal -> portal.getWorld() != null)
-          .filter(portal -> portal.getDestination().getLocation().getWorld() != null)
-          .filter(portal -> Optional.ofNullable(portal.getPermission()).map(perm ->
-              permissionSupplier.test(perm.getName())).orElse(true))
-          .map(portal -> {
-            try {
-              return WhimcPortalPort.from(portal);
-            } catch (Exception e) {
-              return null;
-            }
-          })
-          .filter(Objects::nonNull)
-          .forEach(link -> {
-            if (player == null) {
-              registerPort(link);
-            } else {
-              registerPortVerbose(player, link);
-            }
-          });
-    }
-  }
-
-  private void registerPortVerbose(Player player, Port<LocationCell, World> link) {
-    if (JourneySpigot.getInstance().getDebugManager().isDebugging(player.getUniqueId())) {
-      player.spigot().sendMessage(Format.debug("Registering Link: " + link.toString()));
-    }
-    super.registerPort(link);
-  }
-
-  private Set<Material> collectPassableBlocks(Set<SearchFlag> flags) {
-    Set<Material> passableBlocks = new HashSet<>();
-    if (flags.contains(SearchFlag.NODOOR)) {
-      passableBlocks.add(Material.ACACIA_DOOR);
-      passableBlocks.add(Material.ACACIA_TRAPDOOR);
-      passableBlocks.add(Material.BIRCH_DOOR);
-      passableBlocks.add(Material.BIRCH_TRAPDOOR);
-      passableBlocks.add(Material.CRIMSON_DOOR);
-      passableBlocks.add(Material.CRIMSON_TRAPDOOR);
-      passableBlocks.add(Material.DARK_OAK_DOOR);
-      passableBlocks.add(Material.DARK_OAK_TRAPDOOR);
-      passableBlocks.add(Material.IRON_DOOR);
-      passableBlocks.add(Material.JUNGLE_DOOR);
-      passableBlocks.add(Material.JUNGLE_TRAPDOOR);
-      passableBlocks.add(Material.OAK_DOOR);
-      passableBlocks.add(Material.OAK_TRAPDOOR);
-      passableBlocks.add(Material.SPRUCE_DOOR);
-      passableBlocks.add(Material.SPRUCE_TRAPDOOR);
-      passableBlocks.add(Material.WARPED_DOOR);
-      passableBlocks.add(Material.WARPED_TRAPDOOR);
-    }
-    return passableBlocks;
-  }
 
 }

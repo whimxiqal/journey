@@ -97,7 +97,7 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
    * @param end           the end of the path trial
    * @param modeTypeGroup the mode types used to traverse the path
    */
-  public void addPathTrialOriginToLeap(Port<T, D> end, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialOriginToPort(Port<T, D> end, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session,
         origin, end.getOrigin(),
         getOriginNode(), getLeapNode(end),
@@ -112,7 +112,7 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
    * @param start         the start of the path trial
    * @param modeTypeGroup the mode types used to traverse the path
    */
-  public void addPathTrialLeapToDestination(Port<T, D> start, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialPortToDestination(Port<T, D> start, ModeTypeGroup modeTypeGroup) {
     addPathTrial(session,
         start.getDestination(), destination,
         getLeapNode(start), getDestinationNode(),

@@ -101,6 +101,18 @@ public class LocationCell extends Cell<LocationCell, World> {
   }
 
   /**
+   * Make a Spigot Minecraft location, built from the raw data stored in this cell.
+   *
+   * @return the location
+   */
+  public Location toLocation() {
+    return new Location(this.getDomain(),
+        this.coordinateX,
+        this.coordinateY,
+        this.coordinateZ);
+  }
+
+  /**
    * Get the Minecraft block at some location offset from this location.
    *
    * @param x the x coordinate offset

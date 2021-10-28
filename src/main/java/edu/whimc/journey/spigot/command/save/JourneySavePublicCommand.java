@@ -63,7 +63,7 @@ public class JourneySavePublicCommand extends PlayerCommandNode {
         .getDataManager()
         .getPublicEndpointManager();
 
-    String existingName = publicEndpointManager.getServerEndpointName(new LocationCell(player.getLocation()));
+    String existingName = publicEndpointManager.getPublicEndpointName(new LocationCell(player.getLocation()));
     if (existingName != null) {
       player.spigot().sendMessage(Format.error("Server location ",
           Format.toPlain(Format.note(existingName)),
@@ -71,7 +71,7 @@ public class JourneySavePublicCommand extends PlayerCommandNode {
       return false;
     }
 
-    LocationCell existingCell = publicEndpointManager.getServerEndpoint(name);
+    LocationCell existingCell = publicEndpointManager.getPublicEndpoint(name);
     if (existingCell != null) {
       player.spigot().sendMessage(Format.error("A server location already exists with that name at",
           Format.toPlain(Format.locationCell(existingCell, Format.DEFAULT)),
@@ -79,7 +79,7 @@ public class JourneySavePublicCommand extends PlayerCommandNode {
       return false;
     }
 
-    publicEndpointManager.addServerEndpoint(new LocationCell(player.getLocation()), name);
+    publicEndpointManager.addPublicEndpoint(new LocationCell(player.getLocation()), name);
     player.spigot().sendMessage(Format.success("Added server location named ",
         Format.toPlain(Format.note(name))));
     return true;

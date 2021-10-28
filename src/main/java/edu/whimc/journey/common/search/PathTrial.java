@@ -248,7 +248,6 @@ public class PathTrial<T extends Cell<T, D>, D> implements Resulted {
 
     Node current;
     while (!upcoming.isEmpty()) {
-
       if (session.state.isCanceled()) {
         // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
         return fail(modes, false);

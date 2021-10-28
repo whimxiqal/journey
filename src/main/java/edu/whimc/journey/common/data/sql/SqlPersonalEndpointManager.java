@@ -30,37 +30,37 @@ public abstract class SqlPersonalEndpointManager<T extends Cell<T, D>, D>
   }
 
   @Override
-  public void addCustomEndpoint(@NotNull UUID playerUuid, @NotNull T cell)
+  public void addPersonalEndpoint(@NotNull UUID playerUuid, @NotNull T cell)
       throws IllegalArgumentException, DataAccessException {
     this.addEndpoint(playerUuid, cell);
   }
 
   @Override
-  public void addCustomEndpoint(@NotNull UUID playerUuid, @NotNull T cell, @NotNull String name)
+  public void addPersonalEndpoint(@NotNull UUID playerUuid, @NotNull T cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException {
     this.addEndpoint(playerUuid, cell, name);
   }
 
   @Override
-  public void removeCustomEndpoint(@NotNull UUID playerUuid, @NotNull T cell)
+  public void removePersonalEndpoint(@NotNull UUID playerUuid, @NotNull T cell)
       throws DataAccessException {
     this.removeEndpoint(playerUuid, cell);
   }
 
   @Override
-  public void removeCustomEndpoint(@NotNull UUID playerUuid, @NotNull String name)
+  public void removePersonalEndpoint(@NotNull UUID playerUuid, @NotNull String name)
       throws DataAccessException {
     this.removeEndpoint(playerUuid, name);
   }
 
   @Override
-  public @Nullable String getCustomEndpointName(@NotNull UUID playerUuid, @NotNull T cell)
+  public @Nullable String getPersonalEndpointName(@NotNull UUID playerUuid, @NotNull T cell)
       throws DataAccessException {
     return this.getEndpointName(playerUuid, cell);
   }
 
   @Override
-  public @Nullable T getCustomEndpoint(@NotNull UUID playerUuid, @NotNull String name)
+  public @Nullable T getPersonalEndpoint(@NotNull UUID playerUuid, @NotNull String name)
       throws DataAccessException {
     return this.getEndpoint(playerUuid, name);
   }

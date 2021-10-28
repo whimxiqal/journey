@@ -71,7 +71,7 @@ public class JourneyToMyCommand extends PlayerCommandNode {
         .getDataManager()
         .getPersonalEndpointManager();
     try {
-      endLocation = personalEndpointManager.getCustomEndpoint(player.getUniqueId(), args[0]);
+      endLocation = personalEndpointManager.getPersonalEndpoint(player.getUniqueId(), args[0]);
 
       if (endLocation == null) {
         player.spigot().sendMessage(Format.error("The custom location ",
@@ -88,11 +88,11 @@ public class JourneyToMyCommand extends PlayerCommandNode {
 
     // Check if we should save a custom endpoint
     if (args.length >= 5) {
-      if (personalEndpointManager.hasCustomEndpoint(player.getUniqueId(), endLocation)) {
+      if (personalEndpointManager.hasPersonalEndpoint(player.getUniqueId(), endLocation)) {
         player.spigot().sendMessage(Format.error("A custom location already exists at that location!"));
         return false;
       }
-      if (personalEndpointManager.hasCustomEndpoint(player.getUniqueId(), args[4])) {
+      if (personalEndpointManager.hasPersonalEndpoint(player.getUniqueId(), args[4])) {
         player.spigot().sendMessage(Format.error("A custom location already exists with that name!"));
         return false;
       }
@@ -103,7 +103,7 @@ public class JourneyToMyCommand extends PlayerCommandNode {
         return false;
       }
       // Save it!
-      personalEndpointManager.addCustomEndpoint(player.getUniqueId(), endLocation, args[4]);
+      personalEndpointManager.addPersonalEndpoint(player.getUniqueId(), endLocation, args[4]);
       player.spigot().sendMessage(Format.success("Saved your custom location with name ",
           Format.toPlain(Format.note(args[4])), "!"));
     }

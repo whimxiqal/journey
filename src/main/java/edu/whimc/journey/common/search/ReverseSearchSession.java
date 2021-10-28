@@ -102,10 +102,10 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
               pathTrialDestinationPort,
               modeTypeGroup);
           if (domain.equals(origin.getDomain())) {
-            graph.addPathTrialOriginToLeap(pathTrialDestinationPort, modeTypeGroup);
+            graph.addPathTrialOriginToPort(pathTrialDestinationPort, modeTypeGroup);
           }
           if (domain.equals(destination.getDomain())) {
-            graph.addPathTrialLeapToDestination(pathTrialOriginPort, modeTypeGroup);
+            graph.addPathTrialPortToDestination(pathTrialOriginPort, modeTypeGroup);
           }
         }
       }

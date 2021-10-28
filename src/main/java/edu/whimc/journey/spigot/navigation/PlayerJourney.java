@@ -23,12 +23,9 @@
 package edu.whimc.journey.spigot.navigation;
 
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Journey;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.Path;
-import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Step;
-import edu.whimc.journey.common.tools.AlternatingList;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.music.Song;
 import edu.whimc.journey.spigot.search.PlayerSearchSession;
@@ -47,7 +44,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A journey given to a {@link Player}.
  */
-public class PlayerJourney implements Journey<LocationCell, World> {
+public class PlayerJourney extends SpigotJourney<PlayerSearchSession> {
 
   private static final int ILLUMINATED_COUNT = 64;
 
@@ -65,18 +62,10 @@ public class PlayerJourney implements Journey<LocationCell, World> {
    * added ahead so the trail continues forging ahead.
    */
   private final Set<LocationCell> near = new HashSet<>();
-  private final Itinerary<LocationCell, World> itinerary;
-  private final PlayerSearchSession session;
-  private AlternatingList.Traversal<Port<LocationCell, World>,
-      Path<LocationCell, World>,
-      Path<LocationCell, World>> traversal;
   private int stepIndex = 0;
   private boolean completed = false;
-  private Runnable stopIllumination;
-  /**
-   * Itinerary that is queued as a better one, in case the player wants to use it.
-   */
-  private Itinerary<LocationCell, World> prospectiveItinerary;
+  private Runnable stopIllumination = () -> {
+  };
 
   /**
    * General constructor.
@@ -88,11 +77,9 @@ public class PlayerJourney implements Journey<LocationCell, World> {
   public PlayerJourney(@NotNull final UUID playerUuid,
                        @NotNull PlayerSearchSession session,
                        @NotNull final Itinerary<LocationCell, World> itinerary) {
+    super(session, itinerary);
     this.playerUuid = playerUuid;
-    this.session = session;
-    this.itinerary = itinerary;
-    this.traversal = itinerary.getStages().traverse();
-    startPath(traversal.next()); // start first trail (move beyond the first "leap")
+    startPath(traversal().next()); // start first trail (move beyond the first "leap")
   }
 
   @Override
@@ -100,11 +87,11 @@ public class PlayerJourney implements Journey<LocationCell, World> {
     if (completed) {
       return;  // We're already done, we don't care about visitation
     }
-    if (traversal.get().completeWith(locatable)) {
+    if (traversal().get().completeWith(locatable)) {
       // We have reached our destination for the given path
-      if (traversal.hasNext()) {
+      if (traversal().hasNext()) {
         // There is another path after this one, move on to the next one
-        startPath(traversal.next());
+        startPath(traversal().next());
       } else {
         // There is no other path after this one, we are done
         Player player = Bukkit.getPlayer(playerUuid);
@@ -123,19 +110,24 @@ public class PlayerJourney implements Journey<LocationCell, World> {
       int originalStepIndex = stepIndex;
       LocationCell removing;
       do {
-        removing = traversal.get().getSteps().get(stepIndex).location();
+        removing = traversal().get().getSteps().get(stepIndex).location();
         near.remove(removing);
         stepIndex++;
       } while (!locatable.equals(removing));
       for (int i = originalStepIndex + PROXIMAL_BLOCK_CACHE_SIZE;
-           i < Math.min(stepIndex + PROXIMAL_BLOCK_CACHE_SIZE, traversal.get().getSteps().size());
+           i < Math.min(stepIndex + PROXIMAL_BLOCK_CACHE_SIZE, traversal().get().getSteps().size());
            i++) {
-        near.add(traversal.get().getSteps().get(i).location());
+        near.add(traversal().get().getSteps().get(i).location());
       }
     }
   }
 
-  @Override
+  /**
+   * Give the next locatables to traverse along the journey.
+   *
+   * @param count the number of locatables to get
+   * @return a collection of locatables of size {@code count}
+   */
   public List<Step<LocationCell, World>> next(int count) {
     if (count > PROXIMAL_BLOCK_CACHE_SIZE) {
       throw new IllegalArgumentException("The count may not be larger than " + PROXIMAL_BLOCK_CACHE_SIZE);
@@ -144,8 +136,8 @@ public class PlayerJourney implements Journey<LocationCell, World> {
       return new LinkedList<>();  // Nothing left
     }
     List<Step<LocationCell, World>> next = new LinkedList<>();
-    for (int i = stepIndex; i < Math.min(stepIndex + count, traversal.get().getSteps().size()); i++) {
-      next.add(traversal.get().getSteps().get(i));
+    for (int i = stepIndex; i < Math.min(stepIndex + count, traversal().get().getSteps().size()); i++) {
+      next.add(traversal().get().getSteps().get(i));
     }
     return next;
   }
@@ -156,21 +148,11 @@ public class PlayerJourney implements Journey<LocationCell, World> {
   }
 
   @Override
-  public boolean isCompleted() {
-    return completed;
-  }
-
-  @Override
-  public LocationCell currentPathDestination() {
-    return traversal.get().getDestination();
-  }
-
-  @Override
   public void run() {
     stop();
     completed = false;
-    traversal = itinerary.getStages().traverse();
-    startPath(traversal.next());
+    resetTraversal();
+    startPath(traversal().next());
     illuminateTrail();
   }
 
@@ -242,36 +224,12 @@ public class PlayerJourney implements Journey<LocationCell, World> {
   }
 
   /**
-   * Get the player search session used to calculate this journey.
+   * Determine whether a player's journey has been completed by the player.
    *
-   * @return the session
+   * @return true if complete
    */
-  public PlayerSearchSession getSession() {
-    return session;
-  }
-
-  /**
-   * Get the prospective itinerary.
-   * This (better) itinerary was calculated by the session after this journey was already prepared
-   * for the user. The user will have the option of using this itinerary if he/she
-   * so chooses and create another journey.
-   *
-   * @return the itinerary
-   */
-  public Itinerary<LocationCell, World> getProspectiveItinerary() {
-    return prospectiveItinerary;
-  }
-
-  /**
-   * Get the prospective itinerary.
-   * This (better) itinerary was calculated by the session after this journey was already prepared
-   * for the user. The user will have the option of using this itinerary if he/she
-   * so chooses and create another journey.
-   *
-   * @param prospectiveItinerary the prospective itinerary
-   */
-  public void setProspectiveItinerary(Itinerary<LocationCell, World> prospectiveItinerary) {
-    this.prospectiveItinerary = prospectiveItinerary;
+  public boolean isCompleted() {
+    return completed;
   }
 
 }

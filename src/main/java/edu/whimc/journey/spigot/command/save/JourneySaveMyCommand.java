@@ -63,7 +63,7 @@ public class JourneySaveMyCommand extends PlayerCommandNode {
         .getDataManager()
         .getPersonalEndpointManager();
 
-    String existingName = personalEndpointManager.getCustomEndpointName(player.getUniqueId(),
+    String existingName = personalEndpointManager.getPersonalEndpointName(player.getUniqueId(),
         new LocationCell(player.getLocation()));
     if (existingName != null) {
       player.spigot().sendMessage(Format.error("Custom location ",
@@ -72,7 +72,7 @@ public class JourneySaveMyCommand extends PlayerCommandNode {
       return false;
     }
 
-    LocationCell existingCell = personalEndpointManager.getCustomEndpoint(player.getUniqueId(), name);
+    LocationCell existingCell = personalEndpointManager.getPersonalEndpoint(player.getUniqueId(), name);
     if (existingCell != null) {
       player.spigot().sendMessage(Format.error("A custom location already exists with that name at",
           Format.toPlain(Format.locationCell(existingCell, Format.DEFAULT)),
@@ -80,7 +80,7 @@ public class JourneySaveMyCommand extends PlayerCommandNode {
       return false;
     }
 
-    personalEndpointManager.addCustomEndpoint(player.getUniqueId(),
+    personalEndpointManager.addPersonalEndpoint(player.getUniqueId(),
         new LocationCell(player.getLocation()), name);
     player.spigot().sendMessage(Format.success("Added custom location named ",
         Format.toPlain(Format.note(name)),

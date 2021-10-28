@@ -20,7 +20,7 @@ public interface PublicEndpointManager<T extends Cell<T, D>, D> {
    * @param name the name of the location
    * @throws IllegalArgumentException for invalid inputs
    */
-  void addServerEndpoint(@NotNull T cell, @NotNull String name)
+  void addPublicEndpoint(@NotNull T cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException;
 
   /**
@@ -28,7 +28,7 @@ public interface PublicEndpointManager<T extends Cell<T, D>, D> {
    *
    * @param cell the cell location
    */
-  void removeServerEndpoint(@NotNull T cell) throws DataAccessException;
+  void removePublicEndpoint(@NotNull T cell) throws DataAccessException;
 
   /**
    * Remove a cell from the database by name. Cell location is irrelevant.
@@ -36,7 +36,7 @@ public interface PublicEndpointManager<T extends Cell<T, D>, D> {
    *
    * @param name the name of the location
    */
-  void removeServerEndpoint(@NotNull String name) throws DataAccessException;
+  void removePublicEndpoint(@NotNull String name) throws DataAccessException;
 
   /**
    * Check if a saved cell exists at this location.
@@ -44,8 +44,8 @@ public interface PublicEndpointManager<T extends Cell<T, D>, D> {
    * @param cell the cell location
    * @return true if the cell exists
    */
-  default boolean hasServerEndpoint(@NotNull T cell) throws DataAccessException {
-    return getServerEndpointName(cell) != null;
+  default boolean hasPublicEndpoint(@NotNull T cell) throws DataAccessException {
+    return getPublicEndpointName(cell) != null;
   }
 
   /**
@@ -54,8 +54,8 @@ public interface PublicEndpointManager<T extends Cell<T, D>, D> {
    * @param name the cell name
    * @return true if the cell exists
    */
-  default boolean hasServerEndpoint(@NotNull String name) throws DataAccessException {
-    return getServerEndpoint(name) != null;
+  default boolean hasPublicEndpoint(@NotNull String name) throws DataAccessException {
+    return getPublicEndpoint(name) != null;
   }
 
   /**
@@ -65,7 +65,7 @@ public interface PublicEndpointManager<T extends Cell<T, D>, D> {
    * @return the cell's name, or null if it doesn't exist
    */
   @Nullable
-  String getServerEndpointName(@NotNull T cell) throws DataAccessException;
+  String getPublicEndpointName(@NotNull T cell) throws DataAccessException;
 
   /**
    * Get a specific cell by its given name.
@@ -74,7 +74,7 @@ public interface PublicEndpointManager<T extends Cell<T, D>, D> {
    * @return the cell, or null if it doesn't
    */
   @Nullable
-  T getServerEndpoint(@NotNull String name) throws DataAccessException;
+  T getPublicEndpoint(@NotNull String name) throws DataAccessException;
 
   /**
    * Get a list of all saved endpoints.

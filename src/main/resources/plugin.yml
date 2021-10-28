@@ -1,5 +1,5 @@
 name: Journey
-version: 0.0.2-beta
+version: '${version}'
 main: edu.whimc.journey.spigot.JourneySpigot
 api-version: 1.17
 authors:

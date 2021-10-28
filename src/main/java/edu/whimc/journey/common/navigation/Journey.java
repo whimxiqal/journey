@@ -43,14 +43,6 @@ public interface Journey<T extends Cell<T, D>, D> extends Runnable {
   void visit(T locatable);
 
   /**
-   * Give the next locatables to traverse along the journey.
-   *
-   * @param count the number of locatables to get
-   * @return a collection of locatables of size {@code count}
-   */
-  Collection<Step<T, D>> next(int count);
-
-  /**
    * Should run when the journey is completed or
    * the journey is otherwise left.
    */
@@ -63,13 +55,6 @@ public interface Journey<T extends Cell<T, D>, D> extends Runnable {
    */
   @SuppressWarnings("unused")
   boolean isCompleted();
-
-  /**
-   * Get the destination of the current path being traversed.
-   *
-   * @return the destination location
-   */
-  T currentPathDestination();
 
   /**
    * Run the journey, or restart if it's already been started.
