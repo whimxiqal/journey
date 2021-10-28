@@ -1,0 +1,41 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Java CI with Gradle
+
+on: [pull_request, push]
+
+jobs:
+  checkstyle_job:
+    runs-on: ubuntu-latest
+    name: Checkstyle
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Run check style
+        uses: nikitasavinov/checkstyle-action@master
+        with:
+          fail_on_error: true
+          reporter: 'github-pr-check'
+          tool_name: 'checkstyle'
+          level: error
+          filter_mode: nofilter
+          checkstyle_config: checkstyle.xml
+          checkstyle_version: 9.0.1
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 16
+        uses: actions/setup-java@v2
+        with:
+          java-version: '16'
+          distribution: 'adopt'
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build
+      - name: Test with Gradle
+        run: ./gradlew test

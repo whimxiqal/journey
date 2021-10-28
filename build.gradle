@@ -1,14 +1,9 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
 plugins {
     id 'java'
 }
 
 group = 'edu.whimc'
-version = '0.0.0'
-
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+version = '0.0.2-beta'
 
 repositories {
     mavenCentral()
@@ -24,8 +19,8 @@ repositories {
         dirs 'libs'
     }
     maven {
-        name = 'elmakers-repo'
-        url = 'https://maven.elmakers.com/repository/'
+        name = 'jitpack.io'
+        url = 'https://jitpack.io'
     }
 }
 
@@ -35,29 +30,26 @@ test {
 
 dependencies {
     // Spigot
-    compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+    implementation 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
 
     // Tests
-    testCompile 'org.junit.jupiter:junit-jupiter:5.4.2'
-    testCompile 'com.google.guava:guava:16+'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'com.google.guava:guava:31.0.1-jre'
 
     // Annotations
-    compile 'org.jetbrains:annotations:16.0.2'
+    implementation 'org.jetbrains:annotations:22.0.0'
 
     // Other plugins
-    compileOnly 'me.blackvein.quests:quests:3.6.2'
-    implementation 'edu.whimc:WHIMC-Portals:2.8.3'
+    implementation 'com.github.PikaMug:Quests:4.0.7'
+    implementation 'com.github.whimc:Portals:2.8.3'
 
     // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.16'
-    annotationProcessor 'org.projectlombok:lombok:1.18.16'
-
-    testCompileOnly 'org.projectlombok:lombok:1.18.16'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
+    implementation 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
 }
 
 processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        filter ReplaceTokens, tokens: [version: version]
-    }
+    project.properties.put("version", this.version)
+    expand project.properties
 }
