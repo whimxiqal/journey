@@ -12,11 +12,43 @@ and displayed to the user.
 ## Getting Started
 Get going with the journey plugin with the following steps:
 - Add the journey jar file into the plugins folder and start up your server
-- Save a new custom (personal to you) destination with `/nav custom save "My Location"`
+- Save a new personal destination with `/journey save my <name>`
+  - Use a name that makes sense! If it's your home, use `home`.
   - If you are not in creative mode, make sure your destination is on the ground!
 - Walk some distance away
-- Calculate a path to your destination with `/nav custom to "My Location"`
+- Calculate a path to your destination with `/journey to my <name>`
 - Follow the path!
+
+When searching for a path, some command flags are available to change the way
+the algorithm runs. 
+- `-animate`: animates the algorithm so you can see how it makes decisions
+- `-timeout:<seconds>`: Determines how long to wait, in seconds, before it stops searching
+- `-nofly`: Calculate without the use of the "Fly Mode", even if you are in creative
+- `-nodoor`: Calculate by ignoring iron doors (which often cause problems when in weird configurations)
+Some default values can be changed in the configuration file.
+
+## Permissions
+- `journey.command.admin`:
+  - default: `false`
+  - description: Use all journey admin commands
+- `journey.command.use`:
+  - default: `true`
+  - description: Use all journey commands 
+- `journey.command.to.custom.use`:
+  - default: `true`
+  - description: Use all commands pertaining to custom destinations
+- `journey.command.to.surface.use`:
+  - default: `true`
+  - description: Use surface command to navigate to the surface of overworld type worlds
+- `journey.command.to.quest.use`:
+  - default: `true`
+  - description: Use quest command to navigate to the next quest destination
+- `journey.command.to.public.use`:
+  - default: `true`
+  - description: Use all commands pertaining to public destinations
+- `journey.command.to.public.edit`:
+  - default: `false`
+  - description: Use commands that edit public destinations
 
 ## Journey API
 The path-finding nature of Journey is conducive to more than just helping players move around the world(s).

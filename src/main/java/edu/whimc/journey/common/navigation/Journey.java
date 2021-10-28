@@ -1,4 +1,6 @@
 /*
+ * MIT License
+ *
  * Copyright 2021 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,8 +23,6 @@
  */
 
 package edu.whimc.journey.common.navigation;
-
-import java.util.Collection;
 
 /**
  * Manage information about the traversal of locatables
