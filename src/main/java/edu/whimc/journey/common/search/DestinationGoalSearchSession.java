@@ -155,7 +155,6 @@ public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> exte
           // If run again, then, we would get the same solution to the graph.
           if (usingCache) {
             // Turn off the use of the cache. Maybe we can find better solution by re-solving some paths.
-            System.out.println("Stopped using cache");
             JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new IgnoreCacheSearchEvent<>(this));
             usingCache = false;
             // continue...

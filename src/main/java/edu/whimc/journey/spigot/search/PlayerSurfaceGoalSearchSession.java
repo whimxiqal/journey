@@ -24,10 +24,8 @@
 
 package edu.whimc.journey.spigot.search;
 
-import edu.whimc.journey.common.search.LocalUpwardsSearchSession;
+import edu.whimc.journey.common.search.LocalUpwardsGoalSearchSession;
 import edu.whimc.journey.common.search.SearchSession;
-import edu.whimc.journey.spigot.JourneySpigot;
-import edu.whimc.journey.spigot.external.whimcportals.WhimcPortalPort;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.navigation.mode.ClimbMode;
 import edu.whimc.journey.spigot.navigation.mode.DoorMode;
@@ -43,8 +41,14 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A combination of a {@link LocalUpwardsGoalSearchSession} and a {@link SpigotPlayerSearchSession},
+ * where the former determines the best way to go upwards and potentially reach the surface of the overworld,
+ * and the latter allows us to manage and call back to the former session when we catch the event
+ * in event handlers.
+ */
 public class PlayerSurfaceGoalSearchSession
-    extends LocalUpwardsSearchSession<LocationCell, World>
+    extends LocalUpwardsGoalSearchSession<LocationCell, World>
     implements SpigotPlayerSearchSession<PlayerSurfaceGoalSearchSession> {
 
   /**

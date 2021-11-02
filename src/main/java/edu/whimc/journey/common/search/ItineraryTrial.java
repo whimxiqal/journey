@@ -87,7 +87,8 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
 
       if (session.state.isCanceled()) {
         state = ResultState.STOPPED_CANCELED;
-        JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopItinerarySearchEvent<>(session, this));
+        JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(
+            new StopItinerarySearchEvent<>(session, this));
         return new TrialResult<>(Optional.empty(), true);  // doesn't really matter if changed problem
       }
 

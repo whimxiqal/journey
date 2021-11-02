@@ -25,29 +25,57 @@ public class DebugManager {
   @Getter
   private boolean consoleDebugging = false;
 
+  /**
+   * Begin debugging for a specific player.
+   *
+   * @param debugger the player doing the debugging
+   * @param target   the player for which the debugger is debugging
+   */
   public void startDebuggingPlayer(@NotNull Player debugger, @NotNull Player target) {
     this.debuggers.put(debugger.getUniqueId(), Target.player(target));
   }
 
+  /**
+   * Begin debugging for all players.
+   *
+   * @param debugger the player doing the debugging
+   */
   public void startDebuggingAll(@NotNull Player debugger) {
     this.debuggers.put(debugger.getUniqueId(), Target.all());
   }
 
+  /**
+   * Stop debugging for a player altogether, no matter who he/she was targeting.
+   *
+   * @param player the player doing the debugging
+   */
   public void stopDebugging(@NotNull Player player) {
     this.debuggers.remove(player.getUniqueId());
   }
 
+  /**
+   * Get the target of a player debugging.
+   *
+   * @param debugger the player doing the debugging
+   * @return the target, either a specific player or everyone
+   */
   @Nullable
   public Target getDebuggingTarget(@NotNull Player debugger) {
     return debuggers.get(debugger.getUniqueId());
   }
 
+  /**
+   * Determine whether a player is currently in debug mode.
+   *
+   * @param player the player potentially doing the debugging
+   * @return true if debugging
+   */
   public boolean isDebugging(@NotNull Player player) {
     return debuggers.containsKey(player.getUniqueId());
   }
 
   /**
-   * Broadcast a message to everyone in debug-mode and targeting this player
+   * Broadcast a message to everyone in debug-mode and targeting this player.
    *
    * @param message the message
    */
@@ -65,6 +93,7 @@ public class DebugManager {
 
   /**
    * Broadcast a message to everyone in debugging mode.
+   *
    * @param message the message
    */
   public void broadcast(BaseComponent[] message) {
@@ -79,6 +108,10 @@ public class DebugManager {
     }
   }
 
+  /**
+   * A class to determine how a player is debugging: either getting debug messages for a specific player
+   * or for everyone on the server.
+   */
   public static class Target {
 
     @Nullable
@@ -111,15 +144,20 @@ public class DebugManager {
     @NotNull
     Player requireTarget() {
       if (target == null) {
-        throw new NoSuchElementException("This target targets all and therefore an individual target cannot be retrieved.");
+        throw new NoSuchElementException("This target targets all and therefore "
+            + "an individual target cannot be retrieved.");
       }
       return Objects.requireNonNull(Bukkit.getPlayer(target));
     }
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
       Target that = (Target) o;
       return Objects.equals(target, that.target);
     }

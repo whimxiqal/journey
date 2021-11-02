@@ -26,7 +26,19 @@ package edu.whimc.journey.common.search.event;
 
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.SearchSession;
+import java.util.Collection;
 
+/**
+ * A search event to dispatch when a search stops considering cached paths in the overall process.
+ * This usually happens when no different solution can be found than the one already found
+ * by continuing to use the cached paths, so in an attempt to get a better solution,
+ * we ignore the cached objects and recalculate them because the results may change.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ * @see edu.whimc.journey.common.search.PathTrial#attempt(Collection, boolean)
+ * @see SearchSession
+ */
 public class IgnoreCacheSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   /**

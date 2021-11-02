@@ -24,8 +24,21 @@
 
 package edu.whimc.journey.spigot.util;
 
+/**
+ * A utility class to manage utility methods pertaining to displaying time quantities.
+ */
 public final class TimeUtil {
 
+  private TimeUtil() {
+  }
+
+  /**
+   * Convert some number of seconds to a nicely formatted string.
+   * This works best for periods of time less than a day.
+   *
+   * @param seconds the number of seconds
+   * @return a nicely formatting string to send to the user
+   */
   public static String toSimpleTime(long seconds) {
 
     if (seconds <= 0) {
@@ -55,9 +68,6 @@ public final class TimeUtil {
 
     return "More than a day";
 
-  }
-
-  private TimeUtil() {
   }
 
 }

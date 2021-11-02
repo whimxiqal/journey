@@ -34,6 +34,13 @@ import java.util.Collection;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * An extension of {@link FlexiblePathTrial} where the goal of the trial is to find a path to
+ * a specific predefined destination.
+ *
+ * @param <T> the location type
+ * @param <D> the domain type
+ */
 public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> {
 
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;

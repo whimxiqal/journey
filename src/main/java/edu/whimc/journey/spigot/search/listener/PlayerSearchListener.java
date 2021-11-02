@@ -230,6 +230,11 @@ public class PlayerSearchListener implements Listener {
     });
   }
 
+  /**
+   * Handle the event when an itinerary search begins for those that were caused by a player.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void startItinerarySearchEvent(SpigotStartItinerarySearchEvent event) {
     getPlayerSearch(event).ifPresent(search -> {
@@ -241,6 +246,11 @@ public class PlayerSearchListener implements Listener {
     });
   }
 
+  /**
+   * Handle the event when an itinerary search ends for those that were caused by a player.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void stopItinerarySearchEvent(SpigotStopItinerarySearchEvent event) {
     getPlayerSearch(event).ifPresent(search -> {
@@ -254,6 +264,11 @@ public class PlayerSearchListener implements Listener {
     });
   }
 
+  /**
+   * Handle the event when a path search begins for those that were caused by a player.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void startPathSearchEvent(SpigotStartPathSearchEvent event) {
     getPlayerSearch(event).ifPresent(search -> {
@@ -265,6 +280,11 @@ public class PlayerSearchListener implements Listener {
     });
   }
 
+  /**
+   * Handle the event when a path search ends for those that were caused by a player.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void stopPathSearchEvent(SpigotStopPathSearchEvent event) {
     getPlayerSearch(event).ifPresent(search -> {
@@ -278,6 +298,11 @@ public class PlayerSearchListener implements Listener {
     });
   }
 
+  /**
+   * Handle the event when a search stops considering cached paths for those that were caused by a player.
+   *
+   * @param event the event
+   */
   @EventHandler
   public void ignoreCacheSearchEvent(SpigotIgnoreCacheSearchEvent event) {
     getPlayerSearch(event).ifPresent(search -> {
@@ -339,7 +364,7 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void onQuit(PlayerQuitEvent event) {
-    // Perform quit logic. Currently nothing.
+    // Perform quit logic. Currently, nothing.
   }
 
   @SuppressWarnings("unchecked")

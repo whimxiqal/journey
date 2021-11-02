@@ -42,12 +42,12 @@ import java.util.UUID;
  * @param <T> the location type
  * @param <D> the destination type
  */
-public abstract class LocalUpwardsSearchSession<T extends Cell<T, D>, D> extends SearchSession<T, D> {
+public abstract class LocalUpwardsGoalSearchSession<T extends Cell<T, D>, D> extends SearchSession<T, D> {
 
   private final T origin;
   private long executionStartTime = -1;
 
-  protected LocalUpwardsSearchSession(UUID callerId, Caller callerType, T origin) {
+  protected LocalUpwardsGoalSearchSession(UUID callerId, Caller callerType, T origin) {
     super(callerId, callerType);
     this.origin = origin;
   }

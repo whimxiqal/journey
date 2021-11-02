@@ -30,8 +30,6 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,12 +71,8 @@ public class PathCache<T extends Cell<T, D>, D> implements Serializable {
     modeTypeMap.put(modeTypes, path);
 
 
-
     if (replaced == null) {
-      System.out.println("Cached path, " + origin + " to " + destination + ": " + (path.get() == null ? "empty" : "present"));
       size++;
-    } else {
-      System.out.println("Replaced cached path, " + origin + " to " + destination + ": " + (path.get() == null ? "empty" : "present"));
     }
     return replaced;
   }
@@ -95,13 +89,19 @@ public class PathCache<T extends Cell<T, D>, D> implements Serializable {
   public Path<T, D> get(T origin, T destination, ModeTypeGroup modeTypes) {
     Map<ModeTypeGroup, CachedPath<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
     if (modeTypeMap != null) {
-      Path<T, D> path = modeTypeMap.get(modeTypes).get();
-      System.out.println("Retrieving path, " + origin + " to " + destination + ": " + (path == null ? "empty" : "present"));
-      return path;
+      return modeTypeMap.get(modeTypes).get();
     }
     return null;
   }
 
+  /**
+   * Remove a cached path from the cache, normally because a successful cached path is found to be invalid.
+   *
+   * @param origin      the origin
+   * @param destination the destination
+   * @param modeTypes   the types of modes used to get there
+   * @return the removed path, if it exists
+   */
   @Nullable
   public Path<T, D> remove(T origin, T destination, ModeTypeGroup modeTypes) {
     Map<ModeTypeGroup, CachedPath<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
@@ -170,40 +170,80 @@ public class PathCache<T extends Cell<T, D>, D> implements Serializable {
     return modeTypeMap.containsKey(modeTypes);
   }
 
+  /**
+   * A wrapper around a {@link Path} to allow storage of null values in a map.
+   *
+   * @param <T> the location type
+   * @param <D> the domain type
+   */
   public static class CachedPath<T extends Cell<T, D>, D> implements Serializable {
-    private Path<T, D> path;
-
-    public static <T extends Cell<T, D>, D> CachedPath<T, D> of(@NotNull Path<T, D> path) {
-      return new CachedPath<>(path);
-    }
-
-    public static <T extends Cell<T, D>, D> CachedPath<T, D> empty() {
-      return new CachedPath<>(null);
-    }
+    private final Path<T, D> path;
 
     private CachedPath(@Nullable Path<T, D> path) {
       this.path = path;
     }
 
+    /**
+     * Create a cached path object of a successful path.
+     *
+     * @param path the path
+     * @param <T>  the location type
+     * @param <D>  the domain type
+     * @return the wrapper around the path
+     */
+    public static <T extends Cell<T, D>, D> CachedPath<T, D> of(@NotNull Path<T, D> path) {
+      return new CachedPath<>(path);
+    }
+
+    /**
+     * Create a cached path object of an unsuccessful path.
+     *
+     * @param <T> the location type
+     * @param <D> the domain type
+     * @return the wrapper around an empty path (null)
+     */
+    public static <T extends Cell<T, D>, D> CachedPath<T, D> empty() {
+      return new CachedPath<>(null);
+    }
+
+    /**
+     * Find whether this cached object does not have a path in it.
+     *
+     * @return true if empty
+     */
     public boolean isEmpty() {
       return path == null;
     }
 
+    /**
+     * Find whether this cached object has a path in it.
+     *
+     * @return true if not empty
+     */
     public boolean isPresent() {
       return path != null;
     }
 
-    public void ifPresent(Consumer<Path<T, D>> pathConsumer) {
-      if (path != null) {
-        pathConsumer.accept(path);
-      }
-    }
-
+    /**
+     * Get the path stored in this wrapper object.
+     * If the path is not present, it will return null with no error.
+     *
+     * @return the path
+     * @see #require()
+     */
     @Nullable
     public Path<T, D> get() {
       return path;
     }
 
+    /**
+     * Get the path stored in this wrapper object.
+     * If the path is not present, it will throw an error.
+     *
+     * @return the path
+     * @throws NoSuchElementException if there is no path present
+     * @see #get()
+     */
     @NotNull
     public Path<T, D> require() {
       if (path == null) {

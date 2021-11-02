@@ -25,13 +25,16 @@
 package edu.whimc.journey.spigot.search.event;
 
 import edu.whimc.journey.common.search.event.IgnoreCacheSearchEvent;
-import edu.whimc.journey.common.search.event.StartSearchEvent;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class SpigotIgnoreCacheSearchEvent extends SpigotSearchEvent<IgnoreCacheSearchEvent<LocationCell, World>> {
+/**
+ * A Spigot {@link org.bukkit.event.Event} implementation of {@link IgnoreCacheSearchEvent}.
+ */
+public class SpigotIgnoreCacheSearchEvent
+    extends SpigotSearchEvent<IgnoreCacheSearchEvent<LocationCell, World>> {
 
   private static final HandlerList handlers = new HandlerList();
 

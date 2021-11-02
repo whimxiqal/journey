@@ -34,6 +34,9 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A command to allow administrators to reload the configuration file.
+ */
 public class JourneyAdminReloadCommand extends CommandNode {
 
   /**

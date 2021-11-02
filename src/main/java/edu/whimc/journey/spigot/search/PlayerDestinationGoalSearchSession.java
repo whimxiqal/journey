@@ -22,7 +22,6 @@
 package edu.whimc.journey.spigot.search;
 
 import edu.whimc.journey.common.search.DestinationGoalSearchSession;
-import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.external.whimcportals.WhimcPortalPort;
 import edu.whimc.journey.spigot.navigation.LocationCell;
@@ -32,10 +31,6 @@ import edu.whimc.journey.spigot.navigation.mode.FlyMode;
 import edu.whimc.journey.spigot.navigation.mode.JumpMode;
 import edu.whimc.journey.spigot.navigation.mode.SwimMode;
 import edu.whimc.journey.spigot.navigation.mode.WalkMode;
-import edu.whimc.journey.spigot.search.AnimationManager;
-import edu.whimc.journey.spigot.search.SpigotPlayerSearchSession;
-import edu.whimc.journey.spigot.search.PlayerSessionState;
-import edu.whimc.journey.spigot.search.SearchFlag;
 import java.util.HashSet;
 import java.util.Set;
 import org.bukkit.Bukkit;
@@ -54,6 +49,18 @@ public class PlayerDestinationGoalSearchSession
   private final PlayerSessionState sessionState;
   private final AnimationManager animationManager;
 
+  /**
+   * General constructor.
+   *
+   * @param player             the player calling this session
+   * @param origin             the origin of the search
+   * @param destination        the destination of the search
+   * @param animate            true if we should animate
+   * @param nofly              true if we should ignore the ability of the player to fly
+   * @param nodoor             true if we should ignore the barrier of iron doors
+   * @param algorithmStepDelay the millisecond delay to each step of the lowest
+   *                           level of decision in the algorithm
+   */
   public PlayerDestinationGoalSearchSession(Player player,
                                             LocationCell origin, LocationCell destination,
                                             boolean animate,

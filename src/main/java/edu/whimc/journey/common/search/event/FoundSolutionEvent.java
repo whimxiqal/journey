@@ -59,6 +59,11 @@ public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, 
     return this.itinerary;
   }
 
+  /**
+   * Get how long the session had been searching up until this event was dispatched.
+   *
+   * @return the length of time of execution
+   */
   public final long getExecutionTime() {
     return executionTime;
   }

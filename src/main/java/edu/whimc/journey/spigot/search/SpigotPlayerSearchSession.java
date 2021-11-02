@@ -24,6 +24,7 @@
 
 package edu.whimc.journey.spigot.search;
 
+import edu.whimc.journey.common.search.LocalUpwardsGoalSearchSession;
 import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.navigation.LocationCell;
@@ -38,17 +39,56 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * An interface to tag onto any extension of a {@link SearchSession},
+ * like {@link LocalUpwardsGoalSearchSession}
+ * or {@link edu.whimc.journey.common.search.DestinationGoalSearchSession},
+ * to allow management of the session, callback to the session,
+ * and catching of events relating to sessions that have this type
+ * (the type being caused by a player).
+ *
+ * @param <S> the self-reference to the session type implementing this interface
+ */
 public interface SpigotPlayerSearchSession<S extends SearchSession<LocationCell, World>> {
 
+  /**
+   * Get the player causing this session.
+   *
+   * @return the player
+   */
   @Nullable
   Player getPlayer();
 
+  /**
+   * Get the animation manager in charge of animating the session's algorithm.
+   *
+   * @return the animation manager
+   */
   AnimationManager getAnimationManager();
 
+  /**
+   * Get the encapsulation of the state of the session.
+   * This exists because we want to talk about information relating to the actual session
+   * without imposing the player-cause-specific information to a general session.
+   *
+   * @return the state
+   */
   PlayerSessionState getSessionState();
 
+  /**
+   * Get the actual session (self-reference).
+   *
+   * @return the session
+   */
   S getSession();
 
+  /**
+   * Start the session. This ultimately causes {@link SearchSession#search()},
+   * but includes messages to the player and scheduling with the Spigot/Bukkit scheduler.
+   *
+   * @param timeout how long to try searching before we find a solution and stop naturally or
+   *                stop the search manually with {@link SearchSession#stop()}
+   */
   default void launchSession(int timeout) {
 
     Player player = getPlayer();

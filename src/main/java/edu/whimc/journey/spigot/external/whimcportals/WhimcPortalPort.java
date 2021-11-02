@@ -119,7 +119,16 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
     return new LocationCell(portal.getDestination().getLocation());
   }
 
-  public static void addPortsTo(SearchSession<LocationCell, World> session, Predicate<String> permissionAccess) {
+  /**
+   * Add all possible {@link WhimcPortalPort}s to a session.
+   *
+   * @param session          the session
+   * @param permissionAccess the predicate that determines whether the cause of the session has permission
+   *                         to use the port, which is determined by passing in the permission required
+   *                         for the port to this "permissionAccess" predicate to test
+   */
+  public static void addPortsTo(SearchSession<LocationCell, World> session,
+                                Predicate<String> permissionAccess) {
     Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
     if (plugin instanceof Main) {
       Portal.getPortals().stream()

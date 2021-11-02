@@ -84,6 +84,16 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
   @Getter
   private boolean fromCache;
 
+  /**
+   * General constructor.
+   *
+   * @param session   the session requesting this path trial run
+   * @param origin    the origin
+   * @param scorer    the object to score various possibilities when stepping to new locations
+   *                  throughout the algorithm
+   * @param completer the object to determine whether the path algorithm is complete and
+   *                  the goal has been reached
+   */
   public FlexiblePathTrial(SearchSession<T, D> session,
                            T origin,
                            Scorer<T, D> scorer,
@@ -165,9 +175,6 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
 
     // Dispatch a starting event
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StartPathSearchEvent<>(session, this));
-    if (this instanceof PathTrial<T, D> pathTrial) {
-      System.out.println("Searching for new path from " + origin + " to " + pathTrial.getDestination());
-    }
 
     Queue<Node<T, D>> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> -scorer.apply(node)));
     Map<T, Node<T, D>> visited = new HashMap<>();
