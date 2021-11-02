@@ -6,6 +6,7 @@ import edu.whimc.journey.spigot.command.to.JourneyToMyCommand;
 import edu.whimc.journey.spigot.command.to.JourneyToPublicCommand;
 import edu.whimc.journey.spigot.command.to.JourneyToQuestCommand;
 import edu.whimc.journey.spigot.command.to.JourneyToSurfaceCommand;
+import edu.whimc.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import me.blackvein.quests.Quests;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * A command to allow the calculation of a path to some destination endpoint.
  *
  * @see edu.whimc.journey.common.search.SearchSession
- * @see edu.whimc.journey.spigot.search.PlayerSearchSession
+ * @see PlayerDestinationGoalSearchSession
  */
 public class JourneyToCommand extends FunctionlessCommandNode {
 

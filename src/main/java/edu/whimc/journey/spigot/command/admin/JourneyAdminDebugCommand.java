@@ -24,10 +24,13 @@ package edu.whimc.journey.spigot.command.admin;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandError;
 import edu.whimc.journey.spigot.command.common.CommandNode;
+import edu.whimc.journey.spigot.command.common.Parameter;
+import edu.whimc.journey.spigot.command.common.ParameterSuppliers;
 import edu.whimc.journey.spigot.manager.DebugManager;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
 import java.util.Map;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -52,6 +55,10 @@ public class JourneyAdminDebugCommand extends CommandNode {
         "Enable or disable debug mode",
         "debug");
     setCanBypassInvalid(true);
+    addSubcommand(Parameter.builder()
+            .supplier(ParameterSuppliers.ONLINE_PLAYER)
+            .build(),
+        "Debug for a specific user");
   }
 
   @Override
@@ -60,39 +67,47 @@ public class JourneyAdminDebugCommand extends CommandNode {
                                   @NotNull String label,
                                   @NotNull String[] args,
                                   @NotNull Map<String, String> flags) {
-    boolean enabled;
     if (!(sender instanceof Player player)) {
       if (sender instanceof ConsoleCommandSender) {
         if (JourneySpigot.getInstance()
             .getDebugManager()
             .isConsoleDebugging()) {
           JourneySpigot.getInstance().getDebugManager().setConsoleDebugging(false);
-          enabled = false;
+          sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled."));
         } else {
           JourneySpigot.getInstance().getDebugManager().setConsoleDebugging(true);
-          enabled = true;
+          sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled."));
         }
+        return true;
       } else {
         sendCommandUsageError(sender, CommandError.NO_PLAYER);
         return false;
       }
     } else {
-
       DebugManager debugManager = JourneySpigot.getInstance().getDebugManager();
-      if (debugManager.isDebugging(player.getUniqueId())) {
-        debugManager.stopDebugging(player.getUniqueId());
-        enabled = false;
+
+      if (args.length == 0) {
+        if (debugManager.isDebugging(player)) {
+          debugManager.stopDebugging(player);
+          sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled."));
+        } else {
+          debugManager.startDebuggingAll(player);
+          sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled "
+              + Format.SUCCESS + "on all users."));
+        }
+        return true;
       } else {
-        debugManager.startDebugging(player.getUniqueId());
-        enabled = true;
+        Player target = Bukkit.getPlayer(args[0]);
+        if (target == null) {
+          sender.spigot().sendMessage(Format.error("Could not find that player"));
+          return false;
+        } else {
+          debugManager.startDebuggingPlayer(player, target);
+          sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled "
+              + Format.SUCCESS + "on " + Format.ACCENT + target.getName()));
+          return true;
+        }
       }
     }
-
-    if (enabled) {
-      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.BLUE + "enabled."));
-    } else {
-      sender.spigot().sendMessage(Format.success("Debug mode " + ChatColor.RED + "disabled."));
-    }
-    return true;
   }
 }

@@ -1,13 +1,16 @@
 package edu.whimc.journey.spigot.command.to;
 
+import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.tools.BufferedFunction;
 import edu.whimc.journey.common.util.Extra;
 import edu.whimc.journey.spigot.command.JourneyCommand;
 import edu.whimc.journey.spigot.command.common.CommandError;
+import edu.whimc.journey.spigot.command.common.CommandFlags;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.Parameter;
 import edu.whimc.journey.spigot.command.common.PlayerCommandNode;
 import edu.whimc.journey.spigot.navigation.LocationCell;
+import edu.whimc.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
 import java.util.LinkedList;
@@ -103,7 +106,25 @@ public class JourneyToQuestCommand extends PlayerCommandNode {
 
     LocationCell endLocation = new LocationCell(locationsToReach.getFirst());
 
-    JourneyCommand.journeyTo(player, endLocation, flags);
+
+    int algorithmStepDelay = 0;
+    if (CommandFlags.ANIMATE.isIn(flags)) {
+      algorithmStepDelay = CommandFlags.ANIMATE.retrieve(player, flags);
+    }
+
+    PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(player,
+        new LocationCell(player.getLocation()),
+        endLocation,
+        CommandFlags.ANIMATE.isIn(flags),
+        Settings.DEFAULT_NOFLY_FLAG.getValue() != CommandFlags.NOFLY.isIn(flags),
+        Settings.DEFAULT_NODOOR_FLAG.getValue() != CommandFlags.NODOOR.isIn(flags),
+        algorithmStepDelay);
+
+    int timeout = CommandFlags.TIMEOUT.isIn(flags)
+        ? CommandFlags.TIMEOUT.retrieve(player, flags)
+        : Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+
+    session.launchSession(timeout);
     return true;
   }
 }

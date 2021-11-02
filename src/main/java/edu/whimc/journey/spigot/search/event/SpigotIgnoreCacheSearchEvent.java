@@ -1,4 +1,6 @@
 /*
+ * MIT License
+ *
  * Copyright 2021 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,19 +19,44 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package edu.whimc.journey.spigot.manager;
+package edu.whimc.journey.spigot.search.event;
 
-import edu.whimc.journey.common.manager.SearchManager;
-import edu.whimc.journey.common.search.SearchSession;
+import edu.whimc.journey.common.search.event.IgnoreCacheSearchEvent;
+import edu.whimc.journey.common.search.event.StartSearchEvent;
 import edu.whimc.journey.spigot.navigation.LocationCell;
-import edu.whimc.journey.spigot.navigation.PlayerJourney;
 import org.bukkit.World;
+import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * A search manager specifically for Spigot players.
- */
-public class PlayerSearchManager extends SearchManager<LocationCell, World,
-    SearchSession<LocationCell, World>, PlayerJourney> {
+public class SpigotIgnoreCacheSearchEvent extends SpigotSearchEvent<IgnoreCacheSearchEvent<LocationCell, World>> {
+
+  private static final HandlerList handlers = new HandlerList();
+
+  /**
+   * General constructor.
+   *
+   * @param event the common event
+   */
+  public SpigotIgnoreCacheSearchEvent(IgnoreCacheSearchEvent<LocationCell, World> event) {
+    super(event);
+  }
+
+  /**
+   * Get handler list. Spigot standard.
+   *
+   * @return the handler list
+   */
+  public static HandlerList getHandlerList() {
+    return handlers;
+  }
+
+  @Override
+  @NotNull
+  public HandlerList getHandlers() {
+    return handlers;
+  }
+
 }

@@ -1,11 +1,43 @@
-package edu.whimc.journey.spigot.navigation;
+/*
+ * MIT License
+ *
+ * Copyright 2021 Pieter Svenson
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+package edu.whimc.journey.spigot.external.whimcportals;
 
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.Port;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.common.tools.Verifiable;
+import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.util.SpigotUtil;
+import edu.whimc.portals.Main;
 import edu.whimc.portals.Portal;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,7 +51,6 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
   private WhimcPortalPort(String name, LocationCell origin, LocationCell destination) {
     super(origin, destination, ModeType.PORT, 5);
     this.portalName = name;
-    World world = origin.getDomain();
   }
 
   /**
@@ -28,7 +59,7 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
    * @param portal the portal
    * @return the generated port
    */
-  public static WhimcPortalPort from(Portal portal) {
+  private static WhimcPortalPort from(Portal portal) {
     if (portal.getWorld() == null) {
       throw new IllegalStateException("Error with portal: " + portal.getName()
           + "A Portal Link may only be created with portals that have a world.");
@@ -86,6 +117,27 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
 
   private static LocationCell getDestinationOf(Portal portal) {
     return new LocationCell(portal.getDestination().getLocation());
+  }
+
+  public static void addPortsTo(SearchSession<LocationCell, World> session, Predicate<String> permissionAccess) {
+    Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
+    if (plugin instanceof Main) {
+      Portal.getPortals().stream()
+          .filter(portal -> portal.getDestination() != null)
+          .filter(portal -> portal.getWorld() != null)
+          .filter(portal -> portal.getDestination().getLocation().getWorld() != null)
+          .filter(portal -> Optional.ofNullable(portal.getPermission()).map(perm ->
+              permissionAccess.test(perm.getName())).orElse(true))
+          .map(portal -> {
+            try {
+              return WhimcPortalPort.from(portal);
+            } catch (Exception e) {
+              return null;
+            }
+          })
+          .filter(Objects::nonNull)
+          .forEach(session::registerPort);
+    }
   }
 
   @Override

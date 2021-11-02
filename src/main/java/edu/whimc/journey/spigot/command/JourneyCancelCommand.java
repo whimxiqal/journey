@@ -22,19 +22,23 @@
 
 package edu.whimc.journey.spigot.command;
 
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.PlayerCommandNode;
+import edu.whimc.journey.spigot.navigation.LocationCell;
+import edu.whimc.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import edu.whimc.journey.spigot.util.Format;
 import java.util.Map;
 import java.util.Objects;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A command to cancel an ongoing {@link edu.whimc.journey.spigot.search.PlayerSearchSession}.
+ * A command to cancel an ongoing {@link PlayerDestinationGoalSearchSession}.
  */
 public class JourneyCancelCommand extends PlayerCommandNode {
 
@@ -55,14 +59,22 @@ public class JourneyCancelCommand extends PlayerCommandNode {
                                         @NotNull String[] args,
                                         @NotNull Map<String, String> flags) {
     if (!JourneySpigot.getInstance().getSearchManager().isSearching(player.getUniqueId())) {
-      player.spigot().sendMessage(Format.error("You do not have an ongoing search"));
+      player.spigot().sendMessage(Format.error("You do not have an ongoing search."));
       return false;
     }
 
-    Objects.requireNonNull(JourneySpigot.getInstance().getSearchManager().getSearch(player.getUniqueId()))
-        .cancel();
-    player.spigot().sendMessage(Format.success("Search canceled."));
-    return true;
+    SearchSession<LocationCell, World> session = Objects.requireNonNull(JourneySpigot.getInstance()
+        .getSearchManager()
+        .getSearch(player.getUniqueId()));
+
+    if (session.stop()) {
+      player.spigot().sendMessage(Format.success("Search cancelling..."));
+      return true;
+    } else {
+      player.spigot().sendMessage(Format.error("You do not have an ongoing search."));
+      return false;
+    }
+
   }
 
 }

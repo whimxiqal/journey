@@ -1,4 +1,6 @@
 /*
+ * MIT License
+ *
  * Copyright 2021 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,19 +19,28 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package edu.whimc.journey.spigot.manager;
+package edu.whimc.journey.common.search.event;
 
-import edu.whimc.journey.common.manager.SearchManager;
+import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.SearchSession;
-import edu.whimc.journey.spigot.navigation.LocationCell;
-import edu.whimc.journey.spigot.navigation.PlayerJourney;
-import org.bukkit.World;
 
-/**
- * A search manager specifically for Spigot players.
- */
-public class PlayerSearchManager extends SearchManager<LocationCell, World,
-    SearchSession<LocationCell, World>, PlayerJourney> {
+public class IgnoreCacheSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
+
+  /**
+   * General constructor.
+   *
+   * @param session the session
+   */
+  public IgnoreCacheSearchEvent(SearchSession<T, D> session) {
+    super(session);
+  }
+
+  @Override
+  EventType type() {
+    return EventType.IGNORE_CACHE;
+  }
+
 }

@@ -35,6 +35,7 @@ import edu.whimc.journey.spigot.manager.NetherManager;
 import edu.whimc.journey.spigot.manager.PlayerSearchManager;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.search.event.SpigotFoundSolutionEvent;
+import edu.whimc.journey.spigot.search.event.SpigotIgnoreCacheSearchEvent;
 import edu.whimc.journey.spigot.search.event.SpigotModeFailureEvent;
 import edu.whimc.journey.spigot.search.event.SpigotModeSuccessEvent;
 import edu.whimc.journey.spigot.search.event.SpigotStartItinerarySearchEvent;
@@ -49,16 +50,9 @@ import edu.whimc.journey.spigot.search.listener.AnimationListener;
 import edu.whimc.journey.spigot.search.listener.DataStorageListener;
 import edu.whimc.journey.spigot.search.listener.PlayerSearchListener;
 import edu.whimc.journey.spigot.util.LoggerSpigot;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.file.Paths;
+import edu.whimc.journey.spigot.util.Serialize;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Event;
@@ -73,7 +67,6 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public final class JourneySpigot extends JavaPlugin {
 
-  private static final String SERIALIZED_PATH_CACHE_FILENAME = "paths.ser";
   private static JourneySpigot instance;
 
   // Caches
@@ -127,6 +120,7 @@ public final class JourneySpigot extends JavaPlugin {
     SearchDispatcher<LocationCell, World, Event> dispatcher = new SearchDispatcher<>(event ->
         Bukkit.getServer().getPluginManager().callEvent(event));
     dispatcher.registerEvent(SpigotFoundSolutionEvent::new, SearchEvent.EventType.FOUND_SOLUTION);
+    dispatcher.registerEvent(SpigotIgnoreCacheSearchEvent::new, SearchEvent.EventType.IGNORE_CACHE);
     dispatcher.registerEvent(SpigotModeFailureEvent::new, SearchEvent.EventType.MODE_FAILURE);
     dispatcher.registerEvent(SpigotModeSuccessEvent::new, SearchEvent.EventType.MODE_SUCCESS);
     dispatcher.registerEvent(SpigotStartItinerarySearchEvent::new, SearchEvent.EventType.START_ITINERARY);
@@ -177,50 +171,38 @@ public final class JourneySpigot extends JavaPlugin {
     serializeCaches();
   }
 
-  @SuppressWarnings("unchecked")
   private void deserializeCaches() {
-    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_PATH_CACHE_FILENAME).toFile();
-    if (!file.exists()) {
-      return;
-    }
-    try (FileInputStream fileStream = new FileInputStream(file);
-         ObjectInputStream in = new ObjectInputStream(fileStream)) {
+    // Path cache
+    Serialize.<PathCache<LocationCell, World>>deserializeCache(this.getDataFolder(),
+        PathCache.SERIALIZED_PATH_CACHE_FILENAME,
+        JourneyCommon::setPathCache,
+        PathCache::new);
+    JourneySpigot.getInstance().getLogger().info(JourneyCommon.getPathCache().size() + " paths deserialized");
 
-      JourneyCommon.setPathCache((PathCache<LocationCell, World>) in.readObject());
-      JourneySpigot.getInstance().getLogger().info("Deserialized trail cache ("
-          + JourneyCommon.getPathCache().size()
-          + " trails)");
-    } catch (IOException | ClassNotFoundException e) {
-      JourneySpigot.getInstance().getLogger().severe("Could not deserialize trail caches!");
-    }
+    // Nether Ports cache
+    Serialize.deserializeCache(this.getDataFolder(),
+        NetherManager.NETHER_MANAGER_CACHE_FILE_NAME,
+        manager -> this.netherManager = manager,
+        NetherManager::new);
+    JourneySpigot.getInstance().getLogger().info(this.netherManager.size() + " nether ports deserialized");
   }
 
   private void serializeCaches() {
-    File file = Paths.get(this.getDataFolder().toPath().toString(), SERIALIZED_PATH_CACHE_FILENAME).toFile();
-    try {
-      //noinspection ResultOfMethodCallIgnored
-      this.getDataFolder().mkdirs();
-      if (file.createNewFile()) {
-        JourneySpigot.getInstance().getLogger().info("Created serialized trail file");
-      }
-    } catch (IOException e) {
-      JourneySpigot.getInstance().getLogger().severe("Could not create serialization file");
-      return;
-    }
+    // Path cache
+    Serialize.<PathCache<LocationCell, World>>serializeCache(this.getDataFolder(),
+        PathCache.SERIALIZED_PATH_CACHE_FILENAME,
+        JourneyCommon::getPathCache,
+        JourneyCommon::setPathCache,
+        PathCache::new);
+    JourneySpigot.getInstance().getLogger().info(JourneyCommon.getPathCache().size() + " paths serialized");
 
-    try (FileOutputStream fileStream = new FileOutputStream(Paths.get(
-        this.getDataFolder().toPath().toString(),
-        SERIALIZED_PATH_CACHE_FILENAME).toFile());
-         ObjectOutputStream out = new ObjectOutputStream(fileStream)) {
-
-      out.writeObject(JourneyCommon.getPathCache());
-      JourneySpigot.getInstance().getLogger().info("Serialized trail cache ("
-          + JourneyCommon.getPathCache().size() + " trails)");
-
-    } catch (IOException e) {
-      JourneySpigot.getInstance().getLogger().severe("Could not serialize trail caches");
-      e.printStackTrace();
-    }
+    // nether Ports cache
+    Serialize.serializeCache(this.getDataFolder(),
+        NetherManager.NETHER_MANAGER_CACHE_FILE_NAME,
+        () -> this.netherManager,
+        manager -> this.netherManager = manager,
+        NetherManager::new);
+    JourneySpigot.getInstance().getLogger().info(this.netherManager.size() + " nether ports serialized");
   }
 
 }

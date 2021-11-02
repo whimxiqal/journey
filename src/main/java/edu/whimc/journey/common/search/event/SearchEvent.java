@@ -74,6 +74,7 @@ public abstract class SearchEvent<T extends Cell<T, D>, D> {
    */
   public enum EventType {
     FOUND_SOLUTION,
+    IGNORE_CACHE,
     MODE_FAILURE,
     MODE_SUCCESS,
     START_ITINERARY,

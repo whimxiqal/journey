@@ -28,7 +28,11 @@ import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.navigation.Path;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import org.bukkit.Bukkit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,7 +45,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PathCache<T extends Cell<T, D>, D> implements Serializable {
 
-  private final Map<T, Map<T, Map<ModeTypeGroup, Path<T, D>>>> cache = new ConcurrentHashMap<>();
+  public static final String SERIALIZED_PATH_CACHE_FILENAME = "paths.ser";
+
+  private final Map<T, Map<T, Map<ModeTypeGroup, CachedPath<T, D>>>> cache = new ConcurrentHashMap<>();
   private int size = 0;
 
   /**
@@ -54,17 +60,25 @@ public class PathCache<T extends Cell<T, D>, D> implements Serializable {
    * @return the replaced path, if there was one
    */
   @Nullable
-  public Path<T, D> put(T origin, T destination, ModeTypeGroup modeTypes, Path<T, D> path) {
+  public CachedPath<T, D> put(@NotNull T origin,
+                              @NotNull T destination,
+                              @NotNull ModeTypeGroup modeTypes,
+                              @NotNull CachedPath<T, D> path) {
     cache.putIfAbsent(origin, Maps.newHashMap());
-    Map<T, Map<ModeTypeGroup, Path<T, D>>> destinationMap = cache.get(origin);
+    Map<T, Map<ModeTypeGroup, CachedPath<T, D>>> destinationMap = cache.get(origin);
     destinationMap.putIfAbsent(destination, Maps.newHashMap());
-    Map<ModeTypeGroup, Path<T, D>> modeTypeMap = destinationMap.get(destination);
+    Map<ModeTypeGroup, CachedPath<T, D>> modeTypeMap = destinationMap.get(destination);
 
-    Path<T, D> replaced = modeTypeMap.get(modeTypes);
+    CachedPath<T, D> replaced = modeTypeMap.get(modeTypes);
     modeTypeMap.put(modeTypes, path);
 
+
+
     if (replaced == null) {
+      System.out.println("Cached path, " + origin + " to " + destination + ": " + (path.get() == null ? "empty" : "present"));
       size++;
+    } else {
+      System.out.println("Replaced cached path, " + origin + " to " + destination + ": " + (path.get() == null ? "empty" : "present"));
     }
     return replaced;
   }
@@ -79,9 +93,25 @@ public class PathCache<T extends Cell<T, D>, D> implements Serializable {
    */
   @Nullable
   public Path<T, D> get(T origin, T destination, ModeTypeGroup modeTypes) {
-    Map<ModeTypeGroup, Path<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
+    Map<ModeTypeGroup, CachedPath<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
     if (modeTypeMap != null) {
-      return modeTypeMap.get(modeTypes);
+      Path<T, D> path = modeTypeMap.get(modeTypes).get();
+      System.out.println("Retrieving path, " + origin + " to " + destination + ": " + (path == null ? "empty" : "present"));
+      return path;
+    }
+    return null;
+  }
+
+  @Nullable
+  public Path<T, D> remove(T origin, T destination, ModeTypeGroup modeTypes) {
+    Map<ModeTypeGroup, CachedPath<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
+    if (modeTypeMap != null) {
+      CachedPath<T, D> cachedPath = modeTypeMap.remove(modeTypes);
+      if (cachedPath == null) {
+        return null;
+      } else {
+        return cachedPath.get();
+      }
     }
     return null;
   }
@@ -97,9 +127,9 @@ public class PathCache<T extends Cell<T, D>, D> implements Serializable {
    * @return the map of mode types to paths
    */
   @Nullable
-  public Map<ModeTypeGroup, Path<T, D>> getModeTypeMap(T origin, T destination) {
+  public Map<ModeTypeGroup, CachedPath<T, D>> getModeTypeMap(T origin, T destination) {
     if (cache.containsKey(origin)) {
-      Map<T, Map<ModeTypeGroup, Path<T, D>>> destinationMap = cache.get(origin);
+      Map<T, Map<ModeTypeGroup, CachedPath<T, D>>> destinationMap = cache.get(origin);
       if (destinationMap.containsKey(destination)) {
         return destinationMap.get(destination);
       }
@@ -133,11 +163,54 @@ public class PathCache<T extends Cell<T, D>, D> implements Serializable {
    * @return true if it is contained
    */
   public boolean contains(T origin, T destination, ModeTypeGroup modeTypes) {
-    Map<ModeTypeGroup, Path<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
+    Map<ModeTypeGroup, CachedPath<T, D>> modeTypeMap = getModeTypeMap(origin, destination);
     if (modeTypeMap == null) {
       return false;
     }
     return modeTypeMap.containsKey(modeTypes);
+  }
+
+  public static class CachedPath<T extends Cell<T, D>, D> implements Serializable {
+    private Path<T, D> path;
+
+    public static <T extends Cell<T, D>, D> CachedPath<T, D> of(@NotNull Path<T, D> path) {
+      return new CachedPath<>(path);
+    }
+
+    public static <T extends Cell<T, D>, D> CachedPath<T, D> empty() {
+      return new CachedPath<>(null);
+    }
+
+    private CachedPath(@Nullable Path<T, D> path) {
+      this.path = path;
+    }
+
+    public boolean isEmpty() {
+      return path == null;
+    }
+
+    public boolean isPresent() {
+      return path != null;
+    }
+
+    public void ifPresent(Consumer<Path<T, D>> pathConsumer) {
+      if (path != null) {
+        pathConsumer.accept(path);
+      }
+    }
+
+    @Nullable
+    public Path<T, D> get() {
+      return path;
+    }
+
+    @NotNull
+    public Path<T, D> require() {
+      if (path == null) {
+        throw new NoSuchElementException("This cached path is empty");
+      }
+      return path;
+    }
   }
 
 }

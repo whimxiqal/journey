@@ -31,7 +31,6 @@ public final class MaterialGroups {
    */
   public static final Set<Material> INVALID_PASSABLE = Sets.newHashSet(
       Material.LAVA,
-      Material.NETHER_PORTAL,
       Material.END_PORTAL);
   /**
    * Anything that a player can squeeze through vertically, other than the obvious.

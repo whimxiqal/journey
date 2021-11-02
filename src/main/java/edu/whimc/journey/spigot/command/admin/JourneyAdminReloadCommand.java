@@ -1,4 +1,6 @@
 /*
+ * MIT License
+ *
  * Copyright 2021 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,55 +19,43 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-package edu.whimc.journey.common.search.event;
-
-import edu.whimc.journey.common.navigation.Cell;
-import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.search.SearchSession;
-
-/**
- * An event that is dispatched when a new solution is found during a path search.
  *
- * @param <T> the location type
- * @param <D> the domain type
- * @see SearchSession
- * @see SearchDispatcher
  */
-public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
-  private final Itinerary<T, D> itinerary;
-  private final long executionTime;
+package edu.whimc.journey.spigot.command.admin;
+
+import edu.whimc.journey.common.JourneyCommon;
+import edu.whimc.journey.spigot.command.common.CommandNode;
+import edu.whimc.journey.spigot.util.Format;
+import edu.whimc.journey.spigot.util.Permissions;
+import java.util.Map;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class JourneyAdminReloadCommand extends CommandNode {
 
   /**
    * General constructor.
    *
-   * @param session   the session
-   * @param itinerary the solution to the search
+   * @param parent the parent command
    */
-  public FoundSolutionEvent(SearchSession<T, D> session, Itinerary<T, D> itinerary) {
-    super(session);
-    this.itinerary = itinerary;
-    this.executionTime = this.getSession().executionTime();
-  }
-
-  /**
-   * Get the solution to the search.
-   *
-   * @return the solution
-   */
-  public Itinerary<T, D> getItinerary() {
-    return this.itinerary;
-  }
-
-  public final long getExecutionTime() {
-    return executionTime;
+  public JourneyAdminReloadCommand(@Nullable CommandNode parent) {
+    super(parent, Permissions.ADMIN,
+        "Reload the configuration file",
+        "reload");
   }
 
   @Override
-  EventType type() {
-    return EventType.FOUND_SOLUTION;
+  public boolean onWrappedCommand(@NotNull CommandSender sender,
+                                  @NotNull Command command,
+                                  @NotNull String label,
+                                  @NotNull String[] args,
+                                  @NotNull Map<String, String> flags) {
+    JourneyCommon.getConfigManager().load();
+    sender.spigot().sendMessage(Format.success("Reloaded the config"));
+    return true;
   }
 
 }

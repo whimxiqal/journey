@@ -2,6 +2,7 @@ package edu.whimc.journey.spigot.command;
 
 import edu.whimc.journey.spigot.command.admin.JourneyAdminDebugCommand;
 import edu.whimc.journey.spigot.command.admin.JourneyAdminInvalidateCommand;
+import edu.whimc.journey.spigot.command.admin.JourneyAdminReloadCommand;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
 import edu.whimc.journey.spigot.util.Permissions;
@@ -23,6 +24,7 @@ public class JourneyAdminCommand extends FunctionlessCommandNode {
         "admin");
     addChildren(new JourneyAdminDebugCommand(this));
     addChildren(new JourneyAdminInvalidateCommand(this));
+    addChildren(new JourneyAdminReloadCommand(this));
   }
 
 }

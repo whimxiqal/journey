@@ -26,19 +26,17 @@ import edu.whimc.journey.common.navigation.Itinerary;
 import edu.whimc.journey.common.navigation.Journey;
 import edu.whimc.journey.common.navigation.Path;
 import edu.whimc.journey.common.navigation.Port;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.common.tools.AlternatingList;
-import edu.whimc.journey.spigot.search.SpigotSearchSession;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A general implementation of a {@link Journey} specifically for Spigot purposes.
- *
- * @param <S> the session used to create this journey
  */
-public abstract class SpigotJourney<S extends SpigotSearchSession> implements Journey<LocationCell, World> {
+public abstract class SpigotJourney implements Journey<LocationCell, World> {
 
-  private final S session;
+  private final SearchSession<LocationCell, World> session;
   private final Itinerary<LocationCell, World> itinerary;
   private AlternatingList.Traversal<Port<LocationCell, World>,
       Path<LocationCell, World>,
@@ -54,7 +52,7 @@ public abstract class SpigotJourney<S extends SpigotSearchSession> implements Jo
    * @param session   the session ultimately causing this journey
    * @param itinerary the itinerary that acts a roadmap for this journey
    */
-  public SpigotJourney(@NotNull S session,
+  public SpigotJourney(@NotNull SearchSession<LocationCell, World> session,
                        @NotNull Itinerary<LocationCell, World> itinerary) {
     this.session = session;
     this.itinerary = itinerary;
@@ -66,7 +64,7 @@ public abstract class SpigotJourney<S extends SpigotSearchSession> implements Jo
    *
    * @return the session
    */
-  public S getSession() {
+  public SearchSession<LocationCell, World> getSession() {
     return session;
   }
 

@@ -87,20 +87,34 @@ class SearchTest {
       solution.set(event.getItinerary());
     }, SearchEvent.EventType.FOUND_SOLUTION);
 
+    // Printers for our answers
+    char[][] printer1 = new char[boardSize][boardSize];
+    char[][] printer2 = new char[boardSize][boardSize];
+
+//    dispatcher.<StepSearchEvent<Point3D, Domain>>registerEvent(event -> () -> {
+//      char[][] printer;
+//      if (event.getStep().location().domain.equals(domain1)) {
+//        printer = printer1;
+//      } else {
+//        printer = printer2;
+//      }
+//      printer[event.getStep().location().getX()][event.getStep().location().getZ()] = '-';
+//    }, SearchEvent.EventType.STEP);
+
+    Point3D origin = board1[4][4];
+    Point3D destination = board1[4][8];
+
     // Set up parameters for search
-    ReverseSearchSession<Point3D, Domain> session = new TestSearchSession(UUID.randomUUID(),
-        SearchSession.Caller.OTHER);
+    DestinationGoalSearchSession<Point3D, Domain> session = new TestSearchSession(UUID.randomUUID(),
+        SearchSession.Caller.OTHER,
+        origin,
+        destination);
     List<Port<Point3D, Domain>> links = Lists.newLinkedList();
     links.add(new TestLink(board1[8][4], board2[3][6]));
     links.add(new TestLink(board2[7][7], board1[8][8]));
     links.forEach(session::registerPort);
 
-    Point3D origin = board1[4][4];
-    Point3D destination = board1[4][8];
 
-    // Printers for our answers
-    char[][] printer1 = new char[boardSize][boardSize];
-    char[][] printer2 = new char[boardSize][boardSize];
 
     // Clear printer board
     clearPrinters(board1, board2, printer1, printer2, origin, destination, links, boardSize);
@@ -114,10 +128,10 @@ class SearchTest {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      session.cancel();
+      session.stop();
     });
     thread.start();
-    session.search(origin, destination);
+    session.search();
 
     Assertions.assertTrue(solved.get());
 
@@ -148,7 +162,7 @@ class SearchTest {
   private void clearPrinters(Point3D[][] board1, Point3D[][] board2,
                              char[][] printer1, char[][] printer2,
                              Point3D origin, Point3D destination,
-                             List<Port<Point3D, Domain>> links,
+                             List<Port<Point3D, Domain>> ports,
                              int boardSize) {
     for (int i = 0; i < boardSize; i++) {
       for (int j = 0; j < boardSize; j++) {
@@ -177,27 +191,27 @@ class SearchTest {
       printer2[destination.getX()][destination.getY()] = 'B';
     }
 
-    // Put in links
-    for (int i = 0; i < links.size(); i++) {
-      if (links.get(i).getOrigin().getDomain().equals(domain1)) {
+    // Put in ports
+    for (int i = 0; i < ports.size(); i++) {
+      if (ports.get(i).getOrigin().getDomain().equals(domain1)) {
         printer1
-            [links.get(i).getOrigin().getX()]
-            [links.get(i).getOrigin().getY()] = Character.forDigit(i, 10);
+            [ports.get(i).getOrigin().getX()]
+            [ports.get(i).getOrigin().getY()] = Character.forDigit(i, 10);
       }
-      if (links.get(i).getOrigin().getDomain().equals(domain2)) {
+      if (ports.get(i).getOrigin().getDomain().equals(domain2)) {
         printer2
-            [links.get(i).getOrigin().getX()]
-            [links.get(i).getOrigin().getY()] = Character.forDigit(i, 10);
+            [ports.get(i).getOrigin().getX()]
+            [ports.get(i).getOrigin().getY()] = Character.forDigit(i, 10);
       }
-      if (links.get(i).getDestination().getDomain().equals(domain1)) {
+      if (ports.get(i).getDestination().getDomain().equals(domain1)) {
         printer1
-            [links.get(i).getDestination().getX()]
-            [links.get(i).getDestination().getY()] = Character.forDigit(i, 10);
+            [ports.get(i).getDestination().getX()]
+            [ports.get(i).getDestination().getY()] = Character.forDigit(i, 10);
       }
-      if (links.get(i).getDestination().getDomain().equals(domain2)) {
+      if (ports.get(i).getDestination().getDomain().equals(domain2)) {
         printer2
-            [links.get(i).getDestination().getX()]
-            [links.get(i).getDestination().getY()] = Character.forDigit(i, 10);
+            [ports.get(i).getDestination().getX()]
+            [ports.get(i).getDestination().getY()] = Character.forDigit(i, 10);
       }
     }
   }
@@ -211,10 +225,16 @@ class SearchTest {
     }
   }
 
-  static class TestSearchSession extends ReverseSearchSession<Point3D, Domain> {
+  static class TestSearchSession extends DestinationGoalSearchSession<Point3D, Domain> {
 
-    public TestSearchSession(UUID callerId, Caller callerType) {
-      super(callerId, callerType);
+    public TestSearchSession(UUID callerId, Caller callerType,
+                             Point3D origin, Point3D destination) {
+      super(callerId, callerType, origin, destination);
+    }
+
+    @Override
+    public long executionTime() {
+      return 0;  // unimplemented
     }
 
   }

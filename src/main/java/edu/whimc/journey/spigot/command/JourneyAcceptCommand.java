@@ -28,6 +28,7 @@ import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.PlayerCommandNode;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.navigation.PlayerJourney;
+import edu.whimc.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import edu.whimc.journey.spigot.util.Format;
 import java.util.Map;
 import java.util.Objects;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A command to allow players to accept a new journey from
- * an ongoing {@link edu.whimc.journey.spigot.search.PlayerSearchSession}.
+ * an ongoing {@link PlayerDestinationGoalSearchSession}.
  */
 public class JourneyAcceptCommand extends PlayerCommandNode {
 

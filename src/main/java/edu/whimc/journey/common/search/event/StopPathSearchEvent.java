@@ -22,6 +22,7 @@
 package edu.whimc.journey.common.search.event;
 
 import edu.whimc.journey.common.navigation.Cell;
+import edu.whimc.journey.common.search.FlexiblePathTrial;
 import edu.whimc.journey.common.search.PathTrial;
 import edu.whimc.journey.common.search.SearchSession;
 
@@ -36,7 +37,7 @@ import edu.whimc.journey.common.search.SearchSession;
  */
 public class StopPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
-  private final PathTrial<T, D> pathTrial;
+  private final FlexiblePathTrial<T, D> pathTrial;
 
   /**
    * General constructor.
@@ -44,7 +45,7 @@ public class StopPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T,
    * @param session   the session
    * @param pathTrial the path trial causing this event
    */
-  public StopPathSearchEvent(SearchSession<T, D> session, PathTrial<T, D> pathTrial) {
+  public StopPathSearchEvent(SearchSession<T, D> session, FlexiblePathTrial<T, D> pathTrial) {
     super(session);
     this.pathTrial = pathTrial;
   }
@@ -54,7 +55,7 @@ public class StopPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T,
    *
    * @return the path trial
    */
-  public PathTrial<T, D> getPathTrial() {
+  public FlexiblePathTrial<T, D> getPathTrial() {
     return pathTrial;
   }
 

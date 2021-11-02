@@ -31,7 +31,7 @@ import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandFlags;
 import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
 import edu.whimc.journey.spigot.navigation.LocationCell;
-import edu.whimc.journey.spigot.search.PlayerSearchSession;
+import edu.whimc.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import edu.whimc.journey.spigot.search.SearchFlag;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
@@ -108,77 +108,6 @@ public class JourneyCommand extends FunctionlessCommandNode {
         return new LinkedList<>();
       }
     }, 1000);
-  }
-
-  /**
-   * A helper method to generate a journey and run it for any given player,
-   * given some endpoint.
-   *
-   * @param player       the player
-   * @param endpoint     the endpoint
-   * @param commandFlags the flags found from command execution
-   */
-  public static void journeyTo(@NotNull Player player,
-                               @NotNull LocationCell endpoint,
-                               @NotNull Map<String, String> commandFlags) {
-
-    Set<SearchFlag> searchFlags = new HashSet<>();
-    if (Settings.DEFAULT_NOFLY_FLAG.getValue() != CommandFlags.NOFLY.isIn(commandFlags)) {
-      searchFlags.add(SearchFlag.NOFLY);
-    }
-    if (Settings.DEFAULT_NODOOR_FLAG.getValue() != CommandFlags.NODOOR.isIn(commandFlags)) {
-      searchFlags.add(SearchFlag.NODOOR);
-    }
-
-    int algorithmStepDelay = 0;
-    if (CommandFlags.ANIMATE.isIn(commandFlags)) {
-      searchFlags.add(SearchFlag.ANIMATE);
-      algorithmStepDelay = CommandFlags.ANIMATE.retrieve(player, commandFlags);
-    }
-    PlayerSearchSession session = new PlayerSearchSession(player, searchFlags, algorithmStepDelay);
-
-    int timeout = CommandFlags.TIMEOUT.isIn(commandFlags)
-        ? CommandFlags.TIMEOUT.retrieve(player, commandFlags)
-        : Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
-
-    // Set up a "Working..." message if it takes too long
-    player.spigot().sendMessage(Format.info("Searching for path to your destination ("
-        + timeout
-        + " sec)..."));
-    player.spigot().sendMessage(new ComponentBuilder()
-        .append(Format.PREFIX)
-        .append(new ComponentBuilder()
-            .append("  [Search Flags]")
-            .color(Format.ACCENT2.asBungee())
-            .italic(true)
-            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                new Text(new ComponentBuilder("Flags: ")
-                    .color(Format.ACCENT2.asBungee())
-                    .append(searchFlags.stream()
-                        .map(flag -> flag.name().toLowerCase())
-                        .collect(Collectors.joining(", ")))
-                    .color(Format.INFO.asBungee())
-                    .create())))
-            .create())
-        .create());
-
-    // Set up a search cancellation in case it takes too long
-    Bukkit.getScheduler().runTaskLater(JourneySpigot.getInstance(),
-        () -> {
-          if (session.getState() != ResultState.SUCCESSFUL) {
-            player.spigot().sendMessage(Format.error("Time limit surpassed. Canceling search..."));
-            session.cancel();
-          }
-        },
-        (long) timeout * 20 /* ticks per second */);
-
-    // SEARCH
-    Bukkit.getScheduler().runTaskAsynchronously(JourneySpigot.getInstance(), () -> {
-          // Search... this may take a long time
-          session.search(new LocationCell(player.getLocation()), endpoint);
-        }
-    );
-
   }
 
 }

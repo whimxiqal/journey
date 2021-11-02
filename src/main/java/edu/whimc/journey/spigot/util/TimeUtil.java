@@ -1,4 +1,6 @@
 /*
+ * MIT License
+ *
  * Copyright 2021 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,19 +19,45 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package edu.whimc.journey.spigot.manager;
+package edu.whimc.journey.spigot.util;
 
-import edu.whimc.journey.common.manager.SearchManager;
-import edu.whimc.journey.common.search.SearchSession;
-import edu.whimc.journey.spigot.navigation.LocationCell;
-import edu.whimc.journey.spigot.navigation.PlayerJourney;
-import org.bukkit.World;
+public final class TimeUtil {
 
-/**
- * A search manager specifically for Spigot players.
- */
-public class PlayerSearchManager extends SearchManager<LocationCell, World,
-    SearchSession<LocationCell, World>, PlayerJourney> {
+  public static String toSimpleTime(long seconds) {
+
+    if (seconds <= 0) {
+      return "instantly";
+    }
+
+    if (seconds < 60) {
+      return seconds + " secs";
+    }
+
+    long mins = seconds / 60;
+    long secs = seconds % 60;
+
+    if (mins < 60) {
+      return mins + " mins"
+          + (secs > 0 ? ", " + secs + " secs" : "");
+    }
+
+    long hours = mins / 60;
+    mins = mins % 60;
+
+    if (hours < 24) {
+      return hours + " hours"
+          + (mins > 0 ? ", " + mins + " mins" : "")
+          + (secs > 0 ? ", " + secs + " secs" : "");
+    }
+
+    return "More than a day";
+
+  }
+
+  private TimeUtil() {
+  }
+
 }
