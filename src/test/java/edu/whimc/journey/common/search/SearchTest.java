@@ -11,6 +11,7 @@ import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.search.event.FoundSolutionEvent;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
+import edu.whimc.journey.common.search.event.StepSearchEvent;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -24,7 +25,8 @@ import org.junit.jupiter.api.Test;
 
 class SearchTest {
 
-  static boolean print = true;
+  static boolean printResult = true;
+  static boolean printSteps = false;
 
   static int boardSize = 12;
   static Point3D[][] board1 = new Point3D[boardSize][boardSize];
@@ -91,15 +93,18 @@ class SearchTest {
     char[][] printer1 = new char[boardSize][boardSize];
     char[][] printer2 = new char[boardSize][boardSize];
 
-//    dispatcher.<StepSearchEvent<Point3D, Domain>>registerEvent(event -> () -> {
-//      char[][] printer;
-//      if (event.getStep().location().domain.equals(domain1)) {
-//        printer = printer1;
-//      } else {
-//        printer = printer2;
-//      }
-//      printer[event.getStep().location().getX()][event.getStep().location().getZ()] = '-';
-//    }, SearchEvent.EventType.STEP);
+    dispatcher.<StepSearchEvent<Point3D, Domain>>registerEvent(event -> () -> {
+      if (!printSteps) {
+        return;
+      }
+      char[][] printer;
+      if (event.getStep().location().domain.equals(domain1)) {
+        printer = printer1;
+      } else {
+        printer = printer2;
+      }
+      printer[event.getStep().location().getX()][event.getStep().location().getZ()] = '-';
+    }, SearchEvent.EventType.STEP);
 
     Point3D origin = board1[4][4];
     Point3D destination = board1[4][8];
@@ -135,7 +140,7 @@ class SearchTest {
 
     Assertions.assertTrue(solved.get());
 
-    if (print) {
+    if (printResult) {
       // Put in path
       solution.get().getSteps().forEach(step -> {
         char[][] printer;
