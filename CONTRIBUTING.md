@@ -6,4 +6,4 @@ would not be very effective.
 However, we are looking for feedback! We encourage you to download the plugin and get a feel for it.
 We are eager for any suggestions! Examples of topics include:
 - Command structure
-- External plugin support (Essentials, Towny, etc.)
+- External plugin support (Essentials, Towny, RPG servers, etc.)

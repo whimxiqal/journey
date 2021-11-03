@@ -89,7 +89,10 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
     for (PathTrial<T, D> pathTrial : alternatingList.getMinors()) {
 
       if (session.state.isCanceled()) {
-        return new TrialResult<>(Optional.empty(), false);
+        state = ResultState.STOPPED_CANCELED;
+        JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(
+            new StopItinerarySearchEvent<>(session, this));
+        return new TrialResult<>(Optional.empty(), true);  // doesn't really matter if changed problem
       }
 
       PathTrial.TrialResult<T, D> pathTrialResult = pathTrial.attempt(modes, useCacheIfPossible);
@@ -101,7 +104,7 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
       }
     }
     if (failed) {
-      state = ResultState.FAILED;
+      state = ResultState.STOPPED_FAILED;
       JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopItinerarySearchEvent<>(session, this));
       return new TrialResult<>(Optional.empty(), changedProblem);
     }
@@ -130,7 +133,7 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
         allSteps.addAll(list);
       }
     }
-    state = ResultState.SUCCESSFUL;
+    state = ResultState.STOPPED_SUCCESSFUL;
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopItinerarySearchEvent<>(session, this));
     return new TrialResult<>(Optional.of(new Itinerary<>(origin,
         allSteps,

@@ -30,6 +30,7 @@ import edu.whimc.journey.common.navigation.Itinerary;
 import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.search.event.FoundSolutionEvent;
+import edu.whimc.journey.common.search.event.IgnoreCacheSearchEvent;
 import edu.whimc.journey.common.search.event.StartSearchEvent;
 import edu.whimc.journey.common.search.event.StopSearchEvent;
 import java.util.HashMap;
@@ -49,7 +50,11 @@ import java.util.UUID;
  * @param <T> the cell type
  * @param <D> the domain type
  */
-public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends SearchSession<T, D> {
+public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> extends SearchSession<T, D> {
+
+  private final T origin;
+  private final T destination;
+  private long executionStartTime = -1;
 
   /**
    * General constructor.
@@ -57,13 +62,17 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
    * @param callerId   the identifier for the caller
    * @param callerType the type of caller
    */
-  public ReverseSearchSession(UUID callerId, Caller callerType) {
+  public DestinationGoalSearchSession(UUID callerId, Caller callerType,
+                                      T origin, T destination) {
     super(callerId, callerType);
+    this.origin = origin;
+    this.destination = destination;
   }
 
   @Override
-  public final void search(T origin, T destination) {
+  public final void search() {
 
+    executionStartTime = System.currentTimeMillis();
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StartSearchEvent<>(this));
 
     state = ResultState.RUNNING;
@@ -116,69 +125,72 @@ public abstract class ReverseSearchSession<T extends Cell<T, D>, D> extends Sear
 
     Itinerary<T, D> bestItinerary = null;
     boolean usingCache = true;
-    boolean noSolution;
     while (!this.state.isCanceled()) {
 
       ItineraryTrial<T, D> itineraryTrial = graph.calculate();
-      noSolution = false;
       if (itineraryTrial == null) {
-        noSolution = true;
+        // There is no possible solution to the entire problem
+        state = ResultState.STOPPED_FAILED;
+        JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
+        return;
       } else {
+        // We have an overall solution with individual paths that aren't verified/calculated
         ItineraryTrial.TrialResult<T, D> trialResult = itineraryTrial.attempt(this.modes, usingCache);
         if (trialResult.itinerary().isPresent()) {
-          if (!trialResult.changedProblem()) {
-            // This result did not change the problem, as in,
-            //  it did not affect the values that affect the algorithm, so we will get the
-            //  same solution every time. So, stop solving.
+          // There is an itinerary solution!
 
-            if (this.state.isRunning()) {
-              // Another solution hasn't yet been found. That means this solution was found
-              //  without changing a single piece of data so all trails must have been cached.
-              //  That's fine, just set the state to successful and return this sole solution.
-              this.state = ResultState.SUCCESSFUL;
-              JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(
-                  new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
+          if (bestItinerary == null
+              || trialResult.itinerary().get().getLength() < bestItinerary.getLength()) {
+            bestItinerary = trialResult.itinerary().get();
+            this.state = ResultState.RUNNING_SUCCESSFUL;
+            JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(
+                new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
+          }
+        }
+
+        // Do a quick check to see if the search was canceled before we try to return a value
+        if (this.state.isCanceled()) {
+          break;
+        }
+
+        if (!trialResult.changedProblem()) {
+          // This result did not change the problem.
+          // If run again, then, we would get the same solution to the graph.
+          if (usingCache) {
+            // Turn off the use of the cache. Maybe we can find better solution by re-solving some paths.
+            JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new IgnoreCacheSearchEvent<>(this));
+            usingCache = false;
+            // continue...
+          } else {
+            // The problem hasn't changed, and we aren't using the cache,
+            // so no better solutions are possible.
+            if (state.isSuccessful()) {
+              state = ResultState.STOPPED_SUCCESSFUL;  // in case we had the running-successful state
+            } else {
+              state = ResultState.STOPPED_FAILED;
             }
             JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
             return;
           }
-          if (bestItinerary == null
-              || bestItinerary.getLength() > trialResult.itinerary().get().getLength()) {
-            // TODO verify if all the paths still work (some of them might be cached)
-            bestItinerary = trialResult.itinerary().get();
-            this.state = ResultState.SUCCESSFUL;
-            JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(
-                new FoundSolutionEvent<>(this, trialResult.itinerary().get()));
-          }
-        } else {
-          if (!trialResult.changedProblem()) {
-            // We couldn't find any solution to the itinerary trial and nothing has changed,
-            //  so there isn't any solution.
-            noSolution = true;
-          }
         }
-      }
-
-      if (noSolution) {
-        if (usingCache) {
-          // We've been using cache up to this point.
-          //  Let's switch into not using the cache because it may have been wrong,
-          //  even though it takes longer to calculate now.
-          //  These solutions will probably not work!
-          usingCache = false;
-          continue;
-        }
-        // We couldn't find any solution to the graph, meaning no overall solution is possible
-        state = ResultState.FAILED;
-        JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
-        return;
       }
     }
 
-    // We are canceled
-    if (!state.isSuccessful()) {
-      state = ResultState.CANCELED;
+    // Canceling...
+    if (state.isSuccessful()) {
+      state = ResultState.STOPPED_SUCCESSFUL;  // in case we had the running-successful state
+    } else {
+      state = ResultState.STOPPED_CANCELED;  // must have been canceled
     }
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopSearchEvent<>(this));
   }
+
+  @Override
+  public long executionTime() {
+    if (executionStartTime < 0) {
+      return -1;
+    }
+    return System.currentTimeMillis() - executionStartTime;
+  }
+
 }

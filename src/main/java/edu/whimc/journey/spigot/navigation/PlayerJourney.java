@@ -28,9 +28,9 @@ import edu.whimc.journey.common.navigation.Itinerary;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.Path;
 import edu.whimc.journey.common.navigation.Step;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.music.Song;
-import edu.whimc.journey.spigot.search.PlayerSearchSession;
 import edu.whimc.journey.spigot.util.Format;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -46,11 +46,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A journey given to a {@link Player}.
  */
-public class PlayerJourney extends SpigotJourney<PlayerSearchSession> {
+public class PlayerJourney extends SpigotJourney {
 
   private static final int ILLUMINATED_COUNT = 64;
 
-  private static final int PARTICLE_CYCLE_COUNT = 4;
+  private static final int PARTICLE_CYCLE_COUNT = 1;
   private static final int TICKS_PER_PARTICLE_CYCLE = 2;
 
   private static final float PARTICLE_SPAWN_DENSITY = 0.6f;
@@ -73,13 +73,13 @@ public class PlayerJourney extends SpigotJourney<PlayerSearchSession> {
    * General constructor.
    *
    * @param playerUuid the identifier for the player
-   * @param session    the search session
+   * @param search    the player search
    * @param itinerary  the itinerary that determines the path
    */
   public PlayerJourney(@NotNull final UUID playerUuid,
-                       @NotNull PlayerSearchSession session,
+                       @NotNull SearchSession<LocationCell, World> search,
                        @NotNull final Itinerary<LocationCell, World> itinerary) {
-    super(session, itinerary);
+    super(search, itinerary);
     this.playerUuid = playerUuid;
     startPath(traversal().next()); // start first trail (move beyond the first "leap")
   }

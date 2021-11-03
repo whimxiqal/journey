@@ -24,12 +24,17 @@
 
 package edu.whimc.journey.spigot.command.to;
 
+import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.data.DataAccessException;
+import edu.whimc.journey.spigot.command.common.CommandFlags;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.PlayerCommandNode;
+import edu.whimc.journey.spigot.navigation.LocationCell;
+import edu.whimc.journey.spigot.search.PlayerSurfaceGoalSearchSession;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
 import java.util.Map;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +62,36 @@ public class JourneyToSurfaceCommand extends PlayerCommandNode {
                                         @NotNull Command command,
                                         @NotNull String label,
                                         @NotNull String[] args,
-                                        @NotNull Map<String, String> flags) throws DataAccessException {
-    player.spigot().sendMessage(Format.error("This is not implemented yet!"));
-    return false;
+                                        @NotNull Map<String, String> commandFlags)
+      throws DataAccessException {
+    if (!player.getWorld().getEnvironment().equals(World.Environment.NORMAL)) {
+      player.spigot().sendMessage(Format.error("You may only use this command in the Overworld!"));
+    }
+
+    int algorithmStepDelay = 0;
+    if (CommandFlags.ANIMATE.isIn(commandFlags)) {
+      algorithmStepDelay = CommandFlags.ANIMATE.retrieve(player, commandFlags);
+    }
+
+    LocationCell playerLocationCell = new LocationCell(player.getLocation());
+    PlayerSurfaceGoalSearchSession session = new PlayerSurfaceGoalSearchSession(player,
+        new LocationCell(player.getLocation()),
+        CommandFlags.ANIMATE.isIn(commandFlags),
+        Settings.DEFAULT_NOFLY_FLAG.getValue() != CommandFlags.NOFLY.isIn(commandFlags),
+        Settings.DEFAULT_NODOOR_FLAG.getValue() != CommandFlags.NODOOR.isIn(commandFlags),
+        algorithmStepDelay);
+
+    if (session.reachesGoal(playerLocationCell)) {
+      player.spigot().sendMessage(Format.success("You're already at the surface!"));
+      return true;
+    }
+
+    int timeout = CommandFlags.TIMEOUT.isIn(commandFlags)
+        ? CommandFlags.TIMEOUT.retrieve(player, commandFlags)
+        : Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+
+    session.launchSession(timeout);
+
+    return true;
   }
 }

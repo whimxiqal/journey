@@ -29,6 +29,7 @@ import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.navigation.NetherPort;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.NetherUtil;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -50,8 +51,9 @@ import org.bukkit.event.world.PortalCreateEvent;
 /**
  * A manager for all nether portals.
  */
-public class NetherManager implements Listener {
+public class NetherManager implements Listener, Serializable {
 
+  public static final String NETHER_MANAGER_CACHE_FILE_NAME = "netherports.ser";
   private final Map<LocationCell, LocationCell> portalConnections = new ConcurrentHashMap<>();
 
   /**
@@ -82,7 +84,7 @@ public class NetherManager implements Listener {
    */
   @EventHandler(priority = EventPriority.LOW)
   public void onPortalCreate(PortalCreateEvent e) {
-    // TODO implement a way to create link here
+    // TODO implement a way to create port here
   }
 
   /**
@@ -160,23 +162,36 @@ public class NetherManager implements Listener {
       /* We don't have this portal link set up yet */
 
       // Remove any connections with this origin (the portal link changed)
-      linkedOrigins.forEach(portalConnections::remove);
-      linkedOrigins.add(originGroup.get().port());
+      linkedOrigins.forEach(old -> {
+        JourneySpigot.getInstance().getDebugManager()
+            .broadcast(Format.debug("Removed nether port:"));
+        JourneySpigot.getInstance().getDebugManager()
+            .broadcast(Format.debug(old + " -> "));
+        JourneySpigot.getInstance().getDebugManager()
+            .broadcast(Format.debug(portalConnections.get(old).toString()));
+
+        portalConnections.remove(old);
+      });
 
       // Add the portal
       LocationCell previous = portalConnections.put(originGroup.get().port(), destinationGroup.get().port());
       if (previous == null) {
-        JourneySpigot.getInstance()
-            .getDebugManager()
-            .broadcastDebugMessage(Format.debug("Added nether link:"));
-        JourneySpigot.getInstance()
-            .getDebugManager()
-            .broadcastDebugMessage(Format.debug(originGroup.get().port() + " -> "));
-        JourneySpigot.getInstance()
-            .getDebugManager()
-            .broadcastDebugMessage(Format.debug(destinationGroup.get().port().toString()));
+        JourneySpigot.getInstance().getDebugManager()
+            .broadcast(Format.debug("Added nether port:"));
+        JourneySpigot.getInstance().getDebugManager()
+            .broadcast(Format.debug(originGroup.get().port() + " -> "));
+        JourneySpigot.getInstance().getDebugManager()
+            .broadcast(Format.debug(destinationGroup.get().port().toString()));
       }
     }, 20);
   }
 
+  /**
+   * Get the number of portal connections that are registered.
+   *
+   * @return the portal connection count
+   */
+  public int size() {
+    return portalConnections.size();
+  }
 }

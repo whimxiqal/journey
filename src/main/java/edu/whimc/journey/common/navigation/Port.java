@@ -56,6 +56,19 @@ public class Port<T extends Cell<T, D>, D> extends Path<T, D> implements Moded {
     this.modeType = modeType;
   }
 
+  /**
+   * Get a stationary port, as in, one that doesn't move in any direction
+   * and is used as a placeholder to connect paths together.
+   *
+   * @param location the location, being the origin and destination of this port
+   * @param <T>      the location type
+   * @param <D>      the domain type
+   * @return the port
+   */
+  public static <T extends Cell<T, D>, D> Port<T, D> stationary(T location) {
+    return new Port<>(location, location, ModeType.NONE, 0);
+  }
+
   @Override
   @NotNull
   public ModeType getModeType() {

@@ -24,9 +24,8 @@
 
 package edu.whimc.journey.spigot.search.listener;
 
-import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.spigot.search.AnimationManager;
-import edu.whimc.journey.spigot.search.PlayerSearchSession;
+import edu.whimc.journey.spigot.search.SpigotPlayerSearchSession;
 import edu.whimc.journey.spigot.search.event.SpigotModeFailureEvent;
 import edu.whimc.journey.spigot.search.event.SpigotModeSuccessEvent;
 import edu.whimc.journey.spigot.search.event.SpigotSearchEvent;
@@ -38,7 +37,7 @@ import org.bukkit.event.Listener;
 
 /**
  * A class to listen for Spigot events originating from
- * {@link edu.whimc.journey.common.search.SearchSession#search(Cell, Cell)}
+ * {@link edu.whimc.journey.common.search.SearchSession#search()}
  * and allowing for the animating of the algorithm in realtime.
  */
 public class AnimationListener implements Listener {
@@ -121,8 +120,8 @@ public class AnimationListener implements Listener {
   }
 
   private AnimationManager getAnimationManager(SpigotSearchEvent<?> event) {
-    if (event.getSearchEvent().getSession() instanceof PlayerSearchSession) {
-      AnimationManager animationManager = ((PlayerSearchSession) event.getSearchEvent().getSession())
+    if (event.getSearchEvent().getSession() instanceof SpigotPlayerSearchSession<?>) {
+      AnimationManager animationManager = ((SpigotPlayerSearchSession<?>) event.getSearchEvent().getSession())
           .getAnimationManager();
       if (animationManager.isAnimating()) {
         return animationManager;

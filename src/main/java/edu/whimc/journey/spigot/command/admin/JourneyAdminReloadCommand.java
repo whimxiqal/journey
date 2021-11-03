@@ -22,33 +22,43 @@
  *
  */
 
-package edu.whimc.journey.spigot.command;
+package edu.whimc.journey.spigot.command.admin;
 
-import edu.whimc.journey.spigot.command.admin.JourneyAdminDebugCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminInvalidateCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminReloadCommand;
+import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.spigot.command.common.CommandNode;
-import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
+import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
+import java.util.Map;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A command to provide admin commands.
+ * A command to allow administrators to reload the configuration file.
  */
-public class JourneyAdminCommand extends FunctionlessCommandNode {
+public class JourneyAdminReloadCommand extends CommandNode {
 
   /**
    * General constructor.
    *
    * @param parent the parent command
    */
-  public JourneyAdminCommand(@Nullable CommandNode parent) {
+  public JourneyAdminReloadCommand(@Nullable CommandNode parent) {
     super(parent, Permissions.ADMIN,
-        "All administrative commands",
-        "admin");
-    addChildren(new JourneyAdminDebugCommand(this));
-    addChildren(new JourneyAdminInvalidateCommand(this));
-    addChildren(new JourneyAdminReloadCommand(this));
+        "Reload the configuration file",
+        "reload");
+  }
+
+  @Override
+  public boolean onWrappedCommand(@NotNull CommandSender sender,
+                                  @NotNull Command command,
+                                  @NotNull String label,
+                                  @NotNull String[] args,
+                                  @NotNull Map<String, String> flags) {
+    JourneyCommon.getConfigManager().load();
+    sender.spigot().sendMessage(Format.success("Reloaded the config"));
+    return true;
   }
 
 }

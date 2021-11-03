@@ -27,7 +27,7 @@ package edu.whimc.journey.common.config;
 import edu.whimc.journey.common.data.StorageMethod;
 
 /**
- * An enumeration of all Settings. No need to register anywhere, that's done dynamically.
+ * An enumeration of all {@link Setting}s. No need to register anywhere, that's done dynamically.
  */
 public final class Settings {
 

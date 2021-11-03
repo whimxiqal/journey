@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'edu.whimc'
-version = '0.0.2-beta'
+version = '0.1.0-beta'
 
 repositories {
     mavenCentral()
@@ -50,6 +50,7 @@ dependencies {
 }
 
 processResources {
-    project.properties.put("version", this.version)
-    expand project.properties
+    filesMatching('plugin.yml') {
+        expand 'version': version
+    }
 }

@@ -39,6 +39,7 @@ import edu.whimc.journey.common.search.SearchSession;
 public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final Itinerary<T, D> itinerary;
+  private final long executionTime;
 
   /**
    * General constructor.
@@ -49,6 +50,7 @@ public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, 
   public FoundSolutionEvent(SearchSession<T, D> session, Itinerary<T, D> itinerary) {
     super(session);
     this.itinerary = itinerary;
+    this.executionTime = this.getSession().executionTime();
   }
 
   /**
@@ -58,6 +60,15 @@ public class FoundSolutionEvent<T extends Cell<T, D>, D> extends SearchEvent<T, 
    */
   public Itinerary<T, D> getItinerary() {
     return this.itinerary;
+  }
+
+  /**
+   * Get how long the session had been searching up until this event was dispatched.
+   *
+   * @return the length of time of execution
+   */
+  public final long getExecutionTime() {
+    return executionTime;
   }
 
   @Override

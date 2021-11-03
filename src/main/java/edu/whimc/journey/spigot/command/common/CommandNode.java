@@ -65,6 +65,11 @@ public abstract class CommandNode implements CommandExecutor, TabCompleter {
   private final List<String> aliases = Lists.newLinkedList();
   private final List<CommandNode> children = Lists.newLinkedList();
   private final Map<Parameter, String> parameters = Maps.newLinkedHashMap();
+
+  /**
+   * A flag to say whether this command can ignore the regular barrier of waiting for
+   * initialization to complete.
+   */
   @Setter
   @Getter
   private boolean canBypassInvalid = false;

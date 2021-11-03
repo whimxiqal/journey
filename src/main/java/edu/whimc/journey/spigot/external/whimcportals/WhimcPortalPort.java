@@ -22,14 +22,22 @@
  *
  */
 
-package edu.whimc.journey.spigot.navigation;
+package edu.whimc.journey.spigot.external.whimcportals;
 
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.Port;
+import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.common.tools.Verifiable;
+import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.util.SpigotUtil;
+import edu.whimc.portals.Main;
 import edu.whimc.portals.Portal;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,7 +51,6 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
   private WhimcPortalPort(String name, LocationCell origin, LocationCell destination) {
     super(origin, destination, ModeType.PORT, 5);
     this.portalName = name;
-    World world = origin.getDomain();
   }
 
   /**
@@ -52,7 +59,7 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
    * @param portal the portal
    * @return the generated port
    */
-  public static WhimcPortalPort from(Portal portal) {
+  private static WhimcPortalPort from(Portal portal) {
     if (portal.getWorld() == null) {
       throw new IllegalStateException("Error with portal: " + portal.getName()
           + "A Portal Link may only be created with portals that have a world.");
@@ -110,6 +117,36 @@ public class WhimcPortalPort extends Port<LocationCell, World> implements Verifi
 
   private static LocationCell getDestinationOf(Portal portal) {
     return new LocationCell(portal.getDestination().getLocation());
+  }
+
+  /**
+   * Add all possible {@link WhimcPortalPort}s to a session.
+   *
+   * @param session          the session
+   * @param permissionAccess the predicate that determines whether the cause of the session has permission
+   *                         to use the port, which is determined by passing in the permission required
+   *                         for the port to this "permissionAccess" predicate to test
+   */
+  public static void addPortsTo(SearchSession<LocationCell, World> session,
+                                Predicate<String> permissionAccess) {
+    Plugin plugin = Bukkit.getPluginManager().getPlugin("WHIMC-Portals");
+    if (plugin instanceof Main) {
+      Portal.getPortals().stream()
+          .filter(portal -> portal.getDestination() != null)
+          .filter(portal -> portal.getWorld() != null)
+          .filter(portal -> portal.getDestination().getLocation().getWorld() != null)
+          .filter(portal -> Optional.ofNullable(portal.getPermission()).map(perm ->
+              permissionAccess.test(perm.getName())).orElse(true))
+          .map(portal -> {
+            try {
+              return WhimcPortalPort.from(portal);
+            } catch (Exception e) {
+              return null;
+            }
+          })
+          .filter(Objects::nonNull)
+          .forEach(session::registerPort);
+    }
   }
 
   @Override

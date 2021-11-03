@@ -30,66 +30,83 @@ package edu.whimc.journey.common.search;
 public enum ResultState {
 
   IDLE,
-  FAILED,
-  SUCCESSFUL,
   RUNNING,
-  CANCELING,
-  CANCELED;
+  RUNNING_SUCCESSFUL,
+  CANCELING_FAILED,
+  CANCELING_SUCCESSFUL,
+  STOPPED_FAILED,
+  STOPPED_SUCCESSFUL,
+  STOPPED_CANCELED;
 
   /**
-   * If the state it not {@link ResultState#IDLE}.
-   *
-   * @return true if not idle
-   */
-  public boolean hasStarted() {
-    return this != IDLE;
-  }
-
-  /**
-   * If the state is {@link ResultState#RUNNING}.
+   * Determine if the state is implying the process is still operating (running).
    *
    * @return true if running
    */
   public boolean isRunning() {
-    return this == RUNNING || this == CANCELING;
+    return this == RUNNING
+        || this == RUNNING_SUCCESSFUL
+        || this == CANCELING_FAILED
+        || this == CANCELING_SUCCESSFUL;
   }
 
   /**
-   * If the result is {@link ResultState#FAILED}, {@link ResultState#SUCCESSFUL},
-   * or {@link ResultState#CANCELED}.
+   * Determine if this state is implying the process has finished operating
+   * or is preparing to finish operating.
    *
-   * @return true if the state is finished.
+   * @return true if finished
    */
   public boolean hasFinished() {
-    return this == FAILED || this == SUCCESSFUL || this == CANCELED;
+    return this == STOPPED_FAILED
+        || this == STOPPED_SUCCESSFUL
+        || this == STOPPED_CANCELED
+        || this == CANCELING_FAILED
+        || this == CANCELING_SUCCESSFUL;
   }
 
   /**
-   * If the result is {@link ResultState#SUCCESSFUL}.
+   * Determine if this state is implying the process had or will have a successful result upon completion.
    *
-   * @return true if the state is successful.
+   * @return true if successful
    */
   public boolean isSuccessful() {
-    return this == SUCCESSFUL;
+    return this == STOPPED_SUCCESSFUL
+        || this == RUNNING_SUCCESSFUL;
   }
 
   /**
-   * If the result is {@link ResultState#FAILED} or {@link ResultState#CANCELED}.
-   * Otherwise, the state is either successful or undetermined.
+   * Determine if this state is implying the process was canceled/stopped before it was determined successful,
+   * whether it would have been successful if it was allowed to continue or not.
    *
-   * @return true if determined to be not successful
+   * @return true if canceled and consequently failed
    */
-  public boolean isUnsuccessful() {
-    return this == FAILED || this == CANCELING || this == CANCELED;
+  public boolean isCancelFailed() {
+    return this == CANCELING_FAILED
+        || this == STOPPED_CANCELED;
   }
 
   /**
-   * If the result is either canceled or in the process of being canceled.
+   * Determine if this state was canceled at any point, whether a successful result had been found or not.
    *
-   * @return true if canceled or cancelling
+   * @return true if canceled (manually stopped)
    */
   public boolean isCanceled() {
-    return this == CANCELING || this == CANCELED;
+    return this == CANCELING_FAILED
+        || this == CANCELING_SUCCESSFUL
+        || this == STOPPED_CANCELED;
   }
 
+  @Override
+  public String toString() {
+    return switch (this) {
+      case IDLE -> "idle";
+      case RUNNING -> "running";
+      case RUNNING_SUCCESSFUL -> "running (successful)";
+      case CANCELING_FAILED -> "canceling (failed)";
+      case CANCELING_SUCCESSFUL -> "canceling (successful)";
+      case STOPPED_FAILED -> "stopped (failed)";
+      case STOPPED_SUCCESSFUL -> "stopped (successful)";
+      case STOPPED_CANCELED -> "stopped (canceled)";
+    };
+  }
 }

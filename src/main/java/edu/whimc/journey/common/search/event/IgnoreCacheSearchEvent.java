@@ -26,68 +26,33 @@ package edu.whimc.journey.common.search.event;
 
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.SearchSession;
-import java.util.Date;
+import java.util.Collection;
 
 /**
- * A search event. These are the events that are dispatched from the
- * execution of a {@link SearchSession} using the {@link SearchDispatcher}.
+ * A search event to dispatch when a search stops considering cached paths in the overall process.
+ * This usually happens when no different solution can be found than the one already found
+ * by continuing to use the cached paths, so in an attempt to get a better solution,
+ * we ignore the cached objects and recalculate them because the results may change.
  *
  * @param <T> the location type
  * @param <D> the domain type
+ * @see edu.whimc.journey.common.search.PathTrial#attempt(Collection, boolean)
+ * @see SearchSession
  */
-public abstract class SearchEvent<T extends Cell<T, D>, D> {
-
-  public static int ID = 4;
-  private final SearchSession<T, D> session;
-  private final Date date = new Date();
+public class IgnoreCacheSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   /**
    * General constructor.
    *
-   * @param session the session that caused this event
+   * @param session the session
    */
-  public SearchEvent(SearchSession<T, D> session) {
-    this.session = session;
+  public IgnoreCacheSearchEvent(SearchSession<T, D> session) {
+    super(session);
   }
 
-  /**
-   * Get the session causing this event.
-   *
-   * @return the search session
-   */
-  public SearchSession<T, D> getSession() {
-    return session;
-  }
-
-  /**
-   * Get the date the event was created and dispatched. This is useful for data storage.
-   *
-   * @return the date
-   */
-  public Date getDate() {
-    return date;
-  }
-
-  abstract EventType type();
-
-  /**
-   * An enumeration of all possible event types.
-   * Every search event must have a unique type, found in this enumeration.
-   * This value is used for keying purposes upon registration.
-   */
-  public enum EventType {
-    FOUND_SOLUTION,
-    IGNORE_CACHE,
-    MODE_FAILURE,
-    MODE_SUCCESS,
-    START_ITINERARY,
-    START_PATH,
-    START,
-    STEP,
-    STOP_ITINERARY,
-    STOP_PATH,
-    STOP,
-    VISITATION
+  @Override
+  EventType type() {
+    return EventType.IGNORE_CACHE;
   }
 
 }

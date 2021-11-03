@@ -22,33 +22,52 @@
  *
  */
 
-package edu.whimc.journey.spigot.command;
-
-import edu.whimc.journey.spigot.command.admin.JourneyAdminDebugCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminInvalidateCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminReloadCommand;
-import edu.whimc.journey.spigot.command.common.CommandNode;
-import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
-import edu.whimc.journey.spigot.util.Permissions;
-import org.jetbrains.annotations.Nullable;
+package edu.whimc.journey.spigot.util;
 
 /**
- * A command to provide admin commands.
+ * A utility class to manage utility methods pertaining to displaying time quantities.
  */
-public class JourneyAdminCommand extends FunctionlessCommandNode {
+public final class TimeUtil {
+
+  private TimeUtil() {
+  }
 
   /**
-   * General constructor.
+   * Convert some number of seconds to a nicely formatted string.
+   * This works best for periods of time less than a day.
    *
-   * @param parent the parent command
+   * @param seconds the number of seconds
+   * @return a nicely formatting string to send to the user
    */
-  public JourneyAdminCommand(@Nullable CommandNode parent) {
-    super(parent, Permissions.ADMIN,
-        "All administrative commands",
-        "admin");
-    addChildren(new JourneyAdminDebugCommand(this));
-    addChildren(new JourneyAdminInvalidateCommand(this));
-    addChildren(new JourneyAdminReloadCommand(this));
+  public static String toSimpleTime(long seconds) {
+
+    if (seconds <= 0) {
+      return "instantly";
+    }
+
+    if (seconds < 60) {
+      return seconds + " secs";
+    }
+
+    long mins = seconds / 60;
+    long secs = seconds % 60;
+
+    if (mins < 60) {
+      return mins + " mins"
+          + (secs > 0 ? ", " + secs + " secs" : "");
+    }
+
+    long hours = mins / 60;
+    mins = mins % 60;
+
+    if (hours < 24) {
+      return hours + " hours"
+          + (mins > 0 ? ", " + mins + " mins" : "")
+          + (secs > 0 ? ", " + secs + " secs" : "");
+    }
+
+    return "More than a day";
+
   }
 
 }

@@ -27,6 +27,7 @@ package edu.whimc.journey.common.search;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.Port;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -56,23 +57,27 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
   }
 
   /**
-   * Perform the titular pathfinding search.
-   * Uses the local tracker to report stages of the operation.
-   *
-   * @param origin      the starting location of the pathfinding search
-   * @param destination the ending location of the pathfinding search
+   * Perform the titular search operation.
    */
-  public abstract void search(T origin, T destination);
+  public abstract void search();
 
   /**
    * Terminate the search operation. It is up to the implementation
    * of this search session object to implement the actual cancellation behavior;
    * this method only tells the class that it should be canceling itself.
+   *
+   * @return true if the state was changed
    */
-  public final void cancel() {
-    if (!state.hasFinished()) {
-      this.state = ResultState.CANCELING;
+  public final boolean stop() {
+    if (state == ResultState.IDLE
+        || state == ResultState.RUNNING) {
+      this.state = ResultState.CANCELING_FAILED;
+      return true;
+    } else if (state == ResultState.RUNNING_SUCCESSFUL) {
+      this.state = ResultState.CANCELING_SUCCESSFUL;
+      return true;
     }
+    return false;
   }
 
   @Override
@@ -100,6 +105,24 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
    */
   public final void registerMode(Mode<T, D> mode) {
     this.modes.add(mode);
+  }
+
+  /**
+   * Get a copy of all the registered ports on this session.
+   *
+   * @return the ports
+   */
+  public final Collection<Port<T, D>> ports() {
+    return List.copyOf(ports);
+  }
+
+  /**
+   * Get a copy of all the registered modes on this session.
+   *
+   * @return the modes
+   */
+  public final Collection<Mode<T, D>> modes() {
+    return List.copyOf(modes);
   }
 
   /**
@@ -160,6 +183,14 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
   public int hashCode() {
     return Objects.hash(uuid);
   }
+
+  /**
+   * Get the time since the search operation execution, in milliseconds.
+   * It will return a negative number if the method is called before the search operation.
+   *
+   * @return the search execution time, in milliseconds
+   */
+  public abstract long executionTime();
 
   /**
    * The caller type. A search session may be created for multiple types of entities,

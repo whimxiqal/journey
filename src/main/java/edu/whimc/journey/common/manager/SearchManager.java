@@ -109,7 +109,7 @@ public class SearchManager<T extends Cell<T, D>, D, S extends SearchSession<T, D
   public S putSearch(@NotNull UUID callerId, S search) {
     S oldSearch = playerSearches.put(callerId, search);
     if (oldSearch != null) {
-      oldSearch.cancel();
+      oldSearch.stop();
     }
     return oldSearch;
   }
@@ -124,7 +124,7 @@ public class SearchManager<T extends Cell<T, D>, D, S extends SearchSession<T, D
   public S removeSearch(@NotNull UUID callerId) {
     S oldSearch = playerSearches.remove(callerId);
     if (oldSearch != null) {
-      oldSearch.cancel();
+      oldSearch.stop();
     }
     return oldSearch;
   }
@@ -178,7 +178,7 @@ public class SearchManager<T extends Cell<T, D>, D, S extends SearchSession<T, D
    * Cancel all the saved running searches.
    */
   public void cancelAllSearches() {
-    playerSearches.values().forEach(SearchSession::cancel);
+    playerSearches.values().forEach(SearchSession::stop);
   }
 
   /**

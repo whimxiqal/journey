@@ -32,15 +32,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The place where all animation operations and memory are stored for any single
- * {@link PlayerSearchSession}.
+ * {@link PlayerDestinationGoalSearchSession}.
  */
 public class AnimationManager {
 
   private final Set<LocationCell> successfulLocations = ConcurrentHashMap.newKeySet();
-  private final PlayerSearchSession session;
+  private final SpigotPlayerSearchSession<?> session;
   private LocationCell lastFailure;
   private boolean animating;
 
@@ -49,7 +50,7 @@ public class AnimationManager {
    *
    * @param session the session
    */
-  public AnimationManager(PlayerSearchSession session) {
+  public AnimationManager(SpigotPlayerSearchSession<?> session) {
     this.session = session;
   }
 
@@ -65,7 +66,7 @@ public class AnimationManager {
     if (!animating) {
       return false;
     }
-    Player player = Bukkit.getPlayer(session.getCallerId());
+    Player player = Bukkit.getPlayer(session.getSession().getCallerId());
     if (player == null) {
       return false;
     }
@@ -98,7 +99,7 @@ public class AnimationManager {
   }
 
   private void hideResult(LocationCell cell) {
-    Player player = Bukkit.getPlayer(session.getCallerId());
+    Player player = Bukkit.getPlayer(session.getSession().getCallerId());
     if (player == null) {
       return;
     }
@@ -121,6 +122,9 @@ public class AnimationManager {
       return false;
     }
     Player player = getPlayer();
+    if (player == null) {
+      return false;
+    }
     if (cell.getDomain() != player.getWorld()
         || cell.distanceToSquared(new LocationCell(player.getLocation())) > 10000) {
       return false;
@@ -134,7 +138,7 @@ public class AnimationManager {
    * Undo all the block changes displayed to the user so everything looks as it did before animating.
    */
   public void undoAnimation() {
-    Player player = Bukkit.getPlayer(session.getCallerId());
+    Player player = Bukkit.getPlayer(session.getSession().getCallerId());
     if (player == null) {
       return;
     }
@@ -146,8 +150,9 @@ public class AnimationManager {
     }
   }
 
+  @Nullable
   private Player getPlayer() {
-    return Bukkit.getPlayer(session.getCallerId());
+    return Bukkit.getPlayer(session.getSession().getCallerId());
   }
 
   /**
