@@ -49,13 +49,13 @@ public final class CommandFlags {
                 + "must be an integer. Using 10."));
             return 10;
           }
-          if (value < 0) {
-            player.spigot().sendMessage(Format.error("Your value for the animate flag "
-                + "must be positive. Using 10."));
+          if (value < 1) {
+            player.spigot().sendMessage(Format.warn("Your value for the animate flag "
+                + "must be at least 1."));
             return 10;
           } else if (value > 2000) {
-            player.spigot().sendMessage(Format.error("Your value for the animate flag "
-                + "may not be greater than 2000. Using 10."));
+            player.spigot().sendMessage(Format.warn("Your value for the animate flag "
+                + "may not be greater than 2000."));
             return 10;
           }
           return value;

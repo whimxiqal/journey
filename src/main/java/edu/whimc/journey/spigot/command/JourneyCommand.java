@@ -24,37 +24,31 @@
 
 package edu.whimc.journey.spigot.command;
 
-import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.data.DataAccessException;
-import edu.whimc.journey.common.search.ResultState;
 import edu.whimc.journey.common.tools.BufferedFunction;
 import edu.whimc.journey.common.tools.BufferedSupplier;
 import edu.whimc.journey.common.util.Extra;
 import edu.whimc.journey.spigot.JourneySpigot;
-import edu.whimc.journey.spigot.command.common.CommandFlags;
-import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
-import edu.whimc.journey.spigot.navigation.LocationCell;
-import edu.whimc.journey.spigot.search.PlayerDestinationGoalSearchSession;
-import edu.whimc.journey.spigot.search.SearchFlag;
+import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.hover.content.Text;
-import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Root command of all commands for the Journey plugin.
  */
-public class JourneyCommand extends FunctionlessCommandNode {
+public class JourneyCommand extends CommandNode {
 
   /**
    * General constructor.
@@ -113,4 +107,61 @@ public class JourneyCommand extends FunctionlessCommandNode {
     }, 1000);
   }
 
+  @Override
+  public boolean onWrappedCommand(@NotNull CommandSender sender,
+                                  @NotNull Command command,
+                                  @NotNull String label,
+                                  @NotNull String[] args,
+                                  @NotNull Map<String, String> flags) {
+    if (sender instanceof ConsoleCommandSender) {
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("%%%%%%%%   ").color(ChatColor.DARK_GRAY)
+          .append("Journey").color(Format.THEME.asBungee())
+          .append("   %%%%%%%%%").reset().color(ChatColor.DARK_GRAY)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("         ")
+          .append("v" + JourneySpigot.getInstance().getDescription().getVersion()).color(ChatColor.DARK_GRAY)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("        ")
+          .append("by  ").color(ChatColor.GRAY)
+          .append("PietElite").color(ChatColor.DARK_AQUA).bold(true)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append(" ")
+          .append("github.com/pietelite/journey").color(ChatColor.GOLD).event(
+              new ClickEvent(ClickEvent.Action.OPEN_URL,
+                  "https://github.com/pietelite/journey")).italic(true).underlined(true)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%").color(ChatColor.DARK_GRAY)
+          .create());
+    } else {
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("%%%%%%%%  ").color(ChatColor.DARK_GRAY)
+          .append(" Journey ").color(Format.THEME.asBungee())
+          .append("  %%%%%%%%").reset().color(ChatColor.DARK_GRAY)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("             ")
+          .append("v" + JourneySpigot.getInstance().getDescription().getVersion()).color(ChatColor.DARK_GRAY)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("            ")
+          .append("by ").color(ChatColor.GRAY)
+          .append("PietElite").color(ChatColor.DARK_AQUA).bold(true)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("  ")
+          .append("github.com/pietelite/journey").color(ChatColor.GOLD).event(
+              new ClickEvent(ClickEvent.Action.OPEN_URL,
+                  "https://github.com/pietelite/journey")).italic(true).underlined(true)
+          .create());
+      sender.spigot().sendMessage(new ComponentBuilder()
+          .append("%%%%%%%%%%%%%%%%%%%%%%%%%%%").color(ChatColor.DARK_GRAY)
+          .create());
+    }
+    return true;
+  }
 }

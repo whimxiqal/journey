@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A setting, generally used as a key-value pair from a configuration file.
+ * These are enumerated in {@link Settings} and they shouldn't be created elsewhere.
  *
  * @param <T> the data type stored in the setting
  */
