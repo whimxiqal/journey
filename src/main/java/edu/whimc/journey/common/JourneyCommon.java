@@ -26,9 +26,11 @@ package edu.whimc.journey.common;
 
 import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.config.ConfigManager;
+import edu.whimc.journey.common.ml.NeuralNetwork;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.util.LoggerCommon;
+import edu.whimc.journey.common.util.MinecraftConversions;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -47,6 +49,12 @@ public final class JourneyCommon {
    * A cache of all previously calculated paths.
    */
   private static PathCache<?, ?> pathCache;
+
+  private static MinecraftConversions<?, ?> conversions;
+
+  @Getter
+  @Setter
+  private static NeuralNetwork neuralNetwork;
 
   private JourneyCommon() {
   }
@@ -124,5 +132,25 @@ public final class JourneyCommon {
   public static void setLogger(LoggerCommon logger) {
     JourneyCommon.logger = logger;
   }
+
+  @SuppressWarnings("unchecked")
+  public static <T extends Cell<T, D>, D> MinecraftConversions<T, D> getConversions() {
+    if (conversions == null) {
+      throw new IllegalStateException("No Minecraft conversions! Did you forget to initialize it?");
+    }
+    return (MinecraftConversions<T, D>) conversions;
+  }
+
+  /**
+   * Set the path cache.
+   *
+   * @param conversions the path cache
+   * @param <T>         the location type
+   * @param <D>         the domain type
+   */
+  public static <T extends Cell<T, D>, D> void setConversions(MinecraftConversions<T, D> conversions) {
+    JourneyCommon.conversions = conversions;
+  }
+
 
 }

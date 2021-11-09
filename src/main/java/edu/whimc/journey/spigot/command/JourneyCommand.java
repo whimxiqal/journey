@@ -64,8 +64,7 @@ public class JourneyCommand extends CommandNode {
     addChildren(new JourneyListCommand(this));
     addChildren(new JourneySaveCommand(this));
     addChildren(new JourneyToCommand(this));
-    setCanBypassInvalid(true);
-  }
+    setCanBypassInvalid(true);}
 
   /**
    * Get a buffered supplier of a list of the names of public endpoints,

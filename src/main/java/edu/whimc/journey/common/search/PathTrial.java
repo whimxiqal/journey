@@ -55,7 +55,12 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
                     ResultState state,
                     boolean fromCache) {
     super(session, origin,
-        node -> -node.getData().location().distanceToSquared(destination),
+        node -> -JourneyCommon.getNeuralNetwork().getDeviationOf(
+            node.getData().location().distanceToSquared(destination),
+            Math.abs(node.getData().location().getY() - destination.getY()),
+            node.getData().location().getY(),
+            destination.getY(),
+            JourneyCommon.<T, D>getConversions().getBiome(node.getData().location())),
         node -> node.getData().location().distanceToSquared(destination)
             <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
         length,

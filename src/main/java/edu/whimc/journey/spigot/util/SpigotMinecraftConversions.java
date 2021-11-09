@@ -22,35 +22,20 @@
  *
  */
 
-package edu.whimc.journey.spigot.command;
+package edu.whimc.journey.spigot.util;
 
-import edu.whimc.journey.spigot.command.admin.JourneyAdminDebugCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminInvalidateCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminReloadCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminTrainCommand;
-import edu.whimc.journey.spigot.command.common.CommandNode;
-import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
-import edu.whimc.journey.spigot.util.Permissions;
-import org.jetbrains.annotations.Nullable;
+import edu.whimc.journey.common.util.MinecraftConversions;
+import edu.whimc.journey.spigot.navigation.LocationCell;
+import org.bukkit.World;
 
-/**
- * A command to provide admin commands.
- */
-public class JourneyAdminCommand extends FunctionlessCommandNode {
-
-  /**
-   * General constructor.
-   *
-   * @param parent the parent command
-   */
-  public JourneyAdminCommand(@Nullable CommandNode parent) {
-    super(parent, Permissions.ADMIN,
-        "All administrative commands",
-        "admin");
-    addChildren(new JourneyAdminDebugCommand(this));
-    addChildren(new JourneyAdminInvalidateCommand(this));
-    addChildren(new JourneyAdminReloadCommand(this));
-    addChildren(new JourneyAdminTrainCommand(this));
+public class SpigotMinecraftConversions implements MinecraftConversions<LocationCell, World> {
+  @Override
+  public int getBiome(LocationCell cell) {
+    return cell.getBlock().getBiome().ordinal();
   }
 
+  @Override
+  public int getDimension(World domain) {
+    return domain.getEnvironment().ordinal();
+  }
 }

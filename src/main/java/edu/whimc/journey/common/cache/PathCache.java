@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PathCache<T extends Cell<T, D>, D> implements Serializable {
 
-  public static final String SERIALIZED_PATH_CACHE_FILENAME = "paths.ser";
+  public static final String SERIALIZED_PATH_CACHE_FILE_NAME = "paths.ser";
 
   private final Map<T, Map<T, Map<ModeTypeGroup, CachedPath<T, D>>>> cache = new ConcurrentHashMap<>();
   private int size = 0;

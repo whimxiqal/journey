@@ -50,4 +50,6 @@ public interface DataManager<T extends Cell<T, D>, D> {
    */
   PublicEndpointManager<T, D> getPublicEndpointManager();
 
+  PathReportManager<T, D> getPathReportManager();
+
 }

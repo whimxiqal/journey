@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <D> The domain type
  */
 public record Step<T extends Cell<T, D>, D>(@NonNull T location,
+                                            double length,
                                             @NonNull ModeType modeType) implements Serializable, Moded {
   @Override
   public @NotNull ModeType getModeType() {

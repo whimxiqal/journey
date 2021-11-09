@@ -24,14 +24,46 @@
 
 package edu.whimc.journey.spigot.search.listener;
 
+import edu.whimc.journey.common.data.DataAccessException;
+import edu.whimc.journey.common.search.FlexiblePathTrial;
+import edu.whimc.journey.common.search.PathTrial;
+import edu.whimc.journey.spigot.JourneySpigot;
+import edu.whimc.journey.spigot.navigation.LocationCell;
+import edu.whimc.journey.spigot.search.event.SpigotStopPathSearchEvent;
+import org.bukkit.World;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
  * A listener for managing data storage as operations throughout
  * this plugin proceed.
- *
- * <p><b>Not implemented yet!</b>
  */
 public class DataStorageListener implements Listener {
-  // TODO implement
+
+  /**
+   * Catch the event that a path trial stopped so that we can save the data of the calculation
+   * for the path of that path trial.
+   *
+   * @param event the event
+   */
+  @EventHandler
+  public void savePathData(SpigotStopPathSearchEvent event) {
+    if (true) {
+      return;
+    }
+    FlexiblePathTrial<LocationCell, World> flexiblePathTrial = event.getSearchEvent().getPathTrial();
+    if (flexiblePathTrial instanceof PathTrial<LocationCell, World> pathTrial) {
+      if (pathTrial.getState().isSuccessful()) {
+        try {
+          JourneySpigot.getInstance().getDataManager().getPathReportManager().addReport(
+              pathTrial,
+              event.getSearchEvent().getCalculationNodes(),
+              event.getSearchEvent().getExecutionTime());
+        } catch (DataAccessException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
 }

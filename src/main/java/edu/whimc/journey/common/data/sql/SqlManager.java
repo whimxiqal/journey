@@ -22,35 +22,21 @@
  *
  */
 
-package edu.whimc.journey.spigot.command;
+package edu.whimc.journey.common.data.sql;
 
-import edu.whimc.journey.spigot.command.admin.JourneyAdminDebugCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminInvalidateCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminReloadCommand;
-import edu.whimc.journey.spigot.command.admin.JourneyAdminTrainCommand;
-import edu.whimc.journey.spigot.command.common.CommandNode;
-import edu.whimc.journey.spigot.command.common.FunctionlessCommandNode;
-import edu.whimc.journey.spigot.util.Permissions;
-import org.jetbrains.annotations.Nullable;
+import edu.whimc.journey.common.navigation.Cell;
+import lombok.Getter;
 
-/**
- * A command to provide admin commands.
- */
-public class JourneyAdminCommand extends FunctionlessCommandNode {
+public abstract class SqlManager<T extends Cell<T, D>, D> {
 
-  /**
-   * General constructor.
-   *
-   * @param parent the parent command
-   */
-  public JourneyAdminCommand(@Nullable CommandNode parent) {
-    super(parent, Permissions.ADMIN,
-        "All administrative commands",
-        "admin");
-    addChildren(new JourneyAdminDebugCommand(this));
-    addChildren(new JourneyAdminInvalidateCommand(this));
-    addChildren(new JourneyAdminReloadCommand(this));
-    addChildren(new JourneyAdminTrainCommand(this));
+  @Getter
+  private final SqlConnectionController connectionController;
+  @Getter
+  private final DataAdapter<T, D> dataAdapter;
+
+  public SqlManager(SqlConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
+    this.connectionController = connectionController;
+    this.dataAdapter = dataAdapter;
   }
 
 }

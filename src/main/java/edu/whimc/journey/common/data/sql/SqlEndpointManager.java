@@ -34,7 +34,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,30 +43,24 @@ import org.jetbrains.annotations.Nullable;
  * @param <T> the cell type
  * @param <D> the domain type
  */
-public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
+public abstract class SqlEndpointManager<T extends Cell<T, D>, D> extends SqlManager<T, D> {
 
   private static final String ENDPOINT_TABLE_NAME = "journey_endpoints";
-
-  @Getter
-  private final SqlConnectionController connectionController;
-  @Getter
-  private final DataAdapter<T, D> dataAdapter;
 
   /**
    * Default constructor.
    *
    * @param connectionController a controller for connecting to a SQL database
-   * @param dataAdapter        a conversion controller to serialize and deserialize data from Journey
+   * @param dataAdapter          a conversion controller to serialize and deserialize data from Journey
    */
   public SqlEndpointManager(SqlConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
-    this.connectionController = connectionController;
-    this.dataAdapter = dataAdapter;
+    super(connectionController, dataAdapter);
     createTables();
   }
 
   protected void addEndpoint(@Nullable UUID playerUuid, @NotNull T cell)
       throws IllegalArgumentException, DataAccessException {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       int endpointCount = getEndpoints(playerUuid, connection).size();
       addEndpoint(playerUuid, cell, String.valueOf(endpointCount + 1), connection, true);
     } catch (SQLException e) {
@@ -80,7 +73,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
   protected void addEndpoint(@Nullable UUID playerUuid,
                              @NotNull T cell,
                              @NotNull String name) throws IllegalArgumentException, DataAccessException {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       addEndpoint(playerUuid, cell, name, connection, false);
     } catch (SQLException e) {
       e.printStackTrace();
@@ -111,7 +104,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
     statement.setString(1, playerUuid == null ? null : playerUuid.toString());
     statement.setString(2, name.toLowerCase());
     statement.setString(3, name);
-    statement.setString(4, dataAdapter.getDomainIdentifier(cell.getDomain()));
+    statement.setString(4, getDataAdapter().getDomainIdentifier(cell.getDomain()));
     statement.setInt(5, cell.getX());
     statement.setInt(6, cell.getY());
     statement.setInt(7, cell.getZ());
@@ -122,7 +115,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
   }
 
   protected void removeEndpoint(@Nullable UUID playerUuid, @NotNull T cell) throws DataAccessException {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
@@ -134,7 +127,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
           "z"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, dataAdapter.getDomainIdentifier(cell.getDomain()));
+      statement.setString(2, getDataAdapter().getDomainIdentifier(cell.getDomain()));
       statement.setInt(3, cell.getX());
       statement.setInt(4, cell.getY());
       statement.setInt(5, cell.getZ());
@@ -147,7 +140,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
   }
 
   protected void removeEndpoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s WHERE %s %s ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
@@ -167,7 +160,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
 
   @Nullable
   protected T getEndpoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT * FROM %s WHERE %s %s ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
@@ -180,7 +173,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
 
       ResultSet resultSet = statement.executeQuery();
       if (resultSet.next()) {
-        return dataAdapter.makeCell(resultSet.getInt("x"),
+        return getDataAdapter().makeCell(resultSet.getInt("x"),
             resultSet.getInt("y"),
             resultSet.getInt("z"),
             resultSet.getString("world_uuid"));
@@ -195,7 +188,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
 
   @Nullable
   protected String getEndpointName(@Nullable UUID playerUuid, @NotNull T cell) throws DataAccessException {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT * FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
           ENDPOINT_TABLE_NAME,
@@ -207,7 +200,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
           "z"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, dataAdapter.getDomainIdentifier(cell.getDomain()));
+      statement.setString(2, getDataAdapter().getDomainIdentifier(cell.getDomain()));
       statement.setInt(3, cell.getX());
       statement.setInt(4, cell.getY());
       statement.setInt(5, cell.getZ());
@@ -225,7 +218,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
   }
 
   protected Map<String, T> getEndpoints(@Nullable UUID playerUuid) throws DataAccessException {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       return getEndpoints(playerUuid, connection);
     } catch (SQLException e) {
       e.printStackTrace();
@@ -255,7 +248,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
     Map<String, T> endpoints = new HashMap<>();
     while (resultSet.next()) {
       endpoints.put(resultSet.getString("name"),
-          dataAdapter.makeCell(resultSet.getInt("x"),
+          getDataAdapter().makeCell(resultSet.getInt("x"),
               resultSet.getInt("y"),
               resultSet.getInt("z"),
               resultSet.getString("world_uuid")));
@@ -264,7 +257,7 @@ public abstract class SqlEndpointManager<T extends Cell<T, D>, D> {
   }
 
   protected void createTables() {
-    try (Connection connection = connectionController.establishConnection()) {
+    try (Connection connection = getConnectionController().establishConnection()) {
       String tableStatement = "CREATE TABLE IF NOT EXISTS "
           + ENDPOINT_TABLE_NAME + " ("
           + "player_uuid char(36), "

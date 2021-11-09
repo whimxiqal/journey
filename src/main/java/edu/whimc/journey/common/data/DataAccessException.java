@@ -28,6 +28,13 @@ package edu.whimc.journey.common.data;
  * An exception to throw when data is improperly accessed
  * from any sort of data storage location.
  */
-public class DataAccessException extends Exception {
+public class DataAccessException extends RuntimeException {
 
+  public DataAccessException() {
+    super();
+  }
+
+  public DataAccessException(String s) {
+    super(s);
+  }
 }

@@ -36,6 +36,7 @@ import edu.whimc.journey.common.search.event.StopPathSearchEvent;
 import edu.whimc.journey.common.search.event.VisitationSearchEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -83,6 +84,7 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
   private ResultState state;
   @Getter
   private boolean fromCache;
+  private long startExecutionTime = -1;
 
   /**
    * General constructor.
@@ -128,17 +130,24 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
     this.state = ResultState.STOPPED_FAILED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session,
+        this,
+        Collections.emptySet(),
+        System.currentTimeMillis() - startExecutionTime));
     return new TrialResult<>(Optional.empty(), true);
   }
 
   private FlexiblePathTrial.TrialResult<T, D> resultSucceed(double length,
-                                                            List<Step<T, D>> steps) {
+                                                            List<Step<T, D>> steps,
+                                                            Collection<Node<T, D>> calculationNodes) {
     this.state = ResultState.STOPPED_SUCCESSFUL;
     this.length = length;
     this.path = new Path<>(origin, new ArrayList<>(steps), length);
     this.fromCache = false;
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session,
+        this,
+        calculationNodes,
+        System.currentTimeMillis() - startExecutionTime));
     return new TrialResult<>(Optional.of(this.path), true);
   }
 
@@ -146,7 +155,10 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
     this.state = ResultState.STOPPED_CANCELED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session,
+        this,
+        Collections.emptySet(),
+        System.currentTimeMillis() - startExecutionTime));
     return new TrialResult<>(Optional.empty(), true);
   }
 
@@ -175,11 +187,12 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
 
     // Dispatch a starting event
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StartPathSearchEvent<>(session, this));
+    startExecutionTime = System.currentTimeMillis();
 
     Queue<Node<T, D>> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> -scorer.apply(node)));
     Map<T, Node<T, D>> visited = new HashMap<>();
 
-    Node<T, D> originNode = new Node<>(new Step<>(origin, ModeType.NONE),
+    Node<T, D> originNode = new Node<>(new Step<>(origin, 0, ModeType.NONE),
         null, 0);
     upcoming.add(originNode);
     visited.put(origin, originNode);
@@ -211,7 +224,7 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        return resultSucceed(length, steps);
+        return resultSucceed(length, steps, visited.values());
       }
 
       // Need to keep going
@@ -223,11 +236,16 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
             if (current.getScore() + option.getDistance() < that.getScore()) {
               that.setPrevious(current);
               that.setScore(current.getScore() + option.getDistance());
-              that.setData(new Step<>(that.getData().location(), mode.getType()));
+              that.setData(new Step<>(that.getData().location(),
+                  option.getDistance(),
+                  mode.getType()));
             }
           } else {
             // Not visited. Set up node, give it a score, and add it to the system
-            Node<T, D> nextNode = new Node<>(new Step<>(option.getLocation(), mode.getType()),
+            Node<T, D> nextNode = new Node<>(
+                new Step<>(option.getLocation(),
+                    option.getDistance(),
+                    mode.getType()),
                 current,
                 current.getScore() + option.getDistance());
             upcoming.add(nextNode);
@@ -278,13 +296,17 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
                                                                   boolean changedProblem) {
   }
 
-  static class Node<T extends Cell<T, D>, D> {
+  public static class Node<T extends Cell<T, D>, D> {
     @Getter
     @Setter
     private Step<T, D> data;
     @Getter
     @Setter
     private Node<T, D> previous;
+    /**
+     * The value to store how far away this node is from the original node.
+     * So, how far it is to traverse the space from the origin until this node is reached.
+     */
     @Getter
     @Setter
     private double score;

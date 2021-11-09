@@ -26,11 +26,13 @@ package edu.whimc.journey.spigot.data;
 
 import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.data.DataManager;
+import edu.whimc.journey.common.data.PathReportManager;
 import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.data.PublicEndpointManager;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.data.sql.mysql.SpigotMySqlPersonalEndpointManager;
 import edu.whimc.journey.spigot.data.sql.mysql.SpigotMySqlPublicEndpointManager;
+import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePathReportManager;
 import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePersonalEndpointManager;
 import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePublicEndpointManager;
 import edu.whimc.journey.spigot.navigation.LocationCell;
@@ -43,6 +45,7 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
 
   private final PersonalEndpointManager<LocationCell, World> personalEndpointManager;
   private final PublicEndpointManager<LocationCell, World> publicEndpointManager;
+  private final PathReportManager<LocationCell, World> pathReportManager;
 
   /**
    * General constructor.
@@ -76,6 +79,8 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
         publicEndpointManager = new SpigotSqlitePublicEndpointManager(sqliteAddress);
       }
     }
+
+    pathReportManager = new SpigotSqlitePathReportManager(sqliteAddress);
   }
 
   @Override
@@ -86,5 +91,10 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
   @Override
   public PublicEndpointManager<LocationCell, World> getPublicEndpointManager() {
     return publicEndpointManager;
+  }
+
+  @Override
+  public PathReportManager<LocationCell, World> getPathReportManager() {
+    return pathReportManager;
   }
 }

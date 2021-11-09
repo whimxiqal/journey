@@ -27,6 +27,7 @@ package edu.whimc.journey.spigot;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.data.DataManager;
+import edu.whimc.journey.common.ml.NeuralNetwork;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
 import edu.whimc.journey.spigot.command.JourneyCommand;
@@ -54,6 +55,7 @@ import edu.whimc.journey.spigot.search.listener.DataStorageListener;
 import edu.whimc.journey.spigot.search.listener.PlayerSearchListener;
 import edu.whimc.journey.spigot.util.LoggerSpigot;
 import edu.whimc.journey.spigot.util.Serialize;
+import edu.whimc.journey.spigot.util.SpigotMinecraftConversions;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -108,11 +110,13 @@ public final class JourneySpigot extends JavaPlugin {
       getLogger().info("Journey data folder created");
     }
 
-    // Create caches
+    // Set up Journey Common
     JourneyCommon.setLogger(new LoggerSpigot());
     JourneyCommon.setConfigManager(SpigotConfigManager.initialize("config.yml"));
     JourneyCommon.setPathCache(new PathCache<LocationCell, World>());
+    JourneyCommon.setConversions(new SpigotMinecraftConversions());
 
+    // Set up caches for Spigot Journey
     this.netherManager = new NetherManager();
     this.debugManager = new DebugManager();
     this.searchManager = new PlayerSearchManager();
@@ -177,7 +181,7 @@ public final class JourneySpigot extends JavaPlugin {
   private void deserializeCaches() {
     // Path cache
     Serialize.<PathCache<LocationCell, World>>deserializeCache(this.getDataFolder(),
-        PathCache.SERIALIZED_PATH_CACHE_FILENAME,
+        PathCache.SERIALIZED_PATH_CACHE_FILE_NAME,
         JourneyCommon::setPathCache,
         PathCache::new);
     JourneySpigot.getInstance().getLogger().info(JourneyCommon.getPathCache().size() + " paths deserialized");
@@ -188,12 +192,19 @@ public final class JourneySpigot extends JavaPlugin {
         manager -> this.netherManager = manager,
         NetherManager::new);
     JourneySpigot.getInstance().getLogger().info(this.netherManager.size() + " nether ports deserialized");
+
+    // Neutral Network cache
+    Serialize.deserializeCache(this.getDataFolder(),
+        NeuralNetwork.CACHE_FILE_NAME,
+        JourneyCommon::setNeuralNetwork,
+        NeuralNetwork::new);
+    JourneySpigot.getInstance().getLogger().info("Neural Network deserialized");
   }
 
   private void serializeCaches() {
     // Path cache
     Serialize.<PathCache<LocationCell, World>>serializeCache(this.getDataFolder(),
-        PathCache.SERIALIZED_PATH_CACHE_FILENAME,
+        PathCache.SERIALIZED_PATH_CACHE_FILE_NAME,
         JourneyCommon::getPathCache,
         JourneyCommon::setPathCache,
         PathCache::new);
@@ -206,6 +217,14 @@ public final class JourneySpigot extends JavaPlugin {
         manager -> this.netherManager = manager,
         NetherManager::new);
     JourneySpigot.getInstance().getLogger().info(this.netherManager.size() + " nether ports serialized");
+
+    // Neural Network cache
+    Serialize.serializeCache(this.getDataFolder(),
+        NeuralNetwork.CACHE_FILE_NAME,
+        JourneyCommon::getNeuralNetwork,
+        JourneyCommon::setNeuralNetwork,
+        NeuralNetwork::new);
+    JourneySpigot.getInstance().getLogger().info("Neural Network serialized");
   }
 
 }

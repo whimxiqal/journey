@@ -153,7 +153,7 @@ public abstract class Mode<T extends Cell<T, D>, D> {
     }
 
     /**
-     * Get distance.
+     * Get the distance it would take to reach the location.
      *
      * @return the distance
      */

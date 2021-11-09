@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
 }
 
 group = 'edu.whimc'
-version = '0.1.0-beta'
+version = '0.1.1-beta'
 
 repositories {
     mavenCentral()
@@ -30,23 +31,27 @@ test {
 
 dependencies {
     // Spigot
-    implementation 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
+    shadow 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
 
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
     testImplementation 'com.google.guava:guava:31.0.1-jre'
 
     // Annotations
-    implementation 'org.jetbrains:annotations:22.0.0'
+    shadow 'org.jetbrains:annotations:22.0.0'
 
     // Other plugins
-    implementation 'com.github.PikaMug:Quests:4.0.7'
-    implementation 'com.github.whimc:Portals:2.8.3'
+    shadow 'com.github.PikaMug:Quests:4.0.7'
+    shadow 'com.github.whimc:Portals:2.8.3'
 
     // Lombok
-    implementation 'org.projectlombok:lombok:1.18.22'
+    shadow 'org.projectlombok:lombok:1.18.22'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    // Machine Learning / Neural Networks
+    implementation 'org.deeplearning4j:deeplearning4j-core:1.0.0-M1.1'
+    implementation 'org.nd4j:nd4j-cuda-11.2-platform:1.0.0-M1.1'
 }
 
 processResources {
@@ -54,3 +59,4 @@ processResources {
         expand 'version': version
     }
 }
+

@@ -105,12 +105,18 @@ public final class Serialize {
                                                                Supplier<T> constructor) {
     File file = Paths.get(dataFolder.toPath().toString(), fileName).toFile();
     if (!file.exists()) {
+      setter.accept(constructor.get());
       return;
     }
     try (FileInputStream fileStream = new FileInputStream(file);
          ObjectInputStream in = new ObjectInputStream(fileStream)) {
 
-      setter.accept((T) in.readObject());
+      Object read = in.readObject();
+      if (read == null) {
+        setter.accept(constructor.get());
+      } else {
+        setter.accept((T) read);
+      }
 
     } catch (IOException | ClassNotFoundException e) {
       JourneySpigot.getInstance().getLogger().severe("Could not deserialize " + fileName);
