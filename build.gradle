@@ -5,6 +5,7 @@ plugins {
 
 group = 'com.github.pietelite'
 version = '0.1.0-beta'
+sourceCompatibility = 16
 
 repositories {
     mavenCentral()
