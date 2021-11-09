@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github'
+group = 'com.github.pietelite'
 version = '0.1.0-beta'
 
 repositories {
