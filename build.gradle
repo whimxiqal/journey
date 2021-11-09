@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'edu.whimc'
+group = 'com.github'
 version = '0.1.0-beta'
 
 repositories {
