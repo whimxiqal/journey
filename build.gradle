@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.pietelite'
+group = 'org.whimc'
 version = '0.1.0-beta'
 
 repositories {
@@ -58,5 +58,17 @@ dependencies {
 processResources {
     filesMatching('plugin.yml') {
         expand 'version': version
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'org.whimc'
+            artifactId = 'journey'
+            version = '0.1.0-beta'
+
+            from components.java
+        }
     }
 }
