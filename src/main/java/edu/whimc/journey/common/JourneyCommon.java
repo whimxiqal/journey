@@ -26,13 +26,13 @@ package edu.whimc.journey.common;
 
 import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.config.ConfigManager;
-import edu.whimc.journey.common.ml.NeuralNetwork;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.util.LoggerCommon;
 import edu.whimc.journey.common.util.MinecraftConversions;
 import lombok.Getter;
 import lombok.Setter;
+import org.whimc.journeyml.NeuralNetwork;
 
 /**
  * The central utility class to provide methods for all platform

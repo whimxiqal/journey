@@ -27,7 +27,6 @@ package edu.whimc.journey.spigot;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.data.DataManager;
-import edu.whimc.journey.common.ml.NeuralNetwork;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
 import edu.whimc.journey.spigot.command.JourneyCommand;
@@ -63,6 +62,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Event;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.whimc.journeyml.NeuralNetwork;
 
 /**
  * The base plugin class of the Spigot implementation of Journey.
