@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'org.whimc'
+group = 'edu.whimc'
 version = '0.1.0-beta'
 
 repositories {
@@ -64,7 +64,7 @@ processResources {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId = 'org.whimc'
+            groupId = 'edu.whimc'
             artifactId = 'journey'
             version = '0.1.0-beta'
 
