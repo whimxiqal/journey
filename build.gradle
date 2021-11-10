@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.pietelite'
+group = 'org.whimc'
 version = '0.1.0-beta'
 
 repositories {
