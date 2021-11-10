@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-//    id "com.github.johnrengelman.shadow" version "7.1.0"
+    id 'maven-publish'
 }
 
 group = 'edu.whimc'
@@ -23,6 +23,11 @@ repositories {
         name = 'jitpack.io'
         url = 'https://jitpack.io'
     }
+}
+
+compileJava {
+    sourceCompatibility = 16
+    targetCompatibility = 16
 }
 
 test {
@@ -58,3 +63,14 @@ processResources {
     }
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'edu.whimc'
+            artifactId = 'journey'
+            version = '0.1.0-beta'
+
+            from components.java
+        }
+    }
+}
