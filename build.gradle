@@ -60,3 +60,15 @@ processResources {
         expand 'version': version
     }
 }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'org.whimc'
+            artifactId = 'journey'
+            version = '0.1.0-beta'
+
+            from components.java
+        }
+    }
+}
