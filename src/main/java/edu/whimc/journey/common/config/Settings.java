@@ -40,6 +40,9 @@ public final class Settings {
   public static final Setting<Boolean> DEFAULT_NODOOR_FLAG
       = new BooleanSetting("search.default-nodoor-flag", false);
 
+  public static final Setting<Boolean> USE_NEURAL_NETWORK
+      = new BooleanSetting("search.use-neural-network", false);
+
   public static final Setting<String> STORAGE_ADDRESS
       = new StringSetting("storage.auth.address", "my.address");
 

@@ -22,9 +22,9 @@
  *
  */
 
-package edu.whimc.journey.spigot.util;
+package edu.whimc.journey.common.util;
 
-import edu.whimc.journey.spigot.JourneySpigot;
+import edu.whimc.journey.common.JourneyCommon;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -67,10 +67,10 @@ public final class Serialize {
       //noinspection ResultOfMethodCallIgnored
       dataFolder.mkdirs();
       if (file.createNewFile()) {
-        JourneySpigot.getInstance().getLogger().info("Created serialized file: " + fileName);
+        JourneyCommon.getLogger().info("Created serialized file: " + fileName);
       }
     } catch (IOException e) {
-      JourneySpigot.getInstance().getLogger().severe("Could not create serialized file: " + fileName);
+      JourneyCommon.getLogger().error("Could not create serialized file: " + fileName);
       setter.accept(constructor.get());
       return;
     }
@@ -83,7 +83,7 @@ public final class Serialize {
       out.writeObject(getter.get());
 
     } catch (IOException e) {
-      JourneySpigot.getInstance().getLogger().severe("Could not serialize " + fileName);
+      JourneyCommon.getLogger().error("Could not serialize " + fileName);
       setter.accept(constructor.get());
       e.printStackTrace();
     }
@@ -119,7 +119,7 @@ public final class Serialize {
       }
 
     } catch (IOException | ClassNotFoundException e) {
-      JourneySpigot.getInstance().getLogger().severe("Could not deserialize " + fileName);
+      JourneyCommon.getLogger().error("Could not deserialize " + fileName);
       setter.accept(constructor.get());
     }
   }

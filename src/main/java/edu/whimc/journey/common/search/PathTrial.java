@@ -26,6 +26,7 @@ package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.cache.PathCache;
+import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.ModeTypeGroup;
@@ -55,12 +56,14 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
                     ResultState state,
                     boolean fromCache) {
     super(session, origin,
-        node -> -JourneyCommon.getNeuralNetwork().getDeviationOf(
-            node.getData().location().distanceToSquared(destination),
-            Math.abs(node.getData().location().getY() - destination.getY()),
-            node.getData().location().getY(),
-            destination.getY(),
-            JourneyCommon.<T, D>getConversions().getBiome(node.getData().location())),
+        Settings.USE_NEURAL_NETWORK.getValue()
+            ? node -> -JourneyCommon.getNetwork().calculateOutputs(
+                node.getData().location().distanceToSquared(destination),
+                Math.abs(node.getData().location().getY() - destination.getY()),
+                node.getData().location().getY(),
+                destination.getY(),
+                JourneyCommon.<T, D>getConversions().getBiome(node.getData().location()))
+            : node -> -node.getData().location().distanceToSquared(destination),
         node -> node.getData().location().distanceToSquared(destination)
             <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
         length,

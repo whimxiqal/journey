@@ -27,8 +27,10 @@ package edu.whimc.journey.spigot;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.data.DataManager;
+import edu.whimc.journey.common.ml.ScoringNetwork;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
+import edu.whimc.journey.common.util.Serialize;
 import edu.whimc.journey.spigot.command.JourneyCommand;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.config.SpigotConfigManager;
@@ -50,10 +52,8 @@ import edu.whimc.journey.spigot.search.event.SpigotStopPathSearchEvent;
 import edu.whimc.journey.spigot.search.event.SpigotStopSearchEvent;
 import edu.whimc.journey.spigot.search.event.SpigotVisitationSearchEvent;
 import edu.whimc.journey.spigot.search.listener.AnimationListener;
-import edu.whimc.journey.spigot.search.listener.DataStorageListener;
 import edu.whimc.journey.spigot.search.listener.PlayerSearchListener;
 import edu.whimc.journey.spigot.util.LoggerSpigot;
-import edu.whimc.journey.spigot.util.Serialize;
 import edu.whimc.journey.spigot.util.SpigotMinecraftConversions;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -62,7 +62,6 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Event;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.whimc.journeyml.NeuralNetwork;
 
 /**
  * The base plugin class of the Spigot implementation of Journey.
@@ -158,7 +157,7 @@ public final class JourneySpigot extends JavaPlugin {
     // Register listeners
     Bukkit.getPluginManager().registerEvents(netherManager, this);
     Bukkit.getPluginManager().registerEvents(new AnimationListener(), this);
-    Bukkit.getPluginManager().registerEvents(new DataStorageListener(), this);
+//    Bukkit.getPluginManager().registerEvents(new DataStorageListener(), this);
     Bukkit.getPluginManager().registerEvents(new PlayerSearchListener(), this);
 
 
@@ -195,9 +194,9 @@ public final class JourneySpigot extends JavaPlugin {
 
     // Neutral Network cache
     Serialize.deserializeCache(this.getDataFolder(),
-        NeuralNetwork.CACHE_FILE_NAME,
-        JourneyCommon::setNeuralNetwork,
-        NeuralNetwork::new);
+        ScoringNetwork.CACHE_FILE_NAME,
+        JourneyCommon::setNetwork,
+        ScoringNetwork::new);
     JourneySpigot.getInstance().getLogger().info("Neural Network deserialized");
   }
 
@@ -220,10 +219,10 @@ public final class JourneySpigot extends JavaPlugin {
 
     // Neural Network cache
     Serialize.serializeCache(this.getDataFolder(),
-        NeuralNetwork.CACHE_FILE_NAME,
-        JourneyCommon::getNeuralNetwork,
-        JourneyCommon::setNeuralNetwork,
-        NeuralNetwork::new);
+        ScoringNetwork.CACHE_FILE_NAME,
+        JourneyCommon::getNetwork,
+        JourneyCommon::setNetwork,
+        ScoringNetwork::new);
     JourneySpigot.getInstance().getLogger().info("Neural Network serialized");
   }
 

@@ -36,19 +36,21 @@ import edu.whimc.journey.spigot.util.Permissions;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JourneyAdminTrainCommand extends CommandNode {
+
   public JourneyAdminTrainCommand(@Nullable CommandNode parent) {
     super(parent, Permissions.ADMIN,
         "Train some data for some amount of time",
         "train");
     addSubcommand(Parameter.builder()
-        .supplier(ParameterSuppliers.INTEGER)
-        .build(),
+            .supplier(ParameterSuppliers.INTEGER)
+            .build(),
         "Specify how long we are supposed to train");
   }
 
@@ -58,29 +60,43 @@ public class JourneyAdminTrainCommand extends CommandNode {
                                   @NotNull String label,
                                   @NotNull String[] args,
                                   @NotNull Map<String, String> flags) throws DataAccessException {
-    List<PathReportManager.PathTrialRecord> records = new LinkedList<>();
-    PathReportManager.PathTrialRecord record = JourneySpigot.getInstance()
-        .getDataManager()
-        .getPathReportManager()
-        .getNextReport();
-    while (record != null) {
-      records.add(record);
-      record = JourneySpigot.getInstance()
-          .getDataManager()
-          .getPathReportManager()
-          .getNextReport();
-    }
+    Bukkit.getScheduler().runTaskAsynchronously(JourneySpigot.getInstance(),
+        () -> {
+          List<PathReportManager.PathTrialRecord> records = new LinkedList<>();
+          PathReportManager.PathTrialRecord record = JourneySpigot.getInstance()
+              .getDataManager()
+              .getPathReportManager()
+              .getNextReport();
+          while (record != null) {
+            records.add(record);
+            record = JourneySpigot.getInstance()
+                .getDataManager()
+                .getPathReportManager()
+                .getNextReport();
+          }
 
-    int duration = 5000;  // 5 seconds
-    if (args.length > 0) {
-      int param = Integer.parseInt(args[0]);
-      if (param < 5 || param > 5*60 /* 5 minutes */) {
-        sender.spigot().sendMessage(Format.error("Your duration input is out of bounds! Using 5 seconds..."));
-        return false;
-      }
-      duration = param * 1000;  // Convert to milliseconds
-    }
-    JourneyCommon.getNeuralNetwork().train(records, duration);
+          int duration = 5 * 20;  // 5 seconds
+          if (args.length > 0) {
+            int param = Integer.parseInt(args[0]);
+            if (param < 5 || param > 5 * 60 /* 5 minutes */) {
+              sender.spigot().sendMessage(Format.error("Your duration input is out of bounds! Using 5 seconds..."));
+              param = 5;
+            }
+            duration = param * 20;  // Convert to ticks
+          }
+          sender.spigot().sendMessage(Format.success("Training for " + (duration / 20) + " seconds."));
+          // TODO add locking functionality to make sure that someone can't train twice simultaneously
+
+          Bukkit.getScheduler().scheduleSyncDelayedTask(JourneySpigot.getInstance(),
+              () -> {
+                sender.spigot().sendMessage(Format.success("Training stopped."));
+                JourneyCommon.getNetwork().stopLearning();
+              },
+              duration);  // TODO change to "duration"
+
+          JourneyCommon.getNetwork().learn(records);
+          sender.spigot().sendMessage(Format.success("Done training."));
+        });
     return true;
   }
 }

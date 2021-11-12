@@ -48,9 +48,6 @@ public class DataStorageListener implements Listener {
    */
   @EventHandler
   public void savePathData(SpigotStopPathSearchEvent event) {
-    if (true) {
-      return;
-    }
     FlexiblePathTrial<LocationCell, World> flexiblePathTrial = event.getSearchEvent().getPathTrial();
     if (flexiblePathTrial instanceof PathTrial<LocationCell, World> pathTrial) {
       if (pathTrial.getState().isSuccessful()) {

@@ -32,6 +32,7 @@ import edu.whimc.journey.common.navigation.Path;
 import edu.whimc.journey.common.navigation.Step;
 import edu.whimc.journey.common.search.FlexiblePathTrial;
 import edu.whimc.journey.common.search.PathTrial;
+import edu.whimc.journey.common.util.Extra;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,7 +44,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
-import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
     extends SqlManager<T, D>
@@ -51,7 +53,8 @@ public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
 
   private static final String PATH_REPORT_TABLE_NAME = "path_report";
   private static final String PATH_REPORT_CELL_TABLE_NAME = "path_report_cell";
-  private long index = -1;
+  private long lastReturnedId = -1;
+  private Lock retrievalLock = new ReentrantLock();
 
   public SqlPathReportManager(SqlConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
     super(connectionController, dataAdapter);
@@ -195,11 +198,12 @@ public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
 
   @Override
   public PathTrialRecord getNextReport() {
+    retrievalLock.lock();
     try (Connection connection = getConnectionController().establishConnection()) {
       ResultSet resultSet = connection.prepareStatement("SELECT * FROM "
           + PATH_REPORT_TABLE_NAME
           + " WHERE id > "
-          + index
+          + lastReturnedId
           + " ORDER BY id"
           + " LIMIT 1;").executeQuery();
 
@@ -214,7 +218,7 @@ public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
             resultSet.getInt(7),
             resultSet.getInt(8),
             resultSet.getInt(9),
-            UUID.fromString(resultSet.getString(10)),
+            Extra.fromPlainString(resultSet.getString(10)),
             new LinkedList<>());
 
         if (resultSet.next()) {
@@ -231,23 +235,27 @@ public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
         while (cells.next()) {
           record.cells().add(new PathTrialCellRecord(
               record,
-              resultSet.getInt(2),
-              resultSet.getInt(3),
-              resultSet.getInt(4),
-              resultSet.getInt(5),
-              resultSet.getInt(6),
-              resultSet.getInt(7),
-              resultSet.getInt(8),
-              resultSet.getInt(9)));
+              cells.getInt(2),
+              cells.getInt(3),
+              cells.getInt(4),
+              cells.getInt(5),
+              cells.getInt(6),
+              cells.getInt(7),
+              cells.getInt(8),
+              cells.getInt(9)));
         }
+        lastReturnedId = record.id();
+        retrievalLock.unlock();
         return record;
 
       } else {
-        index = -1;
+        lastReturnedId = -1;
+        retrievalLock.unlock();
         return null;
       }
     } catch (SQLException e) {
       e.printStackTrace();
+      retrievalLock.unlock();
       return null;
     }
   }
@@ -256,8 +264,9 @@ public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
     try (Connection connection = getConnectionController().establishConnection()) {
       String pathTableStatement = "CREATE TABLE IF NOT EXISTS "
           + PATH_REPORT_TABLE_NAME + " ("
+          + "id integer PRIMARY KEY AUTOINCREMENT, "
           + "timestamp integer NOT NULL, "
-          + "duration int NOT NULL, "
+          + "duration integer NOT NULL, "
           + "origin_x int(7) NOT NULL,"
           + "origin_y int(7) NOT NULL,"
           + "origin_z int(7) NOT NULL,"
@@ -270,7 +279,7 @@ public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
 
       String cellTableStatement = "CREATE TABLE IF NOT EXISTS "
           + PATH_REPORT_CELL_TABLE_NAME + " ("
-          + "path_report_id bigint NOT NULL, "
+          + "path_report_id integer NOT NULL, "
           + "x int(7) NOT NULL,"
           + "y int(7) NOT NULL,"
           + "z int(7) NOT NULL,"
@@ -286,7 +295,7 @@ public abstract class SqlPathReportManager<T extends Cell<T, D>, D>
       connection.prepareStatement(cellTableStatement).execute();
 
       String indexStatement = "CREATE INDEX IF NOT EXISTS path_report_idx ON "
-          + PATH_REPORT_TABLE_NAME
+          + PATH_REPORT_CELL_TABLE_NAME
           + " (path_report_id);";
       connection.prepareStatement(indexStatement).execute();
 
