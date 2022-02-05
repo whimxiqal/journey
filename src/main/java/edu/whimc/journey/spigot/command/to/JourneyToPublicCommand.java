@@ -24,12 +24,12 @@
 
 package edu.whimc.journey.spigot.command.to;
 
+import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.data.DataAccessException;
 import edu.whimc.journey.common.data.PublicEndpointManager;
 import edu.whimc.journey.common.tools.BufferedSupplier;
 import edu.whimc.journey.common.util.Validator;
-import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.JourneyCommand;
 import edu.whimc.journey.spigot.command.common.CommandError;
 import edu.whimc.journey.spigot.command.common.CommandFlags;
@@ -87,8 +87,8 @@ public class JourneyToPublicCommand extends PlayerCommandNode {
     }
 
     LocationCell endLocation;
-    PublicEndpointManager<LocationCell, World> publicEndpointManager = JourneySpigot.getInstance()
-        .getDataManager()
+    PublicEndpointManager<LocationCell, World> publicEndpointManager =
+        JourneyCommon.<LocationCell, World>getDataManager()
         .getPublicEndpointManager();
     try {
       endLocation = publicEndpointManager.getPublicEndpoint(args[0]);

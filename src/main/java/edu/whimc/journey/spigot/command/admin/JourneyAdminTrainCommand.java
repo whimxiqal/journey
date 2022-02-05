@@ -26,16 +26,14 @@ package edu.whimc.journey.spigot.command.admin;
 
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.data.DataAccessException;
-import edu.whimc.journey.common.data.PathReportManager;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.Parameter;
 import edu.whimc.journey.spigot.command.common.ParameterSuppliers;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -62,18 +60,6 @@ public class JourneyAdminTrainCommand extends CommandNode {
                                   @NotNull Map<String, String> flags) throws DataAccessException {
     Bukkit.getScheduler().runTaskAsynchronously(JourneySpigot.getInstance(),
         () -> {
-          List<PathReportManager.PathTrialRecord> records = new LinkedList<>();
-          PathReportManager.PathTrialRecord record = JourneySpigot.getInstance()
-              .getDataManager()
-              .getPathReportManager()
-              .getNextReport();
-          while (record != null) {
-            records.add(record);
-            record = JourneySpigot.getInstance()
-                .getDataManager()
-                .getPathReportManager()
-                .getNextReport();
-          }
 
           int duration = 5 * 20;  // 5 seconds
           if (args.length > 0) {
@@ -94,7 +80,9 @@ public class JourneyAdminTrainCommand extends CommandNode {
               },
               duration);  // TODO change to "duration"
 
-          JourneyCommon.getNetwork().learn(records);
+          JourneyCommon.getNetwork().learn(JourneyCommon.getDataManager()
+              .getPathRecordManager()
+              .getRandomTrainingCells(new Random(), 10000));
           sender.spigot().sendMessage(Format.success("Done training."));
         });
     return true;

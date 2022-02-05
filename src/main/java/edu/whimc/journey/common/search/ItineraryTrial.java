@@ -27,13 +27,11 @@ package edu.whimc.journey.common.search;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.navigation.Step;
 import edu.whimc.journey.common.search.event.StartItinerarySearchEvent;
 import edu.whimc.journey.common.search.event.StopItinerarySearchEvent;
 import edu.whimc.journey.common.tools.AlternatingList;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -48,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
  * @see Itinerary
  * @see SearchSession
  * @see PathTrial
- * @see #attempt(Collection, boolean)
+ * @see #attempt(boolean)
  */
 public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
 
@@ -75,12 +73,11 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
   /**
    * Attempt to calculate an itinerary given some modes of transportation.
    *
-   * @param modes              the modes allowed for the caller
    * @param useCacheIfPossible whether the cache should be used for retrieving previous results
    * @return a result object
    */
   @NotNull
-  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCacheIfPossible) {
+  public TrialResult<T, D> attempt(boolean useCacheIfPossible) {
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StartItinerarySearchEvent<>(session, this));
 
     state = ResultState.RUNNING;
@@ -95,7 +92,7 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
         return new TrialResult<>(Optional.empty(), true);  // doesn't really matter if changed problem
       }
 
-      PathTrial.TrialResult<T, D> pathTrialResult = pathTrial.attempt(modes, useCacheIfPossible);
+      PathTrial.TrialResult<T, D> pathTrialResult = pathTrial.attempt(useCacheIfPossible);
       if (pathTrialResult.changedProblem()) {
         changedProblem = true;
       }
@@ -151,7 +148,7 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
    *
    * @param <T> the location type
    * @param <D> the domain type
-   * @see #attempt(Collection, boolean)
+   * @see #attempt(boolean)
    */
   public static final record TrialResult<T extends Cell<T, D>, D>(
       @NotNull Optional<Itinerary<T, D>> itinerary,

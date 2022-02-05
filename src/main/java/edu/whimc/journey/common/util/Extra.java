@@ -26,7 +26,6 @@ package edu.whimc.journey.common.util;
 
 import com.google.common.collect.Lists;
 import java.util.LinkedList;
-import java.util.UUID;
 
 /**
  * A utility class to perform "extra" miscellaneous tasks.
@@ -99,21 +98,6 @@ public final class Extra {
     } else {
       return input;
     }
-  }
-
-  /**
-   * Get the full UUID string for a plain string (without the hyphens).
-   * In other words, put back the hyphens in a UUID without them.
-   *
-   * @param plainUuid the plain uuid
-   * @return the uuid string
-   */
-  public static UUID fromPlainString(String plainUuid) {
-    return UUID.fromString(plainUuid.subSequence(0, 8)
-        + "-" + plainUuid.subSequence(8, 12)
-        + "-" + plainUuid.subSequence(12, 16)
-        + "-" + plainUuid.subSequence(16, 20)
-        + "-" + plainUuid.subSequence(20, 32));
   }
 
 }

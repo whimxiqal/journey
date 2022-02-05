@@ -24,8 +24,8 @@
 
 package edu.whimc.journey.spigot.command.list;
 
+import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.data.DataAccessException;
-import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.Parameter;
 import edu.whimc.journey.spigot.command.common.PlayerCommandNode;
@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.util.ChatPaginator;
@@ -89,8 +90,7 @@ public class JourneyListPublicCommand extends PlayerCommandNode {
       pageNumber = 1;
     }
 
-    Map<String, LocationCell> cells = JourneySpigot.getInstance()
-        .getDataManager()
+    Map<String, LocationCell> cells = JourneyCommon.<LocationCell, World>getDataManager()
         .getPublicEndpointManager()
         .getPublicEndpoints();
 

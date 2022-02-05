@@ -22,14 +22,28 @@
  *
  */
 
-package edu.whimc.journey.common.data.sql.sqlite;
+package edu.whimc.journey.common.ml;
 
-import edu.whimc.journey.common.data.sql.DataAdapter;
-import edu.whimc.journey.common.data.sql.SqlPathReportManager;
-import edu.whimc.journey.common.navigation.Cell;
+import org.neuroph.core.Neuron;
+import org.neuroph.core.learning.stop.SmallErrorChangeStop;
+import org.neuroph.nnet.learning.BackPropagation;
 
-public class SqlitePathReportManager<T extends Cell<T, D>, D> extends SqlPathReportManager<T, D> {
-  public SqlitePathReportManager(String address, DataAdapter<T, D> dataAdapter) {
-    super(new SqliteConnectionController(address), dataAdapter);
+public class CustomBackPropagation extends BackPropagation {
+
+  CustomBackPropagation() {
+    super();
+    this.stopConditions.add(new SmallErrorChangeStop(this));
   }
+
+  @Override
+  protected double calculateHiddenNeuronError(Neuron neuron) {
+    double result = super.calculateHiddenNeuronError(neuron);
+//        if (result >= 0) {
+//          System.out.println("Hidden Neuron: " + neuron.getLabel());
+//          System.out.println("   Info: " + neuron);
+//          System.out.println("   Error: " + result);
+//        }
+    return result;
+  }
+
 }

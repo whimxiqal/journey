@@ -25,8 +25,6 @@
 package edu.whimc.journey.spigot;
 
 import edu.whimc.journey.common.JourneyCommon;
-import edu.whimc.journey.common.cache.PathCache;
-import edu.whimc.journey.common.data.DataManager;
 import edu.whimc.journey.common.ml.ScoringNetwork;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
@@ -52,9 +50,11 @@ import edu.whimc.journey.spigot.search.event.SpigotStopPathSearchEvent;
 import edu.whimc.journey.spigot.search.event.SpigotStopSearchEvent;
 import edu.whimc.journey.spigot.search.event.SpigotVisitationSearchEvent;
 import edu.whimc.journey.spigot.search.listener.AnimationListener;
+import edu.whimc.journey.spigot.search.listener.DataStorageListener;
 import edu.whimc.journey.spigot.search.listener.PlayerSearchListener;
 import edu.whimc.journey.spigot.util.LoggerSpigot;
 import edu.whimc.journey.spigot.util.SpigotMinecraftConversions;
+import java.util.Random;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -83,10 +83,6 @@ public final class JourneySpigot extends JavaPlugin {
   @Getter
   private boolean valid = false;
 
-  // Database
-  @Getter
-  private DataManager<LocationCell, World> dataManager;
-
   /**
    * Get the instance that is currently run on the Spigot server.
    *
@@ -112,7 +108,6 @@ public final class JourneySpigot extends JavaPlugin {
     // Set up Journey Common
     JourneyCommon.setLogger(new LoggerSpigot());
     JourneyCommon.setConfigManager(SpigotConfigManager.initialize("config.yml"));
-    JourneyCommon.setPathCache(new PathCache<LocationCell, World>());
     JourneyCommon.setConversions(new SpigotMinecraftConversions());
 
     // Set up caches for Spigot Journey
@@ -140,7 +135,7 @@ public final class JourneySpigot extends JavaPlugin {
     JourneyCommon.setSearchEventDispatcher(dispatcher);
 
     // Set up data manager
-    this.dataManager = new SpigotDataManager();
+    JourneyCommon.setDataManager(new SpigotDataManager());
 
     // Register command
     CommandNode root = new JourneyCommand();
@@ -157,7 +152,7 @@ public final class JourneySpigot extends JavaPlugin {
     // Register listeners
     Bukkit.getPluginManager().registerEvents(netherManager, this);
     Bukkit.getPluginManager().registerEvents(new AnimationListener(), this);
-//    Bukkit.getPluginManager().registerEvents(new DataStorageListener(), this);
+    Bukkit.getPluginManager().registerEvents(new DataStorageListener(), this);
     Bukkit.getPluginManager().registerEvents(new PlayerSearchListener(), this);
 
 
@@ -167,6 +162,32 @@ public final class JourneySpigot extends JavaPlugin {
       valid = true;
       JourneySpigot.getInstance().getLogger().info("Finished initializing Journey");
     });
+
+    // TODO make these parameters configurable in the config settings
+    int TRAINING_DATA_COUNT = 20000;
+    Random random = new Random(12345);
+    Bukkit.getScheduler().runTaskTimerAsynchronously(this,
+        () -> {
+          if (JourneyCommon.getDataManager().getPathRecordManager().hasAtLeastCellCount(TRAINING_DATA_COUNT)) {
+            getLogger().info("Training journey network");
+            getLogger().info("Current network error: " + JourneyCommon.getNetwork().getError());
+            Bukkit.getScheduler().scheduleSyncDelayedTask(this,
+                () -> JourneyCommon.getNetwork().stopLearning(),
+                20 * 60 * 15 /* 15 minutes */);
+            JourneyCommon.getNetwork().learn(
+                JourneyCommon.getDataManager()
+                    .getPathRecordManager()
+                    .getRandomTrainingCells(random, TRAINING_DATA_COUNT));
+            getLogger().info("Stopped training Journey network");
+            getLogger().info("Current network error: " + JourneyCommon.getNetwork().getError());
+          } else {
+            getLogger().info("Tried to train Journey network, but did not find enough data");
+          }
+
+        },
+        0 /* wait 0 seconds */,
+        20 * 60 * 60 /* wait 1 hour in between training */);
+
   }
 
   @Override
@@ -178,12 +199,6 @@ public final class JourneySpigot extends JavaPlugin {
   }
 
   private void deserializeCaches() {
-    // Path cache
-    Serialize.<PathCache<LocationCell, World>>deserializeCache(this.getDataFolder(),
-        PathCache.SERIALIZED_PATH_CACHE_FILE_NAME,
-        JourneyCommon::setPathCache,
-        PathCache::new);
-    JourneySpigot.getInstance().getLogger().info(JourneyCommon.getPathCache().size() + " paths deserialized");
 
     // Nether Ports cache
     Serialize.deserializeCache(this.getDataFolder(),
@@ -201,13 +216,6 @@ public final class JourneySpigot extends JavaPlugin {
   }
 
   private void serializeCaches() {
-    // Path cache
-    Serialize.<PathCache<LocationCell, World>>serializeCache(this.getDataFolder(),
-        PathCache.SERIALIZED_PATH_CACHE_FILE_NAME,
-        JourneyCommon::getPathCache,
-        JourneyCommon::setPathCache,
-        PathCache::new);
-    JourneySpigot.getInstance().getLogger().info(JourneyCommon.getPathCache().size() + " paths serialized");
 
     // nether Ports cache
     Serialize.serializeCache(this.getDataFolder(),

@@ -27,7 +27,6 @@ package edu.whimc.journey.common.search;
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
-import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.navigation.Port;
 import edu.whimc.journey.common.search.event.FoundSolutionEvent;
 import edu.whimc.journey.common.search.event.IgnoreCacheSearchEvent;
@@ -54,6 +53,7 @@ public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> exte
 
   private final T origin;
   private final T destination;
+  private final Cell.CellConstructor<T, D> constructor;
   private long executionStartTime = -1;
 
   /**
@@ -63,10 +63,12 @@ public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> exte
    * @param callerType the type of caller
    */
   public DestinationGoalSearchSession(UUID callerId, Caller callerType,
-                                      T origin, T destination) {
+                                      T origin, T destination,
+                                      Cell.CellConstructor<T, D> constructor) {
     super(callerId, callerType);
     this.origin = origin;
     this.destination = destination;
+    this.constructor = constructor;
   }
 
   @Override
@@ -98,12 +100,11 @@ public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> exte
       leapsByDestinationDomain.get(port.getDestination().getDomain()).add(port);
     }
 
-    SearchGraph<T, D> graph = new SearchGraph<>(this, origin, destination, this.ports);
+    SearchGraph<T, D> graph = new SearchGraph<>(this, origin, destination, this.ports, constructor);
 
     // Collect path trials
-    ModeTypeGroup modeTypeGroup = ModeTypeGroup.from(this.modes);
     if (origin.getDomain().equals(destination.getDomain())) {
-      graph.addPathTrialOriginToDestination(modeTypeGroup);
+      graph.addPathTrialOriginToDestination(this.modes);
     }
 
     for (D domain : allDomains) {
@@ -112,12 +113,12 @@ public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> exte
           graph.addPathTrialPortToPort(
               pathTrialOriginPort,
               pathTrialDestinationPort,
-              modeTypeGroup);
+              this.modes);
           if (domain.equals(origin.getDomain())) {
-            graph.addPathTrialOriginToPort(pathTrialDestinationPort, modeTypeGroup);
+            graph.addPathTrialOriginToPort(pathTrialDestinationPort, this.modes);
           }
           if (domain.equals(destination.getDomain())) {
-            graph.addPathTrialPortToDestination(pathTrialOriginPort, modeTypeGroup);
+            graph.addPathTrialPortToDestination(pathTrialOriginPort, this.modes);
           }
         }
       }
@@ -135,7 +136,7 @@ public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> exte
         return;
       } else {
         // We have an overall solution with individual paths that aren't verified/calculated
-        ItineraryTrial.TrialResult<T, D> trialResult = itineraryTrial.attempt(this.modes, usingCache);
+        ItineraryTrial.TrialResult<T, D> trialResult = itineraryTrial.attempt(usingCache);
         if (trialResult.itinerary().isPresent()) {
           // There is an itinerary solution!
 

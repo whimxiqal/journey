@@ -100,4 +100,15 @@ public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D>, 
     return domain;
   }
 
+  public final String getDomainId() {
+    return domainId;
+  }
+
+  @FunctionalInterface
+  public interface CellConstructor<T extends Cell<T, D>, D> {
+
+    T construct(int x, int y, int z, String domainId);
+
+  }
+
 }

@@ -24,10 +24,11 @@
 
 package edu.whimc.journey.spigot.search.listener;
 
+import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.data.DataAccessException;
+import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.search.FlexiblePathTrial;
 import edu.whimc.journey.common.search.PathTrial;
-import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.search.event.SpigotStopPathSearchEvent;
 import org.bukkit.World;
@@ -52,9 +53,10 @@ public class DataStorageListener implements Listener {
     if (flexiblePathTrial instanceof PathTrial<LocationCell, World> pathTrial) {
       if (pathTrial.getState().isSuccessful()) {
         try {
-          JourneySpigot.getInstance().getDataManager().getPathReportManager().addReport(
+          JourneyCommon.<LocationCell, World>getDataManager().getPathRecordManager().report(
               pathTrial,
               event.getSearchEvent().getCalculationNodes(),
+              ModeTypeGroup.from(event.getSearchEvent().getPathTrial().getModes()),
               event.getSearchEvent().getExecutionTime());
         } catch (DataAccessException e) {
           e.printStackTrace();

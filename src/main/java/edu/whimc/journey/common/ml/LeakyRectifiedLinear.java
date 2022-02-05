@@ -22,17 +22,22 @@
  *
  */
 
-package edu.whimc.journey.spigot.data.sql.sqlite;
+package edu.whimc.journey.common.ml;
 
-import edu.whimc.journey.common.data.sql.sqlite.SqlitePathReportManager;
-import edu.whimc.journey.spigot.data.SpigotDataAdapter;
-import edu.whimc.journey.spigot.navigation.LocationCell;
-import org.bukkit.World;
+import org.neuroph.core.transfer.TransferFunction;
 
-public class SpigotSqlitePathReportManager extends SqlitePathReportManager<LocationCell, World> {
+public class LeakyRectifiedLinear extends TransferFunction {
 
-  public SpigotSqlitePathReportManager(String address) {
-    super(address, new SpigotDataAdapter());
+  private static final long serialVersionUID = 1L;
+
+  @Override
+  public double getOutput(double net) {
+    return Math.max(0.1 * net, net);
+  }
+
+  @Override
+  public double getDerivative(double net) {
+    return net > 0 ? 1 : 0.1;
   }
 
 }

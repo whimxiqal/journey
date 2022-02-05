@@ -24,10 +24,10 @@
 
 package edu.whimc.journey.spigot.command.save;
 
+import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.data.DataAccessException;
 import edu.whimc.journey.common.data.PublicEndpointManager;
 import edu.whimc.journey.common.util.Validator;
-import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandError;
 import edu.whimc.journey.spigot.command.common.CommandNode;
 import edu.whimc.journey.spigot.command.common.Parameter;
@@ -83,8 +83,8 @@ public class JourneySavePublicCommand extends PlayerCommandNode {
       return false;
     }
 
-    PublicEndpointManager<LocationCell, World> publicEndpointManager = JourneySpigot.getInstance()
-        .getDataManager()
+    PublicEndpointManager<LocationCell, World> publicEndpointManager =
+        JourneyCommon.<LocationCell, World>getDataManager()
         .getPublicEndpointManager();
 
     String existingName = publicEndpointManager.getPublicEndpointName(new LocationCell(player.getLocation()));

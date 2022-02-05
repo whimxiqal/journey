@@ -26,13 +26,13 @@ package edu.whimc.journey.spigot.data;
 
 import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.data.DataManager;
-import edu.whimc.journey.common.data.PathReportManager;
+import edu.whimc.journey.common.data.PathRecordManager;
 import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.data.PublicEndpointManager;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.data.sql.mysql.SpigotMySqlPersonalEndpointManager;
 import edu.whimc.journey.spigot.data.sql.mysql.SpigotMySqlPublicEndpointManager;
-import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePathReportManager;
+import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePathRecordManager;
 import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePersonalEndpointManager;
 import edu.whimc.journey.spigot.data.sql.sqlite.SpigotSqlitePublicEndpointManager;
 import edu.whimc.journey.spigot.navigation.LocationCell;
@@ -45,7 +45,7 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
 
   private final PersonalEndpointManager<LocationCell, World> personalEndpointManager;
   private final PublicEndpointManager<LocationCell, World> publicEndpointManager;
-  private final PathReportManager<LocationCell, World> pathReportManager;
+  private final PathRecordManager<LocationCell, World> pathRecordManager;
 
   /**
    * General constructor.
@@ -80,7 +80,7 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
       }
     }
 
-    pathReportManager = new SpigotSqlitePathReportManager(sqliteAddress);
+    pathRecordManager = new SpigotSqlitePathRecordManager(sqliteAddress);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
   }
 
   @Override
-  public PathReportManager<LocationCell, World> getPathReportManager() {
-    return pathReportManager;
+  public PathRecordManager<LocationCell, World> getPathRecordManager() {
+    return pathRecordManager;
   }
 }

@@ -61,6 +61,8 @@ dependencies {
 
     implementation 'javax.visrec:visrec-api:1.0.5'
 
+    implementation 'com.opencsv:opencsv:5.5.2'
+
 }
 
 processResources {

@@ -24,10 +24,10 @@
 
 package edu.whimc.journey.spigot.command.delete;
 
+import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.data.DataAccessException;
 import edu.whimc.journey.common.data.PersonalEndpointManager;
 import edu.whimc.journey.common.tools.BufferedFunction;
-import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.JourneyCommand;
 import edu.whimc.journey.spigot.command.common.CommandError;
 import edu.whimc.journey.spigot.command.common.CommandNode;
@@ -86,11 +86,11 @@ public class JourneyDeleteMyCommand extends PlayerCommandNode {
       return false;
     }
 
-    PersonalEndpointManager<LocationCell, World> endpointManager = JourneySpigot.getInstance()
-        .getDataManager()
+    PersonalEndpointManager<LocationCell, World> endpointManager =
+        JourneyCommon.<LocationCell, World>getDataManager()
         .getPersonalEndpointManager();
     if (endpointManager.hasPersonalEndpoint(player.getUniqueId(), args[0])) {
-      JourneySpigot.getInstance().getDataManager()
+      JourneyCommon.<LocationCell, World>getDataManager()
           .getPersonalEndpointManager()
           .removePersonalEndpoint(player.getUniqueId(), args[0]);
       player.spigot().sendMessage(Format.success("The custom location ",

@@ -2,7 +2,6 @@ package edu.whimc.journey.common.search;
 
 import com.google.common.collect.Lists;
 import edu.whimc.journey.common.JourneyCommon;
-import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Itinerary;
 import edu.whimc.journey.common.navigation.Mode;
@@ -79,7 +78,6 @@ class SearchTest {
     // Set up JourneyCommon
     SearchDispatcher<Point3D, Domain, Runnable> dispatcher = new SearchDispatcher<>(Runnable::run);
     JourneyCommon.setSearchEventDispatcher(dispatcher);
-    JourneyCommon.setPathCache(new PathCache<Point3D, Domain>());
 
     // Prepare variable to store if a solution has been found during the search
     AtomicBoolean solved = new AtomicBoolean(false);
@@ -236,7 +234,8 @@ class SearchTest {
 
     public TestSearchSession(UUID callerId, Caller callerType,
                              Point3D origin, Point3D destination) {
-      super(callerId, callerType, origin, destination);
+      super(callerId, callerType, origin, destination,
+          (x, y, z, domain) -> new Point3D(x, y, new Domain(domain)));
     }
 
     @Override

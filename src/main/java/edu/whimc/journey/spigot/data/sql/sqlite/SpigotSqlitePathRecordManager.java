@@ -22,34 +22,17 @@
  *
  */
 
-package edu.whimc.journey.common.data;
+package edu.whimc.journey.spigot.data.sql.sqlite;
 
-import edu.whimc.journey.common.navigation.Cell;
+import edu.whimc.journey.common.data.sql.sqlite.SqlitePathRecordManager;
+import edu.whimc.journey.spigot.data.SpigotDataAdapter;
+import edu.whimc.journey.spigot.navigation.LocationCell;
+import org.bukkit.World;
 
-/**
- * An interface for describing what is needed to store the state for this application.
- *
- * @param <T> the location type
- * @param <D> the domain type
- */
-public interface DataManager<T extends Cell<T, D>, D> {
+public class SpigotSqlitePathRecordManager extends SqlitePathRecordManager<LocationCell, World> {
 
-  /**
-   * Get the implementation for the endpoint manager
-   * specifically for personal endpoints in the search algorithm.
-   *
-   * @return the personal endpoint manager
-   */
-  PersonalEndpointManager<T, D> getPersonalEndpointManager();
-
-  /**
-   * Get the implementation for the endpoint manager
-   * specifically for public endpoints in the search algorithm.
-   *
-   * @return the public endpoint manager
-   */
-  PublicEndpointManager<T, D> getPublicEndpointManager();
-
-  PathRecordManager<T, D> getPathRecordManager();
+  public SpigotSqlitePathRecordManager(String address) {
+    super(address, new SpigotDataAdapter());
+  }
 
 }
