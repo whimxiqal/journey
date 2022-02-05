@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'maven-publish'
-    id 'com.github.johnrengelman.shadow' version '7.1.0'
 }
 
 group = 'edu.whimc'
@@ -37,22 +36,22 @@ test {
 
 dependencies {
     // Spigot
-    shadow 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
+    implementation 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
 
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
     testImplementation 'com.google.guava:guava:31.0.1-jre'
 
     // Annotations
-    shadow 'org.jetbrains:annotations:22.0.0'
+    implementation 'org.jetbrains:annotations:22.0.0'
     testImplementation 'org.jetbrains:annotations:22.0.0'
 
     // Other plugins
-    shadow 'com.github.PikaMug:Quests:4.0.7'
-    shadow 'com.github.whimc:Portals:2.8.3'
+    implementation 'com.github.PikaMug:Quests:4.0.7'
+    implementation 'com.github.whimc:Portals:2.8.3'
 
     // Lombok
-    shadow 'org.projectlombok:lombok:1.18.22'
+    implementation 'org.projectlombok:lombok:1.18.22'
     testImplementation('org.projectlombok:lombok:1.18.22')
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'

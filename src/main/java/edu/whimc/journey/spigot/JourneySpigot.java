@@ -25,7 +25,6 @@
 package edu.whimc.journey.spigot;
 
 import edu.whimc.journey.common.JourneyCommon;
-import edu.whimc.journey.common.ml.ScoringNetwork;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.search.event.SearchEvent;
 import edu.whimc.journey.common.util.Serialize;
@@ -54,7 +53,6 @@ import edu.whimc.journey.spigot.search.listener.DataStorageListener;
 import edu.whimc.journey.spigot.search.listener.PlayerSearchListener;
 import edu.whimc.journey.spigot.util.LoggerSpigot;
 import edu.whimc.journey.spigot.util.SpigotMinecraftConversions;
-import java.util.Random;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -163,31 +161,6 @@ public final class JourneySpigot extends JavaPlugin {
       JourneySpigot.getInstance().getLogger().info("Finished initializing Journey");
     });
 
-    // TODO make these parameters configurable in the config settings
-    int TRAINING_DATA_COUNT = 20000;
-    Random random = new Random(12345);
-    Bukkit.getScheduler().runTaskTimerAsynchronously(this,
-        () -> {
-          if (JourneyCommon.getDataManager().getPathRecordManager().hasAtLeastCellCount(TRAINING_DATA_COUNT)) {
-            getLogger().info("Training journey network");
-            getLogger().info("Current network error: " + JourneyCommon.getNetwork().getError());
-            Bukkit.getScheduler().scheduleSyncDelayedTask(this,
-                () -> JourneyCommon.getNetwork().stopLearning(),
-                20 * 60 * 15 /* 15 minutes */);
-            JourneyCommon.getNetwork().learn(
-                JourneyCommon.getDataManager()
-                    .getPathRecordManager()
-                    .getRandomTrainingCells(random, TRAINING_DATA_COUNT));
-            getLogger().info("Stopped training Journey network");
-            getLogger().info("Current network error: " + JourneyCommon.getNetwork().getError());
-          } else {
-            getLogger().info("Tried to train Journey network, but did not find enough data");
-          }
-
-        },
-        0 /* wait 0 seconds */,
-        20 * 60 * 60 /* wait 1 hour in between training */);
-
   }
 
   @Override
@@ -207,12 +180,6 @@ public final class JourneySpigot extends JavaPlugin {
         NetherManager::new);
     JourneySpigot.getInstance().getLogger().info(this.netherManager.size() + " nether ports deserialized");
 
-    // Neutral Network cache
-    Serialize.deserializeCache(this.getDataFolder(),
-        ScoringNetwork.CACHE_FILE_NAME,
-        JourneyCommon::setNetwork,
-        ScoringNetwork::new);
-    JourneySpigot.getInstance().getLogger().info("Neural Network deserialized");
   }
 
   private void serializeCaches() {
@@ -225,13 +192,6 @@ public final class JourneySpigot extends JavaPlugin {
         NetherManager::new);
     JourneySpigot.getInstance().getLogger().info(this.netherManager.size() + " nether ports serialized");
 
-    // Neural Network cache
-    Serialize.serializeCache(this.getDataFolder(),
-        ScoringNetwork.CACHE_FILE_NAME,
-        JourneyCommon::getNetwork,
-        JourneyCommon::setNetwork,
-        ScoringNetwork::new);
-    JourneySpigot.getInstance().getLogger().info("Neural Network serialized");
   }
 
 }

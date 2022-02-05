@@ -24,8 +24,6 @@
 
 package edu.whimc.journey.common.search;
 
-import edu.whimc.journey.common.JourneyCommon;
-import edu.whimc.journey.common.config.Settings;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.Path;
@@ -65,21 +63,8 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
   }
 
   private static <T extends Cell<T, D>, D> ScoringFunction<T, D> scoringFunction(T destination) {
-    if (JourneyCommon.getNetwork().getError() < 20 && Settings.USE_NEURAL_NETWORK.getValue()) {
-      // TODO set error value (currently 5) as setting in config
-      System.out.println("Using Network as Scoring Function");
-      return new ScoringFunction<>(node -> -JourneyCommon.getNetwork().calculateOutputs(
-          node.getData().location().distanceToSquared(destination),
-          Math.abs(node.getData().location().getY() - destination.getY()),
-          node.getData().location().getY(),
-          destination.getY(),
-          JourneyCommon.<T, D>getConversions().getBiome(node.getData().location())),
-          ScoringFunction.Type.NEURAL_NETWORK);
-    } else {
-      System.out.println("Using Euclidean Distance as Scoring Function");
-      return new ScoringFunction<>(node -> -node.getData().location().distanceToSquared(destination),
-          ScoringFunction.Type.EUCLIDEAN_DISTANCE);
-    }
+    return new ScoringFunction<>(node -> -node.getData().location().distanceToSquared(destination),
+        ScoringFunction.Type.EUCLIDEAN_DISTANCE);
   }
 
   /**

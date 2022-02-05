@@ -26,7 +26,6 @@ package edu.whimc.journey.common;
 
 import edu.whimc.journey.common.config.ConfigManager;
 import edu.whimc.journey.common.data.DataManager;
-import edu.whimc.journey.common.ml.ScoringNetwork;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.util.LoggerCommon;
@@ -51,10 +50,6 @@ public final class JourneyCommon {
   private static LoggerCommon logger;
 
   private static MinecraftConversions<?, ?> conversions;
-
-  @Getter
-  @Setter
-  private static ScoringNetwork network;
 
   /**
    * Get the event dispatcher used in a {@link edu.whimc.journey.common.search.SearchSession}.
