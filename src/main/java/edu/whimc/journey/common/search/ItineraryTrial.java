@@ -36,6 +36,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -96,7 +98,7 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
       if (pathTrialResult.changedProblem()) {
         changedProblem = true;
       }
-      if (pathTrialResult.path().isEmpty()) {
+      if (!pathTrialResult.path().isPresent()) {
         failed = true;
       }
     }
@@ -150,9 +152,11 @@ public class ItineraryTrial<T extends Cell<T, D>, D> implements Resulted {
    * @param <D> the domain type
    * @see #attempt(boolean)
    */
-  public static final record TrialResult<T extends Cell<T, D>, D>(
-      @NotNull Optional<Itinerary<T, D>> itinerary,
-      boolean changedProblem) {
+  @Value
+  @Accessors(fluent = true)
+  public static final class TrialResult<T extends Cell<T, D>, D> {
+    @NotNull Optional<Itinerary<T, D>> itinerary;
+    boolean changedProblem;
   }
 
 }

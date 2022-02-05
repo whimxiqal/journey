@@ -74,6 +74,7 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
    * @param session     the session
    * @param origin      the origin of the path
    * @param destination the destination of the path
+   * @param modes       the types of modes used
    * @param path        the path
    * @param <T>         the location type
    * @param <D>         the domain type

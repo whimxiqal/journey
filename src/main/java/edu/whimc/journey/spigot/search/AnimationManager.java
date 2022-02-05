@@ -83,10 +83,18 @@ public class AnimationManager {
     if (success) {
       BlockData blockData;
       switch (modeType) {
-        case WALK -> blockData = Material.LIME_STAINED_GLASS.createBlockData();
-        case JUMP -> blockData = Material.MAGENTA_STAINED_GLASS.createBlockData();
-        case FLY -> blockData = Material.WHITE_STAINED_GLASS.createBlockData();
-        default -> blockData = Material.COBWEB.createBlockData();
+        case WALK:
+          blockData = Material.LIME_STAINED_GLASS.createBlockData();
+          break;
+        case JUMP:
+          blockData = Material.MAGENTA_STAINED_GLASS.createBlockData();
+          break;
+        case FLY:
+          blockData = Material.WHITE_STAINED_GLASS.createBlockData();
+          break;
+        default:
+          blockData = Material.COBWEB.createBlockData();
+          break;
       }
       return showBlock(cell, blockData);
     } else {

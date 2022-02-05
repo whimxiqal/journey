@@ -145,7 +145,7 @@ public class Path<T extends Cell<T, D>, D> implements Serializable {
   }
 
   /**
-   * Get domain of this path (there is only one!)
+   * Get domain of this path (there is only one!).
    *
    * @return the domain
    */

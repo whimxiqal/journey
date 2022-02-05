@@ -27,6 +27,12 @@ package edu.whimc.journey.common.data.sql;
 import edu.whimc.journey.common.navigation.Cell;
 import lombok.Getter;
 
+/**
+ * A general SQL manager for storage purposes.
+ *
+ * @param <T> the cell type
+ * @param <D> the domain type
+ */
 public abstract class SqlManager<T extends Cell<T, D>, D> {
 
   @Getter
@@ -34,6 +40,12 @@ public abstract class SqlManager<T extends Cell<T, D>, D> {
   @Getter
   private final DataAdapter<T, D> dataAdapter;
 
+  /**
+   * General constructor.
+   *
+   * @param connectionController a connection controller
+   * @param dataAdapter          an adapter
+   */
   public SqlManager(SqlConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
     this.connectionController = connectionController;
     this.dataAdapter = dataAdapter;

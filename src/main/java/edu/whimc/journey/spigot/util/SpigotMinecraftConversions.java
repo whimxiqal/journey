@@ -28,6 +28,9 @@ import edu.whimc.journey.common.util.MinecraftConversions;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import org.bukkit.World;
 
+/**
+ * A spigot implementation of conversions for database storage.
+ */
 public class SpigotMinecraftConversions implements MinecraftConversions<LocationCell, World> {
   @Override
   public int getBiome(LocationCell cell) {

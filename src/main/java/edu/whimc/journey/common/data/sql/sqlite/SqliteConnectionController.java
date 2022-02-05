@@ -28,11 +28,16 @@ import edu.whimc.journey.common.data.sql.SqlConnectionController;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import lombok.Value;
+import lombok.experimental.Accessors;
 
 /**
  * An SQL connection controller designed for the SQLite engine.
  */
-public record SqliteConnectionController(String address) implements SqlConnectionController {
+@Value
+@Accessors(fluent = true)
+public class SqliteConnectionController implements SqlConnectionController {
+  String address;
 
   @Override
   public Connection establishConnection() throws SQLException {

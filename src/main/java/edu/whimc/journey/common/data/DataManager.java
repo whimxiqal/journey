@@ -50,6 +50,12 @@ public interface DataManager<T extends Cell<T, D>, D> {
    */
   PublicEndpointManager<T, D> getPublicEndpointManager();
 
+  /**
+   * Get the implementation for the storage of
+   * {@link edu.whimc.journey.common.data.PathRecordManager.PathTrialRecord}s.
+   *
+   * @return the manager
+   */
   PathRecordManager<T, D> getPathRecordManager();
 
 }

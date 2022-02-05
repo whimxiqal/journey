@@ -55,29 +55,35 @@ public class SpigotDataManager implements DataManager<LocationCell, World> {
         .getDataFolder()
         .getPath() + "/journey.db";
     switch (Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()) {
-      case SQLITE -> personalEndpointManager = new SpigotSqlitePersonalEndpointManager(sqliteAddress);
-      case MYSQL -> personalEndpointManager = new SpigotMySqlPersonalEndpointManager();
-      default -> {
+      case SQLITE:
+        personalEndpointManager = new SpigotSqlitePersonalEndpointManager(sqliteAddress);
+        break;
+      case MYSQL:
+        personalEndpointManager = new SpigotMySqlPersonalEndpointManager();
+        break;
+      default:
         JourneySpigot.getInstance()
             .getLogger()
             .severe("This type of custom endpoint storage type is not supported: "
                 + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
                 + ". Defaulting to SQLite storage.");
         personalEndpointManager = new SpigotSqlitePersonalEndpointManager(sqliteAddress);
-      }
     }
 
     switch (Settings.SERVER_ENDPOINT_STORAGE_TYPE.getValue()) {
-      case SQLITE -> publicEndpointManager = new SpigotSqlitePublicEndpointManager(sqliteAddress);
-      case MYSQL -> publicEndpointManager = new SpigotMySqlPublicEndpointManager();
-      default -> {
+      case SQLITE:
+        publicEndpointManager = new SpigotSqlitePublicEndpointManager(sqliteAddress);
+        break;
+      case MYSQL:
+        publicEndpointManager = new SpigotMySqlPublicEndpointManager();
+        break;
+      default:
         JourneySpigot.getInstance()
             .getLogger()
             .severe("This type of server endpoint storage type is not supported: "
                 + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
                 + ". Defaulting to SQLite storage.");
         publicEndpointManager = new SpigotSqlitePublicEndpointManager(sqliteAddress);
-      }
     }
 
     pathRecordManager = new SpigotSqlitePathRecordManager(sqliteAddress);

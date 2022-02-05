@@ -28,7 +28,20 @@ import edu.whimc.journey.common.data.sql.DataAdapter;
 import edu.whimc.journey.common.data.sql.SqlPathRecordManager;
 import edu.whimc.journey.common.navigation.Cell;
 
+/**
+ * A SQLite manger for path records.
+ *
+ * @param <T> the cell type
+ * @param <D> the domain type
+ */
 public class SqlitePathRecordManager<T extends Cell<T, D>, D> extends SqlPathRecordManager<T, D> {
+
+  /**
+   * General constructor.
+   *
+   * @param address     the address to the database
+   * @param dataAdapter the adapter
+   */
   public SqlitePathRecordManager(String address, DataAdapter<T, D> dataAdapter) {
     super(new SqliteConnectionController(address), dataAdapter);
   }

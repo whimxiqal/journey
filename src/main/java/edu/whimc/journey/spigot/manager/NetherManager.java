@@ -129,7 +129,7 @@ public class NetherManager implements Listener, Serializable {
           .stream()
           .min(Comparator.comparingDouble(group ->
               group.port().distanceToSquared(new LocationCell(from))));
-      if (originGroup.isEmpty()) {
+      if (!originGroup.isPresent()) {
         return;  // We can't find the origin portal
       }
 
@@ -142,7 +142,7 @@ public class NetherManager implements Listener, Serializable {
           .stream()
           .min(Comparator.comparingDouble(group ->
               group.port().distanceToSquared(new LocationCell(to))));
-      if (destinationGroup.isEmpty()) {
+      if (!destinationGroup.isPresent()) {
         return;  // We can't find the destination portal
       }
 

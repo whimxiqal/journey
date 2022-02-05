@@ -26,6 +26,7 @@ package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.navigation.Cell;
 import java.util.function.Function;
+import lombok.Value;
 
 /**
  * An interface to represent the score of a given node.
@@ -36,22 +37,31 @@ import java.util.function.Function;
  * @param <T> the location type
  * @param <D> the domain type
  */
-public record ScoringFunction<T extends Cell<T, D>, D>(
-    Function<FlexiblePathTrial.Node<T, D>, Double> function,
-    Type type) implements Function<FlexiblePathTrial.Node<T, D>, Double> {
+@Value
+public class ScoringFunction<T extends Cell<T, D>, D>
+    implements Function<FlexiblePathTrial.Node<T, D>, Double> {
+  Function<FlexiblePathTrial.Node<T, D>, Double> function;
+  Type type;
 
   @Override
   public Double apply(FlexiblePathTrial.Node<T, D> node) {
     return function.apply(node);
   }
 
+  /**
+   * Get the type.
+   *
+   * @return the type
+   */
   public Type getType() {
     return type;
   }
 
+  /**
+   * A type of scoring function.
+   */
   public enum Type {
     EUCLIDEAN_DISTANCE,
-    NEURAL_NETWORK,
     HEIGHT,
     OTHER
   }

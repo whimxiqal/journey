@@ -26,10 +26,31 @@ package edu.whimc.journey.common.util;
 
 import edu.whimc.journey.common.navigation.Cell;
 
+/**
+ * A template to convert various types to values understood by a database.
+ *
+ * @param <T> the cell type
+ * @param <D> the domain type
+ * @deprecated This was mostly useful when trying to test the waters with some
+ *             deep net work for trying to calculate things using machine learning principles.
+ *             This is likely no longer needed.
+ */
 public interface MinecraftConversions<T extends Cell<T, D>, D> {
 
+  /**
+   * Get the ordinal type for a Minecraft biome.
+   *
+   * @param cell the cell
+   * @return the representation for a biome
+   */
   int getBiome(T cell);
 
+  /**
+   * Get the ordinal type for a Minecraft dimension.
+   *
+   * @param domain the domain
+   * @return the representation for a dimension
+   */
   int getDimension(D domain);
 
 }

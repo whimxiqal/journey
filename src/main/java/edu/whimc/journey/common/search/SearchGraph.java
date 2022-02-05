@@ -149,8 +149,9 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
     // First, try to access a cached path
     ModeTypeGroup modeTypes = ModeTypeGroup.from(modes);
     System.out.println("Seeing whether " + origin + " -> " + destination + " is stored");
-    // TODO I disabled this conditional to disable the usage of cached paths. Undo this!
-    if (false && JourneyCommon.<T, D>getDataManager().getPathRecordManager().containsRecord(origin, destination, modeTypes)) {
+    if (JourneyCommon.<T, D>getDataManager()
+        .getPathRecordManager()
+        .containsRecord(origin, destination, modeTypes)) {
       System.out.println("Yes");
       addPathTrial(PathTrial.cached(session, origin, destination,
               modes,

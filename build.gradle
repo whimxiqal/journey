@@ -26,8 +26,8 @@ repositories {
 }
 
 compileJava {
-    sourceCompatibility = 16
-    targetCompatibility = 16
+    sourceCompatibility = 8
+    targetCompatibility = 8
 }
 
 test {

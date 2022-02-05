@@ -27,6 +27,8 @@ package edu.whimc.journey.spigot.navigation.mode;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.search.SearchSession;
 import edu.whimc.journey.spigot.navigation.LocationCell;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
@@ -40,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ClimbMode extends SpigotMode {
 
-  private static final Set<Material> climbable = Set.of(Material.LADDER, Material.VINE);
+  private static final Set<Material> climbable = new HashSet<>(Arrays.asList(Material.LADDER, Material.VINE));
 
   /**
    * General constructor.

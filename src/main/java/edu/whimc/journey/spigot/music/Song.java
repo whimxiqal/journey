@@ -25,8 +25,11 @@
 package edu.whimc.journey.spigot.music;
 
 import edu.whimc.journey.spigot.JourneySpigot;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -39,7 +42,7 @@ public class Song {
   /**
    * A single arpeggio to symbolize success.
    */
-  public static final Song SUCCESS_CHORD = new Song(List.of(
+  public static final Song SUCCESS_CHORD = new Song(Arrays.asList(
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1),
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.75f, 3),
       new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 5),
@@ -88,7 +91,12 @@ public class Song {
   /**
    * A single sound (note) that can be strung together into a {@link Song}.
    */
-  public record Note(Sound sound, float pitch, int delay) {
+  @Value
+  @Accessors(fluent = true)
+  public static class Note {
+    Sound sound;
+    float pitch;
+    int delay;
   }
 
 }

@@ -125,6 +125,13 @@ public final class JourneyCommon {
     JourneyCommon.logger = logger;
   }
 
+  /**
+   * Get the {@link MinecraftConversions} object.
+   *
+   * @param <T> the cell type
+   * @param <D> the domain type
+   * @return the conversions for a specific implementation of a modding platform
+   */
   @SuppressWarnings("unchecked")
   public static <T extends Cell<T, D>, D> MinecraftConversions<T, D> getConversions() {
     if (conversions == null) {

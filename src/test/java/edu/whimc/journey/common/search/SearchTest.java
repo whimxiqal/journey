@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -298,7 +300,10 @@ class SearchTest {
     }
   }
 
-  public record Domain(@NonNull @Getter String name) {
+  @Value
+  @Accessors(fluent = true)
+  public static class Domain {
+    @NonNull @Getter String name;
   }
 
   public class StepMode extends Mode<Point3D, Domain> {

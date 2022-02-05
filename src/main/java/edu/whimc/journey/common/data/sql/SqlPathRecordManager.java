@@ -44,15 +44,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import java.util.Stack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * A generic path record manager for SQL storage.
+ *
+ * @param <T> the cell type
+ * @param <D> the domain type
+ */
 public abstract class SqlPathRecordManager<T extends Cell<T, D>, D>
     extends SqlManager<T, D>
     implements PathRecordManager<T, D> {
@@ -61,6 +65,12 @@ public abstract class SqlPathRecordManager<T extends Cell<T, D>, D>
   private static final String PATH_RECORD_CELL_TABLE_NAME = "path_record_cell";
   private static final String PATH_RECORD_MODE_TABLE_NAME = "path_record_mode";
 
+  /**
+   * General constructor.
+   *
+   * @param connectionController the connection controller
+   * @param dataAdapter          the adapter
+   */
   public SqlPathRecordManager(SqlConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
     super(connectionController, dataAdapter);
     createTables();
@@ -269,22 +279,6 @@ public abstract class SqlPathRecordManager<T extends Cell<T, D>, D>
     // TODO implement
   }
 
-  @Override
-  public boolean hasAtLeastCellCount(long count) {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      ResultSet result = connection.prepareStatement("SELECT COUNT(*) FROM (SELECT * FROM "
-              + PATH_RECORD_CELL_TABLE_NAME
-              + " LIMIT " + count + ")")
-          .executeQuery();
-      if (result.next()) {
-        return result.getLong(1) >= count; // should be exactly count if it works
-      }
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-    return false;
-  }
-
   /**
    * Get all records that have this origin and destination,
    * but do not populate the internal cells, but <b>do</b> populate
@@ -350,6 +344,7 @@ public abstract class SqlPathRecordManager<T extends Cell<T, D>, D>
     }
   }
 
+  @Nullable
   private PathTrialRecord findRecordWithModes(Collection<PathTrialRecord> records, ModeTypeGroup modeTypes) {
     for (PathTrialRecord record : records) {
       if (record.modes()
@@ -413,9 +408,9 @@ public abstract class SqlPathRecordManager<T extends Cell<T, D>, D>
   }
 
   @Override
-  public boolean containsRecord(T origin, T destination, ModeTypeGroup modeTypes) {
+  public boolean containsRecord(T origin, T destination, ModeTypeGroup modeTypeGroup) {
     try (Connection connection = getConnectionController().establishConnection()) {
-      return findRecordWithModes(getRecordsWithoutCells(origin, destination), modeTypes) != null;
+      return findRecordWithModes(getRecordsWithoutCells(origin, destination), modeTypeGroup) != null;
     } catch (SQLException e) {
       e.printStackTrace();
       return false;
@@ -443,51 +438,6 @@ public abstract class SqlPathRecordManager<T extends Cell<T, D>, D>
         cells.add(extractCell(record, result));
       }
       return cells;
-    } catch (SQLException e) {
-      e.printStackTrace();
-      return Collections.emptyList();
-    }
-  }
-
-  @Override
-  public @NotNull Collection<PathTrialCellRecord> getRandomTrainingCells(Random random, int limit) {
-    // Going to make "count" number of queries, each one getting the cell that is
-    // the closest (above) to some random value for each iteration.
-    // Save each record so that we can reuse them if we find a cell from the same record.
-
-    try (Connection connection = getConnectionController().establishConnection()) {
-
-      Set<PathTrialCellRecord> pathTrialCellRecords = new HashSet<>();
-
-      // Map to store all retrieved records already (because we might find multiple cells with the same record)
-      Map<Long, PathTrialRecord> records = new HashMap<>();
-
-      // Split the search into batches of square root the number to make this faster
-      int sqrtCount = (int) Math.floor(Math.sqrt(limit));
-      for (int i = 0; i < sqrtCount; i++) {
-        final ResultSet cellResult = connection.prepareStatement("SELECT * FROM "
-            + PATH_RECORD_TABLE_NAME + " "
-            + "JOIN " + PATH_RECORD_CELL_TABLE_NAME + " "
-            + "ON " + PATH_RECORD_TABLE_NAME + ".id = "
-            + PATH_RECORD_CELL_TABLE_NAME + ".path_record_id"
-            + " WHERE random > " + random.nextDouble()
-            + " AND scoring_function = 'EUCLIDEAN_DISTANCE'"
-            + " ORDER BY random "
-            + " LIMIT " + sqrtCount
-            + ";").executeQuery();
-        while (cellResult.next()) {
-          // Use this cell result
-          long pathReportId = cellResult.getLong("id");
-          if (records.containsKey(pathReportId)) {
-            pathTrialCellRecords.add(extractCell(records.get(pathReportId), cellResult));
-          } else {
-            PathTrialRecord record = extractRecord(cellResult);
-            records.put(record.id(), record);
-            pathTrialCellRecords.add(extractCell(record, cellResult));
-          }
-        }
-      }
-      return pathTrialCellRecords;
     } catch (SQLException e) {
       e.printStackTrace();
       return Collections.emptyList();

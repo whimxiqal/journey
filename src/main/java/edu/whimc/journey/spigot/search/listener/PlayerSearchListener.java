@@ -211,15 +211,20 @@ public class PlayerSearchListener implements Listener {
             + ChatColor.DARK_GRAY + search.getSession().getState()));
 
         switch (search.getSession().getState()) {
-          case STOPPED_FAILED -> player.spigot().sendMessage(
-              Format.error("Search ended. Either there's no path to it, or it's too far away!"));
-          case STOPPED_CANCELED -> player.spigot().sendMessage(
-              Format.info("Search canceled."));
-          case STOPPED_SUCCESSFUL -> {
+          case STOPPED_FAILED:
+            player.spigot().sendMessage(
+                Format.error("Search ended. Either there's no path to it, or it's too far away!"));
+            break;
+          case STOPPED_CANCELED:
+            player.spigot().sendMessage(
+                Format.info("Search canceled."));
+            break;
+          case STOPPED_SUCCESSFUL:
             /* Don't say anything. They were already notified of the successful solutions. */
-          }
-          default -> Bukkit.getLogger().warning("A player search session stopped while in the "
-              + search.getSession().getState() + " state");
+            break;
+          default:
+            Bukkit.getLogger().warning("A player search session stopped while in the "
+                + search.getSession().getState() + " state");
         }
         // Remove from the searching set, if the saved session is the one that is currently stopping here.
         //  This check is necessary because another session could have been started while this one was running

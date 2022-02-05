@@ -34,27 +34,80 @@ import edu.whimc.journey.common.search.ScoringFunction;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * A manager to record paths during searches.
+ *
+ * @param <T> the cell type
+ * @param <D> the domain type
+ */
 public interface PathRecordManager<T extends Cell<T, D>, D> {
 
+  /**
+   * Record a path trial.
+   *
+   * @param trial            the trial
+   * @param calculationNodes get all the nodes used for this calculation
+   * @param modeTypeGroup    group of modes used to calculate this path trial
+   * @param executionTime    the time it took to execute
+   * @throws DataAccessException when data is accessed incorrectly
+   */
   void report(PathTrial<T, D> trial,
               Collection<FlexiblePathTrial.Node<T, D>> calculationNodes,
               ModeTypeGroup modeTypeGroup,
               long executionTime) throws DataAccessException;
 
+  /**
+   * Clear all records. <b>Dangerous!</b>
+   */
   void clear();
 
+  /**
+   * Ger any records matching a start and end.
+   *
+   * @param origin      the original cell
+   * @param destination the destination cell
+   * @return any records
+   */
   @NotNull
   List<PathTrialRecord> getRecords(T origin, T destination);
 
+  /**
+   * Get a specific record, if it exists.
+   *
+   * @param origin      the original cell
+   * @param destination the destination cell
+   * @param modeTypes   the mode types used to traverse to the destination
+   * @return the record, if it exists
+   */
+  @Nullable
   PathTrialRecord getRecord(T origin, T destination, ModeTypeGroup modeTypes);
 
+  /**
+   * Get a specific path, using a constructor for cells.
+   *
+   * @param origin        the original cell
+   * @param destination   the destination cell
+   * @param modeTypeGroup the mode types used to traverse to the destination
+   * @param constructor   the constructor to provide new cells
+   * @return the new path
+   */
   Path<T, D> getPath(T origin, T destination, ModeTypeGroup modeTypeGroup,
                      Cell.CellConstructor<T, D> constructor);
 
-  boolean containsRecord(T origin, T destination, ModeTypeGroup modeTypes);
+  /**
+   * Return whether a record exists with the given critera.
+   *
+   * @param origin        the original cell
+   * @param destination   the destination cell
+   * @param modeTypeGroup the mode types used to traverse to the destination
+   * @return whether it exists
+   */
+  boolean containsRecord(T origin, T destination, ModeTypeGroup modeTypeGroup);
 
   /**
    * Get all the cells. Dangerous if the database is large!
@@ -63,38 +116,59 @@ public interface PathRecordManager<T extends Cell<T, D>, D> {
    */
   @NotNull Collection<PathTrialCellRecord> getAllCells();
 
-  @NotNull
-  Collection<PathTrialCellRecord> getRandomTrainingCells(Random random, int count);
-
-  boolean hasAtLeastCellCount(long count);
-
+  /**
+   * A record that represents a saved {@link PathTrial}.
+   */
+  @Value
+  @Accessors(fluent = true)
   @SuppressWarnings("checkstyle:MethodName")
-  record PathTrialRecord(long id, Date date,
-                         long duration,
-                         double pathLength,
-                         int originX, int originY, int originZ,
-                         int destinationX, int destinationY, int destinationZ,
-                         String worldId,
-                         ScoringFunction.Type scoringFunctionType,
-                         List<PathTrialCellRecord> cells,
-                         Collection<PathTrialModeRecord> modes) {
+  class PathTrialRecord {
+    long id;
+    Date date;
+    long duration;
+    double pathLength;
+    int originX;
+    int originY;
+    int originZ;
+    int destinationX;
+    int destinationY;
+    int destinationZ;
+    String worldId;
+    ScoringFunction.Type scoringFunctionType;
+    List<PathTrialCellRecord> cells;
+    Collection<PathTrialModeRecord> modes;
+
   }
 
-  @SuppressWarnings("checkstyle:MethodName")
-  record PathTrialCellRecord(PathTrialRecord record,
-                             int x, int y, int z,
-                             boolean critical,
-                             Integer index,
-                             ModeType modeType,
-                             double deviation,
-                             double distance,
-                             int distanceY,
-                             int biome,
-                             int dimension) {
+  /**
+   * A record that represents a saved {@link Cell} within a {@link PathTrial}.
+   */
+  @Value
+  @Accessors(fluent = true)
+  @SuppressWarnings("checkstyle:MemberName")
+  class PathTrialCellRecord {
+    PathTrialRecord record;
+    int x;
+    int y;
+    int z;
+    boolean critical;
+    Integer index;
+    ModeType modeType;
+    double deviation;
+    double distance;
+    int distanceY;
+    int biome;
+    int dimension;
   }
 
-  record PathTrialModeRecord(PathTrialRecord record,
-                             ModeType modeType) {
+  /**
+   * A record to store a {@link edu.whimc.journey.common.navigation.Mode}.
+   */
+  @Value
+  @Accessors(fluent = true)
+  class PathTrialModeRecord {
+    PathTrialRecord record;
+    ModeType modeType;
   }
 
 }

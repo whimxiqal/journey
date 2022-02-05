@@ -29,8 +29,16 @@ import edu.whimc.journey.spigot.data.SpigotDataAdapter;
 import edu.whimc.journey.spigot.navigation.LocationCell;
 import org.bukkit.World;
 
+/**
+ * Path record manager implemented for Spigot and SQLite.
+ */
 public class SpigotSqlitePathRecordManager extends SqlitePathRecordManager<LocationCell, World> {
 
+  /**
+   * General constructor.
+   *
+   * @param address the address to the database
+   */
   public SpigotSqlitePathRecordManager(String address) {
     super(address, new SpigotDataAdapter());
   }

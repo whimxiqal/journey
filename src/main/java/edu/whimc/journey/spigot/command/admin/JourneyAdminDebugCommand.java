@@ -70,7 +70,7 @@ public class JourneyAdminDebugCommand extends CommandNode {
                                   @NotNull String label,
                                   @NotNull String[] args,
                                   @NotNull Map<String, String> flags) {
-    if (!(sender instanceof Player player)) {
+    if (!(sender instanceof Player)) {
       if (sender instanceof ConsoleCommandSender) {
         if (JourneySpigot.getInstance()
             .getDebugManager()
@@ -87,6 +87,7 @@ public class JourneyAdminDebugCommand extends CommandNode {
         return false;
       }
     } else {
+      Player player = (Player) sender;
       DebugManager debugManager = JourneySpigot.getInstance().getDebugManager();
 
       if (args.length == 0) {

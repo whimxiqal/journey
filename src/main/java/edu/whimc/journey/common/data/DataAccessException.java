@@ -30,10 +30,18 @@ package edu.whimc.journey.common.data;
  */
 public class DataAccessException extends RuntimeException {
 
+  /**
+   * Default constructor.
+   */
   public DataAccessException() {
     super();
   }
 
+  /**
+   * Default constructor with a message.
+   *
+   * @param s the message
+   */
   public DataAccessException(String s) {
     super(s);
   }
