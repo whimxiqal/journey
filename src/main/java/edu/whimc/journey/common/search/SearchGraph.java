@@ -26,6 +26,7 @@ package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.navigation.Cell;
+import edu.whimc.journey.common.navigation.Mode;
 import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.navigation.Port;
@@ -52,6 +53,8 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
   private final Node destinationNode;
   private final Map<Port<T, D>, Node> portToNode = new HashMap<>();
 
+  private final Cell.CellConstructor<T, D> constructor;
+
   /**
    * General constructor.
    *
@@ -60,12 +63,14 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
    * @param destination the destination of the entire problem
    * @param ports       the ports
    */
-  public SearchGraph(SearchSession<T, D> session, T origin, T destination, Collection<Port<T, D>> ports) {
+  public SearchGraph(SearchSession<T, D> session, T origin, T destination, Collection<Port<T, D>> ports,
+                     Cell.CellConstructor<T, D> constructor) {
     this.session = session;
     this.origin = origin;
     this.originNode = new Node(new Port<>(origin, origin, ModeType.NONE, 0));
     this.destination = destination;
     this.destinationNode = new Node(new Port<>(destination, destination, ModeType.NONE, 0));
+    this.constructor = constructor;
 
     ports.forEach(port -> portToNode.put(port, new Node(port)));
   }
@@ -86,10 +91,10 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
    * Add a path trial to the search graph that supposedly goes
    * directly from the origin to the destination.
    *
-   * @param modeTypeGroup the mode types to supposedly get from the origin to the destination
+   * @param modes the mode types to supposedly get from the origin to the destination
    */
-  public void addPathTrialOriginToDestination(ModeTypeGroup modeTypeGroup) {
-    addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modeTypeGroup);
+  public void addPathTrialOriginToDestination(Collection<Mode<T, D>> modes) {
+    addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modes);
   }
 
   /**
@@ -97,14 +102,14 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
    * from the origin of the entire search to a port.
    * The endpoint of the path, then, would be the origin of the port.
    *
-   * @param end           the end of the path trial
-   * @param modeTypeGroup the mode types used to traverse the path
+   * @param end   the end of the path trial
+   * @param modes the mode types used to traverse the path
    */
-  public void addPathTrialOriginToPort(Port<T, D> end, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialOriginToPort(Port<T, D> end, Collection<Mode<T, D>> modes) {
     addPathTrial(session,
         origin, end.getOrigin(),
         getOriginNode(), getLeapNode(end),
-        modeTypeGroup);
+        modes);
   }
 
   /**
@@ -112,14 +117,14 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
    * from a port to the destination of the entire search
    * The origin of the path, then, would be the destination of the port.
    *
-   * @param start         the start of the path trial
-   * @param modeTypeGroup the mode types used to traverse the path
+   * @param start the start of the path trial
+   * @param modes the mode types used to traverse the path
    */
-  public void addPathTrialPortToDestination(Port<T, D> start, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialPortToDestination(Port<T, D> start, Collection<Mode<T, D>> modes) {
     addPathTrial(session,
         start.getDestination(), destination,
         getLeapNode(start), getDestinationNode(),
-        modeTypeGroup);
+        modes);
   }
 
   /**
@@ -128,26 +133,35 @@ public final class SearchGraph<T extends Cell<T, D>, D> extends WeightedGraph<Po
    * The destination of the start port is the origin of this path trial,
    * and the origin of the end port is the destination of this path trial.
    *
-   * @param start         the starting port
-   * @param end           the ending port
-   * @param modeTypeGroup the mode types used to traverse the path
+   * @param start the starting port
+   * @param end   the ending port
+   * @param modes the mode types used to traverse the path
    */
-  public void addPathTrialPortToPort(Port<T, D> start, Port<T, D> end, ModeTypeGroup modeTypeGroup) {
+  public void addPathTrialPortToPort(Port<T, D> start, Port<T, D> end, Collection<Mode<T, D>> modes) {
     addPathTrial(session, start.getDestination(), end.getOrigin(),
-        getLeapNode(start), getLeapNode(end), modeTypeGroup);
+        getLeapNode(start), getLeapNode(end), modes);
   }
 
   private void addPathTrial(SearchSession<T, D> session, T origin, T destination,
                             WeightedGraph<Port<T, D>, PathTrial<T, D>>.Node originNode,
                             WeightedGraph<Port<T, D>, PathTrial<T, D>>.Node destinationNode,
-                            ModeTypeGroup modeTypeGroup) {
+                            Collection<Mode<T, D>> modes) {
     // First, try to access a cached path
-    if (JourneyCommon.<T, D>getPathCache().contains(origin, destination, modeTypeGroup)) {
+    ModeTypeGroup modeTypes = ModeTypeGroup.from(modes);
+    System.out.println("Seeing whether " + origin + " -> " + destination + " is stored");
+    if (JourneyCommon.<T, D>getDataManager()
+        .getPathRecordManager()
+        .containsRecord(origin, destination, modeTypes)) {
+      System.out.println("Yes");
       addPathTrial(PathTrial.cached(session, origin, destination,
-              JourneyCommon.<T, D>getPathCache().get(origin, destination, modeTypeGroup)),
+              modes,
+              JourneyCommon.<T, D>getDataManager()
+                  .getPathRecordManager()
+                  .getPath(origin, destination, modeTypes, constructor)),
           originNode, destinationNode);
     } else {
-      addPathTrial(PathTrial.approximate(session, origin, destination), originNode, destinationNode);
+      System.out.println("No");
+      addPathTrial(PathTrial.approximate(session, origin, destination, modes), originNode, destinationNode);
     }
   }
 

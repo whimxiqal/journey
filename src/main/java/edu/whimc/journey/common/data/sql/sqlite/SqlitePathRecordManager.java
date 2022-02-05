@@ -22,40 +22,27 @@
  *
  */
 
-package edu.whimc.journey.common.data;
+package edu.whimc.journey.common.data.sql.sqlite;
 
+import edu.whimc.journey.common.data.sql.DataAdapter;
+import edu.whimc.journey.common.data.sql.SqlPathRecordManager;
 import edu.whimc.journey.common.navigation.Cell;
 
 /**
- * An interface for describing what is needed to store the state for this application.
+ * A SQLite manger for path records.
  *
- * @param <T> the location type
+ * @param <T> the cell type
  * @param <D> the domain type
  */
-public interface DataManager<T extends Cell<T, D>, D> {
+public class SqlitePathRecordManager<T extends Cell<T, D>, D> extends SqlPathRecordManager<T, D> {
 
   /**
-   * Get the implementation for the endpoint manager
-   * specifically for personal endpoints in the search algorithm.
+   * General constructor.
    *
-   * @return the personal endpoint manager
+   * @param address     the address to the database
+   * @param dataAdapter the adapter
    */
-  PersonalEndpointManager<T, D> getPersonalEndpointManager();
-
-  /**
-   * Get the implementation for the endpoint manager
-   * specifically for public endpoints in the search algorithm.
-   *
-   * @return the public endpoint manager
-   */
-  PublicEndpointManager<T, D> getPublicEndpointManager();
-
-  /**
-   * Get the implementation for the storage of
-   * {@link edu.whimc.journey.common.data.PathRecordManager.PathTrialRecord}s.
-   *
-   * @return the manager
-   */
-  PathRecordManager<T, D> getPathRecordManager();
-
+  public SqlitePathRecordManager(String address, DataAdapter<T, D> dataAdapter) {
+    super(new SqliteConnectionController(address), dataAdapter);
+  }
 }

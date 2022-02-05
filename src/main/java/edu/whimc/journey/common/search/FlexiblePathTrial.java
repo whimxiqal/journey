@@ -36,6 +36,7 @@ import edu.whimc.journey.common.search.event.StopPathSearchEvent;
 import edu.whimc.journey.common.search.event.VisitationSearchEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -44,11 +45,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An attempt to calculate a {@link Path} encapsulated into an object.
@@ -73,8 +76,11 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
   private final T origin;
   @Getter
   private final D domain;
-  private final Scorer<T, D> scorer;
+  @Getter
+  private final ScoringFunction<T, D> scoringFunction;
   private final Completer<T, D> completer;
+  @Getter
+  private final List<Mode<T, D>> modes = new LinkedList<>();
   @Getter
   private double length;
   @Getter
@@ -83,40 +89,45 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
   private ResultState state;
   @Getter
   private boolean fromCache;
+  private long startExecutionTime = -1;
 
   /**
    * General constructor.
    *
-   * @param session   the session requesting this path trial run
-   * @param origin    the origin
-   * @param scorer    the object to score various possibilities when stepping to new locations
-   *                  throughout the algorithm
-   * @param completer the object to determine whether the path algorithm is complete and
-   *                  the goal has been reached
+   * @param session         the session requesting this path trial run
+   * @param origin          the origin
+   * @param scoringFunction the object to score various possibilities when stepping to new locations
+   *                        throughout the algorithm
+   * @param completer       the object to determine whether the path algorithm is complete and
+   *                        the goal has been reached
    */
   public FlexiblePathTrial(SearchSession<T, D> session,
                            T origin,
-                           Scorer<T, D> scorer,
+                           Collection<Mode<T, D>> modes,
+                           ScoringFunction<T, D> scoringFunction,
                            Completer<T, D> completer) {
     this.session = session;
     this.origin = origin;
     this.domain = origin.getDomain();
-    this.scorer = scorer;
+    this.modes.addAll(modes);
+    this.scoringFunction = scoringFunction;
     this.completer = completer;
   }
 
-  FlexiblePathTrial(SearchSession<T, D> session,
-                    T origin,
-                    Scorer<T, D> scorer,
-                    Completer<T, D> completer,
-                    double length,
-                    Path<T, D> path,
-                    ResultState state,
-                    boolean fromCache) {
+  protected FlexiblePathTrial(SearchSession<T, D> session,
+                              T origin,
+                              Collection<Mode<T, D>> modes,
+                              ScoringFunction<T, D> scoringFunction,
+                              Completer<T, D> completer,
+                              double length,
+                              @Nullable Path<T, D> path,
+                              ResultState state,
+                              boolean fromCache) {
     this.session = session;
     this.origin = origin;
     this.domain = origin.getDomain();
-    this.scorer = scorer;
+    this.modes.addAll(modes);
+    this.scoringFunction = scoringFunction;
     this.completer = completer;
     this.length = length;
     this.path = path;
@@ -128,17 +139,24 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
     this.state = ResultState.STOPPED_FAILED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session,
+        this,
+        Collections.emptySet(),
+        System.currentTimeMillis() - startExecutionTime));
     return new TrialResult<>(Optional.empty(), true);
   }
 
   private FlexiblePathTrial.TrialResult<T, D> resultSucceed(double length,
-                                                            List<Step<T, D>> steps) {
+                                                            List<Step<T, D>> steps,
+                                                            Collection<Node<T, D>> calculationNodes) {
     this.state = ResultState.STOPPED_SUCCESSFUL;
     this.length = length;
     this.path = new Path<>(origin, new ArrayList<>(steps), length);
     this.fromCache = false;
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session,
+        this,
+        calculationNodes,
+        System.currentTimeMillis() - startExecutionTime));
     return new TrialResult<>(Optional.of(this.path), true);
   }
 
@@ -146,19 +164,21 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
     this.state = ResultState.STOPPED_CANCELED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session, this));
+    JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StopPathSearchEvent<>(session,
+        this,
+        Collections.emptySet(),
+        System.currentTimeMillis() - startExecutionTime));
     return new TrialResult<>(Optional.empty(), true);
   }
 
   /**
    * Attempt to calculate a path given some modes of transportation.
    *
-   * @param modes              the modes allowed for the caller
    * @param useCacheIfPossible whether the cache should be used for retrieving previous results
    * @return a result object
    */
   @NotNull
-  public TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCacheIfPossible) {
+  public TrialResult<T, D> attempt(boolean useCacheIfPossible) {
 
     // Return the saved states, but only if we want that result.
     //  If we don't want to use the cache, but this result is from the cache,
@@ -175,11 +195,13 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
 
     // Dispatch a starting event
     JourneyCommon.<T, D>getSearchEventDispatcher().dispatch(new StartPathSearchEvent<>(session, this));
+    startExecutionTime = System.currentTimeMillis();
 
-    Queue<Node<T, D>> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> -scorer.apply(node)));
+    Queue<Node<T, D>> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node ->
+        -scoringFunction.apply(node)));
     Map<T, Node<T, D>> visited = new HashMap<>();
 
-    Node<T, D> originNode = new Node<>(new Step<>(origin, ModeType.NONE),
+    Node<T, D> originNode = new Node<>(new Step<>(origin, 0, ModeType.NONE),
         null, 0);
     upcoming.add(originNode);
     visited.put(origin, originNode);
@@ -211,7 +233,7 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        return resultSucceed(length, steps);
+        return resultSucceed(length, steps, visited.values());
       }
 
       // Need to keep going
@@ -223,11 +245,16 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
             if (current.getScore() + option.getDistance() < that.getScore()) {
               that.setPrevious(current);
               that.setScore(current.getScore() + option.getDistance());
-              that.setData(new Step<>(that.getData().location(), mode.getType()));
+              that.setData(new Step<>(that.getData().location(),
+                  option.getDistance(),
+                  mode.getType()));
             }
           } else {
             // Not visited. Set up node, give it a score, and add it to the system
-            Node<T, D> nextNode = new Node<>(new Step<>(option.getLocation(), mode.getType()),
+            Node<T, D> nextNode = new Node<>(
+                new Step<>(option.getLocation(),
+                    option.getDistance(),
+                    mode.getType()),
                 current,
                 current.getScore() + option.getDistance());
             upcoming.add(nextNode);
@@ -241,19 +268,6 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
 
     // We've exhausted all possibilities. Fail.
     return resultFail();
-  }
-
-  /**
-   * An interface to represent the score of a given node.
-   * Of all the nodes that are currently in the running for the
-   * "next best node to try" throughout this algorithm,
-   * the one with the highest score is chosen next.
-   *
-   * @param <T> the location type
-   * @param <D> the domain type
-   */
-  @FunctionalInterface
-  public interface Scorer<T extends Cell<T, D>, D> extends Function<Node<T, D>, Double> {
   }
 
   /**
@@ -274,21 +288,41 @@ public class FlexiblePathTrial<T extends Cell<T, D>, D> implements Resulted {
    * @param <T> the location type
    * @param <D> the domain type
    */
-  public static final record TrialResult<T extends Cell<T, D>, D>(Optional<Path<T, D>> path,
-                                                                  boolean changedProblem) {
+  @Value
+  @Accessors(fluent = true)
+  public static final class TrialResult<T extends Cell<T, D>, D> {
+    Optional<Path<T, D>> path;
+    boolean changedProblem;
   }
 
-  static class Node<T extends Cell<T, D>, D> {
+  /**
+   * A single node representing a possible movement during traversal.
+   *
+   * @param <T> the cell type
+   * @param <D> the domain type
+   */
+  public static class Node<T extends Cell<T, D>, D> {
     @Getter
     @Setter
     private Step<T, D> data;
     @Getter
     @Setter
     private Node<T, D> previous;
+    /**
+     * The value to store how far away this node is from the original node.
+     * So, how far it is to traverse the space from the origin until this node is reached.
+     */
     @Getter
     @Setter
     private double score;
 
+    /**
+     * General constructor.
+     *
+     * @param data     the step
+     * @param previous the previous node that we came from to get here
+     * @param score    our score so far throughout the pathfinding algorithm
+     */
     public Node(@NotNull Step<T, D> data, Node<T, D> previous, double score) {
       this.data = data;
       this.previous = previous;

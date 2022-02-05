@@ -22,40 +22,23 @@
  *
  */
 
-package edu.whimc.journey.common.data;
+package edu.whimc.journey.spigot.util;
 
-import edu.whimc.journey.common.navigation.Cell;
+import edu.whimc.journey.common.util.MinecraftConversions;
+import edu.whimc.journey.spigot.navigation.LocationCell;
+import org.bukkit.World;
 
 /**
- * An interface for describing what is needed to store the state for this application.
- *
- * @param <T> the location type
- * @param <D> the domain type
+ * A spigot implementation of conversions for database storage.
  */
-public interface DataManager<T extends Cell<T, D>, D> {
+public class SpigotMinecraftConversions implements MinecraftConversions<LocationCell, World> {
+  @Override
+  public int getBiome(LocationCell cell) {
+    return cell.getBlock().getBiome().ordinal();
+  }
 
-  /**
-   * Get the implementation for the endpoint manager
-   * specifically for personal endpoints in the search algorithm.
-   *
-   * @return the personal endpoint manager
-   */
-  PersonalEndpointManager<T, D> getPersonalEndpointManager();
-
-  /**
-   * Get the implementation for the endpoint manager
-   * specifically for public endpoints in the search algorithm.
-   *
-   * @return the public endpoint manager
-   */
-  PublicEndpointManager<T, D> getPublicEndpointManager();
-
-  /**
-   * Get the implementation for the storage of
-   * {@link edu.whimc.journey.common.data.PathRecordManager.PathTrialRecord}s.
-   *
-   * @return the manager
-   */
-  PathRecordManager<T, D> getPathRecordManager();
-
+  @Override
+  public int getDimension(World domain) {
+    return domain.getEnvironment().ordinal();
+  }
 }

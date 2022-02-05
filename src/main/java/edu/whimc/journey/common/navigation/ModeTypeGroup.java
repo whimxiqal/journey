@@ -27,6 +27,7 @@ package edu.whimc.journey.common.navigation;
 import com.google.common.collect.Sets;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
@@ -120,6 +121,15 @@ public class ModeTypeGroup implements Serializable {
    */
   public boolean containsAll(@NotNull ModeTypeGroup modeTypeGroup) {
     return this.modeTypes.containsAll(modeTypeGroup.modeTypes);
+  }
+
+  /**
+   * Get a copy of the internal set of mode types.
+   *
+   * @return the mode types
+   */
+  public Set<ModeType> getAll() {
+    return new HashSet<>(modeTypes);
   }
 
   @Override

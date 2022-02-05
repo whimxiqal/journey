@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'edu.whimc'
-version = '0.1.0-beta'
+version = '0.1.1-beta'
 
 repositories {
     mavenCentral()
@@ -26,8 +26,8 @@ repositories {
 }
 
 compileJava {
-    sourceCompatibility = 16
-    targetCompatibility = 16
+    sourceCompatibility = 8
+    targetCompatibility = 8
 }
 
 test {
@@ -44,6 +44,7 @@ dependencies {
 
     // Annotations
     implementation 'org.jetbrains:annotations:22.0.0'
+    testImplementation 'org.jetbrains:annotations:22.0.0'
 
     // Other plugins
     implementation 'com.github.PikaMug:Quests:4.0.7'
@@ -51,8 +52,16 @@ dependencies {
 
     // Lombok
     implementation 'org.projectlombok:lombok:1.18.22'
+    testImplementation('org.projectlombok:lombok:1.18.22')
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    implementation fileTree(dir: 'libs', include: '*.jar')
+
+    implementation 'javax.visrec:visrec-api:1.0.5'
+
+    implementation 'com.opencsv:opencsv:5.5.2'
+
 }
 
 processResources {

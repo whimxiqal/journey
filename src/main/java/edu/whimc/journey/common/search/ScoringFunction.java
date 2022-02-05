@@ -22,40 +22,48 @@
  *
  */
 
-package edu.whimc.journey.common.data;
+package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.navigation.Cell;
+import java.util.function.Function;
+import lombok.Value;
 
 /**
- * An interface for describing what is needed to store the state for this application.
+ * An interface to represent the score of a given node.
+ * Of all the nodes that are currently in the running for the
+ * "next best node to try" throughout this algorithm,
+ * the one with the highest score is chosen next.
  *
  * @param <T> the location type
  * @param <D> the domain type
  */
-public interface DataManager<T extends Cell<T, D>, D> {
+@Value
+public class ScoringFunction<T extends Cell<T, D>, D>
+    implements Function<FlexiblePathTrial.Node<T, D>, Double> {
+  Function<FlexiblePathTrial.Node<T, D>, Double> function;
+  Type type;
+
+  @Override
+  public Double apply(FlexiblePathTrial.Node<T, D> node) {
+    return function.apply(node);
+  }
 
   /**
-   * Get the implementation for the endpoint manager
-   * specifically for personal endpoints in the search algorithm.
+   * Get the type.
    *
-   * @return the personal endpoint manager
+   * @return the type
    */
-  PersonalEndpointManager<T, D> getPersonalEndpointManager();
+  public Type getType() {
+    return type;
+  }
 
   /**
-   * Get the implementation for the endpoint manager
-   * specifically for public endpoints in the search algorithm.
-   *
-   * @return the public endpoint manager
+   * A type of scoring function.
    */
-  PublicEndpointManager<T, D> getPublicEndpointManager();
-
-  /**
-   * Get the implementation for the storage of
-   * {@link edu.whimc.journey.common.data.PathRecordManager.PathTrialRecord}s.
-   *
-   * @return the manager
-   */
-  PathRecordManager<T, D> getPathRecordManager();
+  public enum Type {
+    EUCLIDEAN_DISTANCE,
+    HEIGHT,
+    OTHER
+  }
 
 }

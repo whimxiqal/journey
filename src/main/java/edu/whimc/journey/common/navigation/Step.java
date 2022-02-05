@@ -26,6 +26,8 @@ package edu.whimc.journey.common.navigation;
 
 import java.io.Serializable;
 import lombok.NonNull;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,8 +36,13 @@ import org.jetbrains.annotations.NotNull;
  * @param <T> The locatable type
  * @param <D> The domain type
  */
-public record Step<T extends Cell<T, D>, D>(@NonNull T location,
-                                            @NonNull ModeType modeType) implements Serializable, Moded {
+@Value
+@Accessors(fluent = true)
+public class Step<T extends Cell<T, D>, D> implements Serializable, Moded {
+  @NonNull T location;
+  double length;
+  @NonNull ModeType modeType;
+
   @Override
   public @NotNull ModeType getModeType() {
     return modeType;

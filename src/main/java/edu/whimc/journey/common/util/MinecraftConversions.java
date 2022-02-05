@@ -22,40 +22,35 @@
  *
  */
 
-package edu.whimc.journey.common.data;
+package edu.whimc.journey.common.util;
 
 import edu.whimc.journey.common.navigation.Cell;
 
 /**
- * An interface for describing what is needed to store the state for this application.
+ * A template to convert various types to values understood by a database.
  *
- * @param <T> the location type
+ * @param <T> the cell type
  * @param <D> the domain type
+ * @deprecated This was mostly useful when trying to test the waters with some
+ *             deep net work for trying to calculate things using machine learning principles.
+ *             This is likely no longer needed.
  */
-public interface DataManager<T extends Cell<T, D>, D> {
+public interface MinecraftConversions<T extends Cell<T, D>, D> {
 
   /**
-   * Get the implementation for the endpoint manager
-   * specifically for personal endpoints in the search algorithm.
+   * Get the ordinal type for a Minecraft biome.
    *
-   * @return the personal endpoint manager
+   * @param cell the cell
+   * @return the representation for a biome
    */
-  PersonalEndpointManager<T, D> getPersonalEndpointManager();
+  int getBiome(T cell);
 
   /**
-   * Get the implementation for the endpoint manager
-   * specifically for public endpoints in the search algorithm.
+   * Get the ordinal type for a Minecraft dimension.
    *
-   * @return the public endpoint manager
+   * @param domain the domain
+   * @return the representation for a dimension
    */
-  PublicEndpointManager<T, D> getPublicEndpointManager();
-
-  /**
-   * Get the implementation for the storage of
-   * {@link edu.whimc.journey.common.data.PathRecordManager.PathTrialRecord}s.
-   *
-   * @return the manager
-   */
-  PathRecordManager<T, D> getPathRecordManager();
+  int getDimension(D domain);
 
 }

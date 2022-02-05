@@ -58,7 +58,7 @@ public class JourneyAdminInvalidateCommand extends CommandNode {
                                   @NotNull String label,
                                   @NotNull String[] args,
                                   @NotNull Map<String, String> flags) {
-    JourneyCommon.getPathCache().clear();
+    JourneyCommon.getDataManager().getPathRecordManager().clear();
     sender.spigot().sendMessage(Format.success("Cleared cache."));
     return true;
   }

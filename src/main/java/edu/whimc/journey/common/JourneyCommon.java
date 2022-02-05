@@ -24,11 +24,12 @@
 
 package edu.whimc.journey.common;
 
-import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.config.ConfigManager;
+import edu.whimc.journey.common.data.DataManager;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.event.SearchDispatcher;
 import edu.whimc.journey.common.util.LoggerCommon;
+import edu.whimc.journey.common.util.MinecraftConversions;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,18 +39,17 @@ import lombok.Setter;
  */
 public final class JourneyCommon {
 
+
+  // Database
+  private static DataManager<?, ?> dataManager;
+
   private static SearchDispatcher<?, ?, ?> searchEventDispatcher;
   @Getter
   @Setter
   private static ConfigManager configManager;
   private static LoggerCommon logger;
-  /**
-   * A cache of all previously calculated paths.
-   */
-  private static PathCache<?, ?> pathCache;
 
-  private JourneyCommon() {
-  }
+  private static MinecraftConversions<?, ?> conversions;
 
   /**
    * Get the event dispatcher used in a {@link edu.whimc.journey.common.search.SearchSession}.
@@ -89,22 +89,22 @@ public final class JourneyCommon {
    * @return the cache
    */
   @SuppressWarnings("unchecked")
-  public static <T extends Cell<T, D>, D> PathCache<T, D> getPathCache() {
-    if (pathCache == null) {
+  public static <T extends Cell<T, D>, D> DataManager<T, D> getDataManager() {
+    if (dataManager == null) {
       throw new IllegalStateException("No path cache! Did you forget to initialize it?");
     }
-    return (PathCache<T, D>) pathCache;
+    return (DataManager<T, D>) dataManager;
   }
 
   /**
    * Set the path cache.
    *
-   * @param pathCache the path cache
-   * @param <T>       the location type
-   * @param <D>       the domain type
+   * @param dataManager the path manager
+   * @param <T>         the location type
+   * @param <D>         the domain type
    */
-  public static <T extends Cell<T, D>, D> void setPathCache(PathCache<T, D> pathCache) {
-    JourneyCommon.pathCache = pathCache;
+  public static <T extends Cell<T, D>, D> void setDataManager(DataManager<T, D> dataManager) {
+    JourneyCommon.dataManager = dataManager;
   }
 
   /**
@@ -123,6 +123,32 @@ public final class JourneyCommon {
    */
   public static void setLogger(LoggerCommon logger) {
     JourneyCommon.logger = logger;
+  }
+
+  /**
+   * Get the {@link MinecraftConversions} object.
+   *
+   * @param <T> the cell type
+   * @param <D> the domain type
+   * @return the conversions for a specific implementation of a modding platform
+   */
+  @SuppressWarnings("unchecked")
+  public static <T extends Cell<T, D>, D> MinecraftConversions<T, D> getConversions() {
+    if (conversions == null) {
+      throw new IllegalStateException("No Minecraft conversions! Did you forget to initialize it?");
+    }
+    return (MinecraftConversions<T, D>) conversions;
+  }
+
+  /**
+   * Set the path cache.
+   *
+   * @param conversions the path cache
+   * @param <T>         the location type
+   * @param <D>         the domain type
+   */
+  public static <T extends Cell<T, D>, D> void setConversions(MinecraftConversions<T, D> conversions) {
+    JourneyCommon.conversions = conversions;
   }
 
 }

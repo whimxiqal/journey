@@ -22,40 +22,33 @@
  *
  */
 
-package edu.whimc.journey.common.data;
+package edu.whimc.journey.common.data.sql;
 
 import edu.whimc.journey.common.navigation.Cell;
+import lombok.Getter;
 
 /**
- * An interface for describing what is needed to store the state for this application.
+ * A general SQL manager for storage purposes.
  *
- * @param <T> the location type
+ * @param <T> the cell type
  * @param <D> the domain type
  */
-public interface DataManager<T extends Cell<T, D>, D> {
+public abstract class SqlManager<T extends Cell<T, D>, D> {
+
+  @Getter
+  private final SqlConnectionController connectionController;
+  @Getter
+  private final DataAdapter<T, D> dataAdapter;
 
   /**
-   * Get the implementation for the endpoint manager
-   * specifically for personal endpoints in the search algorithm.
+   * General constructor.
    *
-   * @return the personal endpoint manager
+   * @param connectionController a connection controller
+   * @param dataAdapter          an adapter
    */
-  PersonalEndpointManager<T, D> getPersonalEndpointManager();
-
-  /**
-   * Get the implementation for the endpoint manager
-   * specifically for public endpoints in the search algorithm.
-   *
-   * @return the public endpoint manager
-   */
-  PublicEndpointManager<T, D> getPublicEndpointManager();
-
-  /**
-   * Get the implementation for the storage of
-   * {@link edu.whimc.journey.common.data.PathRecordManager.PathTrialRecord}s.
-   *
-   * @return the manager
-   */
-  PathRecordManager<T, D> getPathRecordManager();
+  public SqlManager(SqlConnectionController connectionController, DataAdapter<T, D> dataAdapter) {
+    this.connectionController = connectionController;
+    this.dataAdapter = dataAdapter;
+  }
 
 }

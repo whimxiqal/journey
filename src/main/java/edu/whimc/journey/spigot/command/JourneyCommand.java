@@ -24,12 +24,14 @@
 
 package edu.whimc.journey.spigot.command;
 
+import edu.whimc.journey.common.JourneyCommon;
 import edu.whimc.journey.common.data.DataAccessException;
 import edu.whimc.journey.common.tools.BufferedFunction;
 import edu.whimc.journey.common.tools.BufferedSupplier;
 import edu.whimc.journey.common.util.Extra;
 import edu.whimc.journey.spigot.JourneySpigot;
 import edu.whimc.journey.spigot.command.common.CommandNode;
+import edu.whimc.journey.spigot.navigation.LocationCell;
 import edu.whimc.journey.spigot.util.Format;
 import edu.whimc.journey.spigot.util.Permissions;
 import java.util.LinkedList;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -77,7 +80,7 @@ public class JourneyCommand extends CommandNode {
   public static BufferedSupplier<List<String>> bufferedPublicEndpointSupplier() {
     return new BufferedSupplier<>(() -> {
       try {
-        return JourneySpigot.getInstance().getDataManager()
+        return JourneyCommon.<LocationCell, World>getDataManager()
             .getPublicEndpointManager()
             .getPublicEndpoints().keySet()
             .stream().map(Extra::quoteStringWithSpaces).collect(Collectors.toList());
@@ -97,7 +100,7 @@ public class JourneyCommand extends CommandNode {
   public static BufferedFunction<Player, List<String>> bufferedPersonalEndpointFunction() {
     return new BufferedFunction<>(player -> {
       try {
-        return JourneySpigot.getInstance().getDataManager()
+        return JourneyCommon.<LocationCell, World>getDataManager()
             .getPersonalEndpointManager()
             .getPersonalEndpoints(player.getUniqueId()).keySet()
             .stream().map(Extra::quoteStringWithSpaces).collect(Collectors.toList());

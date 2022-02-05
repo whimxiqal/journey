@@ -100,4 +100,35 @@ public abstract class Cell<T extends Cell<T, D>, D> implements Locatable<T, D>, 
     return domain;
   }
 
+  /**
+   * Get the id of the domain.
+   *
+   * @return the domain id
+   */
+  public final String getDomainId() {
+    return domainId;
+  }
+
+  /**
+   * An object that can create a type of cell.
+   *
+   * @param <T> the type of cell
+   * @param <D> the type of domain
+   */
+  @FunctionalInterface
+  public interface CellConstructor<T extends Cell<T, D>, D> {
+
+    /**
+     * Create a new cell.
+     *
+     * @param x        the x location
+     * @param y        the y location
+     * @param z        the z location
+     * @param domainId the id of the domain
+     * @return the new cell
+     */
+    T construct(int x, int y, int z, String domainId);
+
+  }
+
 }

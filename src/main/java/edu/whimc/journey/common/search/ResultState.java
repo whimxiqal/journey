@@ -29,14 +29,20 @@ package edu.whimc.journey.common.search;
  */
 public enum ResultState {
 
-  IDLE,
-  RUNNING,
-  RUNNING_SUCCESSFUL,
-  CANCELING_FAILED,
-  CANCELING_SUCCESSFUL,
-  STOPPED_FAILED,
-  STOPPED_SUCCESSFUL,
-  STOPPED_CANCELED;
+  IDLE("idle"),
+  RUNNING("running"),
+  RUNNING_SUCCESSFUL("running (successful)"),
+  CANCELING_FAILED("canceling (failed)"),
+  CANCELING_SUCCESSFUL("canceling (successful)"),
+  STOPPED_FAILED("stopped (failed)"),
+  STOPPED_SUCCESSFUL("stopped (successful)"),
+  STOPPED_CANCELED("stopped (canceled)");
+
+  final String message;
+
+  ResultState(String message) {
+    this.message = message;
+  }
 
   /**
    * Determine if the state is implying the process is still operating (running).
@@ -98,15 +104,6 @@ public enum ResultState {
 
   @Override
   public String toString() {
-    return switch (this) {
-      case IDLE -> "idle";
-      case RUNNING -> "running";
-      case RUNNING_SUCCESSFUL -> "running (successful)";
-      case CANCELING_FAILED -> "canceling (failed)";
-      case CANCELING_SUCCESSFUL -> "canceling (successful)";
-      case STOPPED_FAILED -> "stopped (failed)";
-      case STOPPED_SUCCESSFUL -> "stopped (successful)";
-      case STOPPED_CANCELED -> "stopped (canceled)";
-    };
+    return this.message;
   }
 }

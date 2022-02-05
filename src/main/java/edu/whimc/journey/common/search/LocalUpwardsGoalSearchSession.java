@@ -62,11 +62,12 @@ public abstract class LocalUpwardsGoalSearchSession<T extends Cell<T, D>, D> ext
     FlexiblePathTrial<T, D> pathTrial = new FlexiblePathTrial<>(
         this,
         origin,
-        node -> (double) node.getData().location().getY(),
+        this.modes,
+        new ScoringFunction<>(node -> (double) node.getData().location().getY(), ScoringFunction.Type.HEIGHT),
         node -> reachesGoal(node.getData().location())
     );
 
-    PathTrial.TrialResult<T, D> result = pathTrial.attempt(this.modes, false);
+    PathTrial.TrialResult<T, D> result = pathTrial.attempt(false);
 
     if (result.path().isPresent()) {
       AlternatingList.Builder<Port<T, D>, Path<T, D>, Path<T, D>> stages

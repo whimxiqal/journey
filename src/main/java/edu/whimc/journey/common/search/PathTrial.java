@@ -24,15 +24,11 @@
 
 package edu.whimc.journey.common.search;
 
-import edu.whimc.journey.common.JourneyCommon;
-import edu.whimc.journey.common.cache.PathCache;
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Mode;
-import edu.whimc.journey.common.navigation.ModeTypeGroup;
 import edu.whimc.journey.common.navigation.Path;
 import java.util.Collection;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * An extension of {@link FlexiblePathTrial} where the goal of the trial is to find a path to
@@ -50,12 +46,13 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
   private PathTrial(SearchSession<T, D> session,
                     T origin,
                     T destination,
+                    Collection<Mode<T, D>> modes,
                     double length,
                     Path<T, D> path,
                     ResultState state,
                     boolean fromCache) {
-    super(session, origin,
-        node -> -node.getData().location().distanceToSquared(destination),
+    super(session, origin, modes,
+        scoringFunction(destination),
         node -> node.getData().location().distanceToSquared(destination)
             <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
         length,
@@ -65,6 +62,11 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
     this.destination = destination;
   }
 
+  private static <T extends Cell<T, D>, D> ScoringFunction<T, D> scoringFunction(T destination) {
+    return new ScoringFunction<>(node -> -node.getData().location().distanceToSquared(destination),
+        ScoringFunction.Type.EUCLIDEAN_DISTANCE);
+  }
+
   /**
    * Get a path trial that is already determined to be successful.
    * Any attempts will result in success.
@@ -72,6 +74,7 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
    * @param session     the session
    * @param origin      the origin of the path
    * @param destination the destination of the path
+   * @param modes       the types of modes used
    * @param path        the path
    * @param <T>         the location type
    * @param <D>         the domain type
@@ -79,8 +82,10 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
    */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> successful(SearchSession<T, D> session,
                                                                      T origin, T destination,
+                                                                     Collection<Mode<T, D>> modes,
                                                                      Path<T, D> path) {
     return new PathTrial<>(session, origin, destination,
+        modes,
         path.getLength(), path,
         ResultState.STOPPED_SUCCESSFUL, false);
   }
@@ -97,8 +102,10 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
    * @return the path trial
    */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> failed(SearchSession<T, D> session,
-                                                                 T origin, T destination) {
+                                                                 T origin, T destination,
+                                                                 Collection<Mode<T, D>> modes) {
     return new PathTrial<>(session, origin, destination,
+        modes,
         Double.MAX_VALUE, null,
         ResultState.STOPPED_FAILED, false);
   }
@@ -117,8 +124,10 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
    * @return the path trial
    */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> approximate(SearchSession<T, D> session,
-                                                                      T origin, T destination) {
+                                                                      T origin, T destination,
+                                                                      Collection<Mode<T, D>> modes) {
     return new PathTrial<>(session, origin, destination,
+        modes,
         origin.distanceTo(destination), null,
         ResultState.IDLE, false);
   }
@@ -136,31 +145,13 @@ public class PathTrial<T extends Cell<T, D>, D> extends FlexiblePathTrial<T, D> 
    */
   public static <T extends Cell<T, D>, D> PathTrial<T, D> cached(SearchSession<T, D> session,
                                                                  T origin, T destination,
+                                                                 Collection<Mode<T, D>> modes,
                                                                  Path<T, D> path) {
     return new PathTrial<>(session, origin, destination,
+        modes,
         path == null ? origin.distanceTo(destination) : path.getLength(), path,
         path == null ? ResultState.STOPPED_FAILED : ResultState.STOPPED_SUCCESSFUL,
         true);
   }
 
-  @Override
-  public @NotNull TrialResult<T, D> attempt(Collection<Mode<T, D>> modes, boolean useCacheIfPossible) {
-    TrialResult<T, D> result = super.attempt(modes, useCacheIfPossible);
-
-    // We might need to cache this result
-    switch (this.getState()) {
-      case STOPPED_SUCCESSFUL -> JourneyCommon.<T, D>getPathCache().put(this.getOrigin(),
-          this.destination,
-          ModeTypeGroup.from(modes),
-          PathCache.CachedPath.of(result.path().orElseThrow(() ->
-              new RuntimeException("A Path to Destination Trial has a successful state "
-                  + "but returned an empty path Optional."))));
-      case STOPPED_FAILED -> JourneyCommon.<T, D>getPathCache().put(this.getOrigin(),
-          this.destination, ModeTypeGroup.from(modes), PathCache.CachedPath.empty());
-      default -> {
-        /* Do nothing if its canceled */
-      }
-    }
-    return result;
-  }
 }

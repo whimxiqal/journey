@@ -26,12 +26,17 @@ package edu.whimc.journey.common.search;
 
 import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.navigation.Mode;
+import edu.whimc.journey.common.navigation.ModeType;
 import edu.whimc.journey.common.navigation.Port;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * A session to handle a pathfinding search.
@@ -113,7 +118,9 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
    * @return the ports
    */
   public final Collection<Port<T, D>> ports() {
-    return List.copyOf(ports);
+    List<Port<T, D>> copy = new ArrayList<>(ports.size());
+    Collections.copy(copy, ports);
+    return copy;
   }
 
   /**
@@ -122,7 +129,18 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
    * @return the modes
    */
   public final Collection<Mode<T, D>> modes() {
-    return List.copyOf(modes);
+    List<Mode<T, D>> copy = new ArrayList<>(modes.size());
+    Collections.copy(copy, modes);
+    return copy;
+  }
+
+  /**
+   * Get a set of all mode types that are registered on this session.
+   *
+   * @return the mode types
+   */
+  public final Set<ModeType> modeTypes() {
+    return modes.stream().map(Mode::getType).collect(Collectors.toSet());
   }
 
   /**

@@ -33,6 +33,7 @@ import edu.whimc.journey.spigot.navigation.mode.SwimMode;
 import edu.whimc.journey.spigot.navigation.mode.WalkMode;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -67,7 +68,8 @@ public class PlayerDestinationGoalSearchSession
                                             boolean nofly,
                                             boolean nodoor,
                                             int algorithmStepDelay) {
-    super(player.getUniqueId(), Caller.PLAYER, origin, destination);
+    super(player.getUniqueId(), Caller.PLAYER, origin, destination,
+        (x, y, z, world) -> new LocationCell(x, y, z, UUID.fromString(world)));
     this.sessionState = new PlayerSessionState();
     this.animationManager = new AnimationManager(this);
     animationManager.setAnimating(animate);

@@ -28,6 +28,7 @@ import edu.whimc.journey.common.navigation.Cell;
 import edu.whimc.journey.common.search.FlexiblePathTrial;
 import edu.whimc.journey.common.search.PathTrial;
 import edu.whimc.journey.common.search.SearchSession;
+import java.util.Collection;
 
 /**
  * An event dispatched when a {@link PathTrial} stops searching
@@ -41,6 +42,8 @@ import edu.whimc.journey.common.search.SearchSession;
 public class StopPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T, D> {
 
   private final FlexiblePathTrial<T, D> pathTrial;
+  private final Collection<FlexiblePathTrial.Node<T, D>> calculationNodes;
+  private final long executionTime;
 
   /**
    * General constructor.
@@ -48,9 +51,14 @@ public class StopPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T,
    * @param session   the session
    * @param pathTrial the path trial causing this event
    */
-  public StopPathSearchEvent(SearchSession<T, D> session, FlexiblePathTrial<T, D> pathTrial) {
+  public StopPathSearchEvent(SearchSession<T, D> session,
+                             FlexiblePathTrial<T, D> pathTrial,
+                             Collection<FlexiblePathTrial.Node<T, D>> calculationNodes,
+                             long executionTime) {
     super(session);
     this.pathTrial = pathTrial;
+    this.calculationNodes = calculationNodes;
+    this.executionTime = executionTime;
   }
 
   /**
@@ -60,6 +68,24 @@ public class StopPathSearchEvent<T extends Cell<T, D>, D> extends SearchEvent<T,
    */
   public FlexiblePathTrial<T, D> getPathTrial() {
     return pathTrial;
+  }
+
+  /**
+   * Get all the nodes that were created in the process of calculating the path trial.
+   *
+   * @return the nodes of the path trial
+   */
+  public Collection<FlexiblePathTrial.Node<T, D>> getCalculationNodes() {
+    return calculationNodes;
+  }
+
+  /**
+   * Get the total time it took for the process to finish executing, in milliseconds.
+   *
+   * @return the execution time
+   */
+  public long getExecutionTime() {
+    return executionTime;
   }
 
   @Override

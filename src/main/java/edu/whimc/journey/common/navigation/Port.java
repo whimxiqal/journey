@@ -52,7 +52,7 @@ public class Port<T extends Cell<T, D>, D> extends Path<T, D> implements Moded {
    */
   public Port(@NotNull T origin, @NotNull T destination,
               @NotNull ModeType modeType, int length) {
-    super(origin, Lists.newArrayList(new Step<>(destination, modeType)), length);
+    super(origin, Lists.newArrayList(new Step<>(destination, 0, modeType)), length);
     this.modeType = modeType;
   }
 
