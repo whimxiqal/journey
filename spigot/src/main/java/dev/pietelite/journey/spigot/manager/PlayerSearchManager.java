@@ -25,7 +25,7 @@ package dev.pietelite.journey.spigot.manager;
 
 import dev.pietelite.journey.common.manager.SearchManager;
 import dev.pietelite.journey.common.search.SearchSession;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.navigation.PlayerJourney;
 import org.bukkit.World;
 

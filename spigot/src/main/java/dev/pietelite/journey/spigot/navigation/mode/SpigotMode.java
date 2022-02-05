@@ -25,7 +25,7 @@ package dev.pietelite.journey.spigot.navigation.mode;
 
 import dev.pietelite.journey.common.navigation.Mode;
 import dev.pietelite.journey.common.search.SearchSession;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.util.SpigotUtil;
 import java.util.Set;
 import org.bukkit.Material;
@@ -50,6 +50,8 @@ public abstract class SpigotMode extends Mode<LocationCell, World> {
     this.forcePassable = forcePassable;
   }
 
+  // TODO move all of these methods into a static file
+  //  and possibly get it from Baritone
   protected boolean isVerticallyPassable(Block block) {
     return SpigotUtil.isVerticallyPassable(block, forcePassable);
   }

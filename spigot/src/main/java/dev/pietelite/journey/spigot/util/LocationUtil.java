@@ -23,7 +23,7 @@
 
 package dev.pietelite.journey.spigot.util;
 
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 
 /**
  * A utility class to calculate properties about locations in a grid space.

@@ -60,6 +60,9 @@ public abstract class DestinationGoalSearchSession<T extends Cell<T, D>, D> exte
    *
    * @param callerId   the identifier for the caller
    * @param callerType the type of caller
+   * @param origin origination location
+   * @param destination destination location
+   * @param constructor a constructor for the cell type
    */
   public DestinationGoalSearchSession(UUID callerId, Caller callerType,
                                       T origin, T destination,

@@ -23,7 +23,7 @@
 
 package dev.pietelite.journey.spigot.util;
 
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;

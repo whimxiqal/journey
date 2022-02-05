@@ -21,25 +21,42 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package dev.pietelite.journey.spigot.data.sql.sqlite;
+package dev.pietelite.journey.spigot.api.search.event;
 
-import dev.pietelite.journey.common.data.sql.sqlite.SqlitePathRecordManager;
+import dev.pietelite.journey.common.search.event.VisitationSearchEvent;
 import dev.pietelite.journey.spigot.api.navigation.LocationCell;
-import dev.pietelite.journey.spigot.data.SpigotDataAdapter;
 import org.bukkit.World;
+import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Path record manager implemented for Spigot and SQLite.
+ * The Spigot implementation for the {@link VisitationSearchEvent}.
  */
-public class SpigotSqlitePathRecordManager extends SqlitePathRecordManager<LocationCell, World> {
+public class SpigotVisitationSearchEvent extends
+    SpigotSearchEvent<VisitationSearchEvent<LocationCell, World>> {
+  private static final HandlerList handlers = new HandlerList();
 
   /**
    * General constructor.
    *
-   * @param address the address to the database
+   * @param event the common event
    */
-  public SpigotSqlitePathRecordManager(String address) {
-    super(address, new SpigotDataAdapter());
+  public SpigotVisitationSearchEvent(VisitationSearchEvent<LocationCell, World> event) {
+    super(event);
   }
 
+  /**
+   * Get handler list. Spigot standard.
+   *
+   * @return the handler list
+   */
+  public static HandlerList getHandlerList() {
+    return handlers;
+  }
+
+  @Override
+  @NotNull
+  public HandlerList getHandlers() {
+    return handlers;
+  }
 }

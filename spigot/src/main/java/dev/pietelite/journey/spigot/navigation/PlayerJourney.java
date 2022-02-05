@@ -29,6 +29,8 @@ import dev.pietelite.journey.common.navigation.Path;
 import dev.pietelite.journey.common.navigation.Step;
 import dev.pietelite.journey.common.search.SearchSession;
 import dev.pietelite.journey.spigot.JourneySpigot;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.SpigotJourney;
 import dev.pietelite.journey.spigot.music.Song;
 import dev.pietelite.journey.spigot.util.Format;
 import java.util.HashSet;

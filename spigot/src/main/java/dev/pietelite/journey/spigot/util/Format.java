@@ -23,7 +23,7 @@
 
 package dev.pietelite.journey.spigot.util;
 
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import java.util.Arrays;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;

@@ -24,8 +24,8 @@
 package dev.pietelite.journey.spigot.data.sql.mysql;
 
 import dev.pietelite.journey.common.data.sql.mysql.MySqlPublicEndpointManager;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.data.SpigotDataAdapter;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
 import org.bukkit.World;
 
 /**

@@ -21,18 +21,18 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package dev.pietelite.journey.spigot.search.event;
+package dev.pietelite.journey.spigot.api.search.event;
 
-import dev.pietelite.journey.common.search.event.StepSearchEvent;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.common.search.event.StopSearchEvent;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The Spigot implementation for the {@link StepSearchEvent}.
+ * The Spigot implementation for the {@link StopSearchEvent}.
  */
-public class SpigotStepSearchEvent extends SpigotSearchEvent<StepSearchEvent<LocationCell, World>> {
+public class SpigotStopSearchEvent extends SpigotSearchEvent<StopSearchEvent<LocationCell, World>> {
   private static final HandlerList handlers = new HandlerList();
 
   /**
@@ -40,7 +40,7 @@ public class SpigotStepSearchEvent extends SpigotSearchEvent<StepSearchEvent<Loc
    *
    * @param event the common event
    */
-  public SpigotStepSearchEvent(StepSearchEvent<LocationCell, World> event) {
+  public SpigotStopSearchEvent(StopSearchEvent<LocationCell, World> event) {
     super(event);
   }
 

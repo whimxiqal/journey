@@ -21,42 +21,40 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package dev.pietelite.journey.spigot.search.event;
+package dev.pietelite.journey.spigot.api.search.event;
 
-import dev.pietelite.journey.common.search.event.VisitationSearchEvent;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.common.search.event.SearchEvent;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import org.bukkit.World;
-import org.bukkit.event.HandlerList;
-import org.jetbrains.annotations.NotNull;
+import org.bukkit.event.Event;
 
 /**
- * The Spigot implementation for the {@link VisitationSearchEvent}.
+ * The general Spigot implementation of a {@link SearchEvent}.
+ *
+ * @param <S> the type of common event that an instantiation of this class
+ *            would encapsulate
  */
-public class SpigotVisitationSearchEvent extends
-    SpigotSearchEvent<VisitationSearchEvent<LocationCell, World>> {
-  private static final HandlerList handlers = new HandlerList();
+public abstract class SpigotSearchEvent<S extends SearchEvent<LocationCell, World>> extends Event {
+
+  private final S searchEvent;
 
   /**
    * General constructor.
    *
    * @param event the common event
    */
-  public SpigotVisitationSearchEvent(VisitationSearchEvent<LocationCell, World> event) {
-    super(event);
+  public SpigotSearchEvent(S event) {
+    super(true);
+    this.searchEvent = event;
   }
 
   /**
-   * Get handler list. Spigot standard.
+   * Get the common search event for this event.
    *
-   * @return the handler list
+   * @return the common event
    */
-  public static HandlerList getHandlerList() {
-    return handlers;
+  public S getSearchEvent() {
+    return searchEvent;
   }
 
-  @Override
-  @NotNull
-  public HandlerList getHandlers() {
-    return handlers;
-  }
 }

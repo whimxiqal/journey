@@ -24,7 +24,7 @@
 package dev.pietelite.journey.spigot.data;
 
 import dev.pietelite.journey.common.data.sql.DataAdapter;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import java.util.UUID;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;

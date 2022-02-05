@@ -24,7 +24,7 @@
 package dev.pietelite.journey.spigot.manager;
 
 import dev.pietelite.journey.spigot.JourneySpigot;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.navigation.NetherPort;
 import dev.pietelite.journey.spigot.util.Format;
 import dev.pietelite.journey.spigot.util.NetherUtil;

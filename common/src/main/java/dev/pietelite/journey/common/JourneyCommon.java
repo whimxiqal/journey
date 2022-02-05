@@ -39,7 +39,6 @@ import lombok.Setter;
  */
 public final class JourneyCommon {
 
-
   // Database
   private static DataManager<?, ?> dataManager;
 

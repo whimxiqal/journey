@@ -25,7 +25,7 @@ package dev.pietelite.journey.spigot.search;
 
 import dev.pietelite.journey.common.search.LocalUpwardsGoalSearchSession;
 import dev.pietelite.journey.common.search.SearchSession;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.navigation.mode.ClimbMode;
 import dev.pietelite.journey.spigot.navigation.mode.DoorMode;
 import dev.pietelite.journey.spigot.navigation.mode.FlyMode;

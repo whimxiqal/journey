@@ -28,7 +28,7 @@ import dev.pietelite.journey.common.search.LocalUpwardsGoalSearchSession;
 import dev.pietelite.journey.common.search.ResultState;
 import dev.pietelite.journey.common.search.SearchSession;
 import dev.pietelite.journey.spigot.JourneySpigot;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.util.Format;
 import dev.pietelite.journey.spigot.util.TimeUtil;
 import net.md_5.bungee.api.chat.ComponentBuilder;

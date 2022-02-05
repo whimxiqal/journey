@@ -25,10 +25,10 @@ package dev.pietelite.journey.spigot.command.to;
 
 import dev.pietelite.journey.common.config.Settings;
 import dev.pietelite.journey.common.data.DataAccessException;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.command.common.CommandFlags;
 import dev.pietelite.journey.spigot.command.common.CommandNode;
 import dev.pietelite.journey.spigot.command.common.PlayerCommandNode;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
 import dev.pietelite.journey.spigot.search.PlayerSurfaceGoalSearchSession;
 import dev.pietelite.journey.spigot.util.Format;
 import dev.pietelite.journey.spigot.util.Permissions;

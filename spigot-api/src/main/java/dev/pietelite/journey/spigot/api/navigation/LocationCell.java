@@ -21,7 +21,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package dev.pietelite.journey.spigot.navigation;
+package dev.pietelite.journey.spigot.api.navigation;
 
 import dev.pietelite.journey.common.navigation.Cell;
 import java.io.Serializable;

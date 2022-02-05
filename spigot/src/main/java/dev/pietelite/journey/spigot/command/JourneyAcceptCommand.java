@@ -25,9 +25,9 @@ package dev.pietelite.journey.spigot.command;
 
 import dev.pietelite.journey.common.navigation.Itinerary;
 import dev.pietelite.journey.spigot.JourneySpigot;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.command.common.CommandNode;
 import dev.pietelite.journey.spigot.command.common.PlayerCommandNode;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
 import dev.pietelite.journey.spigot.navigation.PlayerJourney;
 import dev.pietelite.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import dev.pietelite.journey.spigot.util.Format;

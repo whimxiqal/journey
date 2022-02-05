@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright 2022 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,43 +19,36 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package dev.pietelite.journey.spigot.search.event;
+package dev.pietelite.journey.spigot.api.search;
 
-import dev.pietelite.journey.common.search.event.ModeSuccessEvent;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.common.search.DestinationGoalSearchSession;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
+import java.util.Objects;
+import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.event.HandlerList;
-import org.jetbrains.annotations.NotNull;
 
 /**
- * The Spigot implementation of the {@link ModeSuccessEvent}.
+ * A search session for the use of plugins using the Journey API.
  */
-public class SpigotModeSuccessEvent extends SpigotSearchEvent<ModeSuccessEvent<LocationCell, World>> {
-  private static final HandlerList handlers = new HandlerList();
+public abstract class SpigotSearchSession extends DestinationGoalSearchSession<LocationCell, World> {
 
   /**
    * General constructor.
    *
-   * @param event the common event
+   * @param callerId    the identifier for the caller
+   * @param callerType  the type of caller
+   * @param origin      origination location
+   * @param destination destination location
    */
-  public SpigotModeSuccessEvent(ModeSuccessEvent<LocationCell, World> event) {
-    super(event);
-  }
-
-  /**
-   * Get handler list. Spigot standard.
-   *
-   * @return the handler list
-   */
-  public static HandlerList getHandlerList() {
-    return handlers;
-  }
-
-  @Override
-  @NotNull
-  public HandlerList getHandlers() {
-    return handlers;
+  public SpigotSearchSession(UUID callerId, Caller callerType,
+                             Location origin, Location destination) {
+    super(callerId, callerType,
+        new LocationCell(origin), new LocationCell(destination),
+        (x, y, z, domainId) -> new LocationCell(x, y, z, Objects.requireNonNull(Bukkit.getWorld(domainId))));
   }
 }

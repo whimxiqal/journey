@@ -24,7 +24,6 @@ repositories {
 
 dependencies {
     implementation project(':common')
-    implementation project(':spigot-api')
     // Spigot
     shadow 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
 
@@ -49,18 +48,14 @@ dependencies {
     implementation 'javax.visrec:visrec-api:1.0.5'
     implementation 'com.opencsv:opencsv:5.5.2'
 
-    implementation 'org.bstats:bstats-bukkit:3.0.0'
-
 }
 
 shadowJar {
-    archiveFileName = "Journey-Spigot-${project.version}.jar"
+    archiveFileName = "Journey-SpigotApi-${project.version}.jar"
 
     dependencies {
         exclude(dependency('org.projectlombok:lombok'))
     }
-
-    relocate 'org.bstats', 'dev.pietelite.bstats'
 }
 
 processResources {

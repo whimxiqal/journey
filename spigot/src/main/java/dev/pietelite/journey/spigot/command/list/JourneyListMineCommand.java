@@ -25,10 +25,10 @@ package dev.pietelite.journey.spigot.command.list;
 
 import dev.pietelite.journey.common.JourneyCommon;
 import dev.pietelite.journey.common.data.DataAccessException;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.command.common.CommandNode;
 import dev.pietelite.journey.spigot.command.common.Parameter;
 import dev.pietelite.journey.spigot.command.common.PlayerCommandNode;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
 import dev.pietelite.journey.spigot.util.Format;
 import dev.pietelite.journey.spigot.util.Permissions;
 import java.util.ArrayList;

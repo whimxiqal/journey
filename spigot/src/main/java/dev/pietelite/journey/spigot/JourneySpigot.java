@@ -27,6 +27,20 @@ import dev.pietelite.journey.common.JourneyCommon;
 import dev.pietelite.journey.common.search.event.SearchDispatcher;
 import dev.pietelite.journey.common.search.event.SearchEvent;
 import dev.pietelite.journey.common.util.Serialize;
+import dev.pietelite.journey.spigot.api.JourneyService;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.search.event.SpigotFoundSolutionEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotIgnoreCacheSearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotModeFailureEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotModeSuccessEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotStartItinerarySearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotStartPathSearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotStartSearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotStepSearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotStopItinerarySearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotStopPathSearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotStopSearchEvent;
+import dev.pietelite.journey.spigot.api.search.event.SpigotVisitationSearchEvent;
 import dev.pietelite.journey.spigot.command.JourneyCommand;
 import dev.pietelite.journey.spigot.command.common.CommandNode;
 import dev.pietelite.journey.spigot.config.SpigotConfigManager;
@@ -34,22 +48,10 @@ import dev.pietelite.journey.spigot.data.SpigotDataManager;
 import dev.pietelite.journey.spigot.manager.DebugManager;
 import dev.pietelite.journey.spigot.manager.NetherManager;
 import dev.pietelite.journey.spigot.manager.PlayerSearchManager;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
-import dev.pietelite.journey.spigot.search.event.SpigotFoundSolutionEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotIgnoreCacheSearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotModeFailureEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotModeSuccessEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotStartItinerarySearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotStartPathSearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotStartSearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotStepSearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotStopItinerarySearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotStopPathSearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotStopSearchEvent;
-import dev.pietelite.journey.spigot.search.event.SpigotVisitationSearchEvent;
 import dev.pietelite.journey.spigot.search.listener.AnimationListener;
 import dev.pietelite.journey.spigot.search.listener.DataStorageListener;
 import dev.pietelite.journey.spigot.search.listener.PlayerSearchListener;
+import dev.pietelite.journey.spigot.service.JourneyServiceImpl;
 import dev.pietelite.journey.spigot.util.LoggerSpigot;
 import dev.pietelite.journey.spigot.util.SpigotMinecraftConversions;
 import lombok.Getter;
@@ -59,6 +61,7 @@ import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Event;
 import org.bukkit.permissions.Permission;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -98,6 +101,12 @@ public final class JourneySpigot extends JavaPlugin {
   @Override
   public void onEnable() {
     getLogger().info("Initializing Journey...");
+    Bukkit.getServer().getServicesManager().register(
+        JourneyService.class,
+        new JourneyServiceImpl(),
+        this,
+        ServicePriority.Normal
+    );
 
     if (this.getDataFolder().mkdirs()) {
       getLogger().info("Journey data folder created");

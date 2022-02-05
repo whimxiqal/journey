@@ -25,7 +25,7 @@ package dev.pietelite.journey.spigot.navigation.mode;
 
 import dev.pietelite.journey.common.navigation.ModeType;
 import dev.pietelite.journey.common.search.SearchSession;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;

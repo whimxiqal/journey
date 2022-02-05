@@ -26,6 +26,7 @@ package dev.pietelite.journey.spigot.navigation;
 import dev.pietelite.journey.common.navigation.ModeType;
 import dev.pietelite.journey.common.navigation.Port;
 import dev.pietelite.journey.common.tools.Verifiable;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import dev.pietelite.journey.spigot.util.NetherUtil;
 import java.util.Objects;
 import org.bukkit.World;

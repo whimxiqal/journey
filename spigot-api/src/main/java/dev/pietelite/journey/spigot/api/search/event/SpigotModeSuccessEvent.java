@@ -21,19 +21,18 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package dev.pietelite.journey.spigot.search.event;
+package dev.pietelite.journey.spigot.api.search.event;
 
-import dev.pietelite.journey.common.search.event.StartPathSearchEvent;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.common.search.event.ModeSuccessEvent;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The Spigot implementation for the {@link StartPathSearchEvent}.
+ * The Spigot implementation of the {@link ModeSuccessEvent}.
  */
-public class SpigotStartPathSearchEvent extends SpigotSearchEvent<StartPathSearchEvent<LocationCell, World>> {
-
+public class SpigotModeSuccessEvent extends SpigotSearchEvent<ModeSuccessEvent<LocationCell, World>> {
   private static final HandlerList handlers = new HandlerList();
 
   /**
@@ -41,7 +40,7 @@ public class SpigotStartPathSearchEvent extends SpigotSearchEvent<StartPathSearc
    *
    * @param event the common event
    */
-  public SpigotStartPathSearchEvent(StartPathSearchEvent<LocationCell, World> event) {
+  public SpigotModeSuccessEvent(ModeSuccessEvent<LocationCell, World> event) {
     super(event);
   }
 
@@ -59,5 +58,4 @@ public class SpigotStartPathSearchEvent extends SpigotSearchEvent<StartPathSearc
   public HandlerList getHandlers() {
     return handlers;
   }
-
 }

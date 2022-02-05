@@ -24,7 +24,7 @@
 package dev.pietelite.journey.spigot.search;
 
 import dev.pietelite.journey.common.navigation.ModeType;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;

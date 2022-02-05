@@ -21,19 +21,18 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package dev.pietelite.journey.spigot.search.event;
+package dev.pietelite.journey.spigot.api.search.event;
 
-import dev.pietelite.journey.common.search.event.IgnoreCacheSearchEvent;
-import dev.pietelite.journey.spigot.navigation.LocationCell;
+import dev.pietelite.journey.common.search.event.StartPathSearchEvent;
+import dev.pietelite.journey.spigot.api.navigation.LocationCell;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A Spigot {@link org.bukkit.event.Event} implementation of {@link IgnoreCacheSearchEvent}.
+ * The Spigot implementation for the {@link StartPathSearchEvent}.
  */
-public class SpigotIgnoreCacheSearchEvent
-    extends SpigotSearchEvent<IgnoreCacheSearchEvent<LocationCell, World>> {
+public class SpigotStartPathSearchEvent extends SpigotSearchEvent<StartPathSearchEvent<LocationCell, World>> {
 
   private static final HandlerList handlers = new HandlerList();
 
@@ -42,7 +41,7 @@ public class SpigotIgnoreCacheSearchEvent
    *
    * @param event the common event
    */
-  public SpigotIgnoreCacheSearchEvent(IgnoreCacheSearchEvent<LocationCell, World> event) {
+  public SpigotStartPathSearchEvent(StartPathSearchEvent<LocationCell, World> event) {
     super(event);
   }
 
