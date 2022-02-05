@@ -53,6 +53,7 @@ import dev.pietelite.journey.spigot.search.listener.PlayerSearchListener;
 import dev.pietelite.journey.spigot.util.LoggerSpigot;
 import dev.pietelite.journey.spigot.util.SpigotMinecraftConversions;
 import lombok.Getter;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
@@ -160,6 +161,8 @@ public final class JourneySpigot extends JavaPlugin {
       JourneySpigot.getInstance().getLogger().info("Finished initializing Journey");
     });
 
+    // bStats
+    Metrics metrics = new Metrics(this, 14192);
   }
 
   @Override

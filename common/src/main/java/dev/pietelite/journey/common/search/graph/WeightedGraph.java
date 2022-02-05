@@ -207,7 +207,7 @@ public abstract class WeightedGraph<N, E> {
   }
 
   private class Table {
-    private Map<Node, Map<Node, E>> edgeMap;
+    private final Map<Node, Map<Node, E>> edgeMap = new HashMap<>();
 
     public void put(Node start, Node end, E edge) {
       edgeMap.computeIfAbsent(start, (k) -> new HashMap<>()).put(end, edge);

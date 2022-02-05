@@ -25,6 +25,7 @@ package dev.pietelite.journey.spigot.search;
 
 import dev.pietelite.journey.common.search.DestinationGoalSearchSession;
 import dev.pietelite.journey.common.search.LocalUpwardsGoalSearchSession;
+import dev.pietelite.journey.common.search.ResultState;
 import dev.pietelite.journey.common.search.SearchSession;
 import dev.pietelite.journey.spigot.JourneySpigot;
 import dev.pietelite.journey.spigot.navigation.LocationCell;
@@ -130,7 +131,8 @@ public interface SpigotPlayerSearchSession<S extends SearchSession<LocationCell,
     // Set up a search cancellation in case it takes too long
     Bukkit.getScheduler().runTaskLater(JourneySpigot.getInstance(),
         () -> {
-          if (getSession().stop()) {
+          getSession().stop();
+          if (getSession().getState() == ResultState.CANCELING_FAILED) {
             player.spigot().sendMessage(Format.error("Time limit surpassed. Canceling search..."));
           }
         },

@@ -1,6 +1,6 @@
 name: Journey
 version: ${version}
-main: edu.whimc.journey.spigot.JourneySpigot
+main: dev.pietelite.journey.spigot.JourneySpigot
 api-version: 1.17
 authors:
   - pietelite

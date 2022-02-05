@@ -211,15 +211,15 @@ public class PlayerSearchListener implements Listener {
             + ChatColor.DARK_GRAY + search.getSession().getState()));
 
         switch (search.getSession().getState()) {
-          case ResultState.STOPPED_FAILED:
+          case STOPPED_FAILED:
             player.spigot().sendMessage(
                 Format.error("Search ended. Either there's no path to it, or it's too far away!"));
             break;
-          case ResultState.STOPPED_CANCELED:
+          case STOPPED_CANCELED:
             player.spigot().sendMessage(
                 Format.info("Search canceled."));
             break;
-          case ResultState.STOPPED_SUCCESSFUL:
+          case STOPPED_SUCCESSFUL:
             /* Don't say anything. They were already notified of the successful solutions. */
             break;
           default:

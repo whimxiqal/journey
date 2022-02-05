@@ -10,7 +10,7 @@ subprojects {
     apply plugin: 'org.cadixdev.licenser'
 
     group = 'dev.pietelite'
-    version = '0.2.0-beta'
+    version = '0.2.0-BETA'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8

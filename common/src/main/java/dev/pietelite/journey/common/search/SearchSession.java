@@ -30,7 +30,6 @@ import dev.pietelite.journey.common.navigation.ModeType;
 import dev.pietelite.journey.common.navigation.Port;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +41,8 @@ import java.util.stream.Collectors;
  * A session to handle a pathfinding search.
  * Every time a person wants to find an {@link Itinerary}
  * from some origin to some destination, they can run a search from this session.
+ *
+ * <p>This class must be thread-safe because it will be called asynchronously
  *
  * @param <T> the cell type
  * @param <D> the domain type
@@ -119,7 +120,7 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
    */
   public final Collection<Port<T, D>> ports() {
     List<Port<T, D>> copy = new ArrayList<>(ports.size());
-    Collections.copy(copy, ports);
+    copy.addAll(ports);
     return copy;
   }
 
@@ -130,7 +131,7 @@ public abstract class SearchSession<T extends Cell<T, D>, D> implements Resulted
    */
   public final Collection<Mode<T, D>> modes() {
     List<Mode<T, D>> copy = new ArrayList<>(modes.size());
-    Collections.copy(copy, modes);
+    copy.addAll(modes);
     return copy;
   }
 
