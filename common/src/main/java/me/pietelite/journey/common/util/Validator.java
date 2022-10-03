@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright 2022 Pieter Svenson
+ * Copyright (c) Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,36 +19,33 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-plugins {
-    id 'java-library'
-    id 'antlr'
-}
+package me.pietelite.journey.common.util;
 
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+import java.util.regex.Pattern;
 
-    // Lombok
-    implementation 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+/**
+ * A utility class used to manage static classes that validate input.
+ */
+public final class Validator {
 
-    testImplementation 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+  private Validator() {
+  }
 
-    // IntelliJ Annotations
-    implementation 'org.jetbrains:annotations:22.0.0'
+  /**
+   * Check if the name is of the valid data name form.
+   * It should start with a letter, then be a series letters, numbers, spaces, or dashes,
+   * then end with a letter or a number.
+   *
+   * @param name the name to check
+   * @return true if it is valid
+   */
+  public static boolean isInvalidDataName(String name) {
+    if (name.equalsIgnoreCase("help")) {
+      return true;
+    }
+    return !Pattern.matches("^[a-zA-Z][a-zA-Z0-9 -]{1,30}[a-zA-Z0-9]$", name);
+  }
 
-    api fileTree(dir: '../../mantle/common/build/libs', include: '*.jar')
-    implementation 'net.kyori:adventure-api:4.11.0'
-    implementation 'net.kyori:adventure-platform-api:4.1.2'
-
-    antlr 'org.antlr:antlr4:4.9.3'
-
-}
-
-generateGrammarSource {
-    arguments += ["-visitor", "-lib", "src/main/antlr/me/pietelite/journey/common", "-package", "me.pietelite.journey.common"]
 }

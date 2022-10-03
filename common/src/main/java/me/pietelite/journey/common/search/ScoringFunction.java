@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright 2022 Pieter Svenson
+ * Copyright (c) Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,36 +19,46 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-plugins {
-    id 'java-library'
-    id 'antlr'
-}
+package me.pietelite.journey.common.search;
 
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+import java.util.function.Function;
+import lombok.Value;
 
-    // Lombok
-    implementation 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+/**
+ * An interface to represent the score of a given node.
+ * Of all the nodes that are currently in the running for the
+ * "next best node to try" throughout this algorithm,
+ * the one with the highest score is chosen next.
+ */
+@Value
+public class ScoringFunction
+    implements Function<FlexiblePathTrial.Node, Double> {
+  Function<FlexiblePathTrial.Node, Double> function;
+  Type type;
 
-    testImplementation 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+  @Override
+  public Double apply(FlexiblePathTrial.Node node) {
+    return function.apply(node);
+  }
 
-    // IntelliJ Annotations
-    implementation 'org.jetbrains:annotations:22.0.0'
+  /**
+   * Get the type.
+   *
+   * @return the type
+   */
+  public Type getType() {
+    return type;
+  }
 
-    api fileTree(dir: '../../mantle/common/build/libs', include: '*.jar')
-    implementation 'net.kyori:adventure-api:4.11.0'
-    implementation 'net.kyori:adventure-platform-api:4.1.2'
+  /**
+   * A type of scoring function.
+   */
+  public enum Type {
+    EUCLIDEAN_DISTANCE,
+    HEIGHT,
+    OTHER
+  }
 
-    antlr 'org.antlr:antlr4:4.9.3'
-
-}
-
-generateGrammarSource {
-    arguments += ["-visitor", "-lib", "src/main/antlr/me/pietelite/journey/common", "-package", "me.pietelite.journey.common"]
 }

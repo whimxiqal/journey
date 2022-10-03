@@ -1,6 +1,6 @@
-name: Journey
+name: JourneySession
 version: ${version}
-main: dev.pietelite.journey.spigot.JourneySpigot
+main: me.pietelite.journey.spigot.JourneySpigot
 api-version: 1.17
 authors:
   - pietelite
@@ -10,29 +10,27 @@ softdepend:
   - WHIMC-Portals
   - Quests
 permissions:
-  journey.command.admin:
+  journey.admin:
     default: false
     description: Use all journey admin commands
-  journey.command.use:
+  journey.path.player:
     default: true
-    description: Use all journey commands
-  journey.command.to.custom.use:
+    description: Use command to create a path to any player
+  journey.path.death:
     default: true
-    description: Use all commands pertaining to custom destinations
-  journey.command.to.surface.use:
+    description: Use command to create a path to last death location
+  journey.path.private:
+    default: true
+    description: Use path command pertaining to private destinations
+  journey.path.surface:
     default: true
     description: Use surface command to navigate to the surface of overworld type worlds
-  journey.command.to.quest.use:
+  journey.path.quest:
     default: true
     description: Use quest command to navigate to the next quest destination
-  journey.command.to.public.use:
+  journey.path.public:
     default: true
     description: Use all commands pertaining to public destinations
-  journey.command.to.public.edit:
+  journey.edit.public:
     default: false
     description: Use commands that edit public destinations
-commands:
-  journey:
-    description: Root of all Journey commands
-
-

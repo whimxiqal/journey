@@ -20,13 +20,14 @@ repositories {
         name = 'jitpack.io'
         url = 'https://jitpack.io'
     }
+    mavenLocal()
 }
 
 dependencies {
     implementation project(':common')
     implementation project(':spigot-api')
     // Spigot
-    shadow 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
+    shadow 'org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT'
 
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
@@ -51,6 +52,13 @@ dependencies {
 
     implementation 'org.bstats:bstats-bukkit:3.0.0'
 
+    shadow fileTree(dir: "../libs", includes: ['*.jar'])
+    implementation fileTree(dir: '../../mantle/bukkit/build/libs', include: '*.jar')
+
+    implementation "net.kyori:adventure-platform-bukkit:4.1.2"
+    implementation 'net.kyori:adventure-text-serializer-legacy:4.11.0'
+    implementation 'net.kyori:adventure-text-serializer-plain:4.11.0'
+
 }
 
 shadowJar {
@@ -60,7 +68,9 @@ shadowJar {
         exclude(dependency('org.projectlombok:lombok'))
     }
 
-    relocate 'org.bstats', 'dev.pietelite.bstats'
+    relocate 'me.pietelite.mantle', 'me.pietelite.libs.mantle'
+    relocate 'net.kyori', 'me.pietelite.libs.kyori'
+    relocate 'org.bstats', 'me.pietelite.libs.bstats'
 }
 
 processResources {

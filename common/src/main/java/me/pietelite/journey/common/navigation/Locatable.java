@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright 2022 Pieter Svenson
+ * Copyright (c) Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,36 +19,40 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-plugins {
-    id 'java-library'
-    id 'antlr'
-}
+package me.pietelite.journey.common.navigation;
 
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+import java.io.Serializable;
+import org.jetbrains.annotations.NotNull;
 
-    // Lombok
-    implementation 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+/**
+ * An abstraction of a location within a Minecraft world.
+ *
+ * @param <T> This implementation class. This is needed for self-reference.
+ */
+public interface Locatable<T extends Locatable<T>> extends Serializable {
 
-    testImplementation 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+  /**
+   * Get the cartesian from one locatable to another, ignoring domain.
+   * For comparisons between distances, use {@link #distanceToSquared(Locatable)}
+   * because it is easier to compute.
+   *
+   * @param other the other locatable
+   * @return the cartesian distance
+   */
+  default double distanceTo(T other) {
+    return Math.sqrt(distanceToSquared(other));
+  }
 
-    // IntelliJ Annotations
-    implementation 'org.jetbrains:annotations:22.0.0'
+  /**
+   * Get the square of the cartesian distance from one locatable to another.
+   * This is much easier to compute than the actual distance because
+   * you avoid a square root.
+   *
+   * @param other the other locatable
+   * @return the square of the cartesian distance
+   */
+  double distanceToSquared(T other);
 
-    api fileTree(dir: '../../mantle/common/build/libs', include: '*.jar')
-    implementation 'net.kyori:adventure-api:4.11.0'
-    implementation 'net.kyori:adventure-platform-api:4.1.2'
-
-    antlr 'org.antlr:antlr4:4.9.3'
-
-}
-
-generateGrammarSource {
-    arguments += ["-visitor", "-lib", "src/main/antlr/me/pietelite/journey/common", "-package", "me.pietelite.journey.common"]
 }

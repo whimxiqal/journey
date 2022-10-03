@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright 2022 Pieter Svenson
+ * Copyright (c) Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,36 +19,29 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-plugins {
-    id 'java-library'
-    id 'antlr'
-}
+package me.pietelite.journey.spigot.util;
 
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+import me.pietelite.journey.common.util.LoggerCommon;
+import me.pietelite.journey.spigot.JourneySpigot;
 
-    // Lombok
-    implementation 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+/**
+ * An implementation the simple common JourneySession logger.
+ */
+public class LoggerSpigot implements LoggerCommon {
+  @Override
+  public void info(String message) {
+    JourneySpigot.getInstance().getLogger().info(message);
+  }
 
-    testImplementation 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+  @Override
+  public void warn(String message) {
+    JourneySpigot.getInstance().getLogger().warning(message);
+  }
 
-    // IntelliJ Annotations
-    implementation 'org.jetbrains:annotations:22.0.0'
-
-    api fileTree(dir: '../../mantle/common/build/libs', include: '*.jar')
-    implementation 'net.kyori:adventure-api:4.11.0'
-    implementation 'net.kyori:adventure-platform-api:4.1.2'
-
-    antlr 'org.antlr:antlr4:4.9.3'
-
-}
-
-generateGrammarSource {
-    arguments += ["-visitor", "-lib", "src/main/antlr/me/pietelite/journey/common", "-package", "me.pietelite.journey.common"]
+  @Override
+  public void error(String message) {
+    JourneySpigot.getInstance().getLogger().severe(message);
+  }
 }
