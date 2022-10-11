@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Formatter {
 
-  public static final TextColor ACCENT = TextColor.color(7, 236, 186);
+  public static final TextColor ACCENT = TextColor.color(0, 135, 165);
   public static final TextColor DARK = TextColor.color(64, 64, 64);
   public static final TextColor DULL = TextColor.color(179, 179, 179);
   public static final TextColor ERROR = TextColor.color(194, 12, 21);
@@ -315,4 +315,7 @@ public final class Formatter {
     }
   }
 
+  public static Component noPlayer(String name) {
+    return error("No player found with name ___", name);
+  }
 }

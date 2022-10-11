@@ -23,6 +23,8 @@
 
 package me.pietelite.journey.spigot.command;
 
+import me.blackvein.quests.Quests;
+import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.spigot.command.common.CommandNode;
 import me.pietelite.journey.spigot.command.common.FunctionlessCommandNode;
@@ -32,8 +34,6 @@ import me.pietelite.journey.spigot.command.path.JourneyPathPrivateCommand;
 import me.pietelite.journey.spigot.command.path.JourneyPathPublicCommand;
 import me.pietelite.journey.spigot.command.path.JourneyPathQuestCommand;
 import me.pietelite.journey.spigot.command.path.JourneyPathSurfaceCommand;
-import me.pietelite.journey.spigot.search.PlayerDestinationGoalSearchSession;
-import me.blackvein.quests.Quests;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;

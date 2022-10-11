@@ -21,23 +21,21 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.common.data.sql.sqlite;
+package me.pietelite.journey.spigot.data.sql.sqlite;
 
-import me.pietelite.journey.common.data.sql.SqlPublicEndpointManager;
+import me.pietelite.journey.common.data.sql.sqlite.SqlitePublicWaypointManager;
 
 /**
- * The SQLite implementation of the SQL public endpoint manager.
+ * The Spigot implementation of the {@link SqlitePublicWaypointManager}.
  */
-public abstract class SqlitePublicEndpointManager
-    extends SqlPublicEndpointManager {
+public class SpigotSqlitePublicWaypointManager extends SqlitePublicWaypointManager {
 
   /**
    * General constructor.
    *
-   * @param address     the address to the SQLite database.
+   * @param address the address location of the sqlite database
    */
-  public SqlitePublicEndpointManager(String address) {
-    super(new SqliteConnectionController(address));
+  public SpigotSqlitePublicWaypointManager(String address) {
+    super(address);
   }
-
 }

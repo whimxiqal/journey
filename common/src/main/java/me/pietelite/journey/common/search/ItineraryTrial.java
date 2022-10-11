@@ -23,6 +23,12 @@
 
 package me.pietelite.journey.common.search;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Itinerary;
@@ -31,12 +37,6 @@ import me.pietelite.journey.common.navigation.Step;
 import me.pietelite.journey.common.search.event.StartItinerarySearchEvent;
 import me.pietelite.journey.common.search.event.StopItinerarySearchEvent;
 import me.pietelite.journey.common.tools.AlternatingList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import lombok.Value;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -83,7 +83,7 @@ public class ItineraryTrial implements Resulted {
     boolean changedProblem = false;
     for (PathTrial pathTrial : alternatingList.getMinors()) {
 
-      if (session.state.isCanceled()) {
+      if (session.state.get().isCanceled()) {
         state = ResultState.STOPPED_CANCELED;
         Journey.get().dispatcher().dispatch(
             new StopItinerarySearchEvent(session, this));
@@ -108,7 +108,7 @@ public class ItineraryTrial implements Resulted {
     double length = 0;
     for (Port port : alternatingList.getMajors()) {
       if (port != null) {
-        length += port.getLength();
+        length += port.getCost();
       }
     }
     for (PathTrial pathTrial : alternatingList.getMinors()) {

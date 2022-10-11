@@ -23,18 +23,18 @@
 
 package me.pietelite.journey.common.data.sql;
 
+import java.util.Map;
 import me.pietelite.journey.common.data.DataAccessException;
 import me.pietelite.journey.common.data.PublicEndpointManager;
 import me.pietelite.journey.common.navigation.Cell;
-import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A public endpoint manager implemented for SQL.
  */
-public abstract class SqlPublicEndpointManager
-    extends SqlEndpointManager
+public abstract class SqlPublicWaypointManager
+    extends SqlWaypointManager
     implements PublicEndpointManager {
 
   /**
@@ -42,38 +42,38 @@ public abstract class SqlPublicEndpointManager
    *
    * @param connectionController the connection controller
    */
-  public SqlPublicEndpointManager(SqlConnectionController connectionController) {
+  public SqlPublicWaypointManager(SqlConnectionController connectionController) {
     super(connectionController);
   }
 
   @Override
-  public void addPublicEndpoint(@NotNull Cell cell, @NotNull String name)
+  public void add(@NotNull Cell cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException {
     addEndpoint(null, cell, name);
   }
 
   @Override
-  public void removePublicEndpoint(@NotNull Cell cell) throws DataAccessException {
+  public void remove(@NotNull Cell cell) throws DataAccessException {
     removeEndpoint(null, cell);
   }
 
   @Override
-  public void removePublicEndpoint(@NotNull String name) throws DataAccessException {
+  public void remove(@NotNull String name) throws DataAccessException {
     removeEndpoint(null, name);
   }
 
   @Override
-  public @Nullable String getPublicEndpointName(@NotNull Cell cell) throws DataAccessException {
+  public @Nullable String getName(@NotNull Cell cell) throws DataAccessException {
     return getEndpointName(null, cell);
   }
 
   @Override
-  public @Nullable Cell getPublicEndpoint(@NotNull String name) throws DataAccessException {
+  public @Nullable Cell getWaypoint(@NotNull String name) throws DataAccessException {
     return getEndpoint(null, name);
   }
 
   @Override
-  public Map<String, Cell> getPublicEndpoints() throws DataAccessException {
+  public Map<String, Cell> getAll() throws DataAccessException {
     return getEndpoints(null);
   }
 }

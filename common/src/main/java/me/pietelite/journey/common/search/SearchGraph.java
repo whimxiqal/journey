@@ -23,6 +23,10 @@
 
 package me.pietelite.journey.common.search;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import me.pietelite.journey.common.Journey;
@@ -32,10 +36,6 @@ import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.Port;
 import me.pietelite.journey.common.search.graph.WeightedGraph;
 import me.pietelite.journey.common.tools.AlternatingList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -142,12 +142,12 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
     // First, try to access a cached path
     Set<ModeType> modeTypes = modes.stream().map(Mode::getType).collect(Collectors.toSet());
     if (Journey.get().proxy().dataManager()
-        .getPathRecordManager()
+        .pathRecordManager()
         .containsRecord(origin, destination, modeTypes)) {
       addPathTrial(PathTrial.cached(session, origin, destination,
               modes,
               Journey.get().proxy().dataManager()
-                  .getPathRecordManager()
+                  .pathRecordManager()
                   .getPath(origin, destination, modeTypes)),
           originNode, destinationNode);
     } else {
@@ -179,7 +179,7 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
 
   @Override
   protected double nodeWeight(Port nodeData) {
-    return nodeData.getLength();
+    return nodeData.getCost();
   }
 
   @Override

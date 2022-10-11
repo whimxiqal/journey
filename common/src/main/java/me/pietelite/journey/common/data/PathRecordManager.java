@@ -33,7 +33,6 @@ import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Mode;
 import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.Path;
-import me.pietelite.journey.common.search.FlexiblePathTrial;
 import me.pietelite.journey.common.search.PathTrial;
 import me.pietelite.journey.common.search.ScoringFunction;
 import org.jetbrains.annotations.NotNull;
@@ -145,6 +144,10 @@ public interface PathRecordManager {
     int z;
     Integer index;
     ModeType modeType;
+
+    public Cell toCell() {
+      return new Cell(x, y, z, record.worldId);
+    }
   }
 
   /**

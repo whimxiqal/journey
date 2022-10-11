@@ -23,13 +23,22 @@
 
 package me.pietelite.journey.common.manager;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import me.pietelite.journey.common.Journey;
+import me.pietelite.journey.common.config.Settings;
+import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.JourneySession;
 import me.pietelite.journey.common.navigation.PlayerJourneySession;
 import me.pietelite.journey.common.search.SearchSession;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import me.pietelite.journey.common.search.flag.Flags;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,16 +106,48 @@ public class SearchManager {
    * Store a new search. Cancel the previous search if there was one.
    *
    * @param callerId the caller id
-   * @param search   the search
+   * @param session  the search session
    * @return the old search
    */
   @Nullable
-  public SearchSession putSearch(@NotNull UUID callerId, SearchSession search) {
-    SearchSession oldSearch = playerSearches.put(callerId, search);
-    if (oldSearch != null) {
-      oldSearch.stop();
+  public SearchSession launchSearch(@NotNull UUID callerId, SearchSession session) {
+    UUID player = session.getCallerId();
+    if (player == null) {
+      return null;
     }
-    return oldSearch;
+
+    Audience audience;
+    switch (session.getCallerType()) {
+      case PLAYER:
+        audience = Journey.get().proxy().audienceProvider().player(player);
+      case OTHER:
+      default:
+        audience = Audience.empty();
+    }
+
+    // Set up a "Working..." message if it takes too long
+    AtomicReference<TextComponent> hoverText = new AtomicReference<>(Component.text("Search Parameters").color(Formatter.THEME));
+    session.flags().forEach((flag, val) -> {
+      hoverText.set(hoverText.get().append(Component.newline())
+          .append(Component.text(flag.name()).color(Formatter.DARK).decorate(TextDecoration.BOLD)));
+      val.ifPresent(s -> hoverText.set(hoverText.get().append(Component.text(":").color(Formatter.DARK).decorate(TextDecoration.BOLD))
+          .append(Component.text(s))));
+    });
+    audience.sendMessage(Component.text()
+        .append(Formatter.prefix())
+        .append(Formatter.hover(Component.text("Searching...").color(Formatter.INFO), hoverText.get())));
+
+    // SEARCH
+    // Search... this may take a long time
+    SearchSession oldSession = playerSearches.put(player, session);
+    int timeout = session.flags().valueOrGetDefault(Flags.TIMEOUT, Settings.DEFAULT_SEARCH_TIMEOUT::getValue);
+    if (oldSession != null) {
+      oldSession.stop().thenRun(() -> session.search(timeout));
+    } else {
+      session.search(timeout);
+    }
+
+    return oldSession;
   }
 
   /**

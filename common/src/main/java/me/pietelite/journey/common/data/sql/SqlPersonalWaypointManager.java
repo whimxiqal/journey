@@ -26,7 +26,7 @@ package me.pietelite.journey.common.data.sql;
 import java.util.Map;
 import java.util.UUID;
 import me.pietelite.journey.common.data.DataAccessException;
-import me.pietelite.journey.common.data.PersonalEndpointManager;
+import me.pietelite.journey.common.data.PersonalWaypointManager;
 import me.pietelite.journey.common.navigation.Cell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,57 +34,51 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A combination of an endpoint manager for SQL and a personal endpoint manager.
  */
-public abstract class SqlPersonalEndpointManager
-    extends SqlEndpointManager
-    implements PersonalEndpointManager {
+public abstract class SqlPersonalWaypointManager
+    extends SqlWaypointManager
+    implements PersonalWaypointManager {
 
   /**
    * Default constructor.
    *
    * @param connectionController the connection controller
    */
-  public SqlPersonalEndpointManager(SqlConnectionController connectionController) {
+  public SqlPersonalWaypointManager(SqlConnectionController connectionController) {
     super(connectionController);
   }
 
   @Override
-  public void addPersonalEndpoint(@NotNull UUID playerUuid, @NotNull Cell cell)
-      throws IllegalArgumentException, DataAccessException {
-    this.addEndpoint(playerUuid, cell);
-  }
-
-  @Override
-  public void addPersonalEndpoint(@NotNull UUID playerUuid, @NotNull Cell cell, @NotNull String name)
+  public void add(@NotNull UUID playerUuid, @NotNull Cell cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException {
     this.addEndpoint(playerUuid, cell, name);
   }
 
   @Override
-  public void removePersonalEndpoint(@NotNull UUID playerUuid, @NotNull Cell cell)
+  public void remove(@NotNull UUID playerUuid, @NotNull Cell cell)
       throws DataAccessException {
     this.removeEndpoint(playerUuid, cell);
   }
 
   @Override
-  public void removePersonalEndpoint(@NotNull UUID playerUuid, @NotNull String name)
+  public void remove(@NotNull UUID playerUuid, @NotNull String name)
       throws DataAccessException {
     this.removeEndpoint(playerUuid, name);
   }
 
   @Override
-  public @Nullable String getPersonalEndpointName(@NotNull UUID playerUuid, @NotNull Cell cell)
+  public @Nullable String getName(@NotNull UUID playerUuid, @NotNull Cell cell)
       throws DataAccessException {
     return this.getEndpointName(playerUuid, cell);
   }
 
   @Override
-  public @Nullable Cell getPersonalEndpoint(@NotNull UUID playerUuid, @NotNull String name)
+  public @Nullable Cell getWaypoint(@NotNull UUID playerUuid, @NotNull String name)
       throws DataAccessException {
     return this.getEndpoint(playerUuid, name);
   }
 
   @Override
-  public Map<String, Cell> getPersonalEndpoints(@NotNull UUID playerUuid)
+  public Map<String, Cell> getAll(@NotNull UUID playerUuid)
       throws DataAccessException {
     return this.getEndpoints(playerUuid);
   }

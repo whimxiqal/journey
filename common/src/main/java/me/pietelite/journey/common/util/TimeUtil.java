@@ -21,7 +21,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.spigot.util;
+package me.pietelite.journey.common.util;
 
 /**
  * A utility class to manage utility methods pertaining to displaying time quantities.

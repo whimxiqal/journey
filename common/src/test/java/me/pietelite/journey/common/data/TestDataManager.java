@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright 2022 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,21 +19,24 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package me.pietelite.journey.spigot.data.sql.sqlite;
+package me.pietelite.journey.common.data;
 
-import me.pietelite.journey.common.data.sql.sqlite.SqlitePersonalEndpointManager;
+public class TestDataManager implements DataManager {
+  @Override
+  public PersonalWaypointManager personalEndpointManager() {
+    return new TestPersonalWaypointManager();
+  }
 
-/**
- * The Spigot implementation of the {@link SqlitePersonalEndpointManager}.
- */
-public class SpigotSqlitePersonalEndpointManager extends SqlitePersonalEndpointManager {
+  @Override
+  public PublicEndpointManager publicEndpointManager() {
+    return new TestPublicEndpointManager();
+  }
 
-  /**
-   * General constructor.
-   */
-  public SpigotSqlitePersonalEndpointManager(String address) {
-    super(address);
+  @Override
+  public PathRecordManager pathRecordManager() {
+    return new TestPathRecordManager();
   }
 }

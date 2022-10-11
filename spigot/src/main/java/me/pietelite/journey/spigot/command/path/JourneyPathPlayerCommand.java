@@ -23,22 +23,19 @@
 
 package me.pietelite.journey.spigot.command.path;
 
+import java.util.Map;
+import java.util.stream.Collectors;
 import me.pietelite.journey.common.config.Settings;
 import me.pietelite.journey.common.data.DataAccessException;
-import me.pietelite.journey.common.tools.BufferedFunction;
+import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.spigot.api.navigation.Cell;
-import me.pietelite.journey.spigot.command.JourneyCommand;
 import me.pietelite.journey.spigot.command.common.CommandError;
 import me.pietelite.journey.spigot.command.common.CommandFlags;
 import me.pietelite.journey.spigot.command.common.CommandNode;
 import me.pietelite.journey.spigot.command.common.Parameter;
 import me.pietelite.journey.spigot.command.common.PlayerCommandNode;
-import me.pietelite.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.spigot.util.Format;
 import me.pietelite.journey.spigot.util.Permissions;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.entity.HumanEntity;

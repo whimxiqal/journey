@@ -80,7 +80,7 @@ public class PathTrial extends FlexiblePathTrial {
                                      Path path) {
     return new PathTrial(session, origin, destination,
         modes,
-        path.getLength(), path,
+        path.getCost(), path,
         ResultState.STOPPED_SUCCESSFUL, false);
   }
 
@@ -137,7 +137,7 @@ public class PathTrial extends FlexiblePathTrial {
                                  Path path) {
     return new PathTrial(session, origin, destination,
         modes,
-        path == null ? origin.distanceTo(destination) : path.getLength(), path,
+        path == null ? origin.distanceTo(destination) : path.getCost(), path,
         path == null ? ResultState.STOPPED_FAILED : ResultState.STOPPED_SUCCESSFUL,
         true);
   }

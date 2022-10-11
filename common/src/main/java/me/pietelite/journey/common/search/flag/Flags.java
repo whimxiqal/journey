@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright 2022 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,20 +19,27 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package me.pietelite.journey.common.data.sql.mysql;
+package me.pietelite.journey.common.search.flag;
 
-import me.pietelite.journey.common.data.sql.SqlPublicEndpointManager;
+import java.util.function.Function;
+import me.pietelite.journey.common.util.TimeUtil;
 
-/**
- * An implementation of the public endpoint manager for SQL with the MySQL engine.
- */
-public abstract class MySqlPublicEndpointManager
-    extends SqlPublicEndpointManager {
+public final class Flags {
 
-  public MySqlPublicEndpointManager() {
-    super(new MySqlConnectionController());
+  public static final ValueFlag<Integer> TIMEOUT = ValueFlag.of("value",
+      (Function<Integer, String>) TimeUtil::toSimpleTime,
+      Integer.class);
+  public static final ValueFlag<Integer> ANIMATE = ValueFlag.of("animate",
+      (Function<Integer, String>) TimeUtil::toSimpleTime,
+      Integer.class);
+  public static final Flag DIG = Flag.of("dig");
+  public static final Flag NO_DOOR = Flag.of("nodoor");
+  public static final Flag NO_FLY = Flag.of("nofly");
+
+  private Flags() {
   }
 
 }

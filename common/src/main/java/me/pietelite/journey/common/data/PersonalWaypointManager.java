@@ -23,10 +23,10 @@
 
 package me.pietelite.journey.common.data;
 
-import me.pietelite.journey.common.navigation.Cell;
-import me.pietelite.journey.common.search.SearchSession;
 import java.util.Map;
 import java.util.UUID;
+import me.pietelite.journey.common.navigation.Cell;
+import me.pietelite.journey.common.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,18 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * @param <D> the domain type
  * @see SearchSession
  */
-public interface PersonalEndpointManager {
-
-  /**
-   * Add a player and a specific cell to the database.
-   * A unique name will automatically be generated for this cell.
-   *
-   * @param playerUuid the player's uuid
-   * @param cell       the cell to add
-   * @throws IllegalArgumentException if the player and cell are not a unique combination
-   */
-  void addPersonalEndpoint(@NotNull UUID playerUuid,
-                           @NotNull Cell cell) throws IllegalArgumentException, DataAccessException;
+public interface PersonalWaypointManager {
 
   /**
    * Add a player to a specific cell to the database with a unique name.
@@ -59,9 +48,9 @@ public interface PersonalEndpointManager {
    * @throws IllegalArgumentException if the player and cell are not a unique combination
    *                                  or if the player and name are not a unique combination
    */
-  void addPersonalEndpoint(@NotNull UUID playerUuid,
-                           @NotNull Cell cell,
-                           @NotNull String name) throws IllegalArgumentException, DataAccessException;
+  void add(@NotNull UUID playerUuid,
+           @NotNull Cell cell,
+           @NotNull String name) throws IllegalArgumentException, DataAccessException;
 
   /**
    * Remove a player and a cell from the database. Name is irrelevant.
@@ -70,8 +59,8 @@ public interface PersonalEndpointManager {
    * @param playerUuid the player's uuid
    * @param cell       the cell location
    */
-  void removePersonalEndpoint(@NotNull UUID playerUuid,
-                              @NotNull Cell cell) throws DataAccessException;
+  void remove(@NotNull UUID playerUuid,
+              @NotNull Cell cell) throws DataAccessException;
 
   /**
    * Remove a player and a named cell from the database. Cell location is irrelevant.
@@ -80,8 +69,8 @@ public interface PersonalEndpointManager {
    * @param playerUuid the player's uuid
    * @param name       the name of the location
    */
-  void removePersonalEndpoint(@NotNull UUID playerUuid,
-                              @NotNull String name) throws DataAccessException;
+  void remove(@NotNull UUID playerUuid,
+              @NotNull String name) throws DataAccessException;
 
   /**
    * Check if a player has a personal endpoint at the certain cell location.
@@ -92,7 +81,7 @@ public interface PersonalEndpointManager {
    */
   default boolean hasPersonalEndpoint(@NotNull UUID playerUuid,
                                       @NotNull Cell cell) throws DataAccessException {
-    return getPersonalEndpointName(playerUuid, cell) != null;
+    return getName(playerUuid, cell) != null;
   }
 
   /**
@@ -104,7 +93,7 @@ public interface PersonalEndpointManager {
    */
   default boolean hasPersonalEndpoint(@NotNull UUID playerUuid,
                                       @NotNull String name) throws DataAccessException {
-    return getPersonalEndpoint(playerUuid, name) != null;
+    return getWaypoint(playerUuid, name) != null;
   }
 
   /**
@@ -115,8 +104,8 @@ public interface PersonalEndpointManager {
    * @return the cell's name, or null if it doesn't exist
    */
   @Nullable
-  String getPersonalEndpointName(@NotNull UUID playerUuid,
-                                 @NotNull Cell cell) throws DataAccessException;
+  String getName(@NotNull UUID playerUuid,
+                 @NotNull Cell cell) throws DataAccessException;
 
   /**
    * Get a specific cell with a given unique player and name combination.
@@ -126,8 +115,8 @@ public interface PersonalEndpointManager {
    * @return the cell, or null if it doesn't
    */
   @Nullable
-  Cell getPersonalEndpoint(@NotNull UUID playerUuid,
-                        @NotNull String name) throws DataAccessException;
+  Cell getWaypoint(@NotNull UUID playerUuid,
+                   @NotNull String name) throws DataAccessException;
 
   /**
    * Get a list of all personal endpoints for a player.
@@ -135,6 +124,6 @@ public interface PersonalEndpointManager {
    * @param playerUuid the player's uuid
    * @return all names of cells mapped to their corresponding cells
    */
-  Map<String, Cell> getPersonalEndpoints(@NotNull UUID playerUuid) throws DataAccessException;
+  Map<String, Cell> getAll(@NotNull UUID playerUuid) throws DataAccessException;
 
 }

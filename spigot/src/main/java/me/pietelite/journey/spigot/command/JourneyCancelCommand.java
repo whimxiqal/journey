@@ -25,11 +25,11 @@ package me.pietelite.journey.spigot.command;
 
 import java.util.Map;
 import java.util.Objects;
+import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.spigot.JourneySpigot;
 import me.pietelite.journey.spigot.command.common.CommandNode;
 import me.pietelite.journey.spigot.command.common.PlayerCommandNode;
-import me.pietelite.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.spigot.util.Format;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;

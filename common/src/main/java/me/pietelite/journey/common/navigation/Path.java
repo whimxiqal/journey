@@ -35,19 +35,19 @@ public class Path implements Serializable {
 
   private final Cell origin;
   private final ArrayList<Step> steps;
-  private final double length;
+  private final double cost;
 
   /**
    * General constructor.
    *
    * @param origin the origin of the whole path
    * @param steps  the steps required to get there
-   * @param length the length of the path
+   * @param cost the cost of the path
    */
-  public Path(Cell origin, @NotNull Collection<Step> steps, double length) {
+  public Path(Cell origin, @NotNull Collection<Step> steps, double cost) {
     this.origin = origin;
     this.steps = new ArrayList<>(steps);
-    this.length = length;
+    this.cost = cost;
   }
 
   /**
@@ -98,8 +98,8 @@ public class Path implements Serializable {
    *
    * @return the path length
    */
-  public final double getLength() {
-    return length;
+  public final double getCost() {
+    return cost;
   }
 
   /**

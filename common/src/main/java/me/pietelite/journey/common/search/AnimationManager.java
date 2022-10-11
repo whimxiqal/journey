@@ -21,19 +21,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.spigot.search;
+package me.pietelite.journey.common.search;
 
+import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.ModeType;
-import me.pietelite.journey.spigot.util.SpigotUtil;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The place where all animation operations and memory are stored for any single
@@ -41,18 +37,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AnimationManager {
 
+  private final UUID player;
   private final Set<Cell> successfulLocations = ConcurrentHashMap.newKeySet();
-  private final SpigotPlayerSearchSession<?> session;
   private Cell lastFailure;
   private boolean animating;
 
-  /**
-   * General constructor.
-   *
-   * @param session the session
-   */
-  public AnimationManager(SpigotPlayerSearchSession<?> session) {
-    this.session = session;
+  public enum StageType {
+    FAILURE,
+    SUCCESS,
+    STEP
+  }
+
+  public AnimationManager(UUID player) {
+    this.player = player;
   }
 
   /**
@@ -67,53 +64,22 @@ public class AnimationManager {
     if (!animating) {
       return false;
     }
-    Player player = Bukkit.getPlayer(session.getSession().getCallerId());
-    if (player == null) {
-      return false;
-    }
 
     if (this.successfulLocations.contains(cell)) {
       return false;
     }
-
-    if (SpigotUtil.cell(player.getLocation()).equals(cell)
-        || SpigotUtil.cell(player.getLocation().add(0, 1, 0)).equals(cell)) {
-      return false;
+    if (Journey.get()
+        .proxy()
+        .platform()
+        .sendBlockData(player, cell, success ? StageType.SUCCESS : StageType.FAILURE, modeType)) {
+      successfulLocations.add(cell);
+      return true;
     }
-
-    if (success) {
-      BlockData blockData;
-      switch (modeType) {
-        case WALK:
-          blockData = Material.LIME_STAINED_GLASS.createBlockData();
-          break;
-        case JUMP:
-          blockData = Material.MAGENTA_STAINED_GLASS.createBlockData();
-          break;
-        case FLY:
-          blockData = Material.WHITE_STAINED_GLASS.createBlockData();
-          break;
-        default:
-          blockData = Material.COBWEB.createBlockData();
-          break;
-      }
-      return showBlock(cell, blockData);
-    } else {
-      if (lastFailure != null) {
-        hideResult(lastFailure);
-      }
-      lastFailure = cell;
-      return showBlock(cell, Material.GLOWSTONE.createBlockData());
-    }
+    return false;
   }
 
   private void hideResult(Cell cell) {
-    Player player = Bukkit.getPlayer(session.getSession().getCallerId());
-    if (player == null) {
-      return;
-    }
-    Location location = SpigotUtil.toLocation(cell);
-    player.sendBlockChange(location, location.getBlock().getBlockData());
+    Journey.get().proxy().platform().resetBlockData(player, Collections.singleton(cell));
     successfulLocations.remove(cell);
   }
 
@@ -124,45 +90,24 @@ public class AnimationManager {
    * @return true if it displayed correctly, false if it failed for some reason
    */
   public boolean showStep(Cell cell) {
-    return showBlock(cell, Material.OBSIDIAN.createBlockData());
-  }
-
-  private boolean showBlock(Cell cell, BlockData blockData) {
-    if (!animating) {
-      return false;
+    if (Journey.get()
+        .proxy()
+        .platform()
+        .sendBlockData(player, cell, StageType.STEP, null)) {
+      successfulLocations.add(cell);
+      return true;
     }
-    Player player = getPlayer();
-    if (player == null) {
-      return false;
-    }
-    if (SpigotUtil.getWorld(cell) != player.getWorld()
-        || cell.distanceToSquared(SpigotUtil.cell(player.getLocation())) > 10000) {
-      return false;
-    }
-    player.sendBlockChange(SpigotUtil.toLocation(cell), blockData);
-    successfulLocations.add(cell);
-    return true;
+    return false;
   }
 
   /**
    * Undo all the block changes displayed to the user so everything looks as it did before animating.
    */
   public void undoAnimation() {
-    Player player = Bukkit.getPlayer(session.getSession().getCallerId());
-    if (player == null) {
-      return;
-    }
-
-    successfulLocations.forEach(cell -> showBlock(cell, SpigotUtil.getBlock(cell).getBlockData()));
-
+    Journey.get().proxy().platform().resetBlockData(player, successfulLocations);
     if (lastFailure != null) {
-      showBlock(lastFailure, SpigotUtil.getBlock(lastFailure).getBlockData());
+      Journey.get().proxy().platform().resetBlockData(player, Collections.singleton(lastFailure));
     }
-  }
-
-  @Nullable
-  private Player getPlayer() {
-    return Bukkit.getPlayer(session.getSession().getCallerId());
   }
 
   /**

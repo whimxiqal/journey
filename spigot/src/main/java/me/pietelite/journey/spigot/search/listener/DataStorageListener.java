@@ -52,7 +52,7 @@ public class DataStorageListener implements Listener {
       PathTrial pathTrial = (PathTrial) flexiblePathTrial;
       if (pathTrial.getState().isSuccessful()) {
         try {
-          Journey.get().proxy().dataManager().getPathRecordManager().report(
+          Journey.get().proxy().dataManager().pathRecordManager().report(
               pathTrial,
               event.getSearchEvent().getPathTrial().getModes().stream().map(Mode::getType).collect(Collectors.toSet()),
               event.getSearchEvent().getExecutionTime());

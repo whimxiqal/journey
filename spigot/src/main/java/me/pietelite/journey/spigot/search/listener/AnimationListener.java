@@ -23,12 +23,12 @@
 
 package me.pietelite.journey.spigot.search.listener;
 
+import me.pietelite.journey.common.search.AnimationManager;
+import me.pietelite.journey.common.search.PlayerSearchSession;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.common.search.event.StepSearchEvent;
 import me.pietelite.journey.common.search.event.StopPathSearchEvent;
 import me.pietelite.journey.common.search.event.StopSearchEvent;
-import me.pietelite.journey.spigot.search.AnimationManager;
-import me.pietelite.journey.spigot.search.SpigotPlayerSearchSession;
 import me.pietelite.journey.spigot.search.event.SpigotModeFailureEvent;
 import me.pietelite.journey.spigot.search.event.SpigotModeSuccessEvent;
 import me.pietelite.journey.spigot.search.event.SpigotSearchEvent;
@@ -123,9 +123,9 @@ public class AnimationListener implements Listener {
   }
 
   private AnimationManager getAnimationManager(SpigotSearchEvent<?> event) {
-    if (event.getSearchEvent().getSession() instanceof SpigotPlayerSearchSession<?>) {
-      AnimationManager animationManager = ((SpigotPlayerSearchSession<?>) event.getSearchEvent().getSession())
-          .getAnimationManager();
+    if (event.getSearchEvent().getSession() instanceof PlayerSearchSession<?>) {
+      AnimationManager animationManager = ((PlayerSearchSession<?>) event.getSearchEvent().getSession())
+          .animationManager();
       if (animationManager.isAnimating()) {
         return animationManager;
       }

@@ -38,6 +38,7 @@ import me.pietelite.journey.common.search.event.FoundSolutionEvent;
 import me.pietelite.journey.common.search.event.IgnoreCacheSearchEvent;
 import me.pietelite.journey.common.search.event.StartSearchEvent;
 import me.pietelite.journey.common.search.event.StopSearchEvent;
+import me.pietelite.journey.common.search.flag.FlagSet;
 
 /**
  * An implementation of the {@link SearchSession} that uses a "reverse"
@@ -51,27 +52,18 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
   private final Cell destination;
   private long executionStartTime = -1;
 
-  /**
-   * General constructor.
-   *
-   * @param callerId    the identifier for the caller
-   * @param callerType  the type of caller
-   * @param origin      origination location
-   * @param destination destination location
-   */
-  public DestinationGoalSearchSession(UUID callerId, Caller callerType, Cell origin, Cell destination) {
-    super(callerId, callerType);
+  public DestinationGoalSearchSession(UUID callerId, Caller callerType, FlagSet flags, Cell origin, Cell destination) {
+    super(callerId, callerType, flags);
     this.origin = origin;
     this.destination = destination;
   }
 
   @Override
-  public final void search() {
-
+  protected void doSearch() {
     executionStartTime = System.currentTimeMillis();
     Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
 
-    state = ResultState.RUNNING;
+    state.set(ResultState.RUNNING);
 
     Set<String> allDomains = new HashSet<>();
 
@@ -120,12 +112,12 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
 
     Itinerary bestItinerary = null;
     boolean usingCache = true;
-    while (!this.state.isCanceled()) {
+    while (!this.state.get().isCanceled()) {
 
       ItineraryTrial itineraryTrial = graph.calculate();
       if (itineraryTrial == null) {
         // There is no possible solution to the entire problem
-        state = ResultState.STOPPED_FAILED;
+        state.set(ResultState.STOPPED_FAILED);
         Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
         return;
       } else {
@@ -137,14 +129,14 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
           if (bestItinerary == null
               || trialResult.itinerary().get().getLength() < bestItinerary.getLength()) {
             bestItinerary = trialResult.itinerary().get();
-            this.state = ResultState.RUNNING_SUCCESSFUL;
+            state.set(ResultState.RUNNING_SUCCESSFUL);
             Journey.get().dispatcher().dispatch(
                 new FoundSolutionEvent(this, trialResult.itinerary().get()));
           }
         }
 
         // Do a quick check to see if the search was canceled before we try to return a value
-        if (this.state.isCanceled()) {
+        if (state.get().isCanceled()) {
           break;
         }
 
@@ -159,10 +151,10 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
           } else {
             // The problem hasn't changed, and we aren't using the cache,
             // so no better solutions are possible.
-            if (state.isSuccessful()) {
-              state = ResultState.STOPPED_SUCCESSFUL;  // in case we had the running-successful state
+            if (state.get().isSuccessful()) {
+              state.set(ResultState.STOPPED_SUCCESSFUL);  // in case we had the running-successful state
             } else {
-              state = ResultState.STOPPED_FAILED;
+              state.set(ResultState.STOPPED_FAILED);
             }
             Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
             return;
@@ -172,11 +164,13 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
     }
 
     // Canceling...
-    if (state.isSuccessful()) {
-      state = ResultState.STOPPED_SUCCESSFUL;  // in case we had the running-successful state
-    } else {
-      state = ResultState.STOPPED_CANCELED;  // must have been canceled
-    }
+    state.getAndUpdate(current -> {
+      if (current.isSuccessful()) {
+        return ResultState.STOPPED_SUCCESSFUL;
+      } else {
+        return ResultState.STOPPED_CANCELED;
+      }
+    });
     Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
   }
 

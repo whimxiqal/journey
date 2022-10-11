@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright 2022 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,23 +19,18 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package me.pietelite.journey.common.data.sql.mysql;
+package me.pietelite.journey.platform;
 
-import me.pietelite.journey.common.data.sql.SqlPersonalEndpointManager;
+import me.pietelite.journey.common.navigation.Cell;
+import me.pietelite.journey.common.navigation.ModeType;
+import me.pietelite.journey.common.navigation.Port;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * MySQL-implementation of the SQL personal endpoint manager.
- */
-public abstract class MySqlPersonalEndpointManager
-    extends SqlPersonalEndpointManager {
-
-  /**
-   * General constructor.
-   */
-  public MySqlPersonalEndpointManager() {
-    super(new MySqlConnectionController());
+public class TestPort extends Port {
+  public TestPort(@NotNull Cell origin, @NotNull Cell destination, @NotNull ModeType modeType, int length) {
+    super(origin, destination, modeType, length);
   }
-
 }

@@ -21,9 +21,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.spigot.search;
+package me.pietelite.journey.common.search;
 
-import me.pietelite.journey.common.search.SearchSession;
+import java.util.UUID;
 
 /**
  * An object to help hold the current state of a running
@@ -40,6 +40,14 @@ public class PlayerSessionState {
    * True if the player has been presented with a solution (itinerary -> journey).
    */
   private boolean solutionPresented = false;
+  private final AnimationManager animationManager;
+  public AnimationManager animationManager() {
+    return animationManager;
+  }
+
+  public PlayerSessionState(UUID playerUuid) {
+    this.animationManager = new AnimationManager(playerUuid);
+  }
 
   /**
    * Set whether the search has been solved already or not.

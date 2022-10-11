@@ -23,8 +23,8 @@
 
 package me.pietelite.journey.common.data;
 
-import me.pietelite.journey.common.navigation.Cell;
 import java.util.Map;
+import me.pietelite.journey.common.navigation.Cell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ public interface PublicEndpointManager {
    * @param name the name of the location
    * @throws IllegalArgumentException for invalid inputs
    */
-  void addPublicEndpoint(@NotNull Cell cell, @NotNull String name)
+  void add(@NotNull Cell cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException;
 
   /**
@@ -48,7 +48,7 @@ public interface PublicEndpointManager {
    *
    * @param cell the cell location
    */
-  void removePublicEndpoint(@NotNull Cell cell) throws DataAccessException;
+  void remove(@NotNull Cell cell) throws DataAccessException;
 
   /**
    * Remove a cell from the database by name. Cell location is irrelevant.
@@ -56,7 +56,7 @@ public interface PublicEndpointManager {
    *
    * @param name the name of the location
    */
-  void removePublicEndpoint(@NotNull String name) throws DataAccessException;
+  void remove(@NotNull String name) throws DataAccessException;
 
   /**
    * Check if a saved cell exists at this location.
@@ -65,7 +65,7 @@ public interface PublicEndpointManager {
    * @return true if the cell exists
    */
   default boolean hasPublicEndpoint(@NotNull Cell cell) throws DataAccessException {
-    return getPublicEndpointName(cell) != null;
+    return getName(cell) != null;
   }
 
   /**
@@ -75,7 +75,7 @@ public interface PublicEndpointManager {
    * @return true if the cell exists
    */
   default boolean hasPublicEndpoint(@NotNull String name) throws DataAccessException {
-    return getPublicEndpoint(name) != null;
+    return getWaypoint(name) != null;
   }
 
   /**
@@ -85,7 +85,7 @@ public interface PublicEndpointManager {
    * @return the cell's name, or null if it doesn't exist
    */
   @Nullable
-  String getPublicEndpointName(@NotNull Cell cell) throws DataAccessException;
+  String getName(@NotNull Cell cell) throws DataAccessException;
 
   /**
    * Get a specific cell by its given name.
@@ -94,13 +94,13 @@ public interface PublicEndpointManager {
    * @return the cell, or null if it doesn't
    */
   @Nullable
-  Cell getPublicEndpoint(@NotNull String name) throws DataAccessException;
+  Cell getWaypoint(@NotNull String name) throws DataAccessException;
 
   /**
    * Get a list of all saved endpoints.
    *
    * @return all names of cells mapped to their corresponding cells
    */
-  Map<String, Cell> getPublicEndpoints() throws DataAccessException;
+  Map<String, Cell> getAll() throws DataAccessException;
 
 }

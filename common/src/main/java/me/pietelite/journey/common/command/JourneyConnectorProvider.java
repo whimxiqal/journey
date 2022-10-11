@@ -4,8 +4,6 @@ import me.pietelite.journey.common.JourneyLexer;
 import me.pietelite.journey.common.JourneyParser;
 import me.pietelite.mantle.common.connector.CommandConnector;
 import me.pietelite.mantle.common.connector.CommandRoot;
-import me.pietelite.mantle.common.connector.CompletionInfo;
-import me.pietelite.mantle.common.connector.HelpCommandInfo;
 import net.kyori.adventure.text.Component;
 
 public class JourneyConnectorProvider {
@@ -20,6 +18,8 @@ public class JourneyConnectorProvider {
               .addAlias("jt")
               .description(Component.text("JourneySession to destinations"))
               .build())
+          .playerOnlyCommands(JourneyParser.RULE_waypoint,
+              JourneyParser.RULE_serverSetWaypoint)
           .lexer(JourneyLexer.class)
           .parser(JourneyParser.class)
           .executor(new JourneyExecutor())

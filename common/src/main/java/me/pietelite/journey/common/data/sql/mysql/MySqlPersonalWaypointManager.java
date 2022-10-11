@@ -21,24 +21,21 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.common.manager;
+package me.pietelite.journey.common.data.sql.mysql;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import me.pietelite.journey.common.navigation.Cell;
+import me.pietelite.journey.common.data.sql.SqlPersonalWaypointManager;
 
-public final class DeathManager {
+/**
+ * MySQL-implementation of the SQL personal endpoint manager.
+ */
+public abstract class MySqlPersonalWaypointManager
+    extends SqlPersonalWaypointManager {
 
-  Map<UUID, Cell> deathLocations = new HashMap<>();
-
-  public Optional<Cell> getDeathLocation(UUID playerUuid) {
-    return Optional.ofNullable(deathLocations.get(playerUuid));
-  }
-
-  public void setDeathLocation(UUID playerUuid, Cell location) {
-    deathLocations.put(playerUuid, location);
+  /**
+   * General constructor.
+   */
+  public MySqlPersonalWaypointManager() {
+    super(new MySqlConnectionController());
   }
 
 }

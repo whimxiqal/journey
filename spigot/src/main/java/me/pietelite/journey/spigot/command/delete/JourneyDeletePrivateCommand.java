@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import me.pietelite.journey.common.data.DataAccessException;
-import me.pietelite.journey.common.data.PersonalEndpointManager;
+import me.pietelite.journey.common.data.PersonalWaypointManager;
 import me.pietelite.journey.common.tools.BufferedFunction;
 import me.pietelite.journey.spigot.command.JourneyCommand;
 import me.pietelite.journey.spigot.command.common.CommandError;
@@ -82,7 +82,7 @@ public class JourneyDeletePrivateCommand extends PlayerCommandNode {
       return false;
     }
 
-    PersonalEndpointManager endpointManager =
+    PersonalWaypointManager endpointManager =
         Journey.get().proxy().dataManager()
             .getPersonalEndpointManager();
     if (endpointManager.hasPersonalEndpoint(player.getUniqueId(), args[0])) {

@@ -21,21 +21,18 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.spigot.data.sql.sqlite;
+package me.pietelite.journey.common.data.sql.mysql;
 
-import me.pietelite.journey.common.data.sql.sqlite.SqlitePublicEndpointManager;
+import me.pietelite.journey.common.data.sql.SqlPublicWaypointManager;
 
 /**
- * The Spigot implementation of the {@link SqlitePublicEndpointManager}.
+ * An implementation of the public endpoint manager for SQL with the MySQL engine.
  */
-public class SpigotSqlitePublicEndpointManager extends SqlitePublicEndpointManager {
+public abstract class MySqlPublicWaypointManager
+    extends SqlPublicWaypointManager {
 
-  /**
-   * General constructor.
-   *
-   * @param address the address location of the sqlite database
-   */
-  public SpigotSqlitePublicEndpointManager(String address) {
-    super(address);
+  public MySqlPublicWaypointManager() {
+    super(new MySqlConnectionController());
   }
+
 }

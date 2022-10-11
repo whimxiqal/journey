@@ -196,7 +196,7 @@ public class FlexiblePathTrial implements Resulted {
 
     Node current;
     while (!upcoming.isEmpty()) {
-      if (session.state.isCancelFailed()) {
+      if (session.state.get().isCancelFailed()) {
         // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
         return resultCancel();
       }

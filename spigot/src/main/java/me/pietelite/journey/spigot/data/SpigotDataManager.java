@@ -26,21 +26,21 @@ package me.pietelite.journey.spigot.data;
 import me.pietelite.journey.common.config.Settings;
 import me.pietelite.journey.common.data.DataManager;
 import me.pietelite.journey.common.data.PathRecordManager;
-import me.pietelite.journey.common.data.PersonalEndpointManager;
+import me.pietelite.journey.common.data.PersonalWaypointManager;
 import me.pietelite.journey.common.data.PublicEndpointManager;
 import me.pietelite.journey.spigot.JourneySpigot;
-import me.pietelite.journey.spigot.data.sql.mysql.SpigotMySqlPersonalEndpointManager;
-import me.pietelite.journey.spigot.data.sql.mysql.SpigotMySqlPublicEndpointManager;
+import me.pietelite.journey.spigot.data.sql.mysql.SpigotMySqlPersonalWaypointManager;
+import me.pietelite.journey.spigot.data.sql.mysql.SpigotMySqlPublicWaypointManager;
 import me.pietelite.journey.spigot.data.sql.sqlite.SpigotSqlitePathRecordManager;
-import me.pietelite.journey.spigot.data.sql.sqlite.SpigotSqlitePersonalEndpointManager;
-import me.pietelite.journey.spigot.data.sql.sqlite.SpigotSqlitePublicEndpointManager;
+import me.pietelite.journey.spigot.data.sql.sqlite.SpigotSqlitePersonalWaypointManager;
+import me.pietelite.journey.spigot.data.sql.sqlite.SpigotSqlitePublicWaypointManager;
 
 /**
  * Implementation of the {@link DataManager} in Spigot Minecraft.
  */
 public class SpigotDataManager implements DataManager {
 
-  private final PersonalEndpointManager personalEndpointManager;
+  private final PersonalWaypointManager personalWaypointManager;
   private final PublicEndpointManager publicEndpointManager;
   private final PathRecordManager pathRecordManager;
 
@@ -53,10 +53,10 @@ public class SpigotDataManager implements DataManager {
         .getPath() + "/journey.db";
     switch (Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()) {
       case SQLITE:
-        personalEndpointManager = new SpigotSqlitePersonalEndpointManager(sqliteAddress);
+        personalWaypointManager = new SpigotSqlitePersonalWaypointManager(sqliteAddress);
         break;
       case MYSQL:
-        personalEndpointManager = new SpigotMySqlPersonalEndpointManager();
+        personalWaypointManager = new SpigotMySqlPersonalWaypointManager();
         break;
       default:
         JourneySpigot.getInstance()
@@ -64,15 +64,15 @@ public class SpigotDataManager implements DataManager {
             .severe("This type of custom endpoint storage type is not supported: "
                 + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
                 + ". Defaulting to SQLite storage.");
-        personalEndpointManager = new SpigotSqlitePersonalEndpointManager(sqliteAddress);
+        personalWaypointManager = new SpigotSqlitePersonalWaypointManager(sqliteAddress);
     }
 
     switch (Settings.SERVER_ENDPOINT_STORAGE_TYPE.getValue()) {
       case SQLITE:
-        publicEndpointManager = new SpigotSqlitePublicEndpointManager(sqliteAddress);
+        publicEndpointManager = new SpigotSqlitePublicWaypointManager(sqliteAddress);
         break;
       case MYSQL:
-        publicEndpointManager = new SpigotMySqlPublicEndpointManager();
+        publicEndpointManager = new SpigotMySqlPublicWaypointManager();
         break;
       default:
         JourneySpigot.getInstance()
@@ -80,24 +80,24 @@ public class SpigotDataManager implements DataManager {
             .severe("This type of server endpoint storage type is not supported: "
                 + Settings.CUSTOM_ENDPOINT_STORAGE_TYPE.getValue()
                 + ". Defaulting to SQLite storage.");
-        publicEndpointManager = new SpigotSqlitePublicEndpointManager(sqliteAddress);
+        publicEndpointManager = new SpigotSqlitePublicWaypointManager(sqliteAddress);
     }
 
     pathRecordManager = new SpigotSqlitePathRecordManager(sqliteAddress);
   }
 
   @Override
-  public PersonalEndpointManager getPersonalEndpointManager() {
-    return personalEndpointManager;
+  public PersonalWaypointManager personalEndpointManager() {
+    return personalWaypointManager;
   }
 
   @Override
-  public PublicEndpointManager getPublicEndpointManager() {
+  public PublicEndpointManager publicEndpointManager() {
     return publicEndpointManager;
   }
 
   @Override
-  public PathRecordManager getPathRecordManager() {
+  public PathRecordManager pathRecordManager() {
     return pathRecordManager;
   }
 }

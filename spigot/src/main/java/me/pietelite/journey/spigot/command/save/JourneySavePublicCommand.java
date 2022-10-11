@@ -23,6 +23,7 @@
 
 package me.pietelite.journey.spigot.command.save;
 
+import java.util.Map;
 import me.pietelite.journey.common.data.DataAccessException;
 import me.pietelite.journey.common.data.PublicEndpointManager;
 import me.pietelite.journey.common.util.Validator;
@@ -33,7 +34,6 @@ import me.pietelite.journey.spigot.command.common.Parameter;
 import me.pietelite.journey.spigot.command.common.PlayerCommandNode;
 import me.pietelite.journey.spigot.util.Format;
 import me.pietelite.journey.spigot.util.Permissions;
-import java.util.Map;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class JourneySavePublicCommand extends PlayerCommandNode {
         ProxyProvider.getDataManager()
         .getPublicEndpointManager();
 
-    String existingName = publicEndpointManager.getPublicEndpointName(SpigotUtil.cell(player.getLocation()));
+    String existingName = publicEndpointManager.getName(SpigotUtil.cell(player.getLocation()));
     if (existingName != null) {
       player.spigot().sendMessage(Format.error("Server location ",
           Format.toPlain(Format.note(existingName)),
@@ -92,7 +92,7 @@ public class JourneySavePublicCommand extends PlayerCommandNode {
       return false;
     }
 
-    Cell existingCell = publicEndpointManager.getPublicEndpoint(name);
+    Cell existingCell = publicEndpointManager.getWaypoint(name);
     if (existingCell != null) {
       player.spigot().sendMessage(Format.error("A server location already exists with that name at",
           Format.toPlain(Format.locationCell(existingCell, Format.DEFAULT)),
@@ -100,7 +100,7 @@ public class JourneySavePublicCommand extends PlayerCommandNode {
       return false;
     }
 
-    publicEndpointManager.addPublicEndpoint(SpigotUtil.cell(player.getLocation()), name);
+    publicEndpointManager.add(SpigotUtil.cell(player.getLocation()), name);
     player.spigot().sendMessage(Format.success("Added server location named ",
         Format.toPlain(Format.note(name))));
     return true;

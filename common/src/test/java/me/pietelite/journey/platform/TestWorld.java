@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright 2022 Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,22 +19,18 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
-package me.pietelite.journey.spigot.data.sql.mysql;
+package me.pietelite.journey.platform;
 
-import me.pietelite.journey.common.data.sql.mysql.MySqlPublicEndpointManager;
+import java.util.Map;
+import me.pietelite.journey.common.navigation.Cell;
 
-/**
- * SQL public endpoint manager implemented in Spigot Minecraft.
- */
-public class SpigotMySqlPublicEndpointManager extends MySqlPublicEndpointManager {
+public class TestWorld {
 
-  /**
-   * General constructor.
-   */
-  public SpigotMySqlPublicEndpointManager() {
-    super();
-  }
+  String name;
+  CellType[][] cells;
+  Map<Integer, Cell> pois;
 
 }

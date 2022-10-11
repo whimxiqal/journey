@@ -297,13 +297,6 @@ public abstract class SqlPathRecordManager
     return findRecordWithModes(getRecords(origin, destination), modeTypes);
   }
 
-  private Cell toClass(PathTrialCellRecord cellRecord) {
-    return new Cell(cellRecord.x(),
-        cellRecord.y(),
-        cellRecord.z(),
-        cellRecord.record().worldId());
-  }
-
   @Override
   public Path getPath(Cell origin, Cell destination, Set<ModeType> modeTypeGroup) {
     try (Connection connection = getConnectionController().establishConnection()) {
@@ -321,13 +314,12 @@ public abstract class SqlPathRecordManager
 
       record.cells().sort(Comparator.comparing(PathTrialCellRecord::index));
 
-
       LinkedList<Step> steps = new LinkedList<>();
 
       // Add the first one because we don't move to get here
-      steps.add(new Step(toClass(record.cells().get(0)), 0, record.cells().get(0).modeType()));
+      steps.add(new Step(record.cells().get(0).toCell(), 0, record.cells().get(0).modeType()));
       for (int i = 1; i < record.cells().size(); i++) {
-        Cell cell = toClass(record.cells().get(i));
+        Cell cell = record.cells().get(i).toCell();
         steps.add(new Step(cell,
             cell.distanceTo(steps.getLast().location()),
             record.cells().get(i).modeType()));

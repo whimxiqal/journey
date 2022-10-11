@@ -23,9 +23,12 @@
 
 package me.pietelite.journey.spigot.command.path;
 
+import java.util.List;
+import java.util.Map;
 import me.pietelite.journey.common.config.Settings;
 import me.pietelite.journey.common.data.DataAccessException;
 import me.pietelite.journey.common.data.PublicEndpointManager;
+import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.common.tools.BufferedSupplier;
 import me.pietelite.journey.common.util.Validator;
 import me.pietelite.journey.spigot.api.navigation.Cell;
@@ -35,11 +38,8 @@ import me.pietelite.journey.spigot.command.common.CommandFlags;
 import me.pietelite.journey.spigot.command.common.CommandNode;
 import me.pietelite.journey.spigot.command.common.Parameter;
 import me.pietelite.journey.spigot.command.common.PlayerCommandNode;
-import me.pietelite.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.spigot.util.Format;
 import me.pietelite.journey.spigot.util.Permissions;
-import java.util.List;
-import java.util.Map;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +88,7 @@ public class JourneyPathPublicCommand extends PlayerCommandNode {
         ProxyProvider.getDataManager()
         .getPublicEndpointManager();
     try {
-      endLocation = publicEndpointManager.getPublicEndpoint(args[0]);
+      endLocation = publicEndpointManager.getWaypoint(args[0]);
 
       if (endLocation == null) {
         player.spigot().sendMessage(Format.error("The server location ",
@@ -139,7 +139,7 @@ public class JourneyPathPublicCommand extends PlayerCommandNode {
         return false;
       }
       // Save it!
-      publicEndpointManager.addPublicEndpoint(endLocation, args[4]);
+      publicEndpointManager.add(endLocation, args[4]);
       player.spigot().sendMessage(Format.success("Saved your server location with name ",
           Format.toPlain(Format.note(args[4])),
           "!"));

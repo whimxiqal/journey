@@ -34,7 +34,7 @@ public interface DataManager {
    *
    * @return the personal endpoint manager
    */
-  PersonalEndpointManager getPersonalEndpointManager();
+  PersonalWaypointManager personalEndpointManager();
 
   /**
    * Get the implementation for the endpoint manager
@@ -42,7 +42,7 @@ public interface DataManager {
    *
    * @return the public endpoint manager
    */
-  PublicEndpointManager getPublicEndpointManager();
+  PublicEndpointManager publicEndpointManager();
 
   /**
    * Get the implementation for the storage of
@@ -50,6 +50,6 @@ public interface DataManager {
    *
    * @return the manager
    */
-  PathRecordManager getPathRecordManager();
+  PathRecordManager pathRecordManager();
 
 }

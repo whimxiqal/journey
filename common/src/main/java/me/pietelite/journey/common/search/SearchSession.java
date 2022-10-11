@@ -30,11 +30,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import me.pietelite.journey.common.Journey;
+import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.navigation.Itinerary;
 import me.pietelite.journey.common.navigation.Mode;
 import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.Port;
+import me.pietelite.journey.common.search.flag.FlagSet;
+import net.kyori.adventure.audience.Audience;
 
 /**
  * A session to handle a pathfinding search.
@@ -50,41 +56,64 @@ public abstract class SearchSession implements Resulted {
   private final UUID callerId;
   private final UUID uuid = UUID.randomUUID();
   private final Caller callerType;
-  protected ResultState state = ResultState.IDLE;
+  private final FlagSet flags;
+  protected AtomicReference<ResultState> state = new AtomicReference<>(ResultState.IDLE);
+  protected CompletableFuture<ResultState> future;
   private int algorithmStepDelay = 0;
 
-  protected SearchSession(UUID callerId, Caller callerType) {
+  protected SearchSession(UUID callerId, Caller callerType, FlagSet flags) {
     this.callerId = callerId;
     this.callerType = callerType;
+    this.flags = flags;
   }
 
   /**
    * Perform the titular search operation.
    */
-  public abstract void search();
+  public final CompletableFuture<ResultState> search(int timeout) {
+    future = new CompletableFuture<>();
+    Journey.get().proxy().schedulingManager().schedule(() -> {
+      doSearch();
+      future.complete(state.get());
+    }, true);
+
+    Journey.get().proxy().schedulingManager().schedule(() -> {
+      if (this.getState() == ResultState.CANCELING_FAILED) {
+        audience().sendMessage(Formatter.error("Time limit surpassed. Canceling search..."));
+      }
+      stop();
+    }, false, timeout * 20 /* ticks per second */);
+    return future;
+  }
+
+  protected abstract void doSearch();
 
   /**
    * Terminate the search operation. It is up to the implementation
    * of this search session object to implement the actual cancellation behavior;
    * this method only tells the class that it should be canceling itself.
-   *
-   * @return true if the state was changed
    */
-  public final boolean stop() {
-    if (state == ResultState.IDLE
-        || state == ResultState.RUNNING) {
-      this.state = ResultState.CANCELING_FAILED;
-      return true;
-    } else if (state == ResultState.RUNNING_SUCCESSFUL) {
-      this.state = ResultState.CANCELING_SUCCESSFUL;
-      return true;
+  public final CompletableFuture<ResultState> stop() {
+    if (future == null) {
+      return CompletableFuture.completedFuture(state.get());
     }
-    return false;
+    state.getAndUpdate(current -> {
+      switch (current) {
+        case IDLE:
+        case RUNNING:
+          return ResultState.CANCELING_FAILED;
+        case RUNNING_SUCCESSFUL:
+          return ResultState.CANCELING_SUCCESSFUL;
+        default:
+          return current;
+      }
+    });
+    return future;
   }
 
   @Override
   public final ResultState getState() {
-    return state;
+    return state.get();
   }
 
   /**
@@ -167,19 +196,8 @@ public abstract class SearchSession implements Resulted {
     return callerType;
   }
 
-  /**
-   * Get the step delay time for the search operation (milliseconds).
-   * This value is primarily used in animation so that each step of the way
-   * is delayed and can therefore be seen visually by the user.
-   *
-   * @return the step delay (milliseconds)
-   */
-  public int getAlgorithmStepDelay() {
-    return algorithmStepDelay;
-  }
-
-  protected void setAlgorithmStepDelay(int delay) {
-    this.algorithmStepDelay = delay;
+  public FlagSet flags() {
+    return flags;
   }
 
   @Override
@@ -206,6 +224,16 @@ public abstract class SearchSession implements Resulted {
    * @return the search execution time, in milliseconds
    */
   public abstract long executionTime();
+
+  public abstract Audience audience();
+
+  public void setAlgorithmStepDelay(int algorithmStepDelay) {
+    this.algorithmStepDelay = algorithmStepDelay;
+  }
+
+  public int getAlgorithmStepDelay() {
+    return algorithmStepDelay;
+  }
 
   /**
    * The caller type. A search session may be created for multiple types of entities,

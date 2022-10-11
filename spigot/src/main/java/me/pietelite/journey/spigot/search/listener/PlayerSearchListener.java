@@ -23,13 +23,20 @@
 
 package me.pietelite.journey.spigot.search.listener;
 
+import java.util.Optional;
+import java.util.UUID;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Itinerary;
 import me.pietelite.journey.common.navigation.JourneySession;
+import me.pietelite.journey.common.navigation.PlayerJourneySession;
+import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
+import me.pietelite.journey.common.search.PlayerSearchSession;
+import me.pietelite.journey.common.search.PlayerSessionState;
 import me.pietelite.journey.common.search.ResultState;
 import me.pietelite.journey.common.search.SearchSession;
+import me.pietelite.journey.common.util.TimeUtil;
 import me.pietelite.journey.spigot.JourneySpigot;
 import me.pietelite.journey.spigot.search.event.SpigotFoundSolutionEvent;
 import me.pietelite.journey.spigot.search.event.SpigotIgnoreCacheSearchEvent;
@@ -40,15 +47,8 @@ import me.pietelite.journey.spigot.search.event.SpigotStartSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStopItinerarySearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStopPathSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStopSearchEvent;
-import me.pietelite.journey.common.navigation.PlayerJourneySession;
-import me.pietelite.journey.spigot.search.PlayerDestinationGoalSearchSession;
-import me.pietelite.journey.spigot.search.PlayerSessionState;
-import me.pietelite.journey.spigot.search.SpigotPlayerSearchSession;
 import me.pietelite.journey.spigot.util.Format;
 import me.pietelite.journey.spigot.util.SpigotUtil;
-import me.pietelite.journey.spigot.util.TimeUtil;
-import java.util.Optional;
-import java.util.UUID;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
@@ -90,7 +90,7 @@ public class PlayerSearchListener implements Listener {
           player.spigot().sendMessage(Format.info("Canceling other search..."));
         }
 
-        Journey.get().searchManager().putSearch(player.getUniqueId(), search.getSession());
+        Journey.get().searchManager().launchSearch(player.getUniqueId(), search.getSession());
       }
     });
   }
@@ -106,7 +106,7 @@ public class PlayerSearchListener implements Listener {
   public void foundSolutionEvent(SpigotFoundSolutionEvent event) {
     getPlayerSearch(event).ifPresent(search -> {
       // Need to update the session state
-      PlayerSessionState playerSessionState = search.getSessionState();
+      PlayerSessionState playerSessionState = search.state();
 
       Player player = Bukkit.getPlayer(search.getSession().getCallerId());
       if (player == null) {
@@ -359,10 +359,10 @@ public class PlayerSearchListener implements Listener {
   }
 
   @SuppressWarnings("unchecked")
-  private Optional<SpigotPlayerSearchSession<SearchSession>> getPlayerSearch(
+  private Optional<PlayerSearchSession<SearchSession>> getPlayerSearch(
       SpigotSearchEvent<?> event) {
-    if (event.getSearchEvent().getSession() instanceof SpigotPlayerSearchSession) {
-      return Optional.of((SpigotPlayerSearchSession<SearchSession>)
+    if (event.getSearchEvent().getSession() instanceof PlayerSearchSession) {
+      return Optional.of((PlayerSearchSession<SearchSession>)
           event.getSearchEvent().getSession());
     } else {
       return Optional.empty();

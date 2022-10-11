@@ -23,17 +23,16 @@
 
 package me.pietelite.journey.spigot.command.list;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import me.pietelite.journey.common.data.DataAccessException;
-import me.pietelite.journey.spigot.api.navigation.Cell;
 import me.pietelite.journey.spigot.command.common.CommandNode;
 import me.pietelite.journey.spigot.command.common.Parameter;
 import me.pietelite.journey.spigot.command.common.PlayerCommandNode;
 import me.pietelite.journey.spigot.util.Format;
 import me.pietelite.journey.spigot.util.Permissions;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.util.ChatPaginator;

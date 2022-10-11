@@ -23,6 +23,7 @@
 
 package me.pietelite.journey.common.search;
 
+import java.util.UUID;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Itinerary;
@@ -31,8 +32,8 @@ import me.pietelite.journey.common.navigation.Port;
 import me.pietelite.journey.common.search.event.FoundSolutionEvent;
 import me.pietelite.journey.common.search.event.StartSearchEvent;
 import me.pietelite.journey.common.search.event.StopSearchEvent;
+import me.pietelite.journey.common.search.flag.FlagSet;
 import me.pietelite.journey.common.tools.AlternatingList;
-import java.util.UUID;
 
 /**
  * A search session that's purpose is to run a search, trying to find
@@ -43,17 +44,17 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
   private final Cell origin;
   private long executionStartTime = -1;
 
-  protected LocalUpwardsGoalSearchSession(UUID callerId, Caller callerType, Cell origin) {
-    super(callerId, callerType);
+  protected LocalUpwardsGoalSearchSession(UUID callerId, Caller callerType, Cell origin, FlagSet flags) {
+    super(callerId, callerType, flags);
     this.origin = origin;
   }
 
   @Override
-  public void search() {
+  protected void doSearch() {
 
     executionStartTime = System.currentTimeMillis();
     Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
-    state = ResultState.RUNNING;
+    state.set(ResultState.RUNNING);
 
     FlexiblePathTrial pathTrial = new FlexiblePathTrial(
         this,
@@ -76,10 +77,10 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
               new Itinerary(this.origin,
                   result.path().get().getSteps(),
                   stages.build(),
-                  result.path().get().getLength())));
+                  result.path().get().getCost())));
     }
 
-    state = pathTrial.getState();
+    state.set(pathTrial.getState());
     Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
 
   }

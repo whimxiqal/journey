@@ -44,11 +44,11 @@ public class Port extends Path implements Moded {
    * @param origin      the origin of the port, like the entrance to a portal.
    * @param destination the end of the port, like the endpoint of a portal
    * @param modeType    the mode type that this movement counts as
-   * @param length      the length of this movement, for use of calculating efficiency
+   * @param cost      the cost of this movement, for use of calculating efficiency
    */
   public Port(@NotNull Cell origin, @NotNull Cell destination,
-              @NotNull ModeType modeType, int length) {
-    super(origin, Collections.singletonList(new Step(destination, 0, modeType)), length);
+              @NotNull ModeType modeType, int cost) {
+    super(origin, Collections.singletonList(new Step(destination, 0, modeType)), cost);
     this.modeType = modeType;
   }
 

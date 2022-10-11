@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A manager for storing endpoints of search sessions in SQL.
  */
-public abstract class SqlEndpointManager extends SqlManager {
+public abstract class SqlWaypointManager extends SqlManager {
 
   private static final String ENDPOINT_TABLE_NAME = "journey_endpoints";
 
@@ -48,22 +48,10 @@ public abstract class SqlEndpointManager extends SqlManager {
    *
    * @param connectionController a controller for connecting to a SQL database
    */
-  public SqlEndpointManager(SqlConnectionController connectionController) {
+  public SqlWaypointManager(SqlConnectionController connectionController) {
     super(connectionController);
     createTables();
   }
-
-  protected void addEndpoint(@Nullable UUID playerUuid, @NotNull Cell cell)
-      throws IllegalArgumentException, DataAccessException {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      int endpointCount = getEndpoints(playerUuid, connection).size();
-      addEndpoint(playerUuid, cell, String.valueOf(endpointCount + 1), connection, true);
-    } catch (SQLException e) {
-      e.printStackTrace();
-      throw new DataAccessException();
-    }
-  }
-
 
   protected void addEndpoint(@Nullable UUID playerUuid,
                              @NotNull Cell cell,

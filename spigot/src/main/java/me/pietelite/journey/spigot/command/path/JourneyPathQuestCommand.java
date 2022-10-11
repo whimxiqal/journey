@@ -23,7 +23,14 @@
 
 package me.pietelite.journey.spigot.command.path;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import me.blackvein.quests.Quest;
+import me.blackvein.quests.Quests;
 import me.pietelite.journey.common.config.Settings;
+import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.common.tools.BufferedFunction;
 import me.pietelite.journey.common.util.Extra;
 import me.pietelite.journey.spigot.api.navigation.Cell;
@@ -32,15 +39,8 @@ import me.pietelite.journey.spigot.command.common.CommandFlags;
 import me.pietelite.journey.spigot.command.common.CommandNode;
 import me.pietelite.journey.spigot.command.common.Parameter;
 import me.pietelite.journey.spigot.command.common.PlayerCommandNode;
-import me.pietelite.journey.spigot.search.PlayerDestinationGoalSearchSession;
 import me.pietelite.journey.spigot.util.Format;
 import me.pietelite.journey.spigot.util.Permissions;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import me.blackvein.quests.Quest;
-import me.blackvein.quests.Quests;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
