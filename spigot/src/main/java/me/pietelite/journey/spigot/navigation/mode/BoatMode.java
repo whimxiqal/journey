@@ -77,7 +77,7 @@ public final class BoatMode extends SpigotMode {
 
                 // We can move to offX and offY laterally
                 cell = origin.atOffset(offX, 0, offZ);
-                if (SpigotUtil.getBlock(cell.atOffset(0, -1, 0)).getType() == Material.WATER) {
+                if (SpigotUtil.getBlock(cell.atOffset(0, -1, 0)).getMaterial() == Material.WATER) {
                     // We can boat on it
                     accept(cell, origin.distanceTo(cell) * DISTANCE_MULTIPLIER, options);
                 } else {
@@ -88,7 +88,7 @@ public final class BoatMode extends SpigotMode {
     }
 
     @Override
-    public @NotNull ModeType getType() {
+    public @NotNull ModeType type() {
         return ModeType.BOAT;
     }
 }

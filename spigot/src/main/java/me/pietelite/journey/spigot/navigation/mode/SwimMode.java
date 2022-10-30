@@ -71,7 +71,7 @@ public class SwimMode extends SpigotMode {
                         insideOffX * offX /* get sign back */,
                         insideOffY * offY /* get sign back */,
                         insideOffZ * offZ /* get sign back */);
-                if (SpigotUtil.getBlock(cell).getType() != Material.WATER) {
+                if (SpigotUtil.getBlock(cell).getMaterial() != Material.WATER) {
                   reject(cell);
                   continue outerZ;
                 }
@@ -101,7 +101,7 @@ public class SwimMode extends SpigotMode {
   }
 
   @Override
-  public @NotNull ModeType getType() {
+  public @NotNull ModeType type() {
     return ModeType.SWIM;
   }
 }

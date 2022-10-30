@@ -23,6 +23,7 @@
 
 package me.pietelite.journey.spigot.navigation.mode;
 
+import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Mode;
 import me.pietelite.journey.common.navigation.ModeType;
@@ -54,17 +55,17 @@ public class WalkMode extends SpigotMode {
     Cell cell;
     Cell cell1;
     Cell cell2;
-    // Can you drop into an inhabitable block?
-    cell = origin.atOffset(0, -1, 0);
-    if (canStandOn(SpigotUtil.getBlock(origin.atOffset(0, -2, 0))) && isVerticallyPassable(SpigotUtil.getBlock(cell))) {
-      accept(cell, 1.0d, options);
-    } else {
-      reject(cell);
-    }
+//    // Can you drop into an inhabitable block?
+//    cell = origin.atOffset(0, -1, 0);
+//    if (canStandOn(SpigotUtil.getBlock(origin.atOffset(0, -2, 0))) && isVerticallyPassable(SpigotUtil.getBlock(cell))) {
+//      accept(cell, 1.0d, options);
+//    } else {
+//      reject(cell);
+//    }
 
     // Can we even stand here?
     if (!canStandOn(SpigotUtil.getBlock(origin.atOffset(0, -1, 0)))
-        && !canStandIn(SpigotUtil.getBlock(origin.atOffset(0, 0, 0)))) {
+        && !canStandIn(SpigotUtil.getBlock(origin))) {
       return;
     }
 
@@ -90,37 +91,50 @@ public class WalkMode extends SpigotMode {
             }
           }
         }
+        // We can move to offX and offZ laterally
 
-        // We can move to offX and offY laterally
+        // check at our y coordinate (0 offset)
         cell = origin.atOffset(offX, 0, offZ);
-        if (!isVerticallyPassable(SpigotUtil.getBlock(cell))) {
-          // We can just stand right here (carpets, slabs, etc.)
-          accept(cell, origin.distanceTo(cell), options);
-        } else {
-          reject(cell);
-        }
-
-        for (int offY = -1; offY >= -4; offY--) {  // Check for floor anywhere up to a 3 block fall
-          cell = origin.atOffset(offX, offY, offZ);
-          cell1 = cell.atOffset(0, 1, 0);
-          if (canStandOn(SpigotUtil.getBlock(cell))) {
-            cell2 = cell.atOffset(0, 2, 0);
-            if (SpigotUtil.getBlock(cell2).getType().equals(Material.WATER)) {
-              reject(cell1); // Water (drowning) - invalid destination
-            } else {
-              accept(cell1, origin.distanceTo(cell1), options);
-            }
-            break;
+        if (offX != 0 || offZ != 0) {
+          // we are inquiring about other than origin
+          if (canStandIn(SpigotUtil.getBlock(cell))) {
+            // We can just stand right here (carpets, etc.)
+            accept(cell, origin.distanceTo(cell), options);
+            continue;
           } else {
-            reject(cell1);
+            reject(cell);
           }
+        }
+        for (int offY = -1; offY >= -4; offY--) {  // Check for floor anywhere up to a 3 block fall
+          cell = origin.atOffset(offX, offY, offZ);  // floor
+          cell1 = cell.atOffset(0, 1, 0);  // feet
+          cell2 = cell.atOffset(0, 2, 0);  // head
+          if (!isVerticallyPassable(SpigotUtil.getBlock(cell2)) || SpigotUtil.getBlock(cell2).getMaterial().equals(Material.WATER)) {
+            // we cannot "fall through" this cell, which means we can't land on the block below
+            // or, we are drowning
+            reject(cell1);
+            break;
+          }
+          if (!isVerticallyPassable(SpigotUtil.getBlock(cell1))) {
+            // we cannot put our feet in here
+            reject(cell1);
+            continue;
+          }
+          if (!canStandOn(SpigotUtil.getBlock(cell))) {
+            // we cannot stand on here
+            reject(cell1);
+            continue;
+          }
+          // good
+          accept(cell1, origin.distanceTo(cell1), options);
+          break;
         }
       }
     }
   }
 
   @Override
-  public @NotNull ModeType getType() {
+  public @NotNull ModeType type() {
     return ModeType.WALK;
   }
 }

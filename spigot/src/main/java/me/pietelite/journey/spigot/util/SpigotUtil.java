@@ -27,12 +27,19 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import me.pietelite.journey.common.navigation.Cell;
+import me.pietelite.journey.spigot.JourneySpigot;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.util.Vector;
 
 /**
  * A utility class to handle general odd Spigot Minecraft-related operations.
@@ -54,7 +61,7 @@ public final class SpigotUtil {
    * @param block the block
    * @return true if it can be passed
    */
-  public static boolean isVerticallyPassable(Block block) {
+  public static boolean isVerticallyPassable(BlockData block) {
     return isVerticallyPassable(block, Collections.emptySet());
   }
 
@@ -64,11 +71,11 @@ public final class SpigotUtil {
    * @param block the block
    * @return false if you cannot pass through this block vertically
    */
-  public static boolean isVerticallyPassable(Block block, Set<Material> forcePassable) {
+  public static boolean isVerticallyPassable(BlockData block, Set<Material> forcePassable) {
     if (isPassable(block, forcePassable)) {
       return true;
     }
-    return MaterialGroups.VERTICALLY_PASSABLE.contains(block.getType());
+    return MaterialGroups.isVerticallySpecialPassable(block.getMaterial());
   }
 
   /**
@@ -79,7 +86,7 @@ public final class SpigotUtil {
    * @param block the block
    * @return true if passable
    */
-  public static boolean isLaterallyPassable(Block block) {
+  public static boolean isLaterallyPassable(BlockData block) {
     return isVerticallyPassable(block, Collections.emptySet());
   }
 
@@ -89,11 +96,11 @@ public final class SpigotUtil {
    * @param block the block
    * @return false if you cannot pass through this block laterally
    */
-  public static boolean isLaterallyPassable(Block block, Set<Material> forcePassable) {
+  public static boolean isLaterallyPassable(BlockData block, Set<Material> forcePassable) {
     if (isPassable(block, forcePassable)) {
       return true;
     }
-    return MaterialGroups.LATERALLY_PASSABLE.contains(block.getType());
+    return MaterialGroups.isLaterallySpecialPassable(block.getMaterial());
   }
 
   /**
@@ -102,7 +109,7 @@ public final class SpigotUtil {
    * @param block the block
    * @return true if passable
    */
-  public static boolean isPassable(Block block) {
+  public static boolean isPassable(BlockData block) {
     return isPassable(block, Collections.emptySet());
   }
 
@@ -112,11 +119,11 @@ public final class SpigotUtil {
    * @param block the block
    * @return false if you cannot pass through at all
    */
-  public static boolean isPassable(Block block, Set<Material> forcePassable) {
-    if (forcePassable.contains(block.getType())) {
+  public static boolean isPassable(BlockData block, Set<Material> forcePassable) {
+    if (forcePassable.contains(block.getMaterial())) {
       return true;
     }
-    return block.isPassable() && !MaterialGroups.INVALID_PASSABLE.contains(block.getType());
+    return MaterialGroups.isPassable(block.getMaterial());
   }
 
   /**
@@ -125,12 +132,12 @@ public final class SpigotUtil {
    * @param block the block
    * @return false if a player cannot stand on top of the block
    */
-  public static boolean canStandOn(Block block, Set<Material> forcePassable) {
-    if (forcePassable.contains(block.getType())) {
+  public static boolean canStandOn(BlockData block, Set<Material> forcePassable) {
+    if (forcePassable.contains(block.getMaterial())) {
       return false;
     } else {
-      return (!block.isPassable()/* && block.getBoundingBox().getHeight() >= 1.0*/)
-          || MaterialGroups.TALL_SOLIDS.contains(block.getType());
+      return !MaterialGroups.isPassable(block.getMaterial())
+          || MaterialGroups.TALL_SOLIDS.contains(block.getMaterial());
     }
   }
 
@@ -140,7 +147,7 @@ public final class SpigotUtil {
    * @param block the block
    * @return false if a player cannot stand within this block and be supported
    */
-  public static boolean canStandIn(Block block, Set<Material> forcePassable) {
+  public static boolean canStandIn(BlockData block, Set<Material> forcePassable) {
     return isLaterallyPassable(block, forcePassable)
         && !isVerticallyPassable(block, forcePassable);
   }
@@ -165,12 +172,61 @@ public final class SpigotUtil {
     return world;
   }
 
-  public static Block getBlock(Cell cell) {
-    return getWorld(cell).getBlockAt(cell.getX(), cell.getY(), cell.getZ());
+  /**
+   * Thread safe :)
+   *
+   * @param cell cell
+   * @return the block data at the cell location
+   */
+  public static BlockData getBlock(Cell cell) {
+    if (Bukkit.isPrimaryThread()) {
+      return getWorld(cell.domainId()).getBlockData(cell.getX(), cell.getY(), cell.getZ());
+    }
+    return JourneySpigot.getInstance().getBlockAccessor().getBlock(cell);
   }
 
   public static Location toLocation(Cell cell) {
     return new Location(getWorld(cell), cell.getX(), cell.getY(), cell.getZ());
+  }
+
+  public static me.pietelite.journey.common.math.Vector toLocalVector(Vector vector) {
+    return new me.pietelite.journey.common.math.Vector(vector.getX(), vector.getY(), vector.getZ());
+  }
+
+  public static <T> T waitUntil(Future<T> future) {
+    if (Bukkit.isPrimaryThread()) {
+      throw new RuntimeException("This was called on the main server thread");  // programmer error
+    }
+    try {
+      return future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  public static void runSync(Runnable runnable) {
+    if (Bukkit.isPrimaryThread()) {
+      runnable.run();
+      return;
+    }
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    Bukkit.getScheduler().runTask(JourneySpigot.getInstance(), () -> {
+      try {
+        runnable.run();
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        future.complete(null);
+      }
+    });
+    waitUntil(future);
+  }
+
+  public static <T> T supplySync(Supplier<T> supplier) {
+    AtomicReference<T> ref = new AtomicReference<>();
+    runSync(() -> ref.set(supplier.get()));
+    return ref.get();
   }
 
 }

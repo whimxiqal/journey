@@ -34,6 +34,7 @@ import me.pietelite.journey.spigot.util.SpigotUtil;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -58,14 +59,14 @@ public final class ClimbMode extends SpigotMode {
 
     // TODO we have to make sure that the ladders and vines are oriented correctly
     //  and that the vines have a solid block behind it
-    tryToClimbAdjacent(SpigotUtil.getBlock(origin.atOffset(1, 0, 0)), options);
-    tryToClimbAdjacent(SpigotUtil.getBlock(origin.atOffset(-1, 0, 0)), options);
-    tryToClimbAdjacent(SpigotUtil.getBlock(origin.atOffset(0, 0, 1)), options);
-    tryToClimbAdjacent(SpigotUtil.getBlock(origin.atOffset(0, 0, -1)), options);
-    tryToClimbAdjacent(SpigotUtil.getBlock(origin.atOffset(0, -1, 0)), options);
+    tryToClimbAdjacent(origin.atOffset(1, 0, 0), options);
+    tryToClimbAdjacent(origin.atOffset(-1, 0, 0), options);
+    tryToClimbAdjacent(origin.atOffset(0, 0, 1), options);
+    tryToClimbAdjacent(origin.atOffset(0, 0, -1), options);
+    tryToClimbAdjacent(origin.atOffset(0, -1, 0), options);
 
     // Going up is a different story
-    if (climbable.contains(SpigotUtil.getBlock(origin).getType())) {
+    if (climbable.contains(SpigotUtil.getBlock(origin).getMaterial())) {
       if (isVerticallyPassable(SpigotUtil.getBlock(origin.atOffset(0, 1, 0)))
           && isVerticallyPassable(SpigotUtil.getBlock(origin.atOffset(0, 2, 0)))) {
         accept(origin.atOffset(0, 1, 0), 1.0d, options);
@@ -76,16 +77,16 @@ public final class ClimbMode extends SpigotMode {
 
   }
 
-  private void tryToClimbAdjacent(Block block, List<Option> options) {
-    if (climbable.contains(block.getType())) {
-      accept(SpigotUtil.cell(block.getLocation()), 1.0d, options);
+  private void tryToClimbAdjacent(Cell cell, List<Option> options) {
+    if (climbable.contains(SpigotUtil.getBlock(cell).getMaterial())) {
+      accept(cell, 1.0d, options);
     } else {
-      reject(SpigotUtil.cell(block.getLocation()));
+      reject(cell);
     }
   }
 
   @Override
-  public @NotNull ModeType getType() {
+  public @NotNull ModeType type() {
     return ModeType.CLIMB;
   }
 }

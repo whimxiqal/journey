@@ -26,9 +26,13 @@ package me.pietelite.journey.common.util;
 
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.audience.MessageType;
+import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.platform.AudienceProvider;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.flattener.ComponentFlattener;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
 public class TestAudienceProvider implements AudienceProvider {
@@ -39,7 +43,12 @@ public class TestAudienceProvider implements AudienceProvider {
 
   @Override
   public @NotNull Audience console() {
-    return Audience.empty();
+    return new Audience() {
+      @Override
+      public void sendMessage(@NotNull Identity source, @NotNull Component message, @NotNull MessageType type) {
+        System.out.println(PlainTextComponentSerializer.plainText().serialize(message));
+      }
+    };
   }
 
   @Override

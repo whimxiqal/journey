@@ -32,9 +32,6 @@ import me.pietelite.journey.common.search.SearchSession;
  * An even to be dispatched when the operation of a
  * {@link PathTrial}
  * takes the next-best location in an attempt to calculate the best path.
- *
- * @param <T> the location type
- * @param <D> the domain type
  */
 public class StepSearchEvent extends SearchEvent {
 

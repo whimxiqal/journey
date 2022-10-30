@@ -47,14 +47,17 @@ public class DataStorageListener implements Listener {
    */
   @EventHandler
   public void savePathData(SpigotStopPathSearchEvent event) {
+    if (!event.getSearchEvent().shouldSave()) {
+      return;
+    }
     FlexiblePathTrial flexiblePathTrial = event.getSearchEvent().getPathTrial();
     if (flexiblePathTrial instanceof PathTrial) {
       PathTrial pathTrial = (PathTrial) flexiblePathTrial;
       if (pathTrial.getState().isSuccessful()) {
         try {
-          Journey.get().proxy().dataManager().pathRecordManager().report(
+          Journey.get().dataManager().pathRecordManager().report(
               pathTrial,
-              event.getSearchEvent().getPathTrial().getModes().stream().map(Mode::getType).collect(Collectors.toSet()),
+              event.getSearchEvent().getPathTrial().getModes().stream().map(Mode::type).collect(Collectors.toSet()),
               event.getSearchEvent().getExecutionTime());
         } catch (DataAccessException e) {
           e.printStackTrace();

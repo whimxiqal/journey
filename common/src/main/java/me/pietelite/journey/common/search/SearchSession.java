@@ -58,7 +58,7 @@ public abstract class SearchSession implements Resulted {
   private final Caller callerType;
   private final FlagSet flags;
   protected AtomicReference<ResultState> state = new AtomicReference<>(ResultState.IDLE);
-  protected CompletableFuture<ResultState> future;
+  protected AtomicReference<CompletableFuture<ResultState>> future = new AtomicReference<>(new CompletableFuture<>());
   private int algorithmStepDelay = 0;
 
   protected SearchSession(UUID callerId, Caller callerType, FlagSet flags) {
@@ -71,32 +71,39 @@ public abstract class SearchSession implements Resulted {
    * Perform the titular search operation.
    */
   public final CompletableFuture<ResultState> search(int timeout) {
-    future = new CompletableFuture<>();
     Journey.get().proxy().schedulingManager().schedule(() -> {
-      doSearch();
-      future.complete(state.get());
+      try {
+        doSearch();
+        if (this.getState() == ResultState.CANCELING_FAILED) {
+          audience().sendMessage(Formatter.error("Time limit surpassed. Canceling search..."));
+        }
+      } catch (Exception e) {
+        if (callerType == Caller.PLAYER) {
+          Journey.get().proxy().audienceProvider().player(callerId).sendMessage(Formatter.error("A problem occurred with your search. Please notify an administrator"));
+        }
+        state.set(ResultState.STOPPED_ERROR);
+        e.printStackTrace();
+      }
+      future.get().complete(state.get());
     }, true);
 
-    Journey.get().proxy().schedulingManager().schedule(() -> {
-      if (this.getState() == ResultState.CANCELING_FAILED) {
-        audience().sendMessage(Formatter.error("Time limit surpassed. Canceling search..."));
-      }
-      stop();
-    }, false, timeout * 20 /* ticks per second */);
-    return future;
+    // Set up cancellation task
+    Journey.get().proxy().schedulingManager().schedule(this::stop, false, timeout * 20 /* ticks per second */);
+    return future.get();
   }
 
-  protected abstract void doSearch();
+  protected abstract void doSearch() throws SearchException;
+
+  public final AtomicReference<CompletableFuture<ResultState>> future() {
+    return future;
+  }
 
   /**
    * Terminate the search operation. It is up to the implementation
    * of this search session object to implement the actual cancellation behavior;
    * this method only tells the class that it should be canceling itself.
    */
-  public final CompletableFuture<ResultState> stop() {
-    if (future == null) {
-      return CompletableFuture.completedFuture(state.get());
-    }
+  public final void stop() {
     state.getAndUpdate(current -> {
       switch (current) {
         case IDLE:
@@ -108,7 +115,6 @@ public abstract class SearchSession implements Resulted {
           return current;
       }
     });
-    return future;
   }
 
   @Override
@@ -166,7 +172,7 @@ public abstract class SearchSession implements Resulted {
    * @return the mode types
    */
   public final Set<ModeType> modeTypes() {
-    return modes.stream().map(Mode::getType).collect(Collectors.toSet());
+    return modes.stream().map(Mode::type).collect(Collectors.toSet());
   }
 
   /**
@@ -183,7 +189,7 @@ public abstract class SearchSession implements Resulted {
    *
    * @return the id
    */
-  public final UUID getUuid() {
+  public final UUID uuid() {
     return uuid;
   }
 

@@ -29,6 +29,7 @@ import me.pietelite.journey.spigot.util.SpigotUtil;
 import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 
 /**
  * A general implementation of modes used in Spigot Minecraft.
@@ -50,23 +51,23 @@ public abstract class SpigotMode extends Mode {
 
   // TODO move all of these methods into a static file
   //  and possibly get it from Baritone
-  protected boolean isVerticallyPassable(Block block) {
+  protected boolean isVerticallyPassable(BlockData block) {
     return SpigotUtil.isVerticallyPassable(block, forcePassable);
   }
 
-  protected boolean isLaterallyPassable(Block block) {
+  protected boolean isLaterallyPassable(BlockData block) {
     return SpigotUtil.isLaterallyPassable(block, forcePassable);
   }
 
-  protected boolean isPassable(Block block) {
+  protected boolean isPassable(BlockData block) {
     return SpigotUtil.isPassable(block, forcePassable);
   }
 
-  protected boolean canStandOn(Block block) {
+  protected boolean canStandOn(BlockData block) {
     return SpigotUtil.canStandOn(block, forcePassable);
   }
 
-  protected boolean canStandIn(Block block) {
+  protected boolean canStandIn(BlockData block) {
     return SpigotUtil.canStandIn(block, forcePassable);
   }
 

@@ -33,6 +33,7 @@ import me.pietelite.journey.common.search.event.FoundSolutionEvent;
 import me.pietelite.journey.common.search.event.StartSearchEvent;
 import me.pietelite.journey.common.search.event.StopSearchEvent;
 import me.pietelite.journey.common.search.flag.FlagSet;
+import me.pietelite.journey.common.search.function.HeightScoringFunction;
 import me.pietelite.journey.common.tools.AlternatingList;
 
 /**
@@ -60,8 +61,9 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
         this,
         origin,
         this.modes,
-        new ScoringFunction(node -> (double) node.getData().location().getY(), ScoringFunction.Type.HEIGHT),
-        node -> reachesGoal(node.getData().location())
+        new HeightScoringFunction(),
+        node -> reachesGoal(node.getData().location()),
+        false
     );
 
     PathTrial.TrialResult result = pathTrial.attempt(false);
@@ -71,13 +73,12 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
           = AlternatingList.builder(Port.stationary(origin));
       stages.addLast(result.path().get(), Port.stationary(result.path().get().getDestination()));
 
-      Journey.get().dispatcher().dispatch(
-          new FoundSolutionEvent(
-              this,
-              new Itinerary(this.origin,
-                  result.path().get().getSteps(),
-                  stages.build(),
-                  result.path().get().getCost())));
+      Journey.get().dispatcher().dispatch(new FoundSolutionEvent(
+          this,
+          new Itinerary(this.origin,
+              result.path().get().getSteps(),
+              stages.build(),
+              result.path().get().getCost())));
     }
 
     state.set(pathTrial.getState());

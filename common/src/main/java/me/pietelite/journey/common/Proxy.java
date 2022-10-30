@@ -1,17 +1,17 @@
 package me.pietelite.journey.common;
 
+import java.nio.file.Path;
 import me.pietelite.journey.common.config.ConfigManager;
-import me.pietelite.journey.common.data.DataManager;
 import me.pietelite.journey.common.manager.SchedulingManager;
 import me.pietelite.journey.common.navigation.PlatformProxy;
-import me.pietelite.journey.common.util.LoggerCommon;
+import me.pietelite.journey.common.util.CommonLogger;
 import net.kyori.adventure.platform.AudienceProvider;
 
 public interface Proxy {
 
-  LoggerCommon logger();
+  CommonLogger logger();
 
-  DataManager dataManager();
+  Path dataFolder();
 
   AudienceProvider audienceProvider();
 

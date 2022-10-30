@@ -31,8 +31,8 @@ import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.config.Settings;
 import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.navigation.Cell;
-import me.pietelite.journey.common.navigation.JourneySession;
-import me.pietelite.journey.common.navigation.PlayerJourneySession;
+import me.pietelite.journey.common.navigation.journey.JourneySession;
+import me.pietelite.journey.common.navigation.journey.PlayerJourneySession;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.common.search.flag.Flags;
 import net.kyori.adventure.audience.Audience;
@@ -102,27 +102,25 @@ public class SearchManager {
     return playerJourneys.get(callerId);
   }
 
-  /**
-   * Store a new search. Cancel the previous search if there was one.
-   *
-   * @param callerId the caller id
-   * @param session  the search session
-   * @return the old search
-   */
-  @Nullable
-  public SearchSession launchSearch(@NotNull UUID callerId, SearchSession session) {
+  public boolean launchSearch(SearchSession session) {
     UUID player = session.getCallerId();
     if (player == null) {
-      return null;
+      return false;
+    }
+
+    if (playerSearches.containsKey(player)) {
+      return false;
     }
 
     Audience audience;
     switch (session.getCallerType()) {
       case PLAYER:
         audience = Journey.get().proxy().audienceProvider().player(player);
+        break;
       case OTHER:
       default:
         audience = Audience.empty();
+        break;
     }
 
     // Set up a "Working..." message if it takes too long
@@ -139,15 +137,10 @@ public class SearchManager {
 
     // SEARCH
     // Search... this may take a long time
-    SearchSession oldSession = playerSearches.put(player, session);
     int timeout = session.flags().valueOrGetDefault(Flags.TIMEOUT, Settings.DEFAULT_SEARCH_TIMEOUT::getValue);
-    if (oldSession != null) {
-      oldSession.stop().thenRun(() -> session.search(timeout));
-    } else {
-      session.search(timeout);
-    }
-
-    return oldSession;
+    playerSearches.put(player, session);
+    session.search(timeout).thenRun(() -> Journey.get().proxy().schedulingManager().schedule(() -> playerSearches.remove(player), false, 0));
+    return true;
   }
 
   /**

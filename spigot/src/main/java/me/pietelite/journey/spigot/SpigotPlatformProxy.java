@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import me.pietelite.journey.common.math.Vector;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.PlatformProxy;
@@ -20,6 +21,7 @@ import me.pietelite.journey.spigot.navigation.mode.ClimbMode;
 import me.pietelite.journey.spigot.navigation.mode.DigMode;
 import me.pietelite.journey.spigot.navigation.mode.DoorMode;
 import me.pietelite.journey.spigot.navigation.mode.FlyMode;
+import me.pietelite.journey.spigot.navigation.mode.FlyRayTraceMode;
 import me.pietelite.journey.spigot.navigation.mode.JumpMode;
 import me.pietelite.journey.spigot.navigation.mode.SwimMode;
 import me.pietelite.journey.spigot.navigation.mode.WalkMode;
@@ -31,6 +33,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 public class SpigotPlatformProxy implements PlatformProxy {
@@ -42,7 +45,7 @@ public class SpigotPlatformProxy implements PlatformProxy {
 
   @Override
   public boolean isNetherPortal(Cell cell) {
-    return false;
+    return SpigotUtil.getBlock(cell).getMaterial() == Material.NETHER_PORTAL;
   }
 
   @Override
@@ -51,12 +54,16 @@ public class SpigotPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void spawnDestinationParticle(String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-
+  public void spawnDestinationParticle(UUID playerUuid, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+    Player player = Bukkit.getPlayer(playerUuid);
+    if (player == null || !player.getWorld().equals(SpigotUtil.getWorld(domainId))) {
+      return;
+    }
+    player.spawnParticle(Particle.SPELL_WITCH, x, y, z, count, offsetX, offsetY, offsetZ, 0);
   }
 
   @Override
-  public void spawnModeParticle(ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     Particle particle;
     int particleCount;
     int multiplier;
@@ -69,8 +76,12 @@ public class SpigotPlatformProxy implements PlatformProxy {
       particle = Particle.GLOW;
     }
 
+    Player player = Bukkit.getPlayer(playerUuid);
     World world = SpigotUtil.getWorld(domainId);
-    world.spawnParticle(particle, x, y, z, count, offsetX, offsetY, offsetZ, 0);
+    if (player == null || !player.getWorld().equals(world)) {
+      return;
+    }
+    player.spawnParticle(particle, x, y, z, count, offsetX, offsetY, offsetZ, 0);
 
     // Check if we need to "hint" where the trail is because the water obscures the particle
     if (world.getBlockAt(Location.locToBlock(x), Location.locToBlock(y), Location.locToBlock(z)).isLiquid()
@@ -81,12 +92,17 @@ public class SpigotPlatformProxy implements PlatformProxy {
 
   @Override
   public Optional<UUID> onlinePlayer(String name) {
-    return Optional.empty();
+    return Optional.ofNullable(Bukkit.getPlayer(name)).map(Entity::getUniqueId);
   }
 
   @Override
-  public Cell entityLocation(UUID entityUuid) {
-    return null;
+  public Optional<Cell> entityCellLocation(UUID entityUuid) {
+    return Optional.ofNullable(Bukkit.getEntity(entityUuid)).map(entity -> SpigotUtil.cell(entity.getLocation()));
+  }
+
+  @Override
+  public Optional<Vector> entityVector(UUID entityUuid) {
+    return Optional.ofNullable(Bukkit.getEntity(entityUuid)).map(entity -> SpigotUtil.toLocalVector(entity.getLocation().toVector()));
   }
 
   @Override
@@ -125,12 +141,27 @@ public class SpigotPlatformProxy implements PlatformProxy {
   }
 
   @Override
+  public void prepareDestinationSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, Cell destination) {
+    Set<Material> passableBlocks = new HashSet<>();
+    if (flags.hasFlag(Flags.NO_DOOR)) {
+      passableBlocks.add(Material.IRON_DOOR);
+    }
+
+    Player player = Bukkit.getPlayer(playerUuid);
+    if (player == null) {
+      return;
+    }
+    if (player.getAllowFlight() && !flags.hasFlag(Flags.NO_FLY)) {
+      search.registerMode(new FlyRayTraceMode(search, passableBlocks, destination));
+    }
+  }
+
+  @Override
   public boolean isAtSurface(Cell cell) {
     int x = cell.getX();
     int z = cell.getZ();
-    World world = SpigotUtil.getWorld(cell);
     for (int y = cell.getY() + 1; y <= Math.min(256, cell.getY() + AT_SURFACE_HEIGHT); y++) {
-      if (world.getBlockAt(x, y, z).getType() != Material.AIR) {
+      if (SpigotUtil.getBlock(new Cell(x, y, z, cell.domainId())).getMaterial() != Material.AIR) {
         return false;
       }
     }
@@ -191,8 +222,7 @@ public class SpigotPlatformProxy implements PlatformProxy {
       return false;
     }
 
-    player.sendBlockChanges(locations.stream().map(loc -> SpigotUtil.getBlock(loc).getState()).collect(Collectors.toList()), true);
-    locations.forEach(cell -> showBlock(player, cell, SpigotUtil.getBlock(cell).getBlockData()));
+    locations.forEach(cell -> showBlock(player, cell, SpigotUtil.getBlock(cell)));
     return true;
   }
 }

@@ -23,37 +23,31 @@
 
 package me.pietelite.journey.spigot.search.listener;
 
-import java.util.Optional;
 import java.util.UUID;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Itinerary;
-import me.pietelite.journey.common.navigation.JourneySession;
-import me.pietelite.journey.common.navigation.PlayerJourneySession;
+import me.pietelite.journey.common.navigation.journey.JourneySession;
+import me.pietelite.journey.common.navigation.journey.PlayerJourneySession;
 import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
-import me.pietelite.journey.common.search.PlayerSearchSession;
 import me.pietelite.journey.common.search.PlayerSessionState;
-import me.pietelite.journey.common.search.ResultState;
+import me.pietelite.journey.common.search.PlayerSessionStateful;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.common.util.TimeUtil;
 import me.pietelite.journey.spigot.JourneySpigot;
 import me.pietelite.journey.spigot.search.event.SpigotFoundSolutionEvent;
 import me.pietelite.journey.spigot.search.event.SpigotIgnoreCacheSearchEvent;
-import me.pietelite.journey.spigot.search.event.SpigotSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStartItinerarySearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStartPathSearchEvent;
-import me.pietelite.journey.spigot.search.event.SpigotStartSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStopItinerarySearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStopPathSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStopSearchEvent;
-import me.pietelite.journey.spigot.util.Format;
 import me.pietelite.journey.spigot.util.SpigotUtil;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -69,33 +63,6 @@ public class PlayerSearchListener implements Listener {
   private static final double STEVE_RUNNING_SPEED = 5.621;  // blocks per second
 
   /**
-   * Handle the start of search sessions.
-   * The instance must be saved and the last one running has to be stopped.
-   *
-   * @param event the event
-   */
-  @EventHandler
-  public void startSearchEvent(SpigotStartSearchEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      Player player = Bukkit.getPlayer(event.getSearchEvent().getSession().getCallerId());
-      if (player != null) {
-
-        Journey.get().debugManager().broadcast(Formatter.debug("Started a search for player ___", player.getName()));
-        Journey.get().debugManager().broadcast(Formatter.debug("Modes: ___", search.getSession().modes().size()));
-        Journey.get().debugManager().broadcast(Formatter.debug("Ports: ___", search.getSession().ports().size()));
-
-        SearchSession oldSession = Journey.get().searchManager().getSearch(player.getUniqueId());
-
-        if (oldSession != null && oldSession.getState() == ResultState.RUNNING) {
-          player.spigot().sendMessage(Format.info("Canceling other search..."));
-        }
-
-        Journey.get().searchManager().launchSearch(player.getUniqueId(), search.getSession());
-      }
-    });
-  }
-
-  /**
    * Handle the event fired when a new solution is found.
    * Send the found {@link Itinerary} to the running {@link JourneySession}
    * as a prospective itinerary in case the player wants to use it.
@@ -104,86 +71,72 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void foundSolutionEvent(SpigotFoundSolutionEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      // Need to update the session state
-      PlayerSessionState playerSessionState = search.state();
+    SearchSession session = event.getSearchEvent().getSession();
+    PlayerSessionStateful playerSession;
+    if (session instanceof PlayerSessionStateful) {
+      playerSession = (PlayerSessionStateful) session;
+    } else {
+      return;
+    }
+    // Need to update the session state
+    PlayerSessionState playerSessionState = playerSession.sessionState();
 
-      Player player = Bukkit.getPlayer(search.getSession().getCallerId());
-      if (player == null) {
-        return;
-      }
+    Player player = Bukkit.getPlayer(session.getCallerId());
+    if (player == null) {
+      return;
+    }
 
-      Journey.get().debugManager().broadcast(Formatter.debug("Found a solution to a search for player ___", player.getName()));
+    Journey.get().debugManager().broadcast(Formatter.debug("Found a solution to a search for player ___", player.getName()));
 
-      Itinerary itinerary = event.getSearchEvent().getItinerary();
-      if (playerSessionState.wasSolutionPresented()) {
-        PlayerJourneySession journey = Journey.get().searchManager().getJourney(player.getUniqueId());
-        if (journey != null) {
-          journey.setProspectiveItinerary(itinerary);
-          player.spigot().sendMessage(Format.info("A faster path to your destination "
-              + "was found from your original location."));
-          player.spigot().sendMessage(Format.chain(Format.info("Run "),
-              Format.command("/journey accept", "Accept an incoming trail request"),
-              Format.textOf(Format.INFO + " to accept.")));
-          return;
-        }
-      }
+    Itinerary itinerary = event.getSearchEvent().getItinerary();
+    if (playerSessionState.wasSolutionPresented()) {
+      // TODO ignore for now, but perhaps send to the user to potentially "accept" a better path
+      return;
+    }
 
-      if (playerSessionState.wasSolved()) {
-        Bukkit.getScheduler().cancelTask(playerSessionState.getSuccessNotificationTaskId());
-      }
-      playerSessionState.setSolved(true);
+    if (playerSessionState.wasSolved()) {
+      Bukkit.getScheduler().cancelTask(playerSessionState.getSuccessNotificationTaskId());
+    }
+    playerSessionState.setSolved(true);
 
-      // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
-      PlayerJourneySession journey = new PlayerJourneySession(player.getUniqueId(), search.getSession(), itinerary);
-      journey.run();
+    // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
+    PlayerJourneySession journey = new PlayerJourneySession(player.getUniqueId(), session, itinerary);
+    journey.run();
 
-      // Save the journey
-      Journey.get().searchManager().putJourney(player.getUniqueId(), journey);
+    // Save the journey
+    Journey.get().searchManager().putJourney(player.getUniqueId(), journey);
 
-      // Set up a success notification that will be cancelled if a better one is found in some amount of time
-      playerSessionState.setSuccessNotificationTaskId(Bukkit.getScheduler()
-          .runTaskLater(JourneySpigot.getInstance(),
-              () -> {
-                player.spigot().sendMessage(new ComponentBuilder()
-                    .append(Format.PREFIX)
-                    .append(new ComponentBuilder()
-                        .append("Success! Please follow the path.")
-                        .color(Format.SUCCESS.asBungee())
-                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            new Text(new ComponentBuilder("Search Statistics")
-                                .color(Format.THEME.asBungee())
-                                .bold(true)
-                                .create()),
-                            new Text(new ComponentBuilder("\nWalk Time: ")
-                                .bold(false)
-                                .color(ChatColor.DARK_GRAY.asBungee())
-                                .append(TimeUtil.toSimpleTime(
-                                    Math.round(event.getSearchEvent().getItinerary().getLength()
-                                        / STEVE_RUNNING_SPEED)))
-                                .color(Format.ACCENT2.asBungee())
-                                .create()),
-                            new Text(new ComponentBuilder("\nDistance: ")
-                                .bold(false)
-                                .color(ChatColor.DARK_GRAY.asBungee())
-                                .append(Math.round(event.getSearchEvent().getItinerary().getLength())
-                                    + " blocks")
-                                .color(Format.ACCENT2.asBungee())
-                                .create()),
-                            new Text(new ComponentBuilder("\nSearch Time: ")
-                                .bold(false)
-                                .color(ChatColor.DARK_GRAY.asBungee())
-                                .append(TimeUtil.toSimpleTime(
-                                    Math.round((double) event.getSearchEvent().getExecutionTime() / 1000)))
-                                .color(Format.ACCENT2.asBungee())
-                                .create())))
-                        .create())
-                    .create());
-                playerSessionState.setSolutionPresented(true);
-              },
-              20 /* one second (20 ticks) */)
-          .getTaskId());
-    });
+    // Set up a success notification that will be cancelled if a better one is found in some amount of time
+    playerSessionState.setSuccessNotificationTaskId(Bukkit.getScheduler()
+        .runTaskLater(JourneySpigot.getInstance(),
+            () -> {
+              Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(Formatter.prefix()
+                  .append(Component.text("Success! Please follow the path.")
+                      .color(Formatter.SUCCESS)
+                      .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT,
+                          Component.text("Search Statistics")
+                              .color(Formatter.THEME)
+                              .decorate(TextDecoration.BOLD)
+                              .append(Component.newline())
+                              .append(Component.text("Walk Time: ")
+                                  .color(Formatter.DULL)
+                                  .append(Component.text(TimeUtil.toSimpleTime(Math.round(event.getSearchEvent().getItinerary().cost() / STEVE_RUNNING_SPEED)))
+                                      .color(Formatter.ACCENT)))
+                              .append(Component.newline())
+                              .append(Component.text("Distance: ")
+                                  .color(Formatter.DULL)
+                                  .append(Component.text(Math.round(event.getSearchEvent().getItinerary().cost()) + " blocks")
+                                      .color(Formatter.ACCENT)))
+                              .append(Component.newline())
+                              .append(Component.text("Search Time: ")
+                                  .color(Formatter.DULL)
+                                  .append(Component.text(TimeUtil.toSimpleTime(
+                                          Math.round((double) event.getSearchEvent().getExecutionTime() / 1000)))
+                                      .color(Formatter.ACCENT)))))));
+              playerSessionState.setSolutionPresented(true);
+            },
+            20 /* one second (20 ticks) */)
+        .getTaskId());
   }
 
   /**
@@ -194,39 +147,32 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void stopSearchEvent(SpigotStopSearchEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      // Send failure message if we finished unsuccessfully
-      Player player = Bukkit.getPlayer(search.getSession().getCallerId());
-      if (player != null) {
+    SearchSession session = event.getSearchEvent().getSession();
+    // Send failure message if we finished unsuccessfully
+    Player player = Bukkit.getPlayer(session.getCallerId());
+    if (player == null) {
+      return;
+    }
 
-        Journey.get().debugManager().broadcast(Formatter.debug("Stopping a search for player ___" + player.getName()));
-        Journey.get().debugManager().broadcast(Formatter.debug("Status: ___" + search.getSession().getState()));
+    Journey.get().debugManager().broadcast(Formatter.debug("Stopping a search for player ___", player.getName()));
+    Journey.get().debugManager().broadcast(Formatter.debug("Status: ___", session.getState()));
 
-        switch (search.getSession().getState()) {
-          case STOPPED_FAILED:
-            player.spigot().sendMessage(
-                Format.error("Search ended. Either there's no path to it, or it's too far away!"));
-            break;
-          case STOPPED_CANCELED:
-            player.spigot().sendMessage(
-                Format.info("Search canceled."));
-            break;
-          case STOPPED_SUCCESSFUL:
-            /* Don't say anything. They were already notified of the successful solutions. */
-            break;
-          default:
-            Bukkit.getLogger().warning("A player search session stopped while in the "
-                + search.getSession().getState() + " state");
-        }
-        // Remove from the searching set, if the saved session is the one that is currently stopping here.
-        //  This check is necessary because another session could have been started while this one was running
-
-        SearchSession savedSession = Journey.get().searchManager().getSearch(player.getUniqueId());
-        if (savedSession != null && savedSession.getUuid().equals(search.getSession().getUuid())) {
-          Journey.get().searchManager().removeSearch(player.getUniqueId());
-        }
-      }
-    });
+    switch (session.getState()) {
+      case STOPPED_FAILED:
+        Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(
+            Formatter.error("Search ended. Either there's no path to it, or it's too far away!"));
+        break;
+      case STOPPED_CANCELED:
+        Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(
+            Formatter.info("Search canceled."));
+        break;
+      case STOPPED_SUCCESSFUL:
+        /* Don't say anything. They were already notified of the successful solutions. */
+        break;
+      default:
+        Bukkit.getLogger().warning("A player search session stopped while in the "
+            + session.getState() + " state");
+    }
   }
 
   /**
@@ -236,12 +182,11 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void startItinerarySearchEvent(SpigotStartItinerarySearchEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      Player player = Bukkit.getPlayer(search.getSession().getCallerId());
-      if (player != null) {
-        Journey.get().debugManager().broadcast(Formatter.debug("Started an itinerary search for player ___", player.getName()));
-      }
-    });
+    SearchSession session = event.getSearchEvent().getSession();
+    Player player = Bukkit.getPlayer(session.getCallerId());
+    if (player != null) {
+      Journey.get().debugManager().broadcast(Formatter.debug("Started an itinerary search for player ___", player.getName()));
+    }
   }
 
   /**
@@ -251,13 +196,12 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void stopItinerarySearchEvent(SpigotStopItinerarySearchEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      Player player = Bukkit.getPlayer(search.getSession().getCallerId());
-      if (player != null) {
-        Journey.get().debugManager().broadcast(Formatter.debug("Stopped an itinerary search for player ___", player.getName()));
-        Journey.get().debugManager().broadcast(Formatter.debug("Status: ___", event.getSearchEvent().getItineraryTrial().getState()));
-      }
-    });
+    SearchSession session = event.getSearchEvent().getSession();
+    Player player = Bukkit.getPlayer(session.getCallerId());
+    if (player != null) {
+      Journey.get().debugManager().broadcast(Formatter.debug("Stopped an itinerary search for player ___", player.getName()));
+      Journey.get().debugManager().broadcast(Formatter.debug("Status: ___", event.getSearchEvent().getItineraryTrial().getState()));
+    }
   }
 
   /**
@@ -267,12 +211,11 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void startPathSearchEvent(SpigotStartPathSearchEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      Player player = Bukkit.getPlayer(search.getSession().getCallerId());
-      if (player != null) {
-        Journey.get().debugManager().broadcast(Formatter.debug("Started a path search for player ___", player.getName()));
-      }
-    });
+    SearchSession session = event.getSearchEvent().getSession();
+    Player player = Bukkit.getPlayer(session.getCallerId());
+    if (player != null) {
+      Journey.get().debugManager().broadcast(Formatter.debug("Started a path search for player ___", player.getName()));
+    }
   }
 
   /**
@@ -282,13 +225,12 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void stopPathSearchEvent(SpigotStopPathSearchEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      Player player = Bukkit.getPlayer(search.getSession().getCallerId());
-      if (player != null) {
-        Journey.get().debugManager().broadcast(Formatter.debug("Stopped a path search for player ___", player.getName()));
-        Journey.get().debugManager().broadcast(Formatter.debug("Status: ___", event.getSearchEvent().getPathTrial().getState()));
-      }
-    });
+    SearchSession session = event.getSearchEvent().getSession();
+    Player player = Bukkit.getPlayer(session.getCallerId());
+    if (player != null) {
+      Journey.get().debugManager().broadcast(Formatter.debug("Stopped a path search for player ___", player.getName()));
+      Journey.get().debugManager().broadcast(Formatter.debug("Status: ___", event.getSearchEvent().getPathTrial().getState()));
+    }
   }
 
   /**
@@ -298,17 +240,16 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void ignoreCacheSearchEvent(SpigotIgnoreCacheSearchEvent event) {
-    getPlayerSearch(event).ifPresent(search -> {
-      Player player = Bukkit.getPlayer(search.getSession().getCallerId());
-      if (player != null) {
-        if (!search.getSession().getState().isSuccessful()) {
-          player.spigot().sendMessage(Format.warn("There probably isn't a solution, "
-              + "but the search will continue, just in case!"));
-        }
-        Journey.get().debugManager().broadcast(Formatter.debug("Ignoring cache in search for ___", player.getName()));
-        Journey.get().debugManager().broadcast(Formatter.debug("Status: ___", event.getSearchEvent().getSession().getState()));
+    SearchSession session = event.getSearchEvent().getSession();
+    Player player = Bukkit.getPlayer(session.getCallerId());
+    if (player != null) {
+      if (!session.getState().isSuccessful()) {
+        Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(Formatter.warn("There probably isn't a solution, "
+            + "but the search will continue, just in case!"));
       }
-    });
+      Journey.get().debugManager().broadcast(Formatter.debug("Ignoring cache in search for ___", player.getName()));
+      Journey.get().debugManager().broadcast(Formatter.debug("Status: ___", event.getSearchEvent().getSession().getState()));
+    }
   }
 
 
@@ -336,6 +277,7 @@ public class PlayerSearchListener implements Listener {
 
     Cell currentLocation = Journey.get().searchManager().getLocation(playerUuid);
     if (currentLocation == null) {
+      // We couldn't outright get the player's location. Shouldn't happen, but just set the event "to"
       Journey.get().searchManager().putLocation(playerUuid, cell);
       return;
     }
@@ -357,16 +299,15 @@ public class PlayerSearchListener implements Listener {
   public void onQuit(PlayerQuitEvent event) {
     // Perform quit logic. Currently, nothing.
   }
-
-  @SuppressWarnings("unchecked")
-  private Optional<PlayerSearchSession<SearchSession>> getPlayerSearch(
-      SpigotSearchEvent<?> event) {
-    if (event.getSearchEvent().getSession() instanceof PlayerSearchSession) {
-      return Optional.of((PlayerSearchSession<SearchSession>)
-          event.getSearchEvent().getSession());
-    } else {
-      return Optional.empty();
-    }
-  }
+//
+//  private Optional<PlayerSessionStateful> getPlayerSearch(
+//      SpigotSearchEvent<?> event) {
+//    if (event.getSearchEvent().getSession() instanceof PlayerSessionStateful) {
+//      return Optional.of((PlayerSessionStateful)
+//          event.getSearchEvent().getSession());
+//    } else {
+//      return Optional.empty();
+//    }
+//  }
 
 }

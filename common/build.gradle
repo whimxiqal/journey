@@ -45,6 +45,8 @@ dependencies {
     implementation 'net.kyori:adventure-api:4.11.0'
     implementation 'net.kyori:adventure-platform-api:4.1.2'
 
+    testImplementation 'net.kyori:adventure-text-serializer-plain:4.11.0'
+
     antlr 'org.antlr:antlr4:4.9.3'
 
 }

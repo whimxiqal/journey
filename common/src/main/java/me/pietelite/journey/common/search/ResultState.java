@@ -35,7 +35,8 @@ public enum ResultState {
   CANCELING_SUCCESSFUL("canceling (successful)"),
   STOPPED_FAILED("stopped (failed)"),
   STOPPED_SUCCESSFUL("stopped (successful)"),
-  STOPPED_CANCELED("stopped (canceled)");
+  STOPPED_CANCELED("stopped (canceled)"),
+  STOPPED_ERROR("stopped (error)");
 
   final String message;
 
@@ -49,10 +50,15 @@ public enum ResultState {
    * @return true if running
    */
   public boolean isRunning() {
-    return this == RUNNING
-        || this == RUNNING_SUCCESSFUL
-        || this == CANCELING_FAILED
-        || this == CANCELING_SUCCESSFUL;
+    switch (this) {
+      case RUNNING:
+      case RUNNING_SUCCESSFUL:
+      case CANCELING_FAILED:
+      case CANCELING_SUCCESSFUL:
+        return true;
+      default:
+        return false;
+    }
   }
 
   /**
@@ -61,12 +67,16 @@ public enum ResultState {
    *
    * @return true if finished
    */
-  public boolean hasFinished() {
-    return this == STOPPED_FAILED
-        || this == STOPPED_SUCCESSFUL
-        || this == STOPPED_CANCELED
-        || this == CANCELING_FAILED
-        || this == CANCELING_SUCCESSFUL;
+  public boolean isStopped() {
+    switch (this) {
+      case STOPPED_FAILED:
+      case STOPPED_SUCCESSFUL:
+      case STOPPED_CANCELED:
+      case STOPPED_ERROR:
+        return true;
+      default:
+        return false;
+    }
   }
 
   /**
@@ -75,8 +85,13 @@ public enum ResultState {
    * @return true if successful
    */
   public boolean isSuccessful() {
-    return this == STOPPED_SUCCESSFUL
-        || this == RUNNING_SUCCESSFUL;
+    switch (this) {
+      case STOPPED_SUCCESSFUL:
+      case RUNNING_SUCCESSFUL:
+        return true;
+      default:
+        return false;
+    }
   }
 
   /**
@@ -86,8 +101,13 @@ public enum ResultState {
    * @return true if canceled and consequently failed
    */
   public boolean isCancelFailed() {
-    return this == CANCELING_FAILED
-        || this == STOPPED_CANCELED;
+    switch (this) {
+      case CANCELING_FAILED:
+      case STOPPED_CANCELED:
+        return true;
+      default:
+        return false;
+    }
   }
 
   /**
@@ -95,14 +115,42 @@ public enum ResultState {
    *
    * @return true if canceled (manually stopped)
    */
-  public boolean isCanceled() {
-    return this == CANCELING_FAILED
-        || this == CANCELING_SUCCESSFUL
-        || this == STOPPED_CANCELED;
+  public boolean shouldStop() {
+    switch (this) {
+      case CANCELING_FAILED:
+      case CANCELING_SUCCESSFUL:
+      case STOPPED_CANCELED:
+      case STOPPED_ERROR:
+      case STOPPED_FAILED:
+      case STOPPED_SUCCESSFUL:
+        return true;
+      default:
+        return false;
+    }
   }
 
   @Override
   public String toString() {
     return this.message;
+  }
+
+  /**
+   * The result state of transitioning to a stopped state from the current state
+   * @return stopped result state
+   */
+  public ResultState stoppedResult() {
+    switch (this) {
+      case IDLE:
+      case RUNNING:
+        return STOPPED_ERROR;
+      case RUNNING_SUCCESSFUL:
+      case CANCELING_SUCCESSFUL:
+        return STOPPED_SUCCESSFUL;
+      case CANCELING_FAILED:
+        return STOPPED_FAILED;
+      default:
+        // already is stopped
+        return this;
+    }
   }
 }

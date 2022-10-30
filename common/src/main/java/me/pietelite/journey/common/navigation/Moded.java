@@ -36,6 +36,6 @@ public interface Moded {
    * @return the mode type
    */
   @NotNull
-  ModeType getModeType();
+  ModeType modeType();
 
 }

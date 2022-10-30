@@ -30,8 +30,6 @@ import me.pietelite.journey.common.search.SearchSession;
 /**
  * An event that is dispatched when a new solution is found during a path search.
  *
- * @param <T> the location type
- * @param <D> the domain type
  * @see SearchSession
  * @see SearchDispatcher
  */

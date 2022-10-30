@@ -24,6 +24,7 @@
 
 package me.pietelite.journey.common.data;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +56,11 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
     if (toRemove != null) {
       waypoints.remove(toRemove);
     }
+  }
+
+  @Override
+  public void setPublic(@NotNull UUID playerUuid, @NotNull String name, boolean isPublic) throws DataAccessException {
+    // ignore
   }
 
   @Override
@@ -90,7 +96,16 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
   }
 
   @Override
+  public @Nullable Boolean isPublic(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
+    return true;
+  }
+
+  @Override
   public Map<String, Cell> getAll(@NotNull UUID playerUuid) throws DataAccessException {
-    return waypoints.get(playerUuid);
+    Map<String, Cell> ret = waypoints.get(playerUuid);
+    if (ret == null) {
+      return Collections.emptyMap();
+    }
+    return ret;
   }
 }

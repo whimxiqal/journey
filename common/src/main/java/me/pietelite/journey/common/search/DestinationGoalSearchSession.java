@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import me.pietelite.journey.common.Journey;
+import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Itinerary;
 import me.pietelite.journey.common.navigation.Port;
@@ -50,18 +51,29 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
 
   private final Cell origin;
   private final Cell destination;
+  private final boolean persistentOrigin;
+  private final boolean persistentDestination;
   private long executionStartTime = -1;
 
-  public DestinationGoalSearchSession(UUID callerId, Caller callerType, FlagSet flags, Cell origin, Cell destination) {
+  public DestinationGoalSearchSession(UUID callerId, Caller callerType, FlagSet flags,
+                                      Cell origin, Cell destination,
+                                      boolean persistentOrigin, boolean persistentDestination) {
     super(callerId, callerType, flags);
     this.origin = origin;
     this.destination = destination;
+    this.persistentOrigin = persistentOrigin;
+    this.persistentDestination = persistentDestination;
   }
 
   @Override
   protected void doSearch() {
     executionStartTime = System.currentTimeMillis();
     Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
+    Journey.get().debugManager().broadcast(Formatter.debug("Started a search for caller ___, modes:___, ports:___",
+            getCallerId(),
+            modes().size(),
+            ports().size()),
+        getCallerId());
 
     state.set(ResultState.RUNNING);
 
@@ -90,7 +102,7 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
 
     // Collect path trials
     if (origin.domainId().equals(destination.domainId())) {
-      graph.addPathTrialOriginToDestination(this.modes);
+      graph.addPathTrialOriginToDestination(this.modes, persistentOrigin && persistentDestination);
     }
 
     for (String domain : allDomains) {
@@ -101,10 +113,10 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
               pathTrialDestinationPort,
               this.modes);
           if (domain.equals(origin.domainId())) {
-            graph.addPathTrialOriginToPort(pathTrialDestinationPort, this.modes);
+            graph.addPathTrialOriginToPort(pathTrialDestinationPort, this.modes, persistentOrigin);
           }
           if (domain.equals(destination.domainId())) {
-            graph.addPathTrialPortToDestination(pathTrialOriginPort, this.modes);
+            graph.addPathTrialPortToDestination(pathTrialOriginPort, this.modes, persistentDestination);
           }
         }
       }
@@ -112,7 +124,7 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
 
     Itinerary bestItinerary = null;
     boolean usingCache = true;
-    while (!this.state.get().isCanceled()) {
+    while (!this.state.get().shouldStop()) {
 
       ItineraryTrial itineraryTrial = graph.calculate();
       if (itineraryTrial == null) {
@@ -126,17 +138,15 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
         if (trialResult.itinerary().isPresent()) {
           // There is an itinerary solution!
 
-          if (bestItinerary == null
-              || trialResult.itinerary().get().getLength() < bestItinerary.getLength()) {
+          if (bestItinerary == null || trialResult.itinerary().get().cost() < bestItinerary.cost()) {
             bestItinerary = trialResult.itinerary().get();
             state.set(ResultState.RUNNING_SUCCESSFUL);
-            Journey.get().dispatcher().dispatch(
-                new FoundSolutionEvent(this, trialResult.itinerary().get()));
+            Journey.get().dispatcher().dispatch(new FoundSolutionEvent(this, trialResult.itinerary().get()));
           }
         }
 
         // Do a quick check to see if the search was canceled before we try to return a value
-        if (state.get().isCanceled()) {
+        if (state.get().shouldStop()) {
           break;
         }
 

@@ -33,6 +33,7 @@ import me.pietelite.journey.spigot.util.SpigotUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Door;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,16 +58,16 @@ public final class DoorMode extends SpigotMode {
     // TODO check if there are buttons or levers nearby that may open the door
 
     Cell cell;
-    Block block;
+    BlockData block;
     // Pos X - East
     cell = origin.atOffset(1, 0, 0);
     block = SpigotUtil.getBlock(cell);
     // Check if we found a door
-    if (block.getBlockData() instanceof Door) {
+    if (block instanceof Door) {
       // Check it's a solid floor
       if (!isVerticallyPassable(SpigotUtil.getBlock(origin.atOffset(1, -1, 0)))) {
-        Door doorBlock = (Door) block.getBlockData();
-        if (block.getType().equals(Material.IRON_DOOR)) {
+        Door doorBlock = (Door) block;
+        if (block.getMaterial().equals(Material.IRON_DOOR)) {
           // Need to check if the door is blocking
           if (doorBlock.getFacing().equals(BlockFace.NORTH)
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
@@ -75,7 +76,7 @@ public final class DoorMode extends SpigotMode {
             accept(origin.atOffset(1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getMaterial())) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(1, 0, 0), 1.0d, options);
             } else {
@@ -91,18 +92,18 @@ public final class DoorMode extends SpigotMode {
         reject(origin.atOffset(1, -1, 0));
       }
     } else {
-      reject(SpigotUtil.cell(block.getLocation()));
+      reject(cell);
     }
 
     // Pos Z - North
     cell = origin.atOffset(0, 0, 1);
     block = SpigotUtil.getBlock(cell);
     // Check if we found a door
-    if (block.getBlockData() instanceof Door) {
+    if (block instanceof Door) {
       // Check it's a solid floor
       if (!isVerticallyPassable(SpigotUtil.getBlock(origin.atOffset(0, -1, 1)))) {
-        Door doorBlock = (Door) block.getBlockData();
-        if (block.getType().equals(Material.IRON_DOOR)) {
+        Door doorBlock = (Door) block;
+        if (block.getMaterial().equals(Material.IRON_DOOR)) {
           // Need to check if the door is blocking
           if (doorBlock.getFacing().equals(BlockFace.EAST)
               || doorBlock.getFacing().equals(BlockFace.WEST)
@@ -111,7 +112,7 @@ public final class DoorMode extends SpigotMode {
             accept(origin.atOffset(0, 0, 1), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getMaterial())) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(0, 0, 1), 1.0d, options);
             } else {
@@ -127,18 +128,18 @@ public final class DoorMode extends SpigotMode {
         reject(origin.atOffset(0, -1, 1));
       }
     } else {
-      reject(SpigotUtil.cell(block.getLocation()));
+      reject(cell);
     }
 
     // Neg X - West
     cell = origin.atOffset(-1, 0, 0);
     block = SpigotUtil.getBlock(cell);
     // Check if we found a door
-    if (block.getBlockData() instanceof Door) {
+    if (block instanceof Door) {
       // Check it's a solid floor
       if (!isVerticallyPassable(SpigotUtil.getBlock(origin.atOffset(-1, -1, 0)))) {
-        Door doorBlock = (Door) block.getBlockData();
-        if (block.getType().equals(Material.IRON_DOOR)) {
+        Door doorBlock = (Door) block;
+        if (block.getMaterial().equals(Material.IRON_DOOR)) {
           // Need to check if the door is blocking
           if (doorBlock.getFacing().equals(BlockFace.NORTH)
               || doorBlock.getFacing().equals(BlockFace.SOUTH)
@@ -147,7 +148,7 @@ public final class DoorMode extends SpigotMode {
             accept(origin.atOffset(-1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getMaterial())) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(-1, 0, 0), 1.0d, options);
             } else {
@@ -163,18 +164,18 @@ public final class DoorMode extends SpigotMode {
         reject(origin.atOffset(-1, -1, 0));
       }
     } else {
-      reject(SpigotUtil.cell(block.getLocation()));
+      reject(cell);
     }
 
     // Neg Z - South
     cell = origin.atOffset(0, 0, -1);
     block = SpigotUtil.getBlock(cell);
     // Check if we found a door
-    if (block.getBlockData() instanceof Door) {
+    if (block instanceof Door) {
       // Check it's a solid floor
       if (!isVerticallyPassable(SpigotUtil.getBlock(origin.atOffset(0, -1, -1)))) {
-        Door doorBlock = (Door) block.getBlockData();
-        if (block.getType().equals(Material.IRON_DOOR)) {
+        Door doorBlock = (Door) block;
+        if (block.getMaterial().equals(Material.IRON_DOOR)) {
           // Need to check if the door is blocking
           if (doorBlock.getFacing().equals(BlockFace.EAST)
               || doorBlock.getFacing().equals(BlockFace.WEST)
@@ -183,7 +184,7 @@ public final class DoorMode extends SpigotMode {
             accept(origin.atOffset(0, 0, -1), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getType())) {
+            if (MaterialGroups.PRESSURE_PLATES.contains(SpigotUtil.getBlock(origin).getMaterial())) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(0, 0, -1), 1.0d, options);
             } else {
@@ -199,13 +200,13 @@ public final class DoorMode extends SpigotMode {
         reject(origin.atOffset(0, -1, -1));
       }
     } else {
-      reject(SpigotUtil.cell(block.getLocation()));
+      reject(cell);
     }
 
   }
 
   @Override
-  public @NotNull ModeType getType() {
+  public @NotNull ModeType type() {
     return ModeType.DOOR;
   }
 }

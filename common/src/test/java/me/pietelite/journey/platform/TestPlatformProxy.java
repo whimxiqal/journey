@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import me.pietelite.journey.common.math.Vector;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.PlatformProxy;
@@ -41,6 +42,7 @@ import me.pietelite.journey.common.search.flag.FlagSet;
 public class TestPlatformProxy implements PlatformProxy {
 
   public static Map<String, TestWorld> worlds = new HashMap<>();
+  public static Map<String, Cell> pois = new HashMap<>();
   public static List<TestPort> ports = new LinkedList<>();
 
   @Override
@@ -50,17 +52,17 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public void playSuccess(UUID playerUuid) {
-
+    // ignore
   }
 
   @Override
-  public void spawnDestinationParticle(String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-
+  public void spawnDestinationParticle(UUID playerUuid, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+    // ignore
   }
 
   @Override
-  public void spawnModeParticle(ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-
+  public void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+    // ignore
   }
 
   @Override
@@ -69,14 +71,24 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Cell entityLocation(UUID entityUuid) {
-    return null;
+  public Optional<Cell> entityCellLocation(UUID entityUuid) {
+    return Optional.of(new Cell(0, 0, 0, WorldLoader.worldResources[0]));  // just say everything is at the origin
+  }
+
+  @Override
+  public Optional<Vector> entityVector(UUID entityUuid) {
+    return Optional.empty();
   }
 
   @Override
   public void prepareSearchSession(SearchSession searchSession, UUID player, FlagSet flags, boolean includePorts) {
-    searchSession.registerMode(new WalkMode());
+    searchSession.registerMode(new WalkMode(searchSession));
     ports.forEach(searchSession::registerPort);
+  }
+
+  @Override
+  public void prepareDestinationSearchSession(SearchSession searchSession, UUID player, FlagSet flags, Cell destination) {
+    // do nothing extra here
   }
 
   @Override

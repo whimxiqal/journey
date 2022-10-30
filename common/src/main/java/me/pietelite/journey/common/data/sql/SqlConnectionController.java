@@ -39,4 +39,6 @@ public interface SqlConnectionController {
    */
   Connection establishConnection() throws SQLException;
 
+  String booleanType();
+
 }

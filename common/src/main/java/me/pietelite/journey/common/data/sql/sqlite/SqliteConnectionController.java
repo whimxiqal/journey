@@ -43,4 +43,9 @@ public class SqliteConnectionController implements SqlConnectionController {
     return DriverManager.getConnection(address);
   }
 
+  @Override
+  public String booleanType() {
+    return "INTEGER";
+  }
+
 }

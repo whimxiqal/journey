@@ -33,12 +33,12 @@ import net.kyori.adventure.audience.Audience;
 /**
  * A search session designed to be used for players finding their way to a specific destination.
  */
-public class PlayerDestinationGoalSearchSession extends DestinationGoalSearchSession {
+public class PlayerDestinationGoalSearchSession extends DestinationGoalSearchSession implements PlayerSessionStateful {
 
   private final PlayerSessionState sessionState;
 
-  public PlayerDestinationGoalSearchSession(UUID player, Cell origin, Cell destination, FlagSet flags) {
-    super(player, Caller.PLAYER, flags, origin, destination);
+  public PlayerDestinationGoalSearchSession(UUID player, Cell origin, Cell destination, FlagSet flags, boolean persistentDestination) {
+    super(player, Caller.PLAYER, flags, origin, destination, false, persistentDestination);
     sessionState = new PlayerSessionState(player);
     if (flags.hasFlag(Flags.ANIMATE)) {
       sessionState.animationManager().setAnimating(true);
@@ -47,6 +47,7 @@ public class PlayerDestinationGoalSearchSession extends DestinationGoalSearchSes
       sessionState.animationManager().setAnimating(false);
     }
     Journey.get().proxy().platform().prepareSearchSession(this, player, flags, true);
+    Journey.get().proxy().platform().prepareDestinationSearchSession(this, player, flags, destination);
     Journey.get().netherManager().makePorts().forEach(this::registerPort);
   }
 

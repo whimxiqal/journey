@@ -20,7 +20,10 @@ repositories {
         name = 'jitpack.io'
         url = 'https://jitpack.io'
     }
-    mavenLocal()
+    maven {
+        name = 'essentialsx'
+        url = 'https://repo.essentialsx.net/releases/'
+    }
 }
 
 dependencies {
@@ -47,8 +50,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
 
-    implementation 'javax.visrec:visrec-api:1.0.5'
-    implementation 'com.opencsv:opencsv:5.5.2'
+//    implementation 'javax.visrec:visrec-api:1.0.5'
+//    implementation 'com.opencsv:opencsv:5.5.2'
 
     implementation 'org.bstats:bstats-bukkit:3.0.0'
 
@@ -59,18 +62,27 @@ dependencies {
     implementation 'net.kyori:adventure-text-serializer-legacy:4.11.0'
     implementation 'net.kyori:adventure-text-serializer-plain:4.11.0'
 
+    // Integrations
+    shadow 'net.essentialsx:EssentialsX:2.19.7'
+
 }
 
 shadowJar {
     archiveFileName = "Journey-Spigot-${project.version}.jar"
 
     dependencies {
-        exclude(dependency('org.projectlombok:lombok'))
+        include(dependency('me.pietelite.journey:.*'))
+        include(dependency('me.pietelite.mantle:.*'))
+        include(dependency('org.antlr:.*'))
+        include(dependency('net.kyori:.*'))
+        include(dependency('org.bstats:.*'))
     }
 
-    relocate 'me.pietelite.mantle', 'me.pietelite.libs.mantle'
-    relocate 'net.kyori', 'me.pietelite.libs.kyori'
-    relocate 'org.bstats', 'me.pietelite.libs.bstats'
+    relocate 'me.pietelite.mantle', 'me.pietelite.journey.libs.mantle'
+    relocate 'org.antlr', 'me.pietelite.journey.libs.antlr'
+    relocate 'org.stringtemplate', 'me.pietelite.journey.libs.stringtemplate'
+    relocate 'net.kyori', 'me.pietelite.journey.libs.kyori'
+    relocate 'org.bstats', 'me.pietelite.journey.libs.bstats'
 }
 
 processResources {

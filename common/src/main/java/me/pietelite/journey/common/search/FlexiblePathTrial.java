@@ -48,6 +48,7 @@ import me.pietelite.journey.common.search.event.StartPathSearchEvent;
 import me.pietelite.journey.common.search.event.StepSearchEvent;
 import me.pietelite.journey.common.search.event.StopPathSearchEvent;
 import me.pietelite.journey.common.search.event.VisitationSearchEvent;
+import me.pietelite.journey.common.search.function.ScoringFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +78,7 @@ public class FlexiblePathTrial implements Resulted {
   private final Completer completer;
   @Getter
   private final List<Mode> modes = new LinkedList<>();
+  private final boolean saveOnComplete;
   @Getter
   private double length;
   @Getter
@@ -101,13 +103,15 @@ public class FlexiblePathTrial implements Resulted {
                            Cell origin,
                            Collection<Mode> modes,
                            ScoringFunction scoringFunction,
-                           Completer completer) {
+                           Completer completer,
+                           boolean saveOnComplete) {
     this.session = session;
     this.origin = origin;
     this.domain = origin.domainId();
     this.modes.addAll(modes);
     this.scoringFunction = scoringFunction;
     this.completer = completer;
+    this.saveOnComplete = saveOnComplete;
   }
 
   protected FlexiblePathTrial(SearchSession session,
@@ -118,7 +122,8 @@ public class FlexiblePathTrial implements Resulted {
                               double length,
                               @Nullable Path path,
                               ResultState state,
-                              boolean fromCache) {
+                              boolean fromCache,
+                              boolean saveOnComplete) {
     this.session = session;
     this.origin = origin;
     this.domain = origin.domainId();
@@ -129,16 +134,15 @@ public class FlexiblePathTrial implements Resulted {
     this.path = path;
     this.state = state;
     this.fromCache = fromCache;
+    this.saveOnComplete = saveOnComplete;
   }
 
   private FlexiblePathTrial.TrialResult resultFail() {
     this.state = ResultState.STOPPED_FAILED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session,
-        this,
-        System.currentTimeMillis() - startExecutionTime));
-    return new TrialResult(Optional.empty(), true);
+    Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime, saveOnComplete));
+    return new TrialResult(null, true);
   }
 
   private FlexiblePathTrial.TrialResult resultSucceed(double length, List<Step> steps) {
@@ -146,16 +150,16 @@ public class FlexiblePathTrial implements Resulted {
     this.length = length;
     this.path = new Path(origin, new ArrayList<>(steps), length);
     this.fromCache = false;
-    Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime));
-    return new TrialResult(Optional.of(this.path), true);
+    Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime, saveOnComplete));
+    return new TrialResult(this.path, true);
   }
 
   private FlexiblePathTrial.TrialResult resultCancel() {
     this.state = ResultState.STOPPED_CANCELED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime));
-    return new TrialResult(Optional.empty(), true);
+    Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime, false));
+    return new TrialResult(null, true);
   }
 
   /**
@@ -173,10 +177,10 @@ public class FlexiblePathTrial implements Resulted {
     if (!this.fromCache || useCacheIfPossible) {
       if (this.state == ResultState.STOPPED_SUCCESSFUL) {
         if (path.test(modes)) {
-          return new TrialResult(Optional.of(path), false);
+          return new TrialResult(path, false);
         }
       } else if (this.state == ResultState.STOPPED_FAILED) {
-        return new TrialResult(Optional.empty(), false);
+        return new TrialResult(null, false);
       }
     }
 
@@ -185,7 +189,7 @@ public class FlexiblePathTrial implements Resulted {
     startExecutionTime = System.currentTimeMillis();
 
     Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node ->
-        -scoringFunction.apply(node)));
+        -scoringFunction.apply(node.getData().location())));
     Map<Cell, Node> visited = new HashMap<>();
 
     Node originNode = new Node(new Step(origin, 0, ModeType.NONE),
@@ -208,7 +212,7 @@ public class FlexiblePathTrial implements Resulted {
 
       current = upcoming.poll();
       assert current != null;
-      Journey.get().dispatcher().dispatch(new StepSearchEvent(session, originNode.getData()));
+      Journey.get().dispatcher().dispatch(new StepSearchEvent(session, current.getData()));
 
       if (completer.test(current)) {
         // We found it!
@@ -224,26 +228,26 @@ public class FlexiblePathTrial implements Resulted {
       // Need to keep going
       for (Mode mode : modes) {
         for (Mode.Option option : mode.getDestinations(current.getData().location())) {
-          if (visited.containsKey(option.getLocation())) {
+          if (visited.containsKey(option.location())) {
             // Already visited, but see if it is better to come from this new direction
-            Node that = visited.get(option.getLocation());
-            if (current.getScore() + option.getDistance() < that.getScore()) {
+            Node that = visited.get(option.location());
+            if (current.getScore() + option.cost() < that.getScore()) {
               that.setPrevious(current);
-              that.setScore(current.getScore() + option.getDistance());
+              that.setScore(current.getScore() + option.cost());
               that.setData(new Step(that.getData().location(),
-                  option.getDistance(),
-                  mode.getType()));
+                  option.cost(),
+                  mode.type()));
             }
           } else {
             // Not visited. Set up node, give it a score, and add it to the system
             Node nextNode = new Node(
-                new Step(option.getLocation(),
-                    option.getDistance(),
-                    mode.getType()),
+                new Step(option.location(),
+                    option.cost(),
+                    mode.type()),
                 current,
-                current.getScore() + option.getDistance());
+                current.getScore() + option.cost());
             upcoming.add(nextNode);
-            visited.put(option.getLocation(), nextNode);
+            visited.put(option.location(), nextNode);
             Journey.get().dispatcher().dispatch(new VisitationSearchEvent(session, nextNode.getData()));
           }
         }
@@ -266,11 +270,22 @@ public class FlexiblePathTrial implements Resulted {
   /**
    * A result object to return the result of the {@link #attempt} method.
    */
-  @Value
-  @Accessors(fluent = true)
   public static class TrialResult {
-    Optional<Path> path;
+    Path path;
     boolean changedProblem;
+
+    TrialResult(Path path, boolean changedProblem) {
+      this.path = path;
+      this.changedProblem = changedProblem;
+    }
+
+    Optional<Path> path() {
+      return Optional.ofNullable(path);
+    }
+
+    boolean changedProblem() {
+      return changedProblem;
+    }
   }
 
   /**

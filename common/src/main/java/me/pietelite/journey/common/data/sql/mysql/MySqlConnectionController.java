@@ -41,7 +41,7 @@ public class MySqlConnectionController implements SqlConnectionController {
       Settings.STORAGE_DATABASE.getValue());
   private final Properties databaseProperties;
 
-  MySqlConnectionController() {
+  public MySqlConnectionController() {
     databaseProperties = new Properties();
     databaseProperties.setProperty("user", Settings.STORAGE_USERNAME.getValue());
     databaseProperties.setProperty("password", Settings.STORAGE_PASSWORD.getValue());
@@ -56,5 +56,10 @@ public class MySqlConnectionController implements SqlConnectionController {
           + "Are you sure you are using the correct credentials?");
       throw e;
     }
+  }
+
+  @Override
+  public String booleanType() {
+    return "TINYINT";
   }
 }

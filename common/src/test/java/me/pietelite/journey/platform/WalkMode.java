@@ -38,11 +38,26 @@ public class WalkMode extends Mode {
 
   @Override
   protected void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
-
+    TestWorld world = TestPlatformProxy.worlds.get(origin.domainId());
+    assert world != null;
+    for (int[] pair : new int[][]{{origin.getX() - 1, origin.getY()},
+        {origin.getX() + 1, origin.getY()},
+        {origin.getX(), origin.getY() - 1},
+        {origin.getX(), origin.getY() + 1}}) {
+      int x = pair[0];
+      int y = pair[1];
+      if (x < 0 || x >= world.lengthX || y < 0 || y >= world.lengthY) {
+        continue;  // this is past the border -- we can't go here
+      }
+      if (world.cells[y][x] == CellType.BARRIER) {
+        continue;  // this is a barrier cell -- we can't go here
+      }
+      options.add(Option.between(origin, x, y, 0));
+    }
   }
 
   @Override
-  public @NotNull ModeType getType() {
-    return null;
+  public @NotNull ModeType type() {
+    return ModeType.WALK;
   }
 }

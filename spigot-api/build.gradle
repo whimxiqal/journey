@@ -35,18 +35,6 @@ dependencies {
     shadow 'org.jetbrains:annotations:22.0.0'
     testImplementation 'org.jetbrains:annotations:22.0.0'
 
-    // Other plugins
-    shadow 'com.github.PikaMug:Quests:4.0.7'
-    shadow 'com.github.whimc:Portals:2.8.3'
-
-    // Lombok
-    shadow 'org.projectlombok:lombok:1.18.22'
-    testImplementation('org.projectlombok:lombok:1.18.22')
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
-
-    implementation 'javax.visrec:visrec-api:1.0.5'
-    implementation 'com.opencsv:opencsv:5.5.2'
 
 }
 

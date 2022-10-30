@@ -23,14 +23,11 @@
 
 package me.pietelite.journey.common.data.sql;
 
-import lombok.Getter;
-
 /**
  * A general SQL manager for storage purposes.
  */
 public abstract class SqlManager {
 
-  @Getter
   private final SqlConnectionController connectionController;
 
   /**
@@ -42,4 +39,7 @@ public abstract class SqlManager {
     this.connectionController = connectionController;
   }
 
+  public SqlConnectionController getConnectionController() {
+    return connectionController;
+  }
 }

@@ -30,10 +30,10 @@ import me.pietelite.journey.common.util.TimeUtil;
 public final class Flags {
 
   public static final ValueFlag<Integer> TIMEOUT = ValueFlag.of("value",
-      (Function<Integer, String>) TimeUtil::toSimpleTime,
+      (Function<Integer, String>) TimeUtil::toSimpleTimeMilliseconds,
       Integer.class);
   public static final ValueFlag<Integer> ANIMATE = ValueFlag.of("animate",
-      (Function<Integer, String>) TimeUtil::toSimpleTime,
+      (Function<Integer, String>) TimeUtil::toSimpleTimeMilliseconds,
       Integer.class);
   public static final Flag DIG = Flag.of("dig");
   public static final Flag NO_DOOR = Flag.of("nodoor");

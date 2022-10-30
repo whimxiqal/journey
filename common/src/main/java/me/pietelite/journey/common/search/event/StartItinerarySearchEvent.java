@@ -23,7 +23,6 @@
 
 package me.pietelite.journey.common.search.event;
 
-import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.search.ItineraryTrial;
 import me.pietelite.journey.common.search.SearchSession;
 
@@ -31,8 +30,6 @@ import me.pietelite.journey.common.search.SearchSession;
  * An event dispatched when a new itinerary is being searched for
  * in an {@link ItineraryTrial}.
  *
- * @param <T> the location type
- * @param <D> the domain type
  * @see SearchSession
  * @see ItineraryTrial#attempt(boolean) 
  * @see SearchDispatcher

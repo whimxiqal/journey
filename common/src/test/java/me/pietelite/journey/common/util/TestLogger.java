@@ -24,7 +24,7 @@
 
 package me.pietelite.journey.common.util;
 
-public class TestLogger implements LoggerCommon {
+public class TestLogger implements CommonLogger {
   @Override
   public void info(String message) {
     System.out.println("INFO: " + message);

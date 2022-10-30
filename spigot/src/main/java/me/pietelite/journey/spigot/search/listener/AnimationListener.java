@@ -24,8 +24,7 @@
 package me.pietelite.journey.spigot.search.listener;
 
 import me.pietelite.journey.common.search.AnimationManager;
-import me.pietelite.journey.common.search.PlayerSearchSession;
-import me.pietelite.journey.common.search.SearchSession;
+import me.pietelite.journey.common.search.PlayerSessionStateful;
 import me.pietelite.journey.common.search.event.StepSearchEvent;
 import me.pietelite.journey.common.search.event.StopPathSearchEvent;
 import me.pietelite.journey.common.search.event.StopSearchEvent;
@@ -38,11 +37,6 @@ import me.pietelite.journey.spigot.search.event.SpigotStopSearchEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-/**
- * A class to listen for Spigot events originating from
- * {@link SearchSession#search()}
- * and allowing for the animating of the algorithm in realtime.
- */
 public class AnimationListener implements Listener {
 
   /**
@@ -123,9 +117,8 @@ public class AnimationListener implements Listener {
   }
 
   private AnimationManager getAnimationManager(SpigotSearchEvent<?> event) {
-    if (event.getSearchEvent().getSession() instanceof PlayerSearchSession<?>) {
-      AnimationManager animationManager = ((PlayerSearchSession<?>) event.getSearchEvent().getSession())
-          .animationManager();
+    if (event.getSearchEvent().getSession() instanceof PlayerSessionStateful) {
+      AnimationManager animationManager = ((PlayerSessionStateful) event.getSearchEvent().getSession()).sessionState().animationManager();
       if (animationManager.isAnimating()) {
         return animationManager;
       }

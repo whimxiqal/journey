@@ -29,6 +29,7 @@ import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.search.SearchSession;
 import java.util.List;
 import java.util.Set;
+import me.pietelite.journey.spigot.util.MaterialGroups;
 import me.pietelite.journey.spigot.util.SpigotUtil;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
@@ -97,11 +98,11 @@ public class JumpMode extends SpigotMode {
             }
           }
         }
-        double jumpDistance = (SpigotUtil.getBlock(origin.atOffset(offX, 1, offZ)).getBoundingBox().getMaxY()
+        double jumpDistance = MaterialGroups.height(SpigotUtil.getBlock(origin.atOffset(offX, 1, offZ)).getMaterial())
             + 1.0
-            - (SpigotUtil.getBlock(origin.atOffset(0, 0, 0)).isPassable()
-            ? SpigotUtil.getBlock(origin.atOffset(0, -1, 0)).getBoundingBox().getMaxY() - 1
-            : SpigotUtil.getBlock(origin.atOffset(0, 0, 0)).getBoundingBox().getMaxY()));
+            - (MaterialGroups.isPassable(SpigotUtil.getBlock(origin.atOffset(0, 0, 0)).getMaterial())
+            ? MaterialGroups.height(SpigotUtil.getBlock(origin.atOffset(0, -1, 0)).getMaterial()) - 1
+            : MaterialGroups.height(SpigotUtil.getBlock(origin.atOffset(0, 0, 0)).getMaterial()));
         Cell other = origin.atOffset(offX, 1, offZ);
         if (!isVerticallyPassable(SpigotUtil.getBlock(origin.atOffset(offX, 0, offZ)))
             && jumpDistance <= 1.2) {
@@ -115,7 +116,7 @@ public class JumpMode extends SpigotMode {
   }
 
   @Override
-  public @NotNull ModeType getType() {
+  public @NotNull ModeType type() {
     return ModeType.JUMP;
   }
 }

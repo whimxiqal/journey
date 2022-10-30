@@ -31,6 +31,7 @@ public class TestWorld {
 
   String name;
   CellType[][] cells;
-  Map<Integer, Cell> pois;
+  int lengthX;
+  int lengthY;
 
 }

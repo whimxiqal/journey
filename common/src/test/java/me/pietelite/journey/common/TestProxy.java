@@ -31,39 +31,47 @@ import me.pietelite.journey.common.data.TestDataManager;
 import me.pietelite.journey.common.manager.SchedulingManager;
 import me.pietelite.journey.common.manager.TestSchedulingManager;
 import me.pietelite.journey.common.navigation.PlatformProxy;
-import me.pietelite.journey.common.util.LoggerCommon;
+import me.pietelite.journey.common.util.CommonLogger;
 import me.pietelite.journey.common.util.TestAudienceProvider;
 import me.pietelite.journey.common.util.TestLogger;
+import me.pietelite.journey.platform.TestPlatformProxy;
 import net.kyori.adventure.platform.AudienceProvider;
 
 public class TestProxy implements Proxy {
+  TestLogger logger = new TestLogger();
+  DataManager dataManager = new TestDataManager();
+  AudienceProvider audienceProvider = new TestAudienceProvider();
+  ConfigManager configManager = new TestConfigManager();
+  SchedulingManager schedulingManager = new TestSchedulingManager();
+  PlatformProxy platformProxy = new TestPlatformProxy();
+
   @Override
-  public LoggerCommon logger() {
-    return new TestLogger();
+  public CommonLogger logger() {
+    return logger;
   }
 
   @Override
   public DataManager dataManager() {
-    return new TestDataManager();
+    return dataManager;
   }
 
   @Override
   public AudienceProvider audienceProvider() {
-    return new TestAudienceProvider();
+    return audienceProvider;
   }
 
   @Override
   public ConfigManager configManager() {
-    return new TestConfigManager();
+    return configManager;
   }
 
   @Override
   public SchedulingManager schedulingManager() {
-    return new TestSchedulingManager();
+    return schedulingManager;
   }
 
   @Override
   public PlatformProxy platform() {
-    return null;
+    return platformProxy;
   }
 }

@@ -25,18 +25,28 @@
 package me.pietelite.journey.common.data;
 
 public class TestDataManager implements DataManager {
+  PersonalWaypointManager personalWaypointManager = new TestPersonalWaypointManager();
+  PublicWaypointManager publicWaypointManager = new TestPublicWaypointManager();
+  PathRecordManager pathRecordManager = new TestPathRecordManager();
+  PortDataManager portDataManager = new TestPortDataManager();
+
   @Override
-  public PersonalWaypointManager personalEndpointManager() {
-    return new TestPersonalWaypointManager();
+  public PersonalWaypointManager personalWaypointManager() {
+    return personalWaypointManager;
   }
 
   @Override
-  public PublicEndpointManager publicEndpointManager() {
-    return new TestPublicEndpointManager();
+  public PublicWaypointManager publicWaypointManager() {
+    return publicWaypointManager;
   }
 
   @Override
   public PathRecordManager pathRecordManager() {
-    return new TestPathRecordManager();
+    return pathRecordManager;
+  }
+
+  @Override
+  public PortDataManager portManager() {
+    return portDataManager;
   }
 }

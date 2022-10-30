@@ -42,7 +42,7 @@ public abstract class SpigotSearchEvent<S extends SearchEvent> extends Event {
    * @param event the common event
    */
   public SpigotSearchEvent(S event) {
-    super(true);
+    super(false);
     this.searchEvent = event;
   }
 

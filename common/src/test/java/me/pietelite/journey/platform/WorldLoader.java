@@ -53,7 +53,7 @@ public final class WorldLoader {
       TestWorld world = new TestWorld();
       world.name = resource;
 
-      URL url = Thread.currentThread().getContextClassLoader().getResource(resource + ".txt");
+      URL url = Thread.currentThread().getContextClassLoader().getResource("worlds/" + resource + ".txt");
       File file = new File(url.getPath());
       List<CellType[]> allLines = new LinkedList<>();
       int maxLineLength = 0;
@@ -69,11 +69,8 @@ public final class WorldLoader {
             cellLine[x] = cellTypes.getOrDefault(c, CellType.BLANK);
 
             // POI
-            try {
-              int num = Integer.parseUnsignedInt(String.valueOf(c));
-              world.pois.put(num, new Cell(x, y, 0, resource));
-            } catch (NumberFormatException e) {
-              // ignore
+            if (Character.isDigit(c)) {
+              TestPlatformProxy.pois.put(Character.toString(c), new Cell(x, y, 0, resource));
             }
 
             // PORT
@@ -93,8 +90,8 @@ public final class WorldLoader {
                 // lower case
                 if (pendingPorts.containsKey(Character.toUpperCase(c))) {
                   // complete the port
-                  TestPlatformProxy.ports.add(new TestPort(pendingPorts.get(Character.toUpperCase(c)),
-                      cell,
+                  TestPlatformProxy.ports.add(new TestPort(cell,
+                      pendingPorts.get(Character.toUpperCase(c)),
                       ModeType.PORT,
                       1));
                 } else {
@@ -111,7 +108,9 @@ public final class WorldLoader {
         e.printStackTrace();
       }
 
-      world.cells = new CellType[allLines.size()][maxLineLength];
+      world.lengthX = maxLineLength;
+      world.lengthY = allLines.size();
+      world.cells = new CellType[world.lengthY][world.lengthX];
       for (int i = 0; i < allLines.size(); i++) {
         CellType[] line = allLines.get(i);
         for (int j = 0; j < line.length; j++) {

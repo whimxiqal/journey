@@ -83,11 +83,11 @@ public class DigMode extends SpigotMode {
                     insideOffZ * offZ /* get sign back */);
                 if (!isLaterallyPassable(SpigotUtil.getBlock(cell))) {
                   // we must break it
-                  if (SpigotUtil.getBlock(cell).getType().getHardness() < 0) {
+                  if (SpigotUtil.getBlock(cell).getMaterial().getHardness() < 0) {
                     reject(cell);
                     continue outerZ;
                   } else {
-                    digTime += SpigotUtil.getBlock(cell).getType().getHardness();
+                    digTime += SpigotUtil.getBlock(cell).getMaterial().getHardness();
                   }
                 }
                 for (int h = 0; h <= insideOffY; h++) {
@@ -99,11 +99,11 @@ public class DigMode extends SpigotMode {
                           + (1 - insideOffY) /* for if offYIn is 0 */,
                       insideOffZ * offZ /* get sign back */);
                   if (!isPassable(SpigotUtil.getBlock(cell))) {
-                    if (SpigotUtil.getBlock(cell).getType().getHardness() < 0) {
+                    if (SpigotUtil.getBlock(cell).getMaterial().getHardness() < 0) {
                       reject(cell);
                       continue outerZ;
                     } else {
-                      digTime += SpigotUtil.getBlock(cell).getType().getHardness();
+                      digTime += SpigotUtil.getBlock(cell).getMaterial().getHardness();
                     }
                   }
                 }
@@ -118,7 +118,7 @@ public class DigMode extends SpigotMode {
   }
 
   @Override
-  public @NotNull ModeType getType() {
+  public @NotNull ModeType type() {
     return ModeType.DIG;
   }
 }

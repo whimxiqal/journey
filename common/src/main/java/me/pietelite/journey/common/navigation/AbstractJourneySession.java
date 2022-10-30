@@ -23,6 +23,7 @@
 
 package me.pietelite.journey.common.navigation;
 
+import me.pietelite.journey.common.navigation.journey.JourneySession;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.common.tools.AlternatingList;
 import org.jetbrains.annotations.NotNull;

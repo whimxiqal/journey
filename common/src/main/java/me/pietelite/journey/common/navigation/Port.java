@@ -59,13 +59,13 @@ public class Port extends Path implements Moded {
    * @param location the location, being the origin and destination of this port
    * @return the port
    */
-  public static  Port stationary(Cell location) {
+  public static Port stationary(Cell location) {
     return new Port(location, location, ModeType.NONE, 0);
   }
 
   @Override
   @NotNull
-  public ModeType getModeType() {
+  public ModeType modeType() {
     return modeType;
   }
 

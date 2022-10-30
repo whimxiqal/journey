@@ -1,39 +1,39 @@
 package me.pietelite.journey.common;
 
+import java.nio.file.Path;
 import me.pietelite.journey.common.config.ConfigManager;
-import me.pietelite.journey.common.data.DataManager;
 import me.pietelite.journey.common.manager.SchedulingManager;
 import me.pietelite.journey.common.manager.SearchManager;
 import me.pietelite.journey.common.navigation.PlatformProxy;
-import me.pietelite.journey.common.util.LoggerCommon;
+import me.pietelite.journey.common.util.CommonLogger;
 import net.kyori.adventure.platform.AudienceProvider;
 
 public class ProxyImpl implements Proxy {
 
-  private LoggerCommon logger;
-  private DataManager dataManager;
+  private CommonLogger logger;
+  private Path dataFolder;
   private AudienceProvider audienceProvider;
   private ConfigManager configManager;
   private SchedulingManager schedulingManager;
   private SearchManager searchManager;
   private PlatformProxy platformProxy;
 
-  public void logger(LoggerCommon logger) {
+  public void logger(CommonLogger logger) {
     this.logger = logger;
   }
 
   @Override
-  public LoggerCommon logger() {
+  public CommonLogger logger() {
     return logger;
   }
 
-  public void dataManager(DataManager dataManager) {
-    this.dataManager = dataManager;
+  public void dataFolder(Path dataFolder) {
+    this.dataFolder = dataFolder;
   }
 
   @Override
-  public DataManager dataManager() {
-    return dataManager;
+  public Path dataFolder() {
+    return dataFolder;
   }
 
   public void audienceProvider(AudienceProvider audienceProvider) {
@@ -63,7 +63,7 @@ public class ProxyImpl implements Proxy {
     return schedulingManager;
   }
 
-  public void cellProxy(PlatformProxy platformProxy) {
+  public void platform(PlatformProxy platformProxy) {
     this.platformProxy = platformProxy;
   }
 
@@ -71,4 +71,6 @@ public class ProxyImpl implements Proxy {
   public PlatformProxy platform() {
     return platformProxy;
   }
+
+
 }

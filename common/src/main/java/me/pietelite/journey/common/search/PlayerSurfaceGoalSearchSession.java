@@ -30,7 +30,7 @@ import me.pietelite.journey.common.search.flag.FlagSet;
 import me.pietelite.journey.common.search.flag.Flags;
 import net.kyori.adventure.audience.Audience;
 
-public class PlayerSurfaceGoalSearchSession extends LocalUpwardsGoalSearchSession {
+public class PlayerSurfaceGoalSearchSession extends LocalUpwardsGoalSearchSession implements PlayerSessionStateful {
 
   private final PlayerSessionState sessionState;
 
@@ -48,7 +48,7 @@ public class PlayerSurfaceGoalSearchSession extends LocalUpwardsGoalSearchSessio
     Journey.get().proxy().platform().prepareSearchSession(this, player, flags, false);
   }
 
-  public PlayerSessionState getSessionState() {
+  public PlayerSessionState sessionState() {
     return sessionState;
   }
 

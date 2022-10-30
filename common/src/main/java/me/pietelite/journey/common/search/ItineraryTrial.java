@@ -83,8 +83,9 @@ public class ItineraryTrial implements Resulted {
     boolean changedProblem = false;
     for (PathTrial pathTrial : alternatingList.getMinors()) {
 
-      if (session.state.get().isCanceled()) {
-        state = ResultState.STOPPED_CANCELED;
+      if (session.state.get().shouldStop()) {
+        // officially stop
+        state = state.stoppedResult();
         Journey.get().dispatcher().dispatch(
             new StopItinerarySearchEvent(session, this));
         return new TrialResult(Optional.empty(), true);  // doesn't really matter if changed problem

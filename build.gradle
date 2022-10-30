@@ -9,8 +9,8 @@ subprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'org.cadixdev.licenser'
 
-    group = 'dev.pietelite'
-    version = '0.2.0-BETA'
+    group = 'me.pietelite.journey'
+    version = '1.0.0-BETA'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8

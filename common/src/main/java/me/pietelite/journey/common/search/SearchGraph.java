@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import me.pietelite.journey.common.Journey;
+import me.pietelite.journey.common.data.DataAccessException;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Mode;
 import me.pietelite.journey.common.navigation.ModeType;
@@ -86,8 +87,8 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
    *
    * @param modes the mode types to supposedly get from the origin to the destination
    */
-  public void addPathTrialOriginToDestination(Collection<Mode> modes) {
-    addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modes);
+  public void addPathTrialOriginToDestination(Collection<Mode> modes, boolean persistentEnds) {
+    addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modes, persistentEnds);
   }
 
   /**
@@ -98,11 +99,11 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
    * @param end   the end of the path trial
    * @param modes the mode types used to traverse the path
    */
-  public void addPathTrialOriginToPort(Port end, Collection<Mode> modes) {
+  public void addPathTrialOriginToPort(Port end, Collection<Mode> modes, boolean persistentOrigin) {
     addPathTrial(session,
         origin, end.getOrigin(),
         getOriginNode(), getLeapNode(end),
-        modes);
+        modes, persistentOrigin);
   }
 
   /**
@@ -113,11 +114,11 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
    * @param start the start of the path trial
    * @param modes the mode types used to traverse the path
    */
-  public void addPathTrialPortToDestination(Port start, Collection<Mode> modes) {
+  public void addPathTrialPortToDestination(Port start, Collection<Mode> modes, boolean persistentDestination) {
     addPathTrial(session,
         start.getDestination(), destination,
         getLeapNode(start), getDestinationNode(),
-        modes);
+        modes, persistentDestination);
   }
 
   /**
@@ -132,26 +133,33 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
    */
   public void addPathTrialPortToPort(Port start, Port end, Collection<Mode> modes) {
     addPathTrial(session, start.getDestination(), end.getOrigin(),
-        getLeapNode(start), getLeapNode(end), modes);
+        getLeapNode(start), getLeapNode(end), modes, true);
   }
 
   private void addPathTrial(SearchSession session, Cell origin, Cell destination,
                             WeightedGraph<Port, PathTrial>.Node originNode,
                             WeightedGraph<Port, PathTrial>.Node destinationNode,
-                            Collection<Mode> modes) {
+                            Collection<Mode> modes, boolean saveOnComplete) {
     // First, try to access a cached path
-    Set<ModeType> modeTypes = modes.stream().map(Mode::getType).collect(Collectors.toSet());
-    if (Journey.get().proxy().dataManager()
-        .pathRecordManager()
-        .containsRecord(origin, destination, modeTypes)) {
-      addPathTrial(PathTrial.cached(session, origin, destination,
-              modes,
-              Journey.get().proxy().dataManager()
-                  .pathRecordManager()
-                  .getPath(origin, destination, modeTypes)),
-          originNode, destinationNode);
-    } else {
-      addPathTrial(PathTrial.approximate(session, origin, destination, modes), originNode, destinationNode);
+    Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
+    boolean added = false;
+    try {
+      if (Journey.get().dataManager()
+          .pathRecordManager()
+          .containsRecord(origin, destination, modeTypes)) {
+        addPathTrial(PathTrial.cached(session, origin, destination,
+                modes,
+                Journey.get().dataManager()
+                    .pathRecordManager()
+                    .getPath(origin, destination, modeTypes)),
+            originNode, destinationNode);
+        added = true;
+      }
+    } catch (DataAccessException e) {
+      e.printStackTrace();
+    }
+    if (!added) {
+      addPathTrial(PathTrial.approximate(session, origin, destination, modes, saveOnComplete), originNode, destinationNode);
     }
   }
 

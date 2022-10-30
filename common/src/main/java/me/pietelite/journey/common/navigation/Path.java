@@ -126,7 +126,7 @@ public class Path implements Serializable {
     for (int i = 0; i < steps.size() - 1; i++) {
       for (Mode mode : modes) {
         for (Mode.Option option : mode.getDestinations(steps.get(i).location())) {
-          if (steps.get(i + 1).location().equals(option.getLocation())) {
+          if (steps.get(i + 1).location().equals(option.location())) {
             continue stepLoop;  // we found a mode that gave us a fitting option. Continue to the next step.
           }
         }

@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SqlWaypointManager extends SqlManager {
 
-  private static final String ENDPOINT_TABLE_NAME = "journey_endpoints";
+  public static final String WAYPOINT_TABLE_NAME = "journey_waypoints";
 
   /**
    * Default constructor.
@@ -53,18 +53,18 @@ public abstract class SqlWaypointManager extends SqlManager {
     createTables();
   }
 
-  protected void addEndpoint(@Nullable UUID playerUuid,
+  protected void addWaypoint(@Nullable UUID playerUuid,
                              @NotNull Cell cell,
                              @NotNull String name) throws IllegalArgumentException, DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
-      addEndpoint(playerUuid, cell, name, connection, false);
+      addWaypoint(playerUuid, cell, name, connection, false);
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
     }
   }
 
-  private void addEndpoint(@Nullable UUID playerUuid,
+  private void addWaypoint(@Nullable UUID playerUuid,
                            @NotNull Cell cell,
                            @NotNull String name,
                            @NotNull Connection connection,
@@ -73,16 +73,17 @@ public abstract class SqlWaypointManager extends SqlManager {
       throw new IllegalArgumentException("The given name is not valid: " + name);
     }
     PreparedStatement statement = connection.prepareStatement(String.format(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
-        ENDPOINT_TABLE_NAME,
+        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        WAYPOINT_TABLE_NAME,
         "player_uuid",
         "name_id",
         "name",
-        "world_uuid",
+        "domain_id",
         "x",
         "y",
         "z",
-        "timestamp"));
+        "timestamp",
+        "is_public"));
 
     statement.setString(1, playerUuid == null ? null : playerUuid.toString());
     statement.setString(2, name.toLowerCase());
@@ -92,19 +93,20 @@ public abstract class SqlWaypointManager extends SqlManager {
     statement.setInt(6, cell.getY());
     statement.setInt(7, cell.getZ());
     statement.setLong(8, System.currentTimeMillis() / 1000);
+    statement.setBoolean(9, false);
 
     statement.execute();
 
   }
 
-  protected void removeEndpoint(@Nullable UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
+  protected void removeWaypoint(@Nullable UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
-          ENDPOINT_TABLE_NAME,
+          WAYPOINT_TABLE_NAME,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
-          "world_uuid",
+          "domain_id",
           "x",
           "y",
           "z"));
@@ -122,11 +124,11 @@ public abstract class SqlWaypointManager extends SqlManager {
     }
   }
 
-  protected void removeEndpoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
+  protected void removeWaypoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s WHERE %s %s ? AND %s = ?;",
-          ENDPOINT_TABLE_NAME,
+          WAYPOINT_TABLE_NAME,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
           "name_id"));
@@ -142,11 +144,11 @@ public abstract class SqlWaypointManager extends SqlManager {
   }
 
   @Nullable
-  protected Cell getEndpoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
+  protected Cell getWaypoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT * FROM %s WHERE %s %s ? AND %s = ?;",
-          ENDPOINT_TABLE_NAME,
+          WAYPOINT_TABLE_NAME,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
           "name_id"));
@@ -159,7 +161,7 @@ public abstract class SqlWaypointManager extends SqlManager {
         return new Cell(resultSet.getInt("x"),
             resultSet.getInt("y"),
             resultSet.getInt("z"),
-            resultSet.getString("world_uuid"));
+            resultSet.getString("domain_id"));
       } else {
         return null;
       }
@@ -169,15 +171,17 @@ public abstract class SqlWaypointManager extends SqlManager {
     }
   }
 
+
+
   @Nullable
-  protected String getEndpointName(@Nullable UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
+  protected String getWaypointName(@Nullable UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT * FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
-          ENDPOINT_TABLE_NAME,
+          WAYPOINT_TABLE_NAME,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
-          "world_uuid",
+          "domain_id",
           "x",
           "y",
           "z"));
@@ -200,9 +204,9 @@ public abstract class SqlWaypointManager extends SqlManager {
     }
   }
 
-  protected Map<String, Cell> getEndpoints(@Nullable UUID playerUuid) throws DataAccessException {
+  protected Map<String, Cell> getWaypoints(@Nullable UUID playerUuid) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
-      return getEndpoints(playerUuid, connection);
+      return getWaypoints(playerUuid, connection);
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
@@ -217,11 +221,11 @@ public abstract class SqlWaypointManager extends SqlManager {
    * @return the map of endpoints
    * @throws SQLException if sql error occurs
    */
-  private Map<String, Cell> getEndpoints(@Nullable UUID playerUuid,
+  private Map<String, Cell> getWaypoints(@Nullable UUID playerUuid,
                                          @NotNull Connection connection) throws SQLException {
     PreparedStatement statement = connection.prepareStatement(String.format(
         "SELECT * FROM %s WHERE %s %s ?;",
-        ENDPOINT_TABLE_NAME,
+        WAYPOINT_TABLE_NAME,
         "player_uuid",
         playerUuid == null ? "IS" : "="));
 
@@ -234,7 +238,7 @@ public abstract class SqlWaypointManager extends SqlManager {
           new Cell(resultSet.getInt("x"),
               resultSet.getInt("y"),
               resultSet.getInt("z"),
-              resultSet.getString("world_uuid")));
+              resultSet.getString("domain_id")));
     }
     return endpoints;
   }
@@ -242,11 +246,11 @@ public abstract class SqlWaypointManager extends SqlManager {
   protected void createTables() {
     try (Connection connection = getConnectionController().establishConnection()) {
       String tableStatement = "CREATE TABLE IF NOT EXISTS "
-          + ENDPOINT_TABLE_NAME + " ("
+          + WAYPOINT_TABLE_NAME + " ("
           + "player_uuid char(36), "
           + "name_id varchar(32) NOT NULL, "
           + "name varchar(32) NOT NULL, "
-          + "world_uuid char(36) NOT NULL, "
+          + "domain_id char(36) NOT NULL, "
           + "x int(7) NOT NULL, "
           + "y int(7) NOT NULL, "
           + "z int(7) NOT NULL, "
@@ -255,7 +259,7 @@ public abstract class SqlWaypointManager extends SqlManager {
       connection.prepareStatement(tableStatement).execute();
 
       String indexStatement = "CREATE INDEX IF NOT EXISTS player_uuid_idx ON "
-          + ENDPOINT_TABLE_NAME
+          + WAYPOINT_TABLE_NAME
           + " (player_uuid);";
       connection.prepareStatement(indexStatement).execute();
     } catch (SQLException e) {

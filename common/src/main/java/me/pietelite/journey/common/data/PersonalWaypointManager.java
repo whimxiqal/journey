@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A general description of how to handle storage for personal search endpoints.
  *
- * @param <T> the location type
- * @param <D> the domain type
  * @see SearchSession
  */
 public interface PersonalWaypointManager {
@@ -61,6 +59,10 @@ public interface PersonalWaypointManager {
    */
   void remove(@NotNull UUID playerUuid,
               @NotNull Cell cell) throws DataAccessException;
+
+  void setPublic(@NotNull UUID playerUuid,
+                 @NotNull String name,
+                 boolean isPublic) throws DataAccessException;
 
   /**
    * Remove a player and a named cell from the database. Cell location is irrelevant.
@@ -117,6 +119,10 @@ public interface PersonalWaypointManager {
   @Nullable
   Cell getWaypoint(@NotNull UUID playerUuid,
                    @NotNull String name) throws DataAccessException;
+
+  @Nullable
+  Boolean isPublic(@NotNull UUID playerUuid,
+                 @NotNull String name) throws DataAccessException;
 
   /**
    * Get a list of all personal endpoints for a player.

@@ -23,6 +23,9 @@
 
 package me.pietelite.journey.common.search.event;
 
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.search.SearchSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,11 +35,12 @@ import java.util.function.Consumer;
  * A dispatcher of events used during the execution of a
  * {@link SearchSession}.
  */
-public class SearchDispatcher {
+public abstract class SearchDispatcher {
 
-  protected final Map<SearchEvent.EventType, SearchEventConversion<SearchEvent, Object>> events = new HashMap<>();
-  private Consumer<Object> externalDispatcher;
+  protected final Map<SearchEvent.EventType, SearchEventConversion<SearchEvent, Object>> eventConversions = new HashMap<>();
+  protected Consumer<Object> externalDispatcher;
   private boolean edited = false;
+  protected final ConcurrentLinkedQueue<SearchEvent> events = new ConcurrentLinkedQueue<>();
 
   public <E> Editor<E> editor() {
     if (edited) {
@@ -46,19 +50,8 @@ public class SearchDispatcher {
     return new Editor<>(this);
   }
 
-  /**
-   * A method used to dispatch search events throughout the operation of
-   * the search method in this class. Ultimately, a counterpart to this
-   * event will be dispatched to the appropriate event handling system implemented
-   * in a given Minecraft mod, e.g. Bukkit/Spigot's event handling system.
-   *
-   * @param event a search event
-   * @param <S>   the type of event
-   */
-  public final <S extends SearchEvent> void dispatch(S event) {
-    if (events.containsKey(event.type())) {
-      this.externalDispatcher.accept(events.get(event.type()).convert(event));
-    }
+  public <S extends SearchEvent> void dispatch(S event) {
+    events.add(event);
   }
 
   public final static class Editor<E> {
@@ -68,13 +61,13 @@ public class SearchDispatcher {
       this.dispatcher = dispatcher;
     }
 
-    public void externalDispatcher(Consumer<E> externalDispatcher) {
+    public void setExternalDispatcher(Consumer<E> externalDispatcher) {
       dispatcher.externalDispatcher = (Consumer<Object>) externalDispatcher;
     }
 
     public <S extends SearchEvent> void registerEvent(SearchEventConversion<S, E> eventConversion,
                                                             SearchEvent.EventType eventType) {
-      dispatcher.events.put(eventType, (SearchEventConversion<SearchEvent, Object>) eventConversion);
+      dispatcher.eventConversions.put(eventType, (SearchEventConversion<SearchEvent, Object>) eventConversion);
     }
 
   }

@@ -78,7 +78,7 @@ public abstract class Mode {
                               @NotNull List<Option> options) {
     options.add(new Option(destination, distance));
     delay();
-    Journey.get().dispatcher().dispatch(new ModeSuccessEvent(session, destination, getType()));
+    Journey.get().dispatcher().dispatch(new ModeSuccessEvent(session, destination, type()));
   }
 
   /**
@@ -91,7 +91,7 @@ public abstract class Mode {
    */
   protected final void reject(@NotNull Cell destination) {
     delay();
-    Journey.get().dispatcher().dispatch(new ModeFailureEvent(session, destination, getType()));
+    Journey.get().dispatcher().dispatch(new ModeFailureEvent(session, destination, type()));
   }
 
   private void delay() {
@@ -114,7 +114,7 @@ public abstract class Mode {
    * @return the mode type
    */
   @NotNull
-  public abstract ModeType getType();
+  public abstract ModeType type();
 
   /**
    * A record to store a movement option. It just contains a location and a distance to that location.
@@ -122,17 +122,26 @@ public abstract class Mode {
   public static class Option {
 
     final Cell location;
-    final double distance;
+    final double cost;
+
+    public static Option between(Cell origin, int destinationX, int destinationY, int destinationZ) {
+      Cell destination = new Cell(destinationX, destinationY, destinationZ, origin.domainId());
+      return new Option(destination, origin.distanceTo(destination));
+    }
+
+    public static Option between(Cell origin, Cell destination, double costMultiplier) {
+      return new Option(destination, origin.distanceTo(destination));
+    }
 
     /**
      * General constructor.
      *
      * @param location the location
-     * @param distance the destination
+     * @param cost the destination
      */
-    public Option(@NotNull Cell location, double distance) {
+    public Option(@NotNull Cell location, double cost) {
       this.location = location;
-      this.distance = distance;
+      this.cost = cost;
     }
 
     /**
@@ -141,7 +150,7 @@ public abstract class Mode {
      * @return the location
      */
     @NotNull
-    public Cell getLocation() {
+    public Cell location() {
       return location;
     }
 
@@ -150,8 +159,8 @@ public abstract class Mode {
      *
      * @return the distance
      */
-    public double getDistance() {
-      return distance;
+    public double cost() {
+      return cost;
     }
   }
 

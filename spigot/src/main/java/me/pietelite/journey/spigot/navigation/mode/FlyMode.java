@@ -25,11 +25,14 @@ package me.pietelite.journey.spigot.navigation.mode;
 
 import java.util.List;
 import java.util.Set;
+import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.spigot.util.SpigotUtil;
+import org.bukkit.ChunkSnapshot;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -101,7 +104,7 @@ public class FlyMode extends SpigotMode {
   }
 
   @Override
-  public @NotNull ModeType getType() {
+  public @NotNull ModeType type() {
     return ModeType.FLY;
   }
 }

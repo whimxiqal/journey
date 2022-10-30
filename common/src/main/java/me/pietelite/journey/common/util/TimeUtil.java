@@ -69,4 +69,12 @@ public final class TimeUtil {
 
   }
 
+  public static String toSimpleTimeMilliseconds(long milliseconds) {
+    if (milliseconds > 1000000) {
+      return toSimpleTime(milliseconds / 1000000) + ", " + (milliseconds % 1000000) + " ms";
+    }
+
+    return milliseconds + " milliseconds";
+  }
+
 }

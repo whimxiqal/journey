@@ -73,6 +73,12 @@ public class AnimationManager {
         .platform()
         .sendBlockData(player, cell, success ? StageType.SUCCESS : StageType.FAILURE, modeType)) {
       successfulLocations.add(cell);
+      if (!success) {
+        if (lastFailure != null) {
+          Journey.get().proxy().platform().resetBlockData(player, Collections.singleton(lastFailure));
+        }
+        lastFailure = cell;
+      }
       return true;
     }
     return false;

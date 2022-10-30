@@ -24,23 +24,55 @@
 package me.pietelite.journey.common.navigation;
 
 import java.io.Serializable;
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Accessors;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A representation of a movement step between {@link Locatable}s on a {@link Path}.
  */
-@Value
-@Accessors(fluent = true)
 public class Step implements Serializable, Moded {
-  @NonNull Cell location;
-  double length;
-  @NonNull ModeType modeType;
+  private final Cell location;
+  private final double length;
+  private final ModeType modeType;
+
+  public Step(@NotNull Cell location, double length, @NotNull ModeType modeType) {
+    this.location = location;
+    this.length = length;
+    this.modeType = modeType;
+  }
+
+  public Cell location() {
+    return location;
+  }
+
+  public double length() {
+    return length;
+  }
 
   @Override
-  public @NotNull ModeType getModeType() {
+  public @NotNull ModeType modeType() {
     return modeType;
+  }
+
+  @Override
+  public String toString() {
+    return "Step{" +
+        "location=" + location +
+        ", length=" + length +
+        ", modeType=" + modeType +
+        '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Step step = (Step) o;
+    return Double.compare(step.length, length) == 0 && location.equals(step.location) && modeType == step.modeType;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(location, length, modeType);
   }
 }

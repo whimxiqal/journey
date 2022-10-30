@@ -34,8 +34,6 @@ import java.util.Collection;
  * An event dispatched when a {@link PathTrial} stops searching
  * for a {@link Path}.
  *
- * @param <T> the location type
- * @param <D> the domain type
  * @see SearchDispatcher
  * @see SearchSession
  */
@@ -43,6 +41,7 @@ public class StopPathSearchEvent extends SearchEvent {
 
   private final FlexiblePathTrial pathTrial;
   private final long executionTime;
+  private final boolean save;
 
   /**
    * General constructor.
@@ -52,10 +51,12 @@ public class StopPathSearchEvent extends SearchEvent {
    */
   public StopPathSearchEvent(SearchSession session,
                              FlexiblePathTrial pathTrial,
-                             long executionTime) {
+                             long executionTime,
+                             boolean save) {
     super(session);
     this.pathTrial = pathTrial;
     this.executionTime = executionTime;
+    this.save = save;
   }
 
   /**
@@ -74,6 +75,10 @@ public class StopPathSearchEvent extends SearchEvent {
    */
   public long getExecutionTime() {
     return executionTime;
+  }
+
+  public boolean shouldSave() {
+    return save;
   }
 
   @Override

@@ -28,6 +28,8 @@ import lombok.Getter;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Mode;
 import me.pietelite.journey.common.navigation.Path;
+import me.pietelite.journey.common.search.function.PlanarOrientedScoringFunction;
+import me.pietelite.journey.common.search.function.ScoringFunction;
 
 /**
  * An extension of {@link FlexiblePathTrial} where the goal of the trial is to find a path to
@@ -46,7 +48,8 @@ public class PathTrial extends FlexiblePathTrial {
                     double length,
                     Path path,
                     ResultState state,
-                    boolean fromCache) {
+                    boolean fromCache,
+                    boolean saveOnComplete) {
     super(session, origin, modes,
         scoringFunction(destination),
         node -> node.getData().location().distanceToSquared(destination)
@@ -54,13 +57,13 @@ public class PathTrial extends FlexiblePathTrial {
         length,
         path,
         state,
-        fromCache);
+        fromCache,
+        saveOnComplete);
     this.destination = destination;
   }
 
   private static ScoringFunction scoringFunction(Cell destination) {
-    return new ScoringFunction(node -> -node.getData().location().distanceToSquared(destination),
-        ScoringFunction.Type.EUCLIDEAN_DISTANCE);
+    return new PlanarOrientedScoringFunction(destination);
   }
 
   /**
@@ -81,7 +84,7 @@ public class PathTrial extends FlexiblePathTrial {
     return new PathTrial(session, origin, destination,
         modes,
         path.getCost(), path,
-        ResultState.STOPPED_SUCCESSFUL, false);
+        ResultState.STOPPED_SUCCESSFUL, false, false);
   }
 
   /**
@@ -99,7 +102,7 @@ public class PathTrial extends FlexiblePathTrial {
     return new PathTrial(session, origin, destination,
         modes,
         Double.MAX_VALUE, null,
-        ResultState.STOPPED_FAILED, false);
+        ResultState.STOPPED_FAILED, false, false);
   }
 
   /**
@@ -115,11 +118,12 @@ public class PathTrial extends FlexiblePathTrial {
    */
   public static PathTrial approximate(SearchSession session,
                                       Cell origin, Cell destination,
-                                      Collection<Mode> modes) {
+                                      Collection<Mode> modes,
+                                      boolean saveOnComplete) {
     return new PathTrial(session, origin, destination,
         modes,
-        origin.distanceTo(destination), null,
-        ResultState.IDLE, false);
+        new PlanarOrientedScoringFunction(destination).apply(origin), null,
+        ResultState.IDLE, false, saveOnComplete);
   }
 
   /**
@@ -139,7 +143,7 @@ public class PathTrial extends FlexiblePathTrial {
         modes,
         path == null ? origin.distanceTo(destination) : path.getCost(), path,
         path == null ? ResultState.STOPPED_FAILED : ResultState.STOPPED_SUCCESSFUL,
-        true);
+        true, false);
   }
 
 }

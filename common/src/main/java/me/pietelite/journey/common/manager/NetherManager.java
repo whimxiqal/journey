@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.navigation.Cell;
+import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.NetherPort;
 
 /**
@@ -47,6 +48,13 @@ import me.pietelite.journey.common.navigation.NetherPort;
 public final class NetherManager {
 
   private final Map<Cell, Cell> portalConnections = new ConcurrentHashMap<>();
+
+  public void load() {
+    Journey.get().dataManager()
+        .portManager()
+        .getPorts(ModeType.NETHER_PORTAL)
+        .forEach(port -> portalConnections.put(port.getOrigin(), port.getDestination()));
+  }
 
   /**
    * Create ports specifically representing all nether portals in the world.
@@ -63,6 +71,7 @@ public final class NetherManager {
         linksVerified.add(port);
       } else {
         portalConnections.remove(port.getOrigin(), port.getDestination());
+        Journey.get().dataManager().portManager().removePorts(ModeType.NETHER_PORTAL, port.getOrigin(), port.getDestination());
       }
     }
     return linksVerified;
@@ -126,21 +135,32 @@ public final class NetherManager {
           Journey.get().debugManager().broadcast(Formatter.debug(portalConnections.get(old).toString()));
 
           portalConnections.remove(old);
+          Journey.get().dataManager()
+              .portManager()
+              .getPortsWithOrigin(ModeType.NETHER_PORTAL, old)
+              .forEach(port -> Journey.get().dataManager()
+                  .portManager()
+                  .removePorts(ModeType.NETHER_PORTAL, old, port.getDestination()));
         }
       });
 
       // Add the portal
       Cell previous = portalConnections.put(originGroup.port(), destinationGroup.get().port());
+      Journey.get().dataManager().portManager().addPort(ModeType.NETHER_PORTAL,
+          originGroup.port(),
+          destinationGroup.get().port(),
+          NetherPort.NETHER_PORT_COST);
       if (previous == null) {
-        Journey.get().debugManager().broadcast(Formatter.debug("Added nether port:"));
-        Journey.get().debugManager().broadcast(Formatter.debug(originGroup.port() + " -> "));
-        Journey.get().debugManager().broadcast(Formatter.debug(destinationGroup.get().port().toString()));
+        Journey.get().debugManager().broadcast(Formatter.debug("Added nether port:"
+            + originGroup.port() + " -> "
+            + destinationGroup.get().port().toString()));
       }
     }, false, 20);
   }
 
   public void reset() {
     portalConnections.clear();
+    Journey.get().dataManager().portManager().removePorts(ModeType.NETHER_PORTAL);
   }
 
   /**
@@ -176,21 +196,24 @@ public final class NetherManager {
     for (int x = origin.getX() - radius; x <= origin.getX() + radius; x++) {
       for (int y = startY; y <= endY; y += 2) {
         for (int z = origin.getZ() - radius; z <= origin.getZ() + radius; z++) {
-          if (x + z % 2 == 0) {
-            break;  // Check only in checkerboard pattern
+          if ((x + z) % 2 == 0) {
+            continue;  // Check only in checkerboard pattern
           }
-          //Location being iterated over.
+          // Location being iterated over.
           Cell cell = new Cell(x, y, z, domain);
-          //Don't do anything if the Portal block is already stored.
-          if (!stored.contains(cell)) {
-            PortalGroup pg = getPortalBlocks(cell);
-            //Do nothing if there are no Portal blocks
-            if (pg != null) {
-              //If the PortalGroup was added, store the Portal blocks in the Collection
-              if (portals.add(pg)) {
-                stored.addAll(pg.getBlocks());
-              }
-            }
+          // Don't do anything if the Portal block is already stored.
+          if (stored.contains(cell)) {
+            continue;
+          }
+
+          PortalGroup pg = getPortalBlocks(cell);
+          // Do nothing if there are no Portal blocks
+          if (pg == null) {
+            continue;
+          }
+          // If the PortalGroup was added, store the Portal blocks in the Collection
+          if (portals.add(pg)) {
+            stored.addAll(pg.getBlocks());
           }
         }
       }
@@ -218,7 +241,7 @@ public final class NetherManager {
    * @return A PortalGroup of all the found Portal blocks. Otherwise, returns null.
    */
   private PortalGroup getPortalBlocks(Cell cell) {
-    if (Journey.get().proxy().platform().isNetherPortal(cell)) {
+    if (!Journey.get().proxy().platform().isNetherPortal(cell)) {
       return null;
     }
 
@@ -231,7 +254,7 @@ public final class NetherManager {
       for (int j = -1; j <= 1; j++) {
         for (int k = -1; k <= 1; k++) {
           Cell offset = new Cell(cell.getX() + i, cell.getY() + j, cell.getZ() + k, cell.domainId());
-          if (group.add(offset)) {
+          if (Journey.get().proxy().platform().isNetherPortal(offset) && group.add(offset)) {
             portalBlock(group, offset);
           }
         }
@@ -267,7 +290,7 @@ public final class NetherManager {
      */
     public boolean add(Cell cell) {
       // Check to see if the block is a Portal block.
-      if (Journey.get().proxy().platform().isNetherPortal(cell)) {
+      if (!Journey.get().proxy().platform().isNetherPortal(cell)) {
         return false;
       }
 

@@ -63,7 +63,7 @@ public final class Formatter {
   public static final Component WELCOME = Component.text()
       .append(Component.newline())
       .append(Component.text("%%%%%%%%  ").color(DULL))
-      .append(Component.text("JourneySession").color(THEME))
+      .append(Component.text("Journey").color(THEME))
       .append(Component.text("  %%%%%%%%").color(DULL))
       .append(Component.newline())
       .append(Component.text("             vBETA"))
@@ -72,6 +72,7 @@ public final class Formatter {
       .append(Component.text("PietElite").color(ACCENT))
       .append(Component.newline())
       .append(url("github.com/pietelite/journey", "https://github.com/pietelite/journey"))
+      .append(Component.newline())
       .build();
 
   public static final TextColor WHITE = TextColor.color(255, 255, 255);
@@ -84,8 +85,8 @@ public final class Formatter {
    */
   public static Component prefix() {
     return Component.text()
-        .append(Component.text("Nope ").color(THEME))
-        .append(Component.text("- ").color(DARK))
+        .append(Component.text("Journey ").color(THEME))
+        .append(Component.text("% ").color(DARK))
         .build();
   }
 

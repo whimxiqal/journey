@@ -105,4 +105,26 @@ public class Cell implements Locatable<Cell>, Serializable {
         this.domainId);
   }
 
+  @Override
+  public String toString() {
+    return "Cell{" +
+        "coordinateX=" + coordinateX +
+        ", coordinateY=" + coordinateY +
+        ", coordinateZ=" + coordinateZ +
+        ", domainId='" + domainId + '\'' +
+        '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Cell cell = (Cell) o;
+    return coordinateX == cell.coordinateX && coordinateY == cell.coordinateY && coordinateZ == cell.coordinateZ && domainId.equals(cell.domainId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(coordinateX, coordinateY, coordinateZ, domainId);
+  }
 }

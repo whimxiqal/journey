@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class NetherPort extends Port implements Verifiable {
 
-  public static final int NETHER_PORT_LENGTH = 16;
+  public static final int NETHER_PORT_COST = 8;
   private final Cell origin;
   private final Cell destination;
 
@@ -44,7 +44,7 @@ public final class NetherPort extends Port implements Verifiable {
    * @param destination the destination of the portal
    */
   public NetherPort(@NotNull final Cell origin, @NotNull final Cell destination) {
-    super(origin, destination, ModeType.NETHER_PORTAL, NETHER_PORT_LENGTH);
+    super(origin, destination, ModeType.NETHER_PORTAL, NETHER_PORT_COST);
     this.origin = origin;
     this.destination = destination;
   }

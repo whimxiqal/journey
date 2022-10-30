@@ -1,4 +1,4 @@
-name: JourneySession
+name: Journey
 version: ${version}
 main: me.pietelite.journey.spigot.JourneySpigot
 api-version: 1.17

@@ -25,7 +25,7 @@ package me.pietelite.journey.common.data.sql;
 
 import java.util.Map;
 import me.pietelite.journey.common.data.DataAccessException;
-import me.pietelite.journey.common.data.PublicEndpointManager;
+import me.pietelite.journey.common.data.PublicWaypointManager;
 import me.pietelite.journey.common.navigation.Cell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +33,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A public endpoint manager implemented for SQL.
  */
-public abstract class SqlPublicWaypointManager
+public class SqlPublicWaypointManager
     extends SqlWaypointManager
-    implements PublicEndpointManager {
+    implements PublicWaypointManager {
 
   /**
    * General constructor.
@@ -49,31 +49,31 @@ public abstract class SqlPublicWaypointManager
   @Override
   public void add(@NotNull Cell cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException {
-    addEndpoint(null, cell, name);
+    addWaypoint(null, cell, name);
   }
 
   @Override
   public void remove(@NotNull Cell cell) throws DataAccessException {
-    removeEndpoint(null, cell);
+    removeWaypoint(null, cell);
   }
 
   @Override
   public void remove(@NotNull String name) throws DataAccessException {
-    removeEndpoint(null, name);
+    removeWaypoint(null, name);
   }
 
   @Override
   public @Nullable String getName(@NotNull Cell cell) throws DataAccessException {
-    return getEndpointName(null, cell);
+    return getWaypointName(null, cell);
   }
 
   @Override
   public @Nullable Cell getWaypoint(@NotNull String name) throws DataAccessException {
-    return getEndpoint(null, name);
+    return getWaypoint(null, name);
   }
 
   @Override
   public Map<String, Cell> getAll() throws DataAccessException {
-    return getEndpoints(null);
+    return getWaypoints(null);
   }
 }

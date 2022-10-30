@@ -24,9 +24,28 @@
 
 package me.pietelite.journey.common.manager;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class TestSchedulingManager implements SchedulingManager {
+
+  public static final int TICK_PERIOD_MS = 10;
+
+  private static class Task {
+    Runnable runnable;
+    long executionTime;
+  }
+
+  private final PriorityQueue<Task> queue;
+  private final ReentrantLock queueLock = new ReentrantLock();
+
+  public TestSchedulingManager() {
+    queue = new PriorityQueue<>(Comparator.comparing(task -> task.executionTime));
+    startMainThread();
+  }
+
   @Override
   public void schedule(Runnable runnable, boolean async) {
     if (async) {
@@ -39,19 +58,27 @@ public class TestSchedulingManager implements SchedulingManager {
 
   @Override
   public void schedule(Runnable runnable, boolean async, int tickDelay) {
-    Runnable func = () -> {
-      try {
-        Thread.sleep(tickDelay / 20 * 1000L);
-        runnable.run();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    };
+    long delayMs = tickDelay / 20 * 1000L;
     if (async) {
-      Thread thread = new Thread(func);
+      Thread thread = new Thread(() -> {
+        try {
+          Thread.sleep(delayMs);
+          runnable.run();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      });
       thread.start();
     } else {
-      func.run();
+      Task task = new Task();
+      task.runnable = runnable;
+      task.executionTime = System.currentTimeMillis() + delayMs;
+      try {
+        queueLock.lock();
+        queue.add(task);
+      } finally {
+        queueLock.unlock();
+      }
     }
   }
 
@@ -64,5 +91,25 @@ public class TestSchedulingManager implements SchedulingManager {
   @Override
   public void cancelTask(UUID taskId) {
     // not supported
+  }
+
+  public void startMainThread() {
+    Thread thread = new Thread(() -> {
+      long currentTime = System.currentTimeMillis();
+      try {
+        queueLock.lock();
+        while (!queue.isEmpty() && queue.peek().executionTime < currentTime) {
+          queue.remove().runnable.run();
+        }
+      } finally {
+        queueLock.unlock();
+      }
+      try {
+        Thread.sleep(TICK_PERIOD_MS);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }, "TestSchedulingManagerThread");
+    thread.start();
   }
 }

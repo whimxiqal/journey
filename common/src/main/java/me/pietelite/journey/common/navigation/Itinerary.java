@@ -26,6 +26,7 @@ package me.pietelite.journey.common.navigation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+import me.pietelite.journey.common.navigation.journey.JourneySession;
 import me.pietelite.journey.common.search.ItineraryTrial;
 import me.pietelite.journey.common.search.SearchSession;
 import me.pietelite.journey.common.tools.AlternatingList;
@@ -45,7 +46,7 @@ public final class Itinerary {
   private final Cell origin;
   private final ArrayList<Step> steps;
   private final AlternatingList<Port, Path, Path> stages;
-  private final double length;
+  private final double cost;
 
   /**
    * General constructor.
@@ -53,16 +54,16 @@ public final class Itinerary {
    * @param origin the origin of the itinerary
    * @param steps  the steps to get to the destination
    * @param stages the list of stages to complete to traverse this itinerary
-   * @param length the length of the entire thing
+   * @param cost the length of the entire thing
    */
   public Itinerary(Cell origin,
                    Collection<Step> steps,
                    AlternatingList<Port, Path, Path> stages,
-                   double length) {
+                   double cost) {
     this.origin = origin;
     this.steps = new ArrayList<>(steps);
     this.stages = stages;
-    this.length = length;
+    this.cost = cost;
   }
 
   /**
@@ -98,8 +99,8 @@ public final class Itinerary {
    *
    * @return the length
    */
-  public double getLength() {
-    return length;
+  public double cost() {
+    return cost;
   }
 
   @Override
@@ -111,13 +112,13 @@ public final class Itinerary {
       return false;
     }
     Itinerary itinerary = (Itinerary) o;
-    return Double.compare(itinerary.length, length) == 0
+    return Double.compare(itinerary.cost, cost) == 0
         && Objects.equals(origin, itinerary.origin)
         && Objects.equals(steps, itinerary.steps);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(origin, steps, length);
+    return Objects.hash(origin, steps, cost);
   }
 }

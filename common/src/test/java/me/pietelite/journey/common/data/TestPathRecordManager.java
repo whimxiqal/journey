@@ -137,7 +137,7 @@ public class TestPathRecordManager implements PathRecordManager {
     }
     return new Path(new Cell(record.originX(), record.originY(), record.originZ(), record.worldId()),
         steps,
-        record.pathLength());
+        record.pathCost());
   }
 
   @Override

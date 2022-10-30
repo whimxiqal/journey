@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import me.pietelite.journey.common.data.DataAccessException;
 import me.pietelite.journey.common.data.PathRecordManager;
 import me.pietelite.journey.common.navigation.Cell;
@@ -44,14 +45,15 @@ import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.Path;
 import me.pietelite.journey.common.navigation.Step;
 import me.pietelite.journey.common.search.PathTrial;
-import me.pietelite.journey.common.search.ScoringFunction;
+import me.pietelite.journey.common.search.function.ScoringFunction;
+import me.pietelite.journey.common.search.function.ScoringFunctionType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A generic path record manager for SQL storage.
  */
-public abstract class SqlPathRecordManager
+public class SqlPathRecordManager
     extends SqlManager
     implements PathRecordManager {
 
@@ -84,28 +86,25 @@ public abstract class SqlPathRecordManager
       return;
     }
 
-    /* TODO Add back this deletion mechanism
-    // Delete previous record if it has the same origin/destination/world and is slower
-    ModeTypeGroup modeTypes = ModeTypeGroup.from(trial.getModes());
-    if (containsRecord(trial.getOrigin(), trial.getDestination(), modeTypes)) {
-      // Let's delete the last one, so we can store the new one
+    // Delete any previous record if it has the same origin/destination/world and is slower
+    List<PathTrialRecord> oldRecords = getRecords(trial.getOrigin(), trial.getDestination());
+    for (PathTrialRecord oldRecord : oldRecords) {
       try (Connection connection = getConnectionController().establishConnection()) {
-        connection.prepareStatement("DELETE FROM " + PATH_RECORD_TABLE_NAME
-                + " WHERE "
-                + "origin_x = " + trial.getOrigin().getX() + " AND "
-                + "origin_y = " + trial.getOrigin().getY() + " AND "
-                + "origin_z = " + trial.getOrigin().getZ() + " AND "
-                + "destination_x = " + trial.getDestination().getX() + " AND "
-                + "destination_y = " + trial.getDestination().getY() + " AND "
-                + "destination_z = " + trial.getDestination().getZ() + " AND "
-                + "world_uuid = '" + trial.getOrigin().getDomainId() + "'")
-            .execute();
+        if (oldRecord.pathCost() <= path.getCost()) {
+          continue;
+        }
+        if (modeTypes.containsAll(oldRecord.modes().stream().map(PathTrialModeRecord::modeType).collect(Collectors.toList()))) {
+          // this path cost is better and can do it in the same or fewer modes, so delete the current one
+          connection.prepareStatement("DELETE FROM " + PATH_RECORD_TABLE_NAME
+                  + " WHERE "
+                  + "id = " + oldRecord.id())
+              .execute();
+        }
       } catch (SQLException e) {
         e.printStackTrace();
         throw new DataAccessException();
       }
     }
-     */
 
     long pathReportId = -1;
     try (Connection connection = getConnectionController().establishConnection()) {
@@ -122,7 +121,7 @@ public abstract class SqlPathRecordManager
               "destination_x",
               "destination_y",
               "destination_z",
-              "world_uuid",
+              "domain_id",
               "scoring_function"),
           Statement.RETURN_GENERATED_KEYS);
 
@@ -154,7 +153,6 @@ public abstract class SqlPathRecordManager
     if (pathReportId < 0) {
       throw new DataAccessException("No id found from the inserted path record");
     }
-    // Get all the rest of the deviations
     ArrayList<Step> steps = path.getSteps();
     for (int i = 0; i < steps.size(); i++) {
       Step step = steps.get(i);
@@ -169,11 +167,11 @@ public abstract class SqlPathRecordManager
             "mode_type"));
 
         statement.setLong(1, pathReportId);
-        statement.setLong(2, step.location().getX());
-        statement.setLong(3, step.location().getY());
-        statement.setLong(4, step.location().getZ());
-        statement.setLong(6, i);
-        statement.setInt(7, step.getModeType().ordinal());
+        statement.setInt(2, step.location().getX());
+        statement.setInt(3, step.location().getY());
+        statement.setInt(4, step.location().getZ());
+        statement.setInt(5, i);
+        statement.setInt(6, step.modeType().ordinal());
         statement.execute();
       } catch (SQLException e) {
         e.printStackTrace();
@@ -205,7 +203,7 @@ public abstract class SqlPathRecordManager
   public void clear() {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "DELETE * FROM %s;",
+          "DELETE FROM %s;",
           PATH_RECORD_MODE_TABLE_NAME));
       statement.execute();
     } catch (SQLException e) {
@@ -234,7 +232,7 @@ public abstract class SqlPathRecordManager
               + "destination_x = " + destination.getX() + " AND "
               + "destination_y = " + destination.getY() + " AND "
               + "destination_z = " + destination.getZ() + " AND "
-              + "world_uuid = '" + origin.domainId() + "'")
+              + "domain_id = '" + origin.domainId() + "'")
           .executeQuery();
       List<PathTrialRecord> records = new LinkedList<>();
       while (recordResult.next()) {
@@ -306,10 +304,12 @@ public abstract class SqlPathRecordManager
       ResultSet cellResult = connection.prepareStatement("SELECT * FROM "
           + PATH_RECORD_CELL_TABLE_NAME
           + " WHERE "
-          + "path_record_id = " + record.id() + " AND "
-          + "critical = TRUE").executeQuery();
+          + "path_record_id = " + record.id()).executeQuery();
       while (cellResult.next()) {
         record.cells().add(extractCell(record, cellResult));
+      }
+      if (record.cells().isEmpty()) {
+        throw new DataAccessException("Tried to get a path (id:" + record.id() + "), but found no path cells");
       }
 
       record.cells().sort(Comparator.comparing(PathTrialCellRecord::index));
@@ -325,7 +325,7 @@ public abstract class SqlPathRecordManager
             record.cells().get(i).modeType()));
       }
 
-      return new Path(steps.getFirst().location(), steps, record.pathLength());
+      return new Path(steps.getFirst().location(), steps, record.pathCost());
     } catch (SQLException e) {
       e.printStackTrace();
       return null;
@@ -381,8 +381,8 @@ public abstract class SqlPathRecordManager
         resultSet.getInt("destination_x"),
         resultSet.getInt("destination_y"),
         resultSet.getInt("destination_z"),
-        resultSet.getString("world_uuid"),
-        ScoringFunction.Type.valueOf(resultSet.getString("scoring_function")),
+        resultSet.getString("domain_id"),
+        ScoringFunctionType.valueOf(resultSet.getString("scoring_function")),
         new LinkedList<>(),
         new LinkedList<>()
     );
@@ -416,31 +416,24 @@ public abstract class SqlPathRecordManager
           + "destination_x int(7) NOT NULL,"
           + "destination_y int(7) NOT NULL,"
           + "destination_z int(7) NOT NULL,"
-          + "world_uuid char(36) NOT NULL, "
+          + "domain_id char(36) NOT NULL, "
           + "scoring_function varchar(32) NOT NULL"
           + ");").execute();
 
       connection.prepareStatement("CREATE INDEX IF NOT EXISTS path_record_idx ON "
               + PATH_RECORD_TABLE_NAME
-              + " (origin_x, origin_y, origin_z, destination_x, destination_y, destination_z, world_uuid);")
+              + " (origin_x, origin_y, origin_z, destination_x, destination_y, destination_z, domain_id);")
           .execute();
 
       // Create table of nodes within the path trial calculation
       connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
           + PATH_RECORD_CELL_TABLE_NAME + " ("
           + "path_record_id integer NOT NULL, "  // id of saved path trial (indexed)
-          + "x int(7) NOT NULL,"  // x coordinate
-          + "y int(7) NOT NULL,"  // y coordinate
-          + "z int(7) NOT NULL,"  // z coordinate
-          + "critical int(1) NOT NULL, "  // is this on the critical path (solution)
+          + "x int(7) NOT NULL, "  // x coordinate
+          + "y int(7) NOT NULL, "  // y coordinate
+          + "z int(7) NOT NULL, "  // z coordinate
           + "path_index int(10), "  // what is the index of this critical node (if not critical, null)
           + "mode_type int(2) NOT NULL, "  // what is the mode type used to get here
-          + "deviation double(12, 5) NOT NULL,"
-          + "distance double(12, 5) NOT NULL,"  // the euclidean distance
-          + "distance_y int(3) NOT NULL,"  // the cartesian distance in the y axis
-          + "biome int NOT NULL, "  // the index of the biome
-          + "dimension int NOT NULL, "  // the dimension index
-          + "random double(12, 12) NOT NULL, "  // a random double for random selection (indexed)
           + "FOREIGN KEY (path_record_id) REFERENCES " + PATH_RECORD_TABLE_NAME + "(id)"
           + " ON DELETE CASCADE"
           + " ON UPDATE CASCADE"
@@ -449,10 +442,6 @@ public abstract class SqlPathRecordManager
       connection.prepareStatement("CREATE INDEX IF NOT EXISTS cell_path_record_id_idx ON "
           + PATH_RECORD_CELL_TABLE_NAME
           + " (path_record_id);").execute();
-
-      connection.prepareStatement("CREATE INDEX IF NOT EXISTS cell_random_idx ON "
-          + PATH_RECORD_CELL_TABLE_NAME
-          + " (random);").execute();
 
       connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
           + PATH_RECORD_MODE_TABLE_NAME + " ("

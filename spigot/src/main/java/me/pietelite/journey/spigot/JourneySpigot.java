@@ -26,8 +26,11 @@ package me.pietelite.journey.spigot;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.ProxyImpl;
 import me.pietelite.journey.common.command.JourneyConnectorProvider;
+import me.pietelite.journey.common.integration.Integrator;
+import me.pietelite.journey.common.integration.PotentialIntegrator;
 import me.pietelite.journey.common.search.event.SearchDispatcher;
 import me.pietelite.journey.common.search.event.SearchEvent;
+import me.pietelite.journey.spigot.integration.PotentialEssentialsIntegrator;
 import me.pietelite.journey.spigot.search.event.SpigotFoundSolutionEvent;
 import me.pietelite.journey.spigot.search.event.SpigotIgnoreCacheSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotModeFailureEvent;
@@ -41,15 +44,17 @@ import me.pietelite.journey.spigot.search.event.SpigotStopPathSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotStopSearchEvent;
 import me.pietelite.journey.spigot.search.event.SpigotVisitationSearchEvent;
 import me.pietelite.journey.spigot.config.SpigotConfigManager;
-import me.pietelite.journey.spigot.data.SpigotDataManager;
 import me.pietelite.journey.spigot.listener.DeathListener;
 import me.pietelite.journey.spigot.listener.NetherListener;
 import me.pietelite.journey.spigot.search.listener.AnimationListener;
 import me.pietelite.journey.spigot.search.listener.DataStorageListener;
 import me.pietelite.journey.spigot.search.listener.PlayerSearchListener;
-import me.pietelite.journey.spigot.util.LoggerSpigot;
+import me.pietelite.journey.spigot.util.SpigotLogger;
+import me.pietelite.journey.spigot.util.SpigotSchedulingManager;
+import me.pietelite.journey.spigot.util.ThreadSafeBlockAccessor;
 import me.pietelite.mantle.bukkit.BukkitRegistrarProvider;
 import me.pietelite.mantle.common.CommandRegistrar;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
@@ -70,6 +75,8 @@ public final class JourneySpigot extends JavaPlugin {
     return instance;
   }
 
+  private final ThreadSafeBlockAccessor blockAccessor = new ThreadSafeBlockAccessor();
+
   @Override
   public void onLoad() {
     instance = this;
@@ -77,16 +84,21 @@ public final class JourneySpigot extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    getLogger().info("Initializing JourneySession...");
+    getLogger().info("Initializing Journey...");
 
     if (this.getDataFolder().mkdirs()) {
-      getLogger().info("JourneySession data folder created");
+      getLogger().info("Journey data folder created");
     }
 
-    // Set up JourneySession Common
+    // Set up Journey Common
     ProxyImpl proxy = new ProxyImpl();
-    proxy.logger(new LoggerSpigot());
+    Journey.get().registerProxy(proxy);
+    proxy.logger(new SpigotLogger());
+    proxy.dataFolder(this.getDataFolder().toPath());
+    proxy.audienceProvider(BukkitAudiences.create(this));
     proxy.configManager(SpigotConfigManager.initialize("config.yml"));
+    proxy.schedulingManager(new SpigotSchedulingManager());
+    proxy.platform(new SpigotPlatformProxy());
 
     // Instantiate a SearchDispatcher. Keep registrations alphabetized
     SearchDispatcher.Editor<Event> dispatcher = Journey.get().dispatcher().editor();
@@ -102,9 +114,12 @@ public final class JourneySpigot extends JavaPlugin {
     dispatcher.registerEvent(SpigotStopPathSearchEvent::new, SearchEvent.EventType.STOP_PATH);
     dispatcher.registerEvent(SpigotStopSearchEvent::new, SearchEvent.EventType.STOP);
     dispatcher.registerEvent(SpigotVisitationSearchEvent::new, SearchEvent.EventType.VISITATION);
+    dispatcher.setExternalDispatcher(event -> Bukkit.getPluginManager().callEvent(event));
+
+    // Initialize common Journey (after proxy is set up)
+    Journey.get().init();
 
     // Set up data manager
-    proxy.dataManager(new SpigotDataManager());
 
     // Register command
 //    CommandNode root = new JourneyCommand();
@@ -126,23 +141,44 @@ public final class JourneySpigot extends JavaPlugin {
     Bukkit.getPluginManager().registerEvents(new PlayerSearchListener(), this);
     Bukkit.getPluginManager().registerEvents(new DeathListener(), this);
 
+    // Initialize tasks for async capabilities
+    blockAccessor.init();
+    ((SpigotLogger) proxy.logger()).init();
 
     // Start doing a bunch of searches for common use cases
     Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
       // TODO initialize likely-used paths here (link to link)
       valid = true;
-      JourneySpigot.getInstance().getLogger().info("Finished initializing JourneySession");
+      JourneySpigot.getInstance().getLogger().info("Finished initializing Journey");
     });
 
     // bStats
     Metrics metrics = new Metrics(this, 14192);
+
+    // Integrators
+    attemptIntegrator(new PotentialEssentialsIntegrator());
+  }
+
+  private void attemptIntegrator(PotentialIntegrator<?> potential) {
+    if (potential.viable()) {
+      Integrator integrator = potential.integrator();
+      Journey.get().integrationManager().register(integrator);
+      Journey.logger().info("Added integrator: " + integrator.name());
+    } else {
+      Journey.logger().info("Did not add integrator");
+    }
   }
 
   @Override
   public void onDisable() {
+    // Common Journey shutdown
+    Journey.get().shutdown();
+
     // Plugin shutdown logic
-    Journey.get().searchManager().cancelAllSearches();
-    Journey.get().searchManager().stopAllJourneys();
+    blockAccessor.shutdown();
   }
 
+  public ThreadSafeBlockAccessor getBlockAccessor() {
+    return blockAccessor;
+  }
 }

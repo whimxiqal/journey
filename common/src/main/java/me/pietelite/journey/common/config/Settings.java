@@ -31,7 +31,7 @@ import me.pietelite.journey.common.data.StorageMethod;
 public final class Settings {
 
   public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT
-      = new IntegerSetting("search.default-timeout", 30);
+      = new IntegerSetting("search.default-timeout", 5);
 
   public static final Setting<Boolean> DEFAULT_NOFLY_FLAG
       = new BooleanSetting("search.default-nofly-flag", false);
@@ -51,11 +51,8 @@ public final class Settings {
   public static final Setting<String> STORAGE_PASSWORD
       = new StringSetting("storage.auth.password", "p@ssword");
 
-  public static final Setting<StorageMethod> CUSTOM_ENDPOINT_STORAGE_TYPE
-      = new EnumSetting<>("storage.custom_endpoint_type", StorageMethod.SQLITE, StorageMethod.class);
-
-  public static final Setting<StorageMethod> SERVER_ENDPOINT_STORAGE_TYPE
-      = new EnumSetting<>("storage.server_endpoint_type", StorageMethod.SQLITE, StorageMethod.class);
+  public static final Setting<StorageMethod> STORAGE_TYPE
+      = new EnumSetting<>("storage.type", StorageMethod.SQLITE, StorageMethod.class);
 
   private Settings() {
   }

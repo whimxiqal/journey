@@ -24,5 +24,64 @@
 
 package me.pietelite.journey.common.search;
 
-public class BetterSearchTest {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import me.pietelite.journey.common.Journey;
+import me.pietelite.journey.common.JourneyTestHarness;
+import me.pietelite.journey.common.TestProxy;
+import me.pietelite.journey.common.navigation.Itinerary;
+import me.pietelite.journey.common.search.event.FoundSolutionEvent;
+import me.pietelite.journey.common.search.event.SearchDispatcher;
+import me.pietelite.journey.common.search.event.SearchEvent;
+import me.pietelite.journey.common.search.event.StartItinerarySearchEvent;
+import me.pietelite.journey.common.search.event.StartPathSearchEvent;
+import me.pietelite.journey.common.search.event.StepSearchEvent;
+import me.pietelite.journey.common.search.event.StopItinerarySearchEvent;
+import me.pietelite.journey.common.search.flag.FlagSet;
+import me.pietelite.journey.platform.TestPlatformProxy;
+import me.pietelite.journey.platform.WorldLoader;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+public class BetterSearchTest extends JourneyTestHarness {
+
+  private UUID lastSessionUuid;
+
+  private SearchSession session(String origin, String destination) {
+    return new PlayerDestinationGoalSearchSession(UUID.randomUUID(),
+        TestPlatformProxy.pois.get(origin),
+        TestPlatformProxy.pois.get(destination),
+        new FlagSet(),
+        true);
+  }
+
+  private void runSearch(String origin, String destination, ResultState expectedResult) {
+    SearchSession session = session(origin, destination);
+    lastSessionUuid = session.uuid();
+    Assertions.assertEquals(ResultState.IDLE, session.getState());
+    CompletableFuture<ResultState> future = session.search(20);
+    ResultState state = future.join();
+    Assertions.assertEquals(expectedResult, state, "Expected state of session search was incorrect");
+    if (expectedResult.isSuccessful()) {
+      Assertions.assertTrue(sessionItineraries.containsKey(session.uuid()));
+    }
+  }
+
+  @Test
+  void searches() {
+    runSearch("1", "2", ResultState.STOPPED_SUCCESSFUL);
+    runSearch("1", "3", ResultState.STOPPED_SUCCESSFUL);
+    Itinerary oneToThree = sessionItineraries.get(lastSessionUuid);
+    runSearch("3", "1", ResultState.STOPPED_FAILED);
+    runSearch("1", "4", ResultState.STOPPED_FAILED);
+    runSearch("2", "3", ResultState.STOPPED_SUCCESSFUL);
+    Itinerary twoToThree = sessionItineraries.get(lastSessionUuid);
+
+    Assertions.assertTrue(oneToThree.cost() < twoToThree.cost());
+  }
+
 }

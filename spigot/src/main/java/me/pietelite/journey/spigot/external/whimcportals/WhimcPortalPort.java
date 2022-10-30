@@ -85,32 +85,34 @@ public class WhimcPortalPort extends Port implements Verifiable {
 
   @Nullable
   private static Cell getOriginOf(Portal portal) {
-    // Start by trying to use the center of the portal.
-    int locX = (portal.getPos1().getBlockX() + portal.getPos2().getBlockX()) / 2;  // center of portal
-    int locY = Math.min(portal.getPos1().getBlockY(), portal.getPos2().getBlockY());  // bottom of portal
-    int locZ = (portal.getPos1().getBlockZ() + portal.getPos2().getBlockZ()) / 2;
-    while (!SpigotUtil.isLaterallyPassable(portal.getWorld().getBlockAt(locX, locY, locZ))
-        || !SpigotUtil.isPassable(portal.getWorld().getBlockAt(locX, locY + 1, locZ))) {
-      locY++;
-      if (locY > Math.max(portal.getPos1().getBlockY(), portal.getPos2().getBlockY())) {
-        // There is no y value that works for the center of this portal.
-        // Try every other point and see what sticks (this does not repeat)
-        for (locX = portal.getPos1().getBlockX(); locX <= portal.getPos2().getBlockX(); locX++) {
-          for (locY = portal.getPos1().getBlockY(); locY < portal.getPos2().getBlockY(); locY++) {
-            for (locZ = portal.getPos1().getBlockZ(); locZ <= portal.getPos2().getBlockZ(); locZ++) {
-              if (SpigotUtil.isLaterallyPassable(portal.getWorld().getBlockAt(locX, locY, locZ))
-                  && SpigotUtil.isPassable(portal.getWorld().getBlockAt(locX, locY + 1, locZ))) {
-                return new Cell(locX, locY, locZ, SpigotUtil.getWorldId(portal.getWorld()));
+    return SpigotUtil.supplySync(() -> {
+      // Start by trying to use the center of the portal.
+      int locX = (portal.getPos1().getBlockX() + portal.getPos2().getBlockX()) / 2;  // center of portal
+      int locY = Math.min(portal.getPos1().getBlockY(), portal.getPos2().getBlockY());  // bottom of portal
+      int locZ = (portal.getPos1().getBlockZ() + portal.getPos2().getBlockZ()) / 2;
+      while (!SpigotUtil.isLaterallyPassable(portal.getWorld().getBlockAt(locX, locY, locZ).getBlockData())
+          || !SpigotUtil.isPassable(portal.getWorld().getBlockAt(locX, locY + 1, locZ).getBlockData())) {
+        locY++;
+        if (locY > Math.max(portal.getPos1().getBlockY(), portal.getPos2().getBlockY())) {
+          // There is no y value that works for the center of this portal.
+          // Try every other point and see what sticks (this does not repeat)
+          for (locX = portal.getPos1().getBlockX(); locX <= portal.getPos2().getBlockX(); locX++) {
+            for (locY = portal.getPos1().getBlockY(); locY < portal.getPos2().getBlockY(); locY++) {
+              for (locZ = portal.getPos1().getBlockZ(); locZ <= portal.getPos2().getBlockZ(); locZ++) {
+                if (SpigotUtil.isLaterallyPassable(portal.getWorld().getBlockAt(locX, locY, locZ).getBlockData())
+                    && SpigotUtil.isPassable(portal.getWorld().getBlockAt(locX, locY + 1, locZ).getBlockData())) {
+                  return new Cell(locX, locY, locZ, SpigotUtil.getWorldId(portal.getWorld()));
+                }
               }
             }
           }
+          // Nothing at all found
+          return null;
         }
-        // Nothing at all found
-        return null;
       }
-    }
-    // We found one at the center of the portal!
-    return new Cell(locX, locY, locZ, SpigotUtil.getWorldId(portal.getWorld()));
+      // We found one at the center of the portal!
+      return new Cell(locX, locY, locZ, SpigotUtil.getWorldId(portal.getWorld()));
+    });
   }
 
   private static Cell getDestinationOf(Portal portal) {

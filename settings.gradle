@@ -1,4 +1,4 @@
-rootProject.name = 'Journey'
+rootProject.name = 'journey'
 include (
         'common',
         'spigot',
