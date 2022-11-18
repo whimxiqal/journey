@@ -23,6 +23,7 @@
 
 package me.pietelite.journey.common.search.graph;
 
+import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.tools.AlternatingList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ public abstract class WeightedGraph<N, E> {
 
   private final Set<Node> nodes = new HashSet<>();
   private final Table edgeTable = new Table();
+  private final HashMap<N, Node> dataToNodes = new HashMap<>();
 
   /**
    * Add an edge to the graph.
@@ -58,60 +60,80 @@ public abstract class WeightedGraph<N, E> {
    * @param destination the destination node of the edge
    * @param edge        the edge itself
    */
-  public void addEdge(@NotNull Node origin, @NotNull Node destination, @NotNull E edge) {
-    this.nodes.add(origin);
-    this.nodes.add(destination);
-    this.edgeTable.put(origin, destination, edge);
+  public void addEdge(@NotNull N origin, @NotNull N destination, @NotNull E edge) {
+    Node originNode = makeOrGetNode(origin);
+    Node destinationNode = makeOrGetNode(destination);
+    this.nodes.add(originNode);
+    this.nodes.add(destinationNode);
+    this.edgeTable.put(originNode, destinationNode, edge);
+  }
+
+  private Node makeOrGetNode(N data) {
+    Node existingNode = dataToNodes.get(data);
+    if (existingNode != null) {
+      return existingNode;
+    }
+    existingNode = new Node(data);
+    dataToNodes.put(data, existingNode);
+    return existingNode;
   }
 
   @Nullable
-  protected final AlternatingList<Node, E, Object> findMinimumPath(Node origin, Node destination) {
+  protected final AlternatingList<N, E, Object> findMinimumPath(N origin, N destination) {
+    Node originNode = makeOrGetNode(origin);
+    Node destinationNode = makeOrGetNode(destination);
 
     PriorityQueue<Node> toVisit = new PriorityQueue<>(Comparator.comparingDouble(n -> n.distance));
     Set<Node> visited = new HashSet<>();
 
-    origin.setDistance(0);
-    origin.setPrevious(null);
-    toVisit.add(origin);
+    originNode.setDistance(0);
+    originNode.setPrevious(null);
+    toVisit.add(originNode);
 
     Node current;
     while (!toVisit.isEmpty()) {
       current = toVisit.poll();
+      Journey.logger().info("current: " + current.data);
       visited.add(current);
 
-      if (current.equals(destination)) {
+      if (current.equals(destinationNode)) {
+        Journey.logger().info("Current is destination, packaging solution");
         // We've reached destination. Package solution.
-        AlternatingList.Builder<Node, E, Object> pathBuilder = AlternatingList.builder(destination);
-        while (!current.equals(origin)) {
-          pathBuilder.addFirst(current.getPrevious(),
+        AlternatingList.Builder<N, E, Object> pathBuilder = AlternatingList.builder(destination);
+        while (!current.equals(originNode)) {
+          pathBuilder.addFirst(current.getPrevious().data,
               Objects.requireNonNull(this.edgeTable.getEdge(current.getPrevious(), current)));
           current = current.getPrevious();
         }
 
         resetNodes();
         return pathBuilder.build();
-      } else {
-        // Not yet done
-        Map<Node, E> edges = edgeTable.edgesFrom(current);
-        if (edges == null) {
+      }
+      // Not yet done
+      Map<Node, E> edges = edgeTable.edgesFrom(current);
+      if (edges == null) {
+        Journey.logger().info("Continuing because edges were null");
+        continue;
+      }
+      for (Map.Entry<Node, E> outlet : edgeTable.edgesFrom(current).entrySet()) {
+        Journey.logger().info("For outlet, going to: " + outlet.getKey().data);
+        // outlet.getKey() is destination
+        // outlet.getValue() is edge from 'current' to destination
+        if (visited.contains(outlet.getKey())) {
+          Journey.logger().info("Outlet was already visited, ignoring...");
           continue;
         }
-        for (Map.Entry<Node, E> outlet : edgeTable.edgesFrom(current).entrySet()) {
-          // outlet.getKey() is destination
-          // outlet.getValue() is edge from 'current' to destination
-          if (visited.contains(outlet.getKey())) {
-            continue;
-          }
-          if (outlet.getKey().getDistance() > current.getDistance() + edgeLength(outlet.getValue())) {
-            // A better path for this node would be to come from current.
-            // We can assume that is already queued. Remove from waiting queue to update.
-            toVisit.remove(outlet.getKey());
-            outlet.getKey().setDistance(current.getDistance()
-                + edgeLength(outlet.getValue())
-                + nodeWeight(outlet.getKey().getData()));
-            outlet.getKey().setPrevious(current);
-            toVisit.add(outlet.getKey());
-          }
+        // the outlet constructs with max double distance, aka, infinite distance
+        Journey.logger().info("Existing distance: " + outlet.getKey().getDistance() + ", potential distance: " + (current.getDistance() + edgeLength(outlet.getValue())));
+        if (outlet.getKey().getDistance() > current.getDistance() + edgeLength(outlet.getValue())) {
+          Journey.logger().info("The existing distance to the outlet was greater than the potential distance");
+          // A better path for this node would be to come from current.
+          toVisit.remove(outlet.getKey());  // Remove from waiting queue in case it was already queued before
+          outlet.getKey().setDistance(current.getDistance()
+              + edgeLength(outlet.getValue())
+              + nodeWeight(outlet.getKey().getData()));
+          outlet.getKey().setPrevious(current);
+          toVisit.add(outlet.getKey());
         }
       }
     }
@@ -138,7 +160,7 @@ public abstract class WeightedGraph<N, E> {
    * graph is wrapping to organize a path from the internal data piece,
    * intermittently using edges to get there.
    */
-  public class Node {
+  private class Node {
 
     private final N data;
     private double distance = Double.MAX_VALUE;

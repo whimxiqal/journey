@@ -46,10 +46,9 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
 
   private final SearchSession session;
   private final Cell origin;
-  private final Node originNode;
+  private final Port originNode;
   private final Cell destination;
-  private final Node destinationNode;
-  private final Map<Port, Node> portToNode = new HashMap<>();
+  private final Port destinationNode;
 
   /**
    * General constructor.
@@ -57,28 +56,21 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
    * @param session     the search session
    * @param origin      the origin of the entire problem
    * @param destination the destination of the entire problem
-   * @param ports       the ports
    */
-  public SearchGraph(SearchSession session, Cell origin, Cell destination, Collection<Port> ports) {
+  public SearchGraph(SearchSession session, Cell origin, Cell destination) {
     this.session = session;
     this.origin = origin;
-    this.originNode = new Node(new Port(origin, origin, ModeType.NONE, 0));
+    this.originNode = new Port(origin, origin, ModeType.NONE, 0);
     this.destination = destination;
-    this.destinationNode = new Node(new Port(destination, destination, ModeType.NONE, 0));
-
-    ports.forEach(port -> portToNode.put(port, new Node(port)));
+    this.destinationNode = new Port(destination, destination, ModeType.NONE, 0);
   }
 
-  private Node getOriginNode() {
+  private Port getOriginNode() {
     return originNode;
   }
 
-  private Node getDestinationNode() {
+  private Port getDestinationNode() {
     return destinationNode;
-  }
-
-  private Node getLeapNode(Port port) {
-    return portToNode.get(port);
   }
 
   /**
@@ -102,7 +94,7 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
   public void addPathTrialOriginToPort(Port end, Collection<Mode> modes, boolean persistentOrigin) {
     addPathTrial(session,
         origin, end.getOrigin(),
-        getOriginNode(), getLeapNode(end),
+        getOriginNode(), end,
         modes, persistentOrigin);
   }
 
@@ -117,7 +109,7 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
   public void addPathTrialPortToDestination(Port start, Collection<Mode> modes, boolean persistentDestination) {
     addPathTrial(session,
         start.getDestination(), destination,
-        getLeapNode(start), getDestinationNode(),
+        start, getDestinationNode(),
         modes, persistentDestination);
   }
 
@@ -133,12 +125,12 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
    */
   public void addPathTrialPortToPort(Port start, Port end, Collection<Mode> modes) {
     addPathTrial(session, start.getDestination(), end.getOrigin(),
-        getLeapNode(start), getLeapNode(end), modes, true);
+        start, end, modes, true);
   }
 
   private void addPathTrial(SearchSession session, Cell origin, Cell destination,
-                            WeightedGraph<Port, PathTrial>.Node originNode,
-                            WeightedGraph<Port, PathTrial>.Node destinationNode,
+                            Port originNode,
+                            Port destinationNode,
                             Collection<Mode> modes, boolean saveOnComplete) {
     // First, try to access a cached path
     Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
@@ -163,7 +155,7 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
     }
   }
 
-  private void addPathTrial(PathTrial trial, Node start, Node end) {
+  private void addPathTrial(PathTrial trial, Port start, Port end) {
     addEdge(start, end, trial);
   }
 
@@ -175,13 +167,11 @@ public final class SearchGraph extends WeightedGraph<Port, PathTrial> {
    */
   @Nullable
   public ItineraryTrial calculate() {
-    AlternatingList<Node, PathTrial, Object> graphPath = findMinimumPath(originNode, destinationNode);
+    AlternatingList<Port, PathTrial, Object> graphPath = findMinimumPath(originNode, destinationNode);
     if (graphPath == null) {
       return null;
     } else {
-      return new ItineraryTrial(session, origin,
-          graphPath.convert(node -> Objects.requireNonNull(node.getData()),
-              edge -> edge));
+      return new ItineraryTrial(session, origin, graphPath);
     }
   }
 

@@ -53,7 +53,7 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
   private final Cell destination;
   private final boolean persistentOrigin;
   private final boolean persistentDestination;
-  private long executionStartTime = -1;
+  private State stateInfo = null;
 
   public DestinationGoalSearchSession(UUID callerId, Caller callerType, FlagSet flags,
                                       Cell origin, Cell destination,
@@ -65,9 +65,26 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
     this.persistentDestination = persistentDestination;
   }
 
-  @Override
-  protected void doSearch() {
-    executionStartTime = System.currentTimeMillis();
+  protected void resumeSearch() {
+    switch (state.get()) {
+      case IDLE:
+        initSearch();
+        runSearchUnit();
+        break;
+      case RUNNING:
+      case RUNNING_SUCCESSFUL:
+        runSearchUnit();
+        break;
+      default:
+        state.getAndUpdate(ResultState::stoppedResult);
+        break;
+    }
+  }
+
+  private void initSearch() {
+    state.set(ResultState.RUNNING);
+    stateInfo = new State();
+    stateInfo.startTime = System.currentTimeMillis();
     Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
     Journey.get().debugManager().broadcast(Formatter.debug("Started a search for caller ___, modes:___, ports:___",
             getCallerId(),
@@ -77,119 +94,118 @@ public abstract class DestinationGoalSearchSession extends SearchSession {
 
     state.set(ResultState.RUNNING);
 
-    Set<String> allDomains = new HashSet<>();
-
     for (Port port : this.ports) {
-      allDomains.add(port.getOrigin().domainId());
-      allDomains.add(port.getDestination().domainId());
+      stateInfo.allDomains.add(port.getOrigin().domainId());
+      stateInfo.allDomains.add(port.getDestination().domainId());
     }
 
-    Map<String, List<Port>> portsByOriginDomain = new HashMap<>();
-    Map<String, List<Port>> portsByDestinationDomain = new HashMap<>();
     // Prepare port maps
-    for (String domain : allDomains) {
-      portsByOriginDomain.put(domain, new LinkedList<>());
-      portsByDestinationDomain.put(domain, new LinkedList<>());
+    for (String domain : stateInfo.allDomains) {
+      stateInfo.portsByOriginDomain.put(domain, new LinkedList<>());
+      stateInfo.portsByDestinationDomain.put(domain, new LinkedList<>());
     }
 
     // Fill port maps
     for (Port port : this.ports) {
-      portsByOriginDomain.get(port.getOrigin().domainId()).add(port);
-      portsByDestinationDomain.get(port.getDestination().domainId()).add(port);
+      stateInfo.portsByOriginDomain.get(port.getOrigin().domainId()).add(port);
+      stateInfo.portsByDestinationDomain.get(port.getDestination().domainId()).add(port);
     }
 
-    SearchGraph graph = new SearchGraph(this, origin, destination, this.ports);
+    stateInfo.searchGraph = new SearchGraph(this, origin, destination);
 
     // Collect path trials
     if (origin.domainId().equals(destination.domainId())) {
-      graph.addPathTrialOriginToDestination(this.modes, persistentOrigin && persistentDestination);
+      stateInfo.searchGraph.addPathTrialOriginToDestination(this.modes, persistentOrigin && persistentDestination);
     }
 
-    for (String domain : allDomains) {
-      for (Port pathTrialOriginPort : portsByDestinationDomain.get(domain)) {
-        for (Port pathTrialDestinationPort : portsByOriginDomain.get(domain)) {
-          graph.addPathTrialPortToPort(
+    for (String domain : stateInfo.allDomains) {
+      for (Port pathTrialOriginPort : stateInfo.portsByDestinationDomain.get(domain)) {
+        for (Port pathTrialDestinationPort : stateInfo.portsByOriginDomain.get(domain)) {
+          stateInfo.searchGraph.addPathTrialPortToPort(
               pathTrialOriginPort,
               pathTrialDestinationPort,
               this.modes);
           if (domain.equals(origin.domainId())) {
-            graph.addPathTrialOriginToPort(pathTrialDestinationPort, this.modes, persistentOrigin);
+            stateInfo.searchGraph.addPathTrialOriginToPort(pathTrialDestinationPort, this.modes, persistentOrigin);
           }
           if (domain.equals(destination.domainId())) {
-            graph.addPathTrialPortToDestination(pathTrialOriginPort, this.modes, persistentDestination);
+            stateInfo.searchGraph.addPathTrialPortToDestination(pathTrialOriginPort, this.modes, persistentDestination);
           }
         }
       }
     }
+  }
 
-    Itinerary bestItinerary = null;
-    boolean usingCache = true;
-    while (!this.state.get().shouldStop()) {
+  private void runSearchUnit() {
+    if (state.get().shouldStop()) {
+      markStopped();
+      return;
+    }
 
-      ItineraryTrial itineraryTrial = graph.calculate();
-      if (itineraryTrial == null) {
-        // There is no possible solution to the entire problem
-        state.set(ResultState.STOPPED_FAILED);
-        Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+    ItineraryTrial itineraryTrial = stateInfo.searchGraph.calculate();
+    if (itineraryTrial == null) {
+      // There is no possible solution to the entire problem
+      state.set(ResultState.STOPPED_FAILED);
+      Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+      return;
+    } else {
+      // We have an overall solution with individual paths that aren't verified/calculated
+      ItineraryTrial.TrialResult trialResult = itineraryTrial.attempt(stateInfo.usingCache);
+      if (trialResult.itinerary().isPresent()) {
+        // There is an itinerary solution!
+
+        if (stateInfo.bestItinerary == null || trialResult.itinerary().get().cost() < stateInfo.bestItinerary.cost()) {
+          stateInfo.bestItinerary = trialResult.itinerary().get();
+          state.set(ResultState.RUNNING_SUCCESSFUL);
+          Journey.get().dispatcher().dispatch(new FoundSolutionEvent(this, trialResult.itinerary().get()));
+        }
+      }
+
+      // Do a quick check to see if the search was canceled before we try to return a value
+      if (state.get().shouldStop()) {
+        markStopped();
         return;
-      } else {
-        // We have an overall solution with individual paths that aren't verified/calculated
-        ItineraryTrial.TrialResult trialResult = itineraryTrial.attempt(usingCache);
-        if (trialResult.itinerary().isPresent()) {
-          // There is an itinerary solution!
+      }
 
-          if (bestItinerary == null || trialResult.itinerary().get().cost() < bestItinerary.cost()) {
-            bestItinerary = trialResult.itinerary().get();
-            state.set(ResultState.RUNNING_SUCCESSFUL);
-            Journey.get().dispatcher().dispatch(new FoundSolutionEvent(this, trialResult.itinerary().get()));
-          }
-        }
-
-        // Do a quick check to see if the search was canceled before we try to return a value
-        if (state.get().shouldStop()) {
-          break;
-        }
-
-        if (!trialResult.changedProblem()) {
-          // This result did not change the problem.
-          // If run again, then, we would get the same solution to the graph.
-          if (usingCache) {
-            // Turn off the use of the cache. Maybe we can find better solution by re-solving some paths.
-            Journey.get().dispatcher().dispatch(new IgnoreCacheSearchEvent(this));
-            usingCache = false;
-            // continue...
-          } else {
-            // The problem hasn't changed, and we aren't using the cache,
-            // so no better solutions are possible.
-            if (state.get().isSuccessful()) {
-              state.set(ResultState.STOPPED_SUCCESSFUL);  // in case we had the running-successful state
-            } else {
-              state.set(ResultState.STOPPED_FAILED);
-            }
-            Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
-            return;
-          }
+      if (!trialResult.changedProblem()) {
+        // This result did not change the problem.
+        // If run again, then, we would get the same solution to the graph.
+        if (stateInfo.usingCache) {
+          // Turn off the use of the cache. Maybe we can find better solution by re-solving some paths.
+          Journey.get().dispatcher().dispatch(new IgnoreCacheSearchEvent(this));
+          stateInfo.usingCache = false;
+          // continue...
+        } else {
+          // The problem hasn't changed, and we aren't using the cache,
+          // so no better solutions are possible.
+          markStopped();
         }
       }
     }
 
-    // Canceling...
-    state.getAndUpdate(current -> {
-      if (current.isSuccessful()) {
-        return ResultState.STOPPED_SUCCESSFUL;
-      } else {
-        return ResultState.STOPPED_CANCELED;
-      }
-    });
+  }
+
+  private void markStopped() {
+    state.getAndUpdate(ResultState::stoppedResult);
     Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
   }
 
   @Override
   public long executionTime() {
-    if (executionStartTime < 0) {
+    if (stateInfo == null) {
       return -1;
     }
-    return System.currentTimeMillis() - executionStartTime;
+    return System.currentTimeMillis() - stateInfo.startTime;
+  }
+
+  private static class State {
+    final Set<String> allDomains = new HashSet<>();
+    final Map<String, List<Port>> portsByOriginDomain = new HashMap<>();
+    final Map<String, List<Port>> portsByDestinationDomain = new HashMap<>();
+    long startTime;
+    SearchGraph searchGraph = null;
+    Itinerary bestItinerary = null;
+    boolean usingCache = true;
   }
 
 }

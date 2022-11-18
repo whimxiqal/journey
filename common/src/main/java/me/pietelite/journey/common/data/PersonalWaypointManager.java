@@ -81,8 +81,8 @@ public interface PersonalWaypointManager {
    * @param cell       the cell location
    * @return true if the cell exists for the given player
    */
-  default boolean hasPersonalEndpoint(@NotNull UUID playerUuid,
-                                      @NotNull Cell cell) throws DataAccessException {
+  default boolean hasEndpoint(@NotNull UUID playerUuid,
+                              @NotNull Cell cell) throws DataAccessException {
     return getName(playerUuid, cell) != null;
   }
 
@@ -93,8 +93,8 @@ public interface PersonalWaypointManager {
    * @param name       the cell name
    * @return true if the cell exists for the given player
    */
-  default boolean hasPersonalEndpoint(@NotNull UUID playerUuid,
-                                      @NotNull String name) throws DataAccessException {
+  default boolean hasEndpoint(@NotNull UUID playerUuid,
+                              @NotNull String name) throws DataAccessException {
     return getWaypoint(playerUuid, name) != null;
   }
 
@@ -120,8 +120,7 @@ public interface PersonalWaypointManager {
   Cell getWaypoint(@NotNull UUID playerUuid,
                    @NotNull String name) throws DataAccessException;
 
-  @Nullable
-  Boolean isPublic(@NotNull UUID playerUuid,
+  boolean isPublic(@NotNull UUID playerUuid,
                  @NotNull String name) throws DataAccessException;
 
   /**

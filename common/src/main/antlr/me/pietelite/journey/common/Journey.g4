@@ -11,7 +11,7 @@ renameWaypoint: RENAME newname=identifier+;
 publicWaypoint: PUBLIC (TRUE | FALSE)?;
 
 player: PLAYER user=identifier (playerWaypoint)?;
-playerWaypoint: WAYPOINT name=identifier+;
+playerWaypoint: name=identifier;
 
 server: SERVER (serverSetWaypoint | serverListWaypoints | serverWaypoint);
 serverSetWaypoint: SET_WAYPOINT name=identifier+;

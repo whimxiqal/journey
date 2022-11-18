@@ -62,8 +62,6 @@ public final class AlternatingList<A extends C, B extends C, C> {
    * The items that lie between the majors.
    */
   private final ArrayList<B> minors = new ArrayList<>();
-  @Getter
-  double length = 0;
 
   private AlternatingList(@NotNull List<A> majors, @NotNull List<B> minors) {
     this.majors.addAll(majors);

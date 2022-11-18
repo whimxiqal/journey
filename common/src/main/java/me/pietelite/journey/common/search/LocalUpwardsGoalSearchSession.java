@@ -51,8 +51,8 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
   }
 
   @Override
-  protected void doSearch() {
-
+  protected void resumeSearch() {
+    // This implementation just runs once
     executionStartTime = System.currentTimeMillis();
     Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
     state.set(ResultState.RUNNING);

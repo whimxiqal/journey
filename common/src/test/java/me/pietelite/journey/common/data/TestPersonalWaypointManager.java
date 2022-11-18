@@ -96,7 +96,7 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
   }
 
   @Override
-  public @Nullable Boolean isPublic(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
+  public boolean isPublic(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
     return true;
   }
 

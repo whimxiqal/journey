@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import me.pietelite.journey.common.math.Vector;
 import me.pietelite.journey.common.navigation.Cell;

@@ -50,6 +50,7 @@ public class SearchManager {
   protected final Map<UUID, PlayerJourneySession> playerJourneys = new ConcurrentHashMap<>();
   protected final Map<UUID, Cell> playerLocations = new ConcurrentHashMap<>();
   protected final Map<UUID, SearchSession> playerSearches = new ConcurrentHashMap<>();
+  protected final ConcurrentHashMap<UUID, SearchSession> nextPlayerSearches = new ConcurrentHashMap<>();
 
   /**
    * Store a journey. Stops the previously running journey if there was one.
@@ -67,31 +68,6 @@ public class SearchManager {
   }
 
   /**
-   * Remove a journey from storage and stop the journey.
-   *
-   * @param callerId the caller id
-   * @return the removed journey
-   */
-  @Nullable
-  public PlayerJourneySession removeJourney(@NotNull UUID callerId) {
-    PlayerJourneySession oldJourney = playerJourneys.remove(callerId);
-    if (oldJourney != null) {
-      oldJourney.stop();
-    }
-    return oldJourney;
-  }
-
-  /**
-   * Whether there is a journey stored.
-   *
-   * @param callerId the caller id
-   * @return true if there is a journey
-   */
-  public boolean hasJourney(@NotNull UUID callerId) {
-    return playerJourneys.containsKey(callerId);
-  }
-
-  /**
    * Get the journey.
    *
    * @param callerId the caller id
@@ -102,20 +78,16 @@ public class SearchManager {
     return playerJourneys.get(callerId);
   }
 
-  public boolean launchSearch(SearchSession session) {
-    UUID player = session.getCallerId();
-    if (player == null) {
-      return false;
-    }
-
-    if (playerSearches.containsKey(player)) {
-      return false;
+  public void launchSearch(SearchSession session) {
+    UUID caller = session.getCallerId();
+    if (caller == null) {
+      return;
     }
 
     Audience audience;
     switch (session.getCallerType()) {
       case PLAYER:
-        audience = Journey.get().proxy().audienceProvider().player(player);
+        audience = Journey.get().proxy().audienceProvider().player(caller);
         break;
       case OTHER:
       default:
@@ -123,7 +95,22 @@ public class SearchManager {
         break;
     }
 
-    // Set up a "Working..." message if it takes too long
+    // update player maps
+    if (playerSearches.containsKey(caller)) {
+      // save session for after the current search stops
+      nextPlayerSearches.put(caller, session);
+      playerSearches.get(caller).stop();
+      audience.sendMessage(Formatter.info("Preparing search..."));
+      return;
+    }
+    playerSearches.put(caller, session);
+
+    // launch
+    doLaunchSearch(caller, audience, session);
+  }
+
+  private void doLaunchSearch(UUID caller, Audience audience, SearchSession session) {
+
     AtomicReference<TextComponent> hoverText = new AtomicReference<>(Component.text("Search Parameters").color(Formatter.THEME));
     session.flags().forEach((flag, val) -> {
       hoverText.set(hoverText.get().append(Component.newline())
@@ -135,27 +122,16 @@ public class SearchManager {
         .append(Formatter.prefix())
         .append(Formatter.hover(Component.text("Searching...").color(Formatter.INFO), hoverText.get())));
 
-    // SEARCH
-    // Search... this may take a long time
     int timeout = session.flags().valueOrGetDefault(Flags.TIMEOUT, Settings.DEFAULT_SEARCH_TIMEOUT::getValue);
-    playerSearches.put(player, session);
-    session.search(timeout).thenRun(() -> Journey.get().proxy().schedulingManager().schedule(() -> playerSearches.remove(player), false, 0));
-    return true;
-  }
-
-  /**
-   * Remove the stored search and cancel it.
-   *
-   * @param callerId the caller id
-   * @return the previous search, or null if there was none
-   */
-  @Nullable
-  public SearchSession removeSearch(@NotNull UUID callerId) {
-    SearchSession oldSearch = playerSearches.remove(callerId);
-    if (oldSearch != null) {
-      oldSearch.stop();
-    }
-    return oldSearch;
+    session.search(timeout).thenRun(() -> Journey.get().proxy().schedulingManager().schedule(() -> {
+      if (nextPlayerSearches.containsKey(caller)) {
+        SearchSession newSession = nextPlayerSearches.remove(caller);
+        playerSearches.put(caller, newSession);
+        doLaunchSearch(caller, audience, newSession);
+      } else {
+        playerSearches.remove(caller);
+      }
+    }, false, 0));
   }
 
   /**

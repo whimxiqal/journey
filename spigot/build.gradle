@@ -76,6 +76,7 @@ shadowJar {
         include(dependency('org.antlr:.*'))
         include(dependency('net.kyori:.*'))
         include(dependency('org.bstats:.*'))
+        include(dependency('org.apache.httpcomponents:.*'))
     }
 
     relocate 'me.pietelite.mantle', 'me.pietelite.journey.libs.mantle'
@@ -83,6 +84,7 @@ shadowJar {
     relocate 'org.stringtemplate', 'me.pietelite.journey.libs.stringtemplate'
     relocate 'net.kyori', 'me.pietelite.journey.libs.kyori'
     relocate 'org.bstats', 'me.pietelite.journey.libs.bstats'
+    relocate 'org.apache.httpcomponents', 'me.pietelite.journey.libs.http'
 }
 
 processResources {

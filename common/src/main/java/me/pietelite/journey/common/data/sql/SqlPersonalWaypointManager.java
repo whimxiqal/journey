@@ -102,23 +102,22 @@ public class SqlPersonalWaypointManager
   }
 
   @Override
-  public @Nullable Boolean isPublic(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
+  public @Nullable boolean isPublic(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "SELECT is_public FROM %s WHERE %s %s ? AND %s = ?;",
+          "SELECT is_public FROM %s WHERE %s = ? AND %s = ?;",
           WAYPOINT_TABLE_NAME,
           "player_uuid",
-          playerUuid == null ? "IS" : "=",
           "name_id"));
 
-      statement.setString(1, playerUuid == null ? null : playerUuid.toString());
+      statement.setString(1, playerUuid.toString());
       statement.setString(2, name.toLowerCase());
 
       ResultSet resultSet = statement.executeQuery();
       if (resultSet.next()) {
         return resultSet.getBoolean("is_public");
       } else {
-        return null;
+        throw new RuntimeException("Checking is-public on non-existent waypoint: " + playerUuid + ", " + name);
       }
     } catch (SQLException e) {
       e.printStackTrace();

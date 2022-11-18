@@ -147,7 +147,7 @@ public enum ResultState {
       case CANCELING_SUCCESSFUL:
         return STOPPED_SUCCESSFUL;
       case CANCELING_FAILED:
-        return STOPPED_FAILED;
+        return STOPPED_CANCELED;
       default:
         // already is stopped
         return this;

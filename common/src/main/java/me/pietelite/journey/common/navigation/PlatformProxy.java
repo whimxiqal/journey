@@ -3,6 +3,7 @@ package me.pietelite.journey.common.navigation;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import me.pietelite.journey.common.math.Vector;
 import me.pietelite.journey.common.search.AnimationManager;
 import me.pietelite.journey.common.search.SearchSession;

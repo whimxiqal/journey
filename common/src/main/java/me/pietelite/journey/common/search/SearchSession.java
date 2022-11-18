@@ -58,7 +58,7 @@ public abstract class SearchSession implements Resulted {
   private final Caller callerType;
   private final FlagSet flags;
   protected AtomicReference<ResultState> state = new AtomicReference<>(ResultState.IDLE);
-  protected AtomicReference<CompletableFuture<ResultState>> future = new AtomicReference<>(new CompletableFuture<>());
+  protected CompletableFuture<ResultState> future = new CompletableFuture<>();
   private int algorithmStepDelay = 0;
 
   protected SearchSession(UUID callerId, Caller callerType, FlagSet flags) {
@@ -71,9 +71,21 @@ public abstract class SearchSession implements Resulted {
    * Perform the titular search operation.
    */
   public final CompletableFuture<ResultState> search(int timeout) {
+    // kick off the first portion
+    doSearch();
+    // Set up cancellation task
+    Journey.get().proxy().schedulingManager().schedule(this::stop, false, timeout * 20 /* ticks per second */);
+    return future;
+  }
+
+  private void doSearch() throws SearchException {
+    if (state.get().isStopped()) {
+      future.complete(state.get());
+      return;
+    }
     Journey.get().proxy().schedulingManager().schedule(() -> {
       try {
-        doSearch();
+        resumeSearch();
         if (this.getState() == ResultState.CANCELING_FAILED) {
           audience().sendMessage(Formatter.error("Time limit surpassed. Canceling search..."));
         }
@@ -84,17 +96,19 @@ public abstract class SearchSession implements Resulted {
         state.set(ResultState.STOPPED_ERROR);
         e.printStackTrace();
       }
-      future.get().complete(state.get());
+      doSearch();
     }, true);
-
-    // Set up cancellation task
-    Journey.get().proxy().schedulingManager().schedule(this::stop, false, timeout * 20 /* ticks per second */);
-    return future.get();
   }
 
-  protected abstract void doSearch() throws SearchException;
+  /**
+   * Resume the search by running a portion of the search algorithm but quitting before spending too long.
+   * The purpose of this method is to split up the execution of searches into multiple tasks so many
+   * concurrent searches may make progress even with limited async threads.
+   * @throws SearchException search exception
+   */
+  protected abstract void resumeSearch() throws SearchException;
 
-  public final AtomicReference<CompletableFuture<ResultState>> future() {
+  public final CompletableFuture<ResultState> future() {
     return future;
   }
 

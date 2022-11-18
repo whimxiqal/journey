@@ -24,6 +24,7 @@
 
 package me.pietelite.journey.common;
 
+import java.nio.file.Path;
 import me.pietelite.journey.common.config.ConfigManager;
 import me.pietelite.journey.common.config.TestConfigManager;
 import me.pietelite.journey.common.data.DataManager;
@@ -39,7 +40,6 @@ import net.kyori.adventure.platform.AudienceProvider;
 
 public class TestProxy implements Proxy {
   TestLogger logger = new TestLogger();
-  DataManager dataManager = new TestDataManager();
   AudienceProvider audienceProvider = new TestAudienceProvider();
   ConfigManager configManager = new TestConfigManager();
   SchedulingManager schedulingManager = new TestSchedulingManager();
@@ -51,8 +51,8 @@ public class TestProxy implements Proxy {
   }
 
   @Override
-  public DataManager dataManager() {
-    return dataManager;
+  public Path dataFolder() {
+    return null;
   }
 
   @Override
