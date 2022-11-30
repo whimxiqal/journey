@@ -25,12 +25,16 @@ subprojects {
 
     license {
         header = rootProject.file('HEADER.txt')
-        include '**/*.java'
+        include 'src/**/*.java'
         newLine = true
     }
 
     repositories {
         mavenCentral()
+        maven {
+            name = 'sonatype-snapshots'
+            url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+        }
     }
 
     test {

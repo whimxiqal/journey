@@ -42,7 +42,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:22.0.0'
 
     // Mantle
-    api fileTree(dir: '../../mantle/common/build/libs', include: '*.jar')
+    api 'me.pietelite.mantle:common:0.0.0'
 
     // Antlr
     antlr 'org.antlr:antlr4:4.9.3'

@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-    implementation project(':common')
+    implementation project(path: ':common')
     implementation project(':spigot-api')
     // Spigot
     shadow 'org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT'
@@ -55,8 +55,7 @@ dependencies {
 
     implementation 'org.bstats:bstats-bukkit:3.0.0'
 
-    shadow fileTree(dir: "../libs", includes: ['*.jar'])
-    implementation fileTree(dir: '../../mantle/bukkit/build/libs', include: '*.jar')
+    implementation 'me.pietelite.mantle:bukkit:0.0.0'
 
     implementation "net.kyori:adventure-platform-bukkit:4.1.2"
     implementation 'net.kyori:adventure-text-serializer-legacy:4.11.0'
@@ -73,7 +72,8 @@ shadowJar {
     dependencies {
         include(dependency('me.pietelite.journey:.*'))
         include(dependency('me.pietelite.mantle:.*'))
-        include(dependency('org.antlr:.*'))
+        include(dependency('org.antlr:antlr4-runtime'))
+        include(dependency('com.vmware.antlr4-c3:.*'))
         include(dependency('net.kyori:.*'))
         include(dependency('org.bstats:.*'))
         include(dependency('org.apache.httpcomponents:.*'))
@@ -81,10 +81,16 @@ shadowJar {
 
     relocate 'me.pietelite.mantle', 'me.pietelite.journey.libs.mantle'
     relocate 'org.antlr', 'me.pietelite.journey.libs.antlr'
+    relocate 'com.vmware.antlr4c3', 'me.pietelite.journey.libs.c3'
     relocate 'org.stringtemplate', 'me.pietelite.journey.libs.stringtemplate'
     relocate 'net.kyori', 'me.pietelite.journey.libs.kyori'
     relocate 'org.bstats', 'me.pietelite.journey.libs.bstats'
-    relocate 'org.apache.httpcomponents', 'me.pietelite.journey.libs.http'
+    relocate 'org.apache.http', 'me.pietelite.journey.libs.http'
+    relocate 'mozilla', 'me.pietelite.journey.libs.mozilla'
+}
+
+build {
+    dependsOn 'shadowJar'
 }
 
 processResources {

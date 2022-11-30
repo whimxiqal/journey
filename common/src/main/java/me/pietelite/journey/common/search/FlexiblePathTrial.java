@@ -36,8 +36,6 @@ import java.util.Queue;
 import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Value;
-import lombok.experimental.Accessors;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Mode;
@@ -48,7 +46,7 @@ import me.pietelite.journey.common.search.event.StartPathSearchEvent;
 import me.pietelite.journey.common.search.event.StepSearchEvent;
 import me.pietelite.journey.common.search.event.StopPathSearchEvent;
 import me.pietelite.journey.common.search.event.VisitationSearchEvent;
-import me.pietelite.journey.common.search.function.ScoringFunction;
+import me.pietelite.journey.common.search.function.CostFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +72,7 @@ public class FlexiblePathTrial implements Resulted {
   @Getter
   private final String domain;
   @Getter
-  private final ScoringFunction scoringFunction;
+  private final CostFunction costFunction;
   private final Completer completer;
   @Getter
   private final List<Mode> modes = new LinkedList<>();
@@ -94,7 +92,7 @@ public class FlexiblePathTrial implements Resulted {
    *
    * @param session         the session requesting this path trial run
    * @param origin          the origin
-   * @param scoringFunction the object to score various possibilities when stepping to new locations
+   * @param costFunction the object to score various possibilities when stepping to new locations
    *                        throughout the algorithm
    * @param completer       the object to determine whether the path algorithm is complete and
    *                        the goal has been reached
@@ -102,14 +100,14 @@ public class FlexiblePathTrial implements Resulted {
   public FlexiblePathTrial(SearchSession session,
                            Cell origin,
                            Collection<Mode> modes,
-                           ScoringFunction scoringFunction,
+                           CostFunction costFunction,
                            Completer completer,
                            boolean saveOnComplete) {
     this.session = session;
     this.origin = origin;
     this.domain = origin.domainId();
     this.modes.addAll(modes);
-    this.scoringFunction = scoringFunction;
+    this.costFunction = costFunction;
     this.completer = completer;
     this.saveOnComplete = saveOnComplete;
   }
@@ -117,7 +115,7 @@ public class FlexiblePathTrial implements Resulted {
   protected FlexiblePathTrial(SearchSession session,
                               Cell origin,
                               Collection<Mode> modes,
-                              ScoringFunction scoringFunction,
+                              CostFunction costFunction,
                               Completer completer,
                               double length,
                               @Nullable Path path,
@@ -128,7 +126,7 @@ public class FlexiblePathTrial implements Resulted {
     this.origin = origin;
     this.domain = origin.domainId();
     this.modes.addAll(modes);
-    this.scoringFunction = scoringFunction;
+    this.costFunction = costFunction;
     this.completer = completer;
     this.length = length;
     this.path = path;
@@ -189,7 +187,7 @@ public class FlexiblePathTrial implements Resulted {
     startExecutionTime = System.currentTimeMillis();
 
     Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node ->
-        -scoringFunction.apply(node.getData().location())));
+        costFunction.apply(node.getData().location())));
     Map<Cell, Node> visited = new HashMap<>();
 
     Node originNode = new Node(new Step(origin, 0, ModeType.NONE),

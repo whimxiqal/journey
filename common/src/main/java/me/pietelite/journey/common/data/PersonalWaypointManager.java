@@ -81,7 +81,7 @@ public interface PersonalWaypointManager {
    * @param cell       the cell location
    * @return true if the cell exists for the given player
    */
-  default boolean hasEndpoint(@NotNull UUID playerUuid,
+  default boolean hasWaypoint(@NotNull UUID playerUuid,
                               @NotNull Cell cell) throws DataAccessException {
     return getName(playerUuid, cell) != null;
   }
@@ -93,10 +93,19 @@ public interface PersonalWaypointManager {
    * @param name       the cell name
    * @return true if the cell exists for the given player
    */
-  default boolean hasEndpoint(@NotNull UUID playerUuid,
+  default boolean hasWaypoint(@NotNull UUID playerUuid,
                               @NotNull String name) throws DataAccessException {
     return getWaypoint(playerUuid, name) != null;
   }
+
+  /**
+   * Rename the waypoint.
+   *
+   * @param uuid    the player's uuid
+   * @param name    the waypoint name
+   * @param newName the new waypoint name
+   */
+  void renameWaypoint(UUID uuid, String name, String newName) throws DataAccessException;
 
   /**
    * Get the name of a personal location with a given unique player and cell.
@@ -121,7 +130,7 @@ public interface PersonalWaypointManager {
                    @NotNull String name) throws DataAccessException;
 
   boolean isPublic(@NotNull UUID playerUuid,
-                 @NotNull String name) throws DataAccessException;
+                   @NotNull String name) throws DataAccessException;
 
   /**
    * Get a list of all personal endpoints for a player.
@@ -130,5 +139,4 @@ public interface PersonalWaypointManager {
    * @return all names of cells mapped to their corresponding cells
    */
   Map<String, Cell> getAll(@NotNull UUID playerUuid) throws DataAccessException;
-
 }

@@ -7,27 +7,26 @@ setwaypoint: SET_WAYPOINT name=identifier+;
 listwaypoints: LIST_WAYPOINTS page=ID?;
 waypoint: WAYPOINT name=identifier (unsetWaypoint | renameWaypoint | publicWaypoint | flagSet)?;
 unsetWaypoint: UNSET;
-renameWaypoint: RENAME newname=identifier+;
+renameWaypoint: RENAME newname=identifier;
 publicWaypoint: PUBLIC (TRUE | FALSE)?;
 
 player: PLAYER user=identifier (playerWaypoint)?;
 playerWaypoint: name=identifier;
 
 server: SERVER (serverSetWaypoint | serverListWaypoints | serverWaypoint);
-serverSetWaypoint: SET_WAYPOINT name=identifier+;
+serverSetWaypoint: SET_WAYPOINT name=identifier;
 serverListWaypoints: LIST_WAYPOINTS page=ID?;
 serverWaypoint: WAYPOINT name=identifier (unsetServerWaypoint | renameServerWaypoint | flagSet)?;
-unsetServerWaypoint: UNSET name=identifier+;
-renameServerWaypoint: RENAME name=identifier+;
+unsetServerWaypoint: UNSET name=identifier;
+renameServerWaypoint: RENAME newname=identifier;
 
 admin: ADMIN (debug | invalidate=INVALIDATE | reload=RELOAD | LIST_NETHER_PORTALS);
 debug: DEBUG target=identifier?;
-surface: SURFACE;
-death: DEATH;
+surface: SURFACE flagSet?;
+death: DEATH flagSet?;
 cancel: CANCEL;
 
-journeytoTarget: scopes ID+ flagSet?;
-scopes: (SERVER COLON)? (ID COLON)*;
+journeytoTarget: (identifier COLON)* identifier flagSet?;
 
 flagSet: (timeoutFlag | animateFlag | noflyFlag | nodoorFlag | digFlag)+;
 timeoutFlag: FLAG_TIMEOUT EQUAL timeout=ID;
@@ -36,40 +35,63 @@ noflyFlag: FLAG_NO_FLY;
 nodoorFlag: FLAG_NO_DOOR;
 digFlag: FLAG_DIG;
 
+ADMIN: 'admin';
+CANCEL: 'cancel';
+COLON: ':';
+DEATH: 'death';
+DEBUG: 'debug';
+FALSE: 'false';
+INVALIDATE: 'invalidate';
 JOURNEY: 'journey';
 JOURNEY_TO: 'journeyto';
-ADMIN: 'admin';
 LIST_NETHER_PORTALS: 'listnetherportals';
-SURFACE: 'surface';
-DEATH: 'death';
-CANCEL: 'cancel';
-INVALIDATE: 'invalidate';
-RELOAD: 'reload';
-DEBUG: 'debug';
-SERVER: 'server';
-PUBLIC: 'public';
-PATH: 'path';
-SET: 'set';
-UNSET: 'unset';
-RENAME: 'rename';
-SET_WAYPOINT: 'setwaypoint';
 LIST_WAYPOINTS: 'listwaypoints';
-WAYPOINT: 'waypoint';
+PATH: 'path';
 PLAYER: 'player';
+PUBLIC: 'public';
+RELOAD: 'reload';
+RENAME: 'rename';
+SERVER: 'server';
+SET: 'set';
+SET_WAYPOINT: 'setwaypoint';
+SURFACE: 'surface';
 TRUE: 'true';
-FALSE: 'false';
-COLON: ':';
+UNSET: 'unset';
+WAYPOINT: 'waypoint';
 
-FLAG_TIMEOUT: '-timeout';
 FLAG_ANIMATE: '-animate';
+FLAG_DIG: '-dig';
 FLAG_NO_DOOR: '-nodoor';
 FLAG_NO_FLY: '-nofly';
-FLAG_DIG: '-dig';
+FLAG_TIMEOUT: '-timeout';
 
 EQUAL: '=';
 
 // MANTLE NODES
-identifier: ID | SINGLE_QUOTE ID+ SINGLE_QUOTE | DOUBLE_QUOTE ID+ DOUBLE_QUOTE;
+identifier: ident | SINGLE_QUOTE ident+ SINGLE_QUOTE | DOUBLE_QUOTE ident+ DOUBLE_QUOTE;
+ident: ID
+        | ADMIN
+        | CANCEL
+        | DEATH
+        | DEBUG
+        | FALSE
+        | INVALIDATE
+        | JOURNEY
+        | JOURNEY_TO
+        | LIST_NETHER_PORTALS
+        | LIST_WAYPOINTS
+        | PATH
+        | PLAYER
+        | PUBLIC
+        | RELOAD
+        | RENAME
+        | SERVER
+        | SET
+        | SET_WAYPOINT
+        | SURFACE
+        | TRUE
+        | UNSET
+        | WAYPOINT;
 ID: [a-zA-Z0-9\-_]+;
 ID_SET: ID (COMMA ID)+;
 COMMA: ',';

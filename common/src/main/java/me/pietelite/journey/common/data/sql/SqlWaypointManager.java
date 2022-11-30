@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import me.pietelite.journey.common.data.DataAccessException;
@@ -142,6 +143,27 @@ public abstract class SqlWaypointManager extends SqlManager {
       throw new DataAccessException();
     }
   }
+
+  protected void renameWaypoint(@Nullable UUID uuid, String name, String newName) throws DataAccessException {
+    try (Connection connection = getConnectionController().establishConnection()) {
+      PreparedStatement statement = connection.prepareStatement(String.format(
+          "UPDATE %s SET %s = ? WHERE %s = ?;",
+          WAYPOINT_TABLE_NAME,
+          "name_id",
+          "player_uuid",
+          "name_id"));
+
+      statement.setString(1, newName.toLowerCase(Locale.ENGLISH));
+      statement.setString(2, uuid == null ? null : uuid.toString());
+      statement.setString(3, name.toLowerCase(Locale.ENGLISH));
+
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      e.printStackTrace();
+      throw new DataAccessException();
+    }
+  }
+
 
   @Nullable
   protected Cell getWaypoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {

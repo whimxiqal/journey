@@ -33,7 +33,7 @@ import me.pietelite.journey.common.search.event.FoundSolutionEvent;
 import me.pietelite.journey.common.search.event.StartSearchEvent;
 import me.pietelite.journey.common.search.event.StopSearchEvent;
 import me.pietelite.journey.common.search.flag.FlagSet;
-import me.pietelite.journey.common.search.function.HeightScoringFunction;
+import me.pietelite.journey.common.search.function.HeightCostFunction;
 import me.pietelite.journey.common.tools.AlternatingList;
 
 /**
@@ -61,7 +61,7 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
         this,
         origin,
         this.modes,
-        new HeightScoringFunction(),
+        new HeightCostFunction(),
         node -> reachesGoal(node.getData().location()),
         false
     );

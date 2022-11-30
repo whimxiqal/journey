@@ -145,4 +145,13 @@ public class Path implements Serializable {
   public String domainId() {
     return origin.domainId();
   }
+
+  @Override
+  public String toString() {
+    return "Path{"
+        + "origin=" + origin
+        + ", # of steps=" + steps.size()
+        + ", cost=" + cost
+        + '}';
+  }
 }

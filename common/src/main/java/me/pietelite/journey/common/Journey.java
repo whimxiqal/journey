@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Pieter Svenson
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package me.pietelite.journey.common;
 
 import me.pietelite.journey.common.data.DataManager;
@@ -10,18 +33,19 @@ import me.pietelite.journey.common.manager.SearchManager;
 import me.pietelite.journey.common.search.event.SearchDispatcher;
 import me.pietelite.journey.common.search.event.SearchDispatcherImpl;
 import me.pietelite.journey.common.util.CommonLogger;
+import me.pietelite.journey.common.util.Initializable;
 
 public final class Journey {
 
   private static final Journey instance = new Journey();
-  private Proxy proxy;
-  private final DataManagerImpl dataManager = new DataManagerImpl();
   private final SearchDispatcherImpl searchEventDispatcher = new SearchDispatcherImpl();
   private final PlayerManager playerManager = new PlayerManager();
   private final DebugManager debugManager = new DebugManager();
   private final NetherManager netherManager = new NetherManager();
   private final SearchManager searchManager = new SearchManager();
   private final IntegrationManager integrationManager = new IntegrationManager();
+  private DataManager dataManager = new DataManagerImpl();
+  private Proxy proxy;
 
   public static CommonLogger logger() {
     return instance.proxy.logger();
@@ -43,9 +67,11 @@ public final class Journey {
   }
 
   public void init() {
-    dataManager.init();
+    if (dataManager instanceof Initializable) {
+      ((Initializable) dataManager).initialize();
+    }
     netherManager.load();
-    searchEventDispatcher.init();
+    searchEventDispatcher.initialize();
   }
 
   public void shutdown() {
@@ -57,6 +83,10 @@ public final class Journey {
 
   public DataManager dataManager() {
     return dataManager;
+  }
+
+  public void setDataManager(DataManager dataManager) {
+    this.dataManager = dataManager;
   }
 
   public SearchDispatcher dispatcher() {

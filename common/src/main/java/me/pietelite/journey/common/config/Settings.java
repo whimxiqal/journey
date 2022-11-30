@@ -31,7 +31,7 @@ import me.pietelite.journey.common.data.StorageMethod;
 public final class Settings {
 
   public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT
-      = new IntegerSetting("search.default-timeout", 5);
+      = new IntegerSetting("search.default-timeout", 30);
 
   public static final Setting<Boolean> DEFAULT_NOFLY_FLAG
       = new BooleanSetting("search.default-nofly-flag", false);

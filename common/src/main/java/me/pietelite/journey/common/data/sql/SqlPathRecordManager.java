@@ -45,8 +45,7 @@ import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.Path;
 import me.pietelite.journey.common.navigation.Step;
 import me.pietelite.journey.common.search.PathTrial;
-import me.pietelite.journey.common.search.function.ScoringFunction;
-import me.pietelite.journey.common.search.function.ScoringFunctionType;
+import me.pietelite.journey.common.search.function.CostFunctionType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +121,7 @@ public class SqlPathRecordManager
               "destination_y",
               "destination_z",
               "domain_id",
-              "scoring_function"),
+              "cost_function"),
           Statement.RETURN_GENERATED_KEYS);
 
       statement.setLong(1, System.currentTimeMillis() / 1000);
@@ -135,7 +134,7 @@ public class SqlPathRecordManager
       statement.setInt(8, trial.getDestination().getY());
       statement.setInt(9, trial.getDestination().getZ());
       statement.setString(10, trial.getDomain());
-      statement.setString(11, trial.getScoringFunction().getType().name());
+      statement.setString(11, trial.getCostFunction().getType().name());
 
       statement.execute();
 
@@ -382,7 +381,7 @@ public class SqlPathRecordManager
         resultSet.getInt("destination_y"),
         resultSet.getInt("destination_z"),
         resultSet.getString("domain_id"),
-        ScoringFunctionType.valueOf(resultSet.getString("scoring_function")),
+        CostFunctionType.valueOf(resultSet.getString("cost_function")),
         new LinkedList<>(),
         new LinkedList<>()
     );
@@ -417,7 +416,7 @@ public class SqlPathRecordManager
           + "destination_y int(7) NOT NULL,"
           + "destination_z int(7) NOT NULL,"
           + "domain_id char(36) NOT NULL, "
-          + "scoring_function varchar(32) NOT NULL"
+          + "cost_function varchar(32) NOT NULL"
           + ");").execute();
 
       connection.prepareStatement("CREATE INDEX IF NOT EXISTS path_record_idx ON "

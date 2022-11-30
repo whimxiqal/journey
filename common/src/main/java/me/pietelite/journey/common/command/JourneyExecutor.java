@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) Pieter Svenson
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package me.pietelite.journey.common.command;
 
 import java.util.ArrayList;
@@ -10,7 +33,6 @@ import java.util.stream.Collectors;
 import me.pietelite.journey.common.Journey;
 import me.pietelite.journey.common.JourneyBaseVisitor;
 import me.pietelite.journey.common.JourneyParser;
-import me.pietelite.journey.common.config.Settings;
 import me.pietelite.journey.common.data.PersonalWaypointManager;
 import me.pietelite.journey.common.data.PublicWaypointManager;
 import me.pietelite.journey.common.integration.Scope;
@@ -20,6 +42,7 @@ import me.pietelite.journey.common.message.Formatter;
 import me.pietelite.journey.common.message.Pager;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.search.PlayerDestinationGoalSearchSession;
+import me.pietelite.journey.common.search.PlayerSurfaceGoalSearchSession;
 import me.pietelite.journey.common.search.flag.FlagSet;
 import me.pietelite.journey.common.search.flag.Flags;
 import me.pietelite.journey.common.util.Request;
@@ -27,10 +50,10 @@ import me.pietelite.journey.common.util.Validator;
 import me.pietelite.mantle.common.CommandExecutor;
 import me.pietelite.mantle.common.CommandResult;
 import me.pietelite.mantle.common.CommandSource;
-import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
-public class JourneyExecutor implements CommandExecutor {
+public class  JourneyExecutor implements CommandExecutor {
 
   public static final String PERSONAL_WAYPOINT_SCOPE = "personal";
   public static final String PUBLIC_WAYPOINT_SCOPE = "server";
@@ -65,18 +88,8 @@ public class JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.error("Only players may execute this command"));
           return CommandResult.failure();
         }
-        visitChildren(ctx);  // populate flags
-        String scopedText = ctx.scopes().ID().stream().map(ParseTree::getText).collect(Collectors.joining(":"));
-        if (ctx.scopes().SERVER() != null) {
-          // add "server" (it's a special keyword)
-          scopedText = "server" + (scopedText.isEmpty() ? "" : ":") + scopedText;
-        }
-        String item = ctx.ID().stream().map(ParseTree::getText).collect(Collectors.joining(" "));
-        if (scopedText.isEmpty()) {
-          scopedText = item;
-        } else {
-          scopedText += ":" + item;
-        }
+        visitChildren(ctx);  // populate identifiers and flags
+        String scopedText = String.join(":", identifiers);
         ScopedLocationResult result = Scope.root(src).location(scopedText);
         switch (result.type()) {
           case EXISTS:
@@ -91,12 +104,6 @@ public class JourneyExecutor implements CommandExecutor {
             src.audience().sendMessage(Formatter.error("Could not find that name under the given scope"));
             return CommandResult.failure();
         }
-      }
-
-      @Override
-      public CommandResult visitScopes(JourneyParser.ScopesContext ctx) {
-        // manually handle in parent context
-        return null;
       }
 
       @Override
@@ -162,7 +169,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
 
-        if (personalWaypointManager.hasEndpoint(src.uuid(), name)) {
+        if (personalWaypointManager.hasWaypoint(src.uuid(), name)) {
           src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", ctx.name.getText()));
           return CommandResult.failure();
         }
@@ -253,7 +260,7 @@ public class JourneyExecutor implements CommandExecutor {
         PersonalWaypointManager waypointManager = Journey.get().dataManager().personalWaypointManager();
         assert identifiers.size() >= 1;
         String name = identifiers.get(0);
-        if (waypointManager.hasEndpoint(src.uuid(), name)) {
+        if (waypointManager.hasWaypoint(src.uuid(), name)) {
           waypointManager.remove(src.uuid(), name);
           src.audience().sendMessage(Formatter.success("Waypoint ___ has been removed", name));
           return CommandResult.success();
@@ -265,7 +272,33 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitRenameWaypoint(JourneyParser.RenameWaypointContext ctx) {
-        return unimplemented();
+        if (src.type() != CommandSource.Type.PLAYER) {
+          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+          return CommandResult.failure();
+        }
+        visitChildren(ctx);
+        String name = identifiers.get(0);
+        if (Validator.isInvalidDataName(name)) {
+          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          return CommandResult.failure();
+        }
+
+        String newName = identifiers.get(1);
+        if (Validator.isInvalidDataName(newName)) {
+          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          return CommandResult.failure();
+        }
+
+        PersonalWaypointManager personalWaypointManager = Journey.get().dataManager().personalWaypointManager();
+
+        if (personalWaypointManager.hasWaypoint(src.uuid(), newName)) {
+          src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", ctx.newname.getText()));
+          return CommandResult.failure();
+        }
+
+        personalWaypointManager.renameWaypoint(src.uuid(), name, newName);
+        src.audience().sendMessage(Formatter.success("Renamed waypoint ___ to ___", name, newName));
+        return CommandResult.success();
       }
 
       @Override
@@ -306,6 +339,7 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitPlayerWaypoint(JourneyParser.PlayerWaypointContext ctx) {
         // source is player
+        visitChildren(ctx);
         String playerName = identifiers.get(0);
         String waypoint = identifiers.get(1);
         Optional<UUID> maybePlayer = Journey.get().proxy().platform().onlinePlayer(identifiers.get(0));
@@ -326,7 +360,7 @@ public class JourneyExecutor implements CommandExecutor {
 
       private CommandResult visitPlayerWaypoint(JourneyParser.PlayerWaypointContext ctx, String playerName, UUID dstPlayer, String waypoint) {
         PersonalWaypointManager manager = Journey.get().dataManager().personalWaypointManager();
-        if (!manager.hasEndpoint(dstPlayer, waypoint)) {
+        if (!manager.hasWaypoint(dstPlayer, waypoint)) {
           src.audience().sendMessage(Formatter.error("Player ___ has no waypoint ___", playerName, waypoint));
           return CommandResult.failure();
         }
@@ -365,7 +399,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
 
-        if (publicWaypointManager.hasPublicEndpoint(name)) {
+        if (publicWaypointManager.hasWaypoint(name)) {
           src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", ctx.name.getText()));
           return CommandResult.failure();
         }
@@ -419,7 +453,7 @@ public class JourneyExecutor implements CommandExecutor {
         PublicWaypointManager waypointManager = Journey.get().dataManager().publicWaypointManager();
         assert identifiers.size() >= 1;
         String name = identifiers.get(0);
-        if (waypointManager.hasPublicEndpoint(name)) {
+        if (waypointManager.hasWaypoint(name)) {
           waypointManager.remove(name);
           src.audience().sendMessage(Formatter.success("Waypoint ___ has been removed", name));
           return CommandResult.success();
@@ -431,16 +465,54 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitRenameServerWaypoint(JourneyParser.RenameServerWaypointContext ctx) {
-        return unimplemented();
+        visitChildren(ctx);
+        String name = identifiers.get(0);
+        if (Validator.isInvalidDataName(name)) {
+          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          return CommandResult.failure();
+        }
+
+        String newName = identifiers.get(1);
+        if (Validator.isInvalidDataName(newName)) {
+          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          return CommandResult.failure();
+        }
+
+        PublicWaypointManager publicWaypointManager = Journey.get().dataManager().publicWaypointManager();
+
+        if (publicWaypointManager.hasWaypoint(newName)) {
+          src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", newName));
+          return CommandResult.failure();
+        }
+
+        publicWaypointManager.renameWaypoint(name, newName);
+        src.audience().sendMessage(Formatter.success("Renamed waypoint ___ to ___", name, newName));
+        return CommandResult.success();
       }
 
       @Override
       public CommandResult visitSurface(JourneyParser.SurfaceContext ctx) {
-        return unimplemented();
+        visitChildren(ctx); // populate flags
+        if (src.type() != CommandSource.Type.PLAYER) {
+          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+          return CommandResult.failure();
+        }
+
+        Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
+        if (!location.isPresent()) {
+          src.audience().sendMessage(Formatter.error("Your location could not be found"));
+          return CommandResult.failure();
+        }
+
+        PlayerSurfaceGoalSearchSession session = new PlayerSurfaceGoalSearchSession(src.uuid(), location.get(), flags);
+
+        Journey.get().searchManager().launchSearch(session);
+        return CommandResult.success();
       }
 
       @Override
       public CommandResult visitDeath(JourneyParser.DeathContext ctx) {
+        visitChildren(ctx);  // populate flags
         if (src.type() != CommandSource.Type.PLAYER) {
           src.audience().sendMessage(Formatter.error("Only players may execute this command"));
           return CommandResult.failure();
@@ -485,7 +557,7 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitIdentifier(JourneyParser.IdentifierContext ctx) {
-        ctx.ID().forEach(id -> identifiers.add(id.getText()));
+        identifiers.add(ctx.ident().stream().map(RuleContext::getText).collect(Collectors.joining(" ")));
         return super.visitIdentifier(ctx);
       }
 
@@ -499,7 +571,7 @@ public class JourneyExecutor implements CommandExecutor {
         String name = identifiers.get(0);
 
         PersonalWaypointManager personalWaypointManager = Journey.get().dataManager().personalWaypointManager();
-        if (!personalWaypointManager.hasEndpoint(src.uuid(), name)) {
+        if (!personalWaypointManager.hasWaypoint(src.uuid(), name)) {
           src.audience().sendMessage(Formatter.error("No waypoint ___ exists", name));
         }
 
@@ -539,7 +611,7 @@ public class JourneyExecutor implements CommandExecutor {
       public CommandResult visitTimeoutFlag(JourneyParser.TimeoutFlagContext ctx) {
         int timeout;
         if (ctx.timeout == null) {
-          timeout = Settings.DEFAULT_SEARCH_TIMEOUT.getValue();
+          return visitChildren(ctx);
         } else {
           try {
             timeout = Integer.parseUnsignedInt(ctx.timeout.getText());
@@ -548,7 +620,7 @@ public class JourneyExecutor implements CommandExecutor {
             return CommandResult.failure();
           }
         }
-        flags.addValueFlag(Flags.ANIMATE, timeout);
+        flags.addValueFlag(Flags.TIMEOUT, timeout);
         return super.visitTimeoutFlag(ctx);
       }
 

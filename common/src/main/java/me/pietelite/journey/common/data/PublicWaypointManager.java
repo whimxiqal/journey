@@ -64,7 +64,7 @@ public interface PublicWaypointManager {
    * @param cell the cell location
    * @return true if the cell exists
    */
-  default boolean hasPublicEndpoint(@NotNull Cell cell) throws DataAccessException {
+  default boolean hasWaypoint(@NotNull Cell cell) throws DataAccessException {
     return getName(cell) != null;
   }
 
@@ -74,9 +74,17 @@ public interface PublicWaypointManager {
    * @param name the cell name
    * @return true if the cell exists
    */
-  default boolean hasPublicEndpoint(@NotNull String name) throws DataAccessException {
+  default boolean hasWaypoint(@NotNull String name) throws DataAccessException {
     return getWaypoint(name) != null;
   }
+
+  /**
+   * Rename a waypoint.
+   *
+   * @param name    the name
+   * @param newName the new name
+   */
+  void renameWaypoint(String name, String newName) throws DataAccessException;
 
   /**
    * Get the name of a saved location.
@@ -102,5 +110,4 @@ public interface PublicWaypointManager {
    * @return all names of cells mapped to their corresponding cells
    */
   Map<String, Cell> getAll() throws DataAccessException;
-
 }

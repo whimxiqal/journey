@@ -28,8 +28,8 @@ import lombok.Getter;
 import me.pietelite.journey.common.navigation.Cell;
 import me.pietelite.journey.common.navigation.Mode;
 import me.pietelite.journey.common.navigation.Path;
-import me.pietelite.journey.common.search.function.PlanarOrientedScoringFunction;
-import me.pietelite.journey.common.search.function.ScoringFunction;
+import me.pietelite.journey.common.search.function.CostFunction;
+import me.pietelite.journey.common.search.function.PlanarOrientedCostFunction;
 
 /**
  * An extension of {@link FlexiblePathTrial} where the goal of the trial is to find a path to
@@ -51,7 +51,7 @@ public class PathTrial extends FlexiblePathTrial {
                     boolean fromCache,
                     boolean saveOnComplete) {
     super(session, origin, modes,
-        scoringFunction(destination),
+        costFunction(destination),
         node -> node.getData().location().distanceToSquared(destination)
             <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
         length,
@@ -62,8 +62,8 @@ public class PathTrial extends FlexiblePathTrial {
     this.destination = destination;
   }
 
-  private static ScoringFunction scoringFunction(Cell destination) {
-    return new PlanarOrientedScoringFunction(destination);
+  private static CostFunction costFunction(Cell destination) {
+    return new PlanarOrientedCostFunction(destination);
   }
 
   /**
@@ -122,7 +122,7 @@ public class PathTrial extends FlexiblePathTrial {
                                       boolean saveOnComplete) {
     return new PathTrial(session, origin, destination,
         modes,
-        new PlanarOrientedScoringFunction(destination).apply(origin), null,
+        new PlanarOrientedCostFunction(destination).apply(origin), null,
         ResultState.IDLE, false, saveOnComplete);
   }
 

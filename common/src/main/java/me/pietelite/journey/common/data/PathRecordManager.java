@@ -34,8 +34,7 @@ import me.pietelite.journey.common.navigation.Mode;
 import me.pietelite.journey.common.navigation.ModeType;
 import me.pietelite.journey.common.navigation.Path;
 import me.pietelite.journey.common.search.PathTrial;
-import me.pietelite.journey.common.search.function.ScoringFunction;
-import me.pietelite.journey.common.search.function.ScoringFunctionType;
+import me.pietelite.journey.common.search.function.CostFunctionType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +126,7 @@ public interface PathRecordManager {
     int destinationY;
     int destinationZ;
     String worldId;
-    ScoringFunctionType scoringFunctionType;
+    CostFunctionType costFunctionType;
     List<PathTrialCellRecord> cells;
     Collection<PathTrialModeRecord> modes;
   }

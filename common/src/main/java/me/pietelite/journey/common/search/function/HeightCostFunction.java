@@ -21,38 +21,18 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.common.search.flag;
+package me.pietelite.journey.common.search.function;
 
-import java.util.Objects;
+import me.pietelite.journey.common.navigation.Cell;
 
-public class Flag {
-
-  private final String name;
-
-  protected Flag(String name) {
-    this.name = Objects.requireNonNull(name);
-  }
-
-  public static Flag of(String name) {
-    return new Flag(name);
-  }
-
-  public String name() {
-    return name;
+public class HeightCostFunction implements CostFunction {
+  @Override
+  public CostFunctionType getType() {
+    return CostFunctionType.HEIGHT;
   }
 
   @Override
-  public int hashCode() {
-    return this.name.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return (obj instanceof Flag) && ((Flag) obj).name.equals(this.name);
-  }
-
-  @Override
-  public String toString() {
-    return "Flag:" + name;
+  public Double apply(Cell cell) {
+    return (double) -cell.getY(); // maximize height == minimize cost
   }
 }

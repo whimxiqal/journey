@@ -21,38 +21,39 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.common.search.flag;
+package me.pietelite.journey.common.search.function;
 
-import java.util.Objects;
+import me.pietelite.journey.common.navigation.Cell;
 
-public class Flag {
+/**
+ * This scoring function is similar to the Euclidean distance function but operates under the assumption that
+ * a player should "walk" in the x-z dimensions and must move in the Y dimension using stairs or some path
+ * 45 degrees offset from the x-z plane.
+ */
+public class PlanarOrientedCostFunction implements CostFunction {
 
-  private final String name;
+  private final static double SQRT_TWO = Math.sqrt(2);
+  private final Cell destination;
 
-  protected Flag(String name) {
-    this.name = Objects.requireNonNull(name);
-  }
-
-  public static Flag of(String name) {
-    return new Flag(name);
-  }
-
-  public String name() {
-    return name;
-  }
-
-  @Override
-  public int hashCode() {
-    return this.name.hashCode();
+  public PlanarOrientedCostFunction(Cell destination) {
+    this.destination = destination;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    return (obj instanceof Flag) && ((Flag) obj).name.equals(this.name);
+  public CostFunctionType getType() {
+    return CostFunctionType.PLANAR_ORIENTED;
   }
 
   @Override
-  public String toString() {
-    return "Flag:" + name;
+  public Double apply(Cell cell) {
+    double diffX = cell.getX() - destination.getX();
+    double diffYAbs = Math.abs(cell.getY() - destination.getY());
+    double diffZ = cell.getZ() - destination.getZ();
+
+    double toXZPlane = SQRT_TWO * diffYAbs;
+    double diffXZ = Math.sqrt(diffX * diffX + diffZ * diffZ);
+
+    double alongXZ = Math.abs(diffXZ - diffYAbs);
+    return alongXZ + toXZPlane;
   }
 }

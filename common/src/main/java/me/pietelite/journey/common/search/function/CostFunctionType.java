@@ -23,23 +23,9 @@
 
 package me.pietelite.journey.common.search.function;
 
-import java.util.function.Function;
-import lombok.Value;
-import me.pietelite.journey.common.navigation.Cell;
-import me.pietelite.journey.common.search.FlexiblePathTrial;
-
-/**
- * An interface to represent the score of a given node.
- * Of all the nodes that are currently in the running for the
- * "next best node to try" throughout this algorithm,
- * the one with the highest score is chosen next.
- */
-public interface ScoringFunction extends Function<Cell, Double> {
-  /**
-   * Get the type.
-   *
-   * @return the type
-   */
-  ScoringFunctionType getType();
-
+public enum CostFunctionType {
+  EUCLIDEAN_DISTANCE,
+  PLANAR_ORIENTED,
+  HEIGHT,
+  OTHER
 }

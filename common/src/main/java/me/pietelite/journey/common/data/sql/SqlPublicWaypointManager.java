@@ -63,6 +63,11 @@ public class SqlPublicWaypointManager
   }
 
   @Override
+  public void renameWaypoint(String name, String newName) throws DataAccessException {
+    super.renameWaypoint(null, name, newName);
+  }
+
+  @Override
   public @Nullable String getName(@NotNull Cell cell) throws DataAccessException {
     return getWaypointName(null, cell);
   }

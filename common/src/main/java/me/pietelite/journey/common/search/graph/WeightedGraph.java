@@ -23,8 +23,6 @@
 
 package me.pietelite.journey.common.search.graph;
 
-import me.pietelite.journey.common.Journey;
-import me.pietelite.journey.common.tools.AlternatingList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
+import me.pietelite.journey.common.tools.AlternatingList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,11 +92,9 @@ public abstract class WeightedGraph<N, E> {
     Node current;
     while (!toVisit.isEmpty()) {
       current = toVisit.poll();
-      Journey.logger().info("current: " + current.data);
       visited.add(current);
 
       if (current.equals(destinationNode)) {
-        Journey.logger().info("Current is destination, packaging solution");
         // We've reached destination. Package solution.
         AlternatingList.Builder<N, E, Object> pathBuilder = AlternatingList.builder(destination);
         while (!current.equals(originNode)) {
@@ -112,21 +109,16 @@ public abstract class WeightedGraph<N, E> {
       // Not yet done
       Map<Node, E> edges = edgeTable.edgesFrom(current);
       if (edges == null) {
-        Journey.logger().info("Continuing because edges were null");
         continue;
       }
       for (Map.Entry<Node, E> outlet : edgeTable.edgesFrom(current).entrySet()) {
-        Journey.logger().info("For outlet, going to: " + outlet.getKey().data);
         // outlet.getKey() is destination
         // outlet.getValue() is edge from 'current' to destination
         if (visited.contains(outlet.getKey())) {
-          Journey.logger().info("Outlet was already visited, ignoring...");
           continue;
         }
         // the outlet constructs with max double distance, aka, infinite distance
-        Journey.logger().info("Existing distance: " + outlet.getKey().getDistance() + ", potential distance: " + (current.getDistance() + edgeLength(outlet.getValue())));
         if (outlet.getKey().getDistance() > current.getDistance() + edgeLength(outlet.getValue())) {
-          Journey.logger().info("The existing distance to the outlet was greater than the potential distance");
           // A better path for this node would be to come from current.
           toVisit.remove(outlet.getKey());  // Remove from waiting queue in case it was already queued before
           outlet.getKey().setDistance(current.getDistance()

@@ -54,27 +54,27 @@ public class SqlPersonalWaypointManager
   @Override
   public void add(@NotNull UUID playerUuid, @NotNull Cell cell, @NotNull String name)
       throws IllegalArgumentException, DataAccessException {
-    this.addWaypoint(playerUuid, cell, name);
+    super.addWaypoint(playerUuid, cell, name);
   }
 
   @Override
   public void remove(@NotNull UUID playerUuid, @NotNull Cell cell)
       throws DataAccessException {
-    this.removeWaypoint(playerUuid, cell);
+    super.removeWaypoint(playerUuid, cell);
   }
 
   @Override
   public void setPublic(@NotNull UUID playerUuid, @NotNull String name, boolean isPublic) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "UPDATE %s SET %s = ? WHERE %s = ?;",
+          "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?;",
           WAYPOINT_TABLE_NAME,
-          "player_uuid",
           "is_public",
+          "player_uuid",
           "name_id"));
 
-      statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setBoolean(2, isPublic);
+      statement.setBoolean(1, isPublic);
+      statement.setString(2, playerUuid == null ? null : playerUuid.toString());
       statement.setString(3, name.toLowerCase());
 
       statement.executeUpdate();
@@ -87,13 +87,18 @@ public class SqlPersonalWaypointManager
   @Override
   public void remove(@NotNull UUID playerUuid, @NotNull String name)
       throws DataAccessException {
-    this.removeWaypoint(playerUuid, name);
+    super.removeWaypoint(playerUuid, name);
+  }
+
+  @Override
+  public void renameWaypoint(UUID uuid, String name, String newName) throws DataAccessException {
+    super.renameWaypoint(uuid, name, newName);
   }
 
   @Override
   public @Nullable String getName(@NotNull UUID playerUuid, @NotNull Cell cell)
       throws DataAccessException {
-    return this.getWaypointName(playerUuid, cell);
+    return super.getWaypointName(playerUuid, cell);
   }
 
   @Override

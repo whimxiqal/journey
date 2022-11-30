@@ -31,18 +31,20 @@ import me.pietelite.journey.common.data.sql.SqlPortDataManager;
 import me.pietelite.journey.common.data.sql.SqlPublicWaypointManager;
 import me.pietelite.journey.common.data.sql.mysql.MySqlConnectionController;
 import me.pietelite.journey.common.data.sql.sqlite.SqliteConnectionController;
+import me.pietelite.journey.common.util.Initializable;
 
 /**
  * Implementation of the {@link DataManager} in Spigot Minecraft.
  */
-public class DataManagerImpl implements DataManager {
+public class DataManagerImpl implements DataManager, Initializable {
 
   private PersonalWaypointManager personalWaypointManager;
   private PublicWaypointManager publicWaypointManager;
   private PathRecordManager pathRecordManager;
   private PortDataManager portDataManager;
 
-  public void init() {
+  @Override
+  public void initialize() {
     switch (Settings.STORAGE_TYPE.getValue()) {
       case SQLITE:
         String sqliteAddress = "jdbc:sqlite:" + Journey.get().proxy().dataFolder() + "/journey.db";

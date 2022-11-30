@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright 2022 Pieter Svenson
+ * Copyright (c) Pieter Svenson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,6 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
 package me.pietelite.journey.common.search.flag;
@@ -29,8 +28,8 @@ import me.pietelite.journey.common.util.TimeUtil;
 
 public final class Flags {
 
-  public static final ValueFlag<Integer> TIMEOUT = ValueFlag.of("value",
-      (Function<Integer, String>) TimeUtil::toSimpleTimeMilliseconds,
+  public static final ValueFlag<Integer> TIMEOUT = ValueFlag.of("timeout",
+      (Function<Integer, String>) TimeUtil::toSimpleTime,
       Integer.class);
   public static final ValueFlag<Integer> ANIMATE = ValueFlag.of("animate",
       (Function<Integer, String>) TimeUtil::toSimpleTimeMilliseconds,

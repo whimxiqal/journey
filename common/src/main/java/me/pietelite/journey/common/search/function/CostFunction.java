@@ -21,38 +21,23 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.pietelite.journey.common.search.flag;
+package me.pietelite.journey.common.search.function;
 
-import java.util.Objects;
+import java.util.function.Function;
+import me.pietelite.journey.common.navigation.Cell;
 
-public class Flag {
+/**
+ * An interface to represent the score of a given node.
+ * Of all the nodes that are currently in the running for the
+ * "next best node to try" throughout this algorithm,
+ * the one with the highest score is chosen next.
+ */
+public interface CostFunction extends Function<Cell, Double> {
+  /**
+   * Get the type.
+   *
+   * @return the type
+   */
+  CostFunctionType getType();
 
-  private final String name;
-
-  protected Flag(String name) {
-    this.name = Objects.requireNonNull(name);
-  }
-
-  public static Flag of(String name) {
-    return new Flag(name);
-  }
-
-  public String name() {
-    return name;
-  }
-
-  @Override
-  public int hashCode() {
-    return this.name.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return (obj instanceof Flag) && ((Flag) obj).name.equals(this.name);
-  }
-
-  @Override
-  public String toString() {
-    return "Flag:" + name;
-  }
 }
