@@ -9,7 +9,7 @@ subprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'org.cadixdev.licenser'
 
-    group = 'me.pietelite.journey'
+    group = 'net.whimxiqal.journey'
     version = '1.0.0-BETA'
 
     sourceCompatibility = 1.8

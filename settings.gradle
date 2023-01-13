@@ -1,6 +1,5 @@
 rootProject.name = 'journey'
 include (
         'common',
-        'spigot',
-        'spigot-api',
+        'bukkit',
 )
