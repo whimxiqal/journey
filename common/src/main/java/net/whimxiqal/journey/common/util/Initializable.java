@@ -22,41 +22,13 @@
  *
  */
 
-plugins {
-    id 'java-library'
-    id 'antlr'
-}
+package net.whimxiqal.journey.common.util;
 
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+public interface Initializable {
 
-    // Lombok
-    implementation 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+  /**
+   * Initialize anything that must be initialized.
+   */
+  void initialize();
 
-    testImplementation 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
-
-    // IntelliJ Annotations
-    implementation 'org.jetbrains:annotations:22.0.0'
-
-    // Mantle
-    api 'net.whimxiqal.mantle:common:0.0.0'
-
-    // Antlr
-    antlr 'org.antlr:antlr4:4.9.3'
-
-    // Kyori Adventure
-    implementation 'net.kyori:adventure-api:4.11.0'
-    implementation 'net.kyori:adventure-platform-api:4.1.2'
-    testImplementation 'net.kyori:adventure-text-serializer-plain:4.11.0'
-
-    // Apache HTTP Client
-    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
-
-}
-
-generateGrammarSource {
-    arguments += ["-visitor", "-lib", "src/main/antlr/net/whimxiqal/journey/common", "-package", "net.whimxiqal.journey.common"]
 }
