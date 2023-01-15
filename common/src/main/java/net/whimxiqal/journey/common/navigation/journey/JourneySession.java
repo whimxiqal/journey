@@ -45,7 +45,7 @@ public interface JourneySession extends Runnable {
    * Should run when the journey is completed or
    * the journey is otherwise left.
    */
-  void stop();
+  void stopAnimating();
 
   /**
    * Determine if the caller completed the journey.

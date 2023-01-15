@@ -31,6 +31,8 @@ import java.util.UUID;
 import net.whimxiqal.journey.common.Journey;
 import net.whimxiqal.journey.common.JourneyTestHarness;
 import net.whimxiqal.journey.common.navigation.Cell;
+import net.whimxiqal.journey.platform.TestJourneyPlayer;
+import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
 import net.whimxiqal.mantle.common.CommandResult;
 import net.whimxiqal.mantle.common.CommandSource;
@@ -51,6 +53,7 @@ public class TestCommands extends JourneyTestHarness {
   static void init() {
     Mantle.setProxy(new TestProxy());
     register(JourneyConnectorProvider.connector());
+    TestPlatformProxy.onlinePlayers.add(new TestJourneyPlayer(myUuid));
   }
 
   static void register(CommandConnector connector) {

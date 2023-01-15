@@ -24,12 +24,14 @@
 package net.whimxiqal.journey.platform;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import net.whimxiqal.journey.common.JourneyPlayer;
 import net.whimxiqal.journey.common.math.Vector;
 import net.whimxiqal.journey.common.navigation.Cell;
 import net.whimxiqal.journey.common.navigation.ModeType;
@@ -37,12 +39,14 @@ import net.whimxiqal.journey.common.navigation.PlatformProxy;
 import net.whimxiqal.journey.common.search.AnimationManager;
 import net.whimxiqal.journey.common.search.SearchSession;
 import net.whimxiqal.journey.common.search.flag.FlagSet;
+import net.whimxiqal.mantle.common.CommandSource;
 
 public class TestPlatformProxy implements PlatformProxy {
 
   public static Map<String, TestWorld> worlds = new HashMap<>();
   public static Map<String, Cell> pois = new HashMap<>();
   public static List<TestPort> ports = new LinkedList<>();
+  public static List<JourneyPlayer> onlinePlayers = new LinkedList<>();
 
   @Override
   public boolean isNetherPortal(Cell cell) {
@@ -65,8 +69,18 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Optional<UUID> onlinePlayer(String name) {
-    return Optional.empty();
+  public Collection<JourneyPlayer> onlinePlayers() {
+    return onlinePlayers;
+  }
+
+  @Override
+  public Optional<JourneyPlayer> onlinePlayer(UUID uuid) {
+    return onlinePlayers.stream().filter(player -> player.uuid().equals(uuid)).findFirst();
+  }
+
+  @Override
+  public Optional<JourneyPlayer> onlinePlayer(String name) {
+    return onlinePlayers.stream().filter(player -> player.name().equals(name)).findFirst();
   }
 
   @Override
@@ -102,6 +116,16 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public boolean resetBlockData(UUID player, Collection<Cell> locations) {
+    return false;
+  }
+
+  @Override
+  public String worldIdToName(String domainId) {
+    return domainId;
+  }
+
+  @Override
+  public boolean sendGui(CommandSource source) {
     return false;
   }
 }

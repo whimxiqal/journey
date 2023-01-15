@@ -27,13 +27,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.LinkedList;
-import net.whimxiqal.journey.common.Journey;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.whimxiqal.journey.common.Journey;
+import net.whimxiqal.journey.common.navigation.Cell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -312,6 +313,20 @@ public final class Formatter {
       throw new IllegalArgumentException("Unknown type tried to cast to Component: "
           + o.getClass().getSimpleName());
     }
+  }
+
+  public static Component cell(Cell cell) {
+    return Component.text()
+        .append(Component.text("[x: ").color(DULL))
+        .append(Component.text(cell.getX()).color(ACCENT))
+        .append(Component.text(", y: ").color(DULL))
+        .append(Component.text(cell.getY()).color(ACCENT))
+        .append(Component.text(", z: ").color(DULL))
+        .append(Component.text(cell.getZ()).color(ACCENT))
+        .append(Component.text("] (").color(DULL))
+        .append(Component.text(Journey.get().proxy().platform().worldIdToName(cell.domainId())).color(ACCENT))
+        .append(Component.text(")").color(DULL))
+        .build();
   }
 
   public static Component noPlayer(String name) {

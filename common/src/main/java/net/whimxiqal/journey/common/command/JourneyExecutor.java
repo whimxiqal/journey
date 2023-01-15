@@ -24,19 +24,19 @@
 package net.whimxiqal.journey.common.command;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.common.JourneyPlayer;
 import net.whimxiqal.journey.common.Journey;
 import net.whimxiqal.journey.common.JourneyBaseVisitor;
 import net.whimxiqal.journey.common.JourneyParser;
 import net.whimxiqal.journey.common.data.PersonalWaypointManager;
 import net.whimxiqal.journey.common.data.PublicWaypointManager;
-import net.whimxiqal.journey.common.integration.Scope;
-import net.whimxiqal.journey.common.integration.ScopedLocationResult;
+import net.whimxiqal.journey.common.data.integration.Scope;
+import net.whimxiqal.journey.common.data.integration.ScopedLocationResult;
 import net.whimxiqal.journey.common.manager.DebugManager;
 import net.whimxiqal.journey.common.message.Formatter;
 import net.whimxiqal.journey.common.message.Pager;
@@ -51,7 +51,6 @@ import net.whimxiqal.mantle.common.CommandContext;
 import net.whimxiqal.mantle.common.CommandExecutor;
 import net.whimxiqal.mantle.common.CommandResult;
 import net.whimxiqal.mantle.common.CommandSource;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 public class  JourneyExecutor implements CommandExecutor {
@@ -64,6 +63,7 @@ public class  JourneyExecutor implements CommandExecutor {
     CommandSource src = cmd.source();
     return new JourneyBaseVisitor<CommandResult>() {
       final FlagSet flags = new FlagSet();
+
 
       @Override
       protected CommandResult aggregateResult(CommandResult aggregate, CommandResult nextResult) {
@@ -84,13 +84,28 @@ public class  JourneyExecutor implements CommandExecutor {
       }
 
       @Override
-      public CommandResult visitJourneytoTarget(JourneyParser.JourneytoTargetContext ctx) {
-        if (src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+      public CommandResult visitJourneyto(JourneyParser.JourneytoContext ctx) {
+        CommandResult result = visitChildren(ctx);
+        if (result != null) {
+          return result;
+        }
+        boolean sent = Journey.get().proxy().platform().sendGui(src);
+        if (!sent) {
+          src.audience().sendMessage(Formatter.error("The GUI is not implemented on this version"));
           return CommandResult.failure();
         }
+        return CommandResult.success();
+      }
+
+      @Override
+      public CommandResult visitJourneytoTarget(JourneyParser.JourneytoTargetContext ctx) {
         visitChildren(ctx);  // populate cmd.identifiers() and flags
         String scopedText = String.join(":", cmd.identifiers().getAll());
+
+        if (scopedText.equalsIgnoreCase("surface")) {
+          return journeyToSurface();
+        }
+
         ScopedLocationResult result = Scope.root(src).location(scopedText);
         switch (result.type()) {
           case EXISTS:
@@ -130,12 +145,12 @@ public class  JourneyExecutor implements CommandExecutor {
                 src.audience().sendMessage(Formatter.success("Debug mode ___ on all users.", "enabled"));
               }
             } else {
-              Optional<UUID> target = Journey.get().proxy().platform().onlinePlayer(ctx.target.getText());
+              Optional<JourneyPlayer> target = Journey.get().proxy().platform().onlinePlayer(ctx.target.getText());
               if (!target.isPresent()) {
                 src.audience().sendMessage(Formatter.error("Could not find that player"));
                 return CommandResult.failure();
               }
-              mgr.startDebuggingPlayer(src.uuid(), target.get());
+              mgr.startDebuggingPlayer(src.uuid(), target.get().uuid());
               src.audience().sendMessage(Formatter.success("Debug mode ___ on ___.", "enabled ", ctx.target.getText()));
             }
             return CommandResult.success();
@@ -196,7 +211,7 @@ public class  JourneyExecutor implements CommandExecutor {
 
         Map<String, Cell> cells = Journey.get().dataManager()
             .personalWaypointManager()
-            .getAll(src.uuid());
+            .getAll(src.uuid(), false);
 
         if (cells.isEmpty()) {
           src.audience().sendMessage(Formatter.warn("You have no saved waypoints yet!"));
@@ -205,7 +220,9 @@ public class  JourneyExecutor implements CommandExecutor {
 
         List<Map.Entry<String, Cell>> sortedEntryList = new ArrayList<>(cells.entrySet());
         sortedEntryList.sort(Map.Entry.comparingByKey());
-        Pager.of(sortedEntryList, Map.Entry::getKey, entry -> entry.getValue().toString())
+        Pager.of(sortedEntryList,
+                entry -> Component.text(entry.getKey()).color(Formatter.GOLD),
+                entry -> Formatter.cell(entry.getValue()))
             .sendPage(src.audience(), page);
 
         return CommandResult.success();
@@ -311,12 +328,12 @@ public class  JourneyExecutor implements CommandExecutor {
         if (childrenResult != null) {
           return childrenResult;
         }
-        Optional<UUID> maybePlayer = Journey.get().proxy().platform().onlinePlayer(cmd.identifiers().get(0));
+        Optional<JourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(cmd.identifiers().get(0));
         if (!maybePlayer.isPresent()) {
           src.audience().sendMessage(Formatter.noPlayer(ctx.user.getText()));
           return CommandResult.failure();
         }
-        if (maybePlayer.get().equals(src.uuid())) {
+        if (maybePlayer.get().uuid().equals(src.uuid())) {
           src.audience().sendMessage(Formatter.error("You may not travel to yourself"));
           return CommandResult.failure();
         }
@@ -325,7 +342,7 @@ public class  JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.error("Your location could not be found"));
           return CommandResult.failure();
         }
-        Optional<Cell> otherLocation = Journey.get().proxy().platform().entityCellLocation(maybePlayer.get());
+        Optional<Cell> otherLocation = Journey.get().proxy().platform().entityCellLocation(maybePlayer.get().uuid());
         if (!otherLocation.isPresent()) {
           src.audience().sendMessage(Formatter.error("The other player's location could not be found"));
           return CommandResult.failure();
@@ -342,9 +359,9 @@ public class  JourneyExecutor implements CommandExecutor {
         visitChildren(ctx);
         String playerName = cmd.identifiers().get(0);
         String waypoint = cmd.identifiers().get(1);
-        Optional<UUID> maybePlayer = Journey.get().proxy().platform().onlinePlayer(cmd.identifiers().get(0));
+        Optional<JourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(cmd.identifiers().get(0));
         if (maybePlayer.isPresent()) {
-          return visitPlayerWaypoint(ctx, playerName, maybePlayer.get(), waypoint);
+          return visitPlayerWaypoint(ctx, playerName, maybePlayer.get().uuid(), waypoint);
         }
 
         // Async call for the player uuid
@@ -432,7 +449,9 @@ public class  JourneyExecutor implements CommandExecutor {
 
         List<Map.Entry<String, Cell>> sortedEntryList = new ArrayList<>(cells.entrySet());
         sortedEntryList.sort(Map.Entry.comparingByKey());
-        Pager.of(sortedEntryList, Map.Entry::getKey, entry -> entry.getValue().toString())
+        Pager.of(sortedEntryList,
+                entry -> Component.text(entry.getKey()).color(Formatter.GOLD),
+                entry -> Formatter.cell(entry.getValue()))
             .sendPage(src.audience(), page);
 
         return CommandResult.success();
@@ -496,51 +515,19 @@ public class  JourneyExecutor implements CommandExecutor {
         return CommandResult.success();
       }
 
-      @Override
-      public CommandResult visitSurface(JourneyParser.SurfaceContext ctx) {
-        visitChildren(ctx); // populate flags
-        if (src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
-          return CommandResult.failure();
-        }
-
+      private CommandResult journeyToSurface() {
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
         if (!location.isPresent()) {
           src.audience().sendMessage(Formatter.error("Your location could not be found"));
           return CommandResult.failure();
+        }
+
+        if (Journey.get().proxy().platform().isAtSurface(location.get())) {
+          src.audience().sendMessage(Formatter.error("You are already at the surface!"));
+          return CommandResult.success();
         }
 
         PlayerSurfaceGoalSearchSession session = new PlayerSurfaceGoalSearchSession(src.uuid(), location.get(), flags);
-
-        Journey.get().searchManager().launchSearch(session);
-        return CommandResult.success();
-      }
-
-      @Override
-      public CommandResult visitDeath(JourneyParser.DeathContext ctx) {
-        visitChildren(ctx);  // populate flags
-        if (src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
-          return CommandResult.failure();
-        }
-        CommandResult childrenResult = visitChildren(ctx);
-        if (childrenResult != null) {
-          return childrenResult;
-        }
-        // No other command specified, so journey to the waypoint
-
-        Optional<Cell> endLocation = Journey.get().deathManager().getDeathLocation(src.uuid());
-        if (!endLocation.isPresent()) {
-          src.audience().sendMessage(Formatter.error("No known death location"));
-          return CommandResult.failure();
-        }
-
-        Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
-        if (!location.isPresent()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
-          return CommandResult.failure();
-        }
-        PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(src.uuid(), location.get(), endLocation.get(), flags, false);
 
         Journey.get().searchManager().launchSearch(session);
         return CommandResult.success();
@@ -602,6 +589,10 @@ public class  JourneyExecutor implements CommandExecutor {
           Journey.get().dataManager().pathRecordManager().clear();
           Journey.get().netherManager().reset();
           src.audience().sendMessage(Formatter.success("Invalidate caches"));
+          return CommandResult.success();
+        } else if (ctx.reload != null) {
+          Journey.get().proxy().configManager().load();
+          src.audience().sendMessage(Formatter.success("Reloaded config"));
           return CommandResult.success();
         }
         return super.visitAdmin(ctx);

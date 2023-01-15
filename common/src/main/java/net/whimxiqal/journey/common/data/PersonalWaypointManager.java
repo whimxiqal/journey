@@ -136,7 +136,8 @@ public interface PersonalWaypointManager {
    * Get a list of all personal endpoints for a player.
    *
    * @param playerUuid the player's uuid
+   * @param justPublic whether to show only public waypoints
    * @return all names of cells mapped to their corresponding cells
    */
-  Map<String, Cell> getAll(@NotNull UUID playerUuid) throws DataAccessException;
+  Map<String, Cell> getAll(@NotNull UUID playerUuid, boolean justPublic) throws DataAccessException;
 }

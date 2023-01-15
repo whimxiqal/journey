@@ -79,6 +79,6 @@ public class SqlPublicWaypointManager
 
   @Override
   public Map<String, Cell> getAll() throws DataAccessException {
-    return getWaypoints(null);
+    return getWaypoints(null, false);
   }
 }

@@ -49,8 +49,14 @@ public class PlayerJourneySession extends AbstractJourneySession {
   private final Queue<JourneyStep> journeySteps = new LinkedList<>();
   private int lastAddedJourneyStepIndex = 0;
   private double journeyStepsLength = 0;
-  private boolean completed = false;
+  private State state = State.STOPPED_INCOMPLETE;
   private UUID illuminationTaskId;
+
+  private enum State {
+    STOPPED_INCOMPLETE,
+    RUNNING,
+    STOPPED_COMPLETE
+  }
 
   /**
    * General constructor.
@@ -68,8 +74,8 @@ public class PlayerJourneySession extends AbstractJourneySession {
 
   @Override
   public void visit(Cell locatable) {
-    if (completed) {
-      return;  // We're already done, we don't care about visitation
+    if (state != State.RUNNING) {
+      return;
     }
     if (traversal().get().completeWith(locatable)) {
       // We have reached our destination for the given path
@@ -85,8 +91,8 @@ public class PlayerJourneySession extends AbstractJourneySession {
         // Play a fun chord
         Journey.get().proxy().platform().playSuccess(playerUuid);
 
-        completed = true;
-        stop();
+        state = State.STOPPED_COMPLETE;
+        stopAnimating();
         return;
       }
     }
@@ -114,14 +120,13 @@ public class PlayerJourneySession extends AbstractJourneySession {
   }
 
   @Override
-  public void stop() {
+  public void stopAnimating() {
     Journey.get().proxy().schedulingManager().cancelTask(illuminationTaskId);
   }
 
   @Override
   public void run() {
-    stop();
-    completed = false;
+    stopAnimating();
     resetTraversal();
     traversal().next();
     startPath();
@@ -129,6 +134,7 @@ public class PlayerJourneySession extends AbstractJourneySession {
   }
 
   private void startPath() {
+    state = State.RUNNING;
     lastAddedJourneyStepIndex = 0;
     journeySteps.clear();
     Journey.get().proxy().platform().entityCellLocation(playerUuid).ifPresent(this::visit);
@@ -162,7 +168,7 @@ public class PlayerJourneySession extends AbstractJourneySession {
    * @return true if complete
    */
   public boolean isCompleted() {
-    return completed;
+    return state == State.STOPPED_COMPLETE;
   }
 
 }

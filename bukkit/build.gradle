@@ -58,6 +58,8 @@ dependencies {
     implementation 'net.kyori:adventure-text-serializer-legacy:4.11.0'
     implementation 'net.kyori:adventure-text-serializer-plain:4.11.0'
 
+    implementation "dev.triumphteam:triumph-gui:3.1.2"
+
     // Integrations
     shadow 'net.essentialsx:EssentialsX:2.19.7'
 
@@ -74,6 +76,7 @@ shadowJar {
         include(dependency('net.kyori:.*'))
         include(dependency('org.bstats:.*'))
         include(dependency('org.apache.httpcomponents:.*'))
+        include(dependency('dev.triumphteam:.*'))
     }
 
     relocate 'net.whimxiqal.mantle', 'net.whimxiqal.journey.libs.mantle'
@@ -84,9 +87,11 @@ shadowJar {
     relocate 'org.bstats', 'net.whimxiqal.journey.libs.bstats'
     relocate 'org.apache.http', 'net.whimxiqal.journey.libs.http'
     relocate 'mozilla', 'net.whimxiqal.journey.libs.mozilla'
+    relocate 'dev.triumphteam.gui', 'net.whimxiqal.journey.libs.gui'
 }
 
 build {
+    jar.enabled = false
     dependsOn 'shadowJar'
 }
 

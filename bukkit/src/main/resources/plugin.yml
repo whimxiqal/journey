@@ -1,6 +1,6 @@
 name: Journey
 version: ${version}
-main: net.whimxiqal.journey.spigot.JourneySpigot
+main: net.whimxiqal.journey.bukkit.JourneyBukkit
 api-version: 1.17
 authors:
   - whimxiqal
@@ -8,7 +8,7 @@ description: A path-optimization Minecraft solution
 website: https://whimcproject.web.illinois.edu/
 softdepend:
   - WHIMC-Portals
-  - Quests
+  - Essentials
 permissions:
   journey.admin:
     default: false

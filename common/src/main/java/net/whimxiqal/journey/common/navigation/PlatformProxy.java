@@ -26,10 +26,12 @@ package net.whimxiqal.journey.common.navigation;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
+import net.whimxiqal.journey.common.JourneyPlayer;
 import net.whimxiqal.journey.common.math.Vector;
 import net.whimxiqal.journey.common.search.AnimationManager;
 import net.whimxiqal.journey.common.search.SearchSession;
 import net.whimxiqal.journey.common.search.flag.FlagSet;
+import net.whimxiqal.mantle.common.CommandSource;
 
 public interface PlatformProxy {
 
@@ -41,7 +43,11 @@ public interface PlatformProxy {
 
   void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
 
-  Optional<UUID> onlinePlayer(String name);
+  Collection<JourneyPlayer> onlinePlayers();
+
+  Optional<JourneyPlayer> onlinePlayer(UUID uuid);
+
+  Optional<JourneyPlayer> onlinePlayer(String name);
 
   Optional<Cell> entityCellLocation(UUID entityUuid);
 
@@ -56,4 +62,8 @@ public interface PlatformProxy {
   boolean sendBlockData(UUID player, Cell location, AnimationManager.StageType stage, ModeType mode);
 
   boolean resetBlockData(UUID player, Collection<Cell> locations);
+
+  String worldIdToName(String domainId);
+
+  boolean sendGui(CommandSource source);
 }

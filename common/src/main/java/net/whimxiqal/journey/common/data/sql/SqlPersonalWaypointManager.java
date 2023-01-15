@@ -131,9 +131,9 @@ public class SqlPersonalWaypointManager
   }
 
   @Override
-  public Map<String, Cell> getAll(@NotNull UUID playerUuid)
+  public Map<String, Cell> getAll(@NotNull UUID playerUuid, boolean justPublic)
       throws DataAccessException {
-    return this.getWaypoints(playerUuid);
+    return this.getWaypoints(playerUuid, justPublic);
   }
 
   @Override

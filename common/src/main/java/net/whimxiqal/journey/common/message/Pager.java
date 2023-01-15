@@ -46,12 +46,12 @@ public class Pager {
   }
 
   public static <T> Pager of(Collection<T> components,
-                             Function<T, String> keyExtractor,
-                             Function<T, String> valueExtractor) {
+                             Function<T, Component> keyExtractor,
+                             Function<T, Component> valueExtractor) {
     return of(components.stream().map(entry -> Component.text()
-            .append(Component.text(keyExtractor.apply(entry)).color(Formatter.ACCENT))
-            .append(Component.text(" > ").color(Formatter.WHITE))
-            .append(Component.text(valueExtractor.apply(entry)).color(Formatter.INFO))
+            .append(keyExtractor.apply(entry))
+            .append(Component.text(" > ").color(Formatter.DARK))
+            .append(valueExtractor.apply(entry))
             .build())
         .collect(Collectors.toList()));
   }

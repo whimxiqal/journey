@@ -62,7 +62,7 @@ public class SearchManager {
   public PlayerJourneySession putJourney(@NotNull UUID callerId, PlayerJourneySession journey) {
     PlayerJourneySession oldJourney = this.playerJourneys.put(callerId, journey);
     if (oldJourney != null) {
-      oldJourney.stop();
+      oldJourney.stopAnimating();
     }
     return oldJourney;
   }
@@ -190,7 +190,7 @@ public class SearchManager {
    * Stop all the saved running journeys.
    */
   public void stopAllJourneys() {
-    playerJourneys.values().forEach(JourneySession::stop);
+    playerJourneys.values().forEach(JourneySession::stopAnimating);
   }
 
 }

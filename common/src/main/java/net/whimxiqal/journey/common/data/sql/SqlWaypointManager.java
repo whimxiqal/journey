@@ -226,9 +226,9 @@ public abstract class SqlWaypointManager extends SqlManager {
     }
   }
 
-  protected Map<String, Cell> getWaypoints(@Nullable UUID playerUuid) throws DataAccessException {
+  protected Map<String, Cell> getWaypoints(@Nullable UUID playerUuid, boolean justPublic) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
-      return getWaypoints(playerUuid, connection);
+      return getWaypoints(playerUuid, connection, justPublic);
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
@@ -244,14 +244,19 @@ public abstract class SqlWaypointManager extends SqlManager {
    * @throws SQLException if sql error occurs
    */
   private Map<String, Cell> getWaypoints(@Nullable UUID playerUuid,
-                                         @NotNull Connection connection) throws SQLException {
+                                         @NotNull Connection connection,
+                                         boolean justPublic) throws SQLException {
     PreparedStatement statement = connection.prepareStatement(String.format(
-        "SELECT * FROM %s WHERE %s %s ?;",
+        "SELECT * FROM %s WHERE %s %s ? %s;",
         WAYPOINT_TABLE_NAME,
         "player_uuid",
-        playerUuid == null ? "IS" : "="));
+        playerUuid == null ? "IS" : "=",
+        justPublic ? "AND is_public = ?" : ""));
 
     statement.setString(1, playerUuid == null ? null : playerUuid.toString());
+    if (justPublic) {
+      statement.setBoolean(2, true);
+    }
 
     ResultSet resultSet = statement.executeQuery();
     Map<String, Cell> endpoints = new HashMap<>();

@@ -10,7 +10,7 @@ subprojects {
     apply plugin: 'org.cadixdev.licenser'
 
     group = 'net.whimxiqal.journey'
-    version = '1.0.0-BETA'
+    version = '1.0.0'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8

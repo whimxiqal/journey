@@ -25,7 +25,7 @@ package net.whimxiqal.journey.common;
 
 import net.whimxiqal.journey.common.data.DataManager;
 import net.whimxiqal.journey.common.data.DataManagerImpl;
-import net.whimxiqal.journey.common.integration.IntegrationManager;
+import net.whimxiqal.journey.common.data.integration.IntegrationManager;
 import net.whimxiqal.journey.common.manager.DebugManager;
 import net.whimxiqal.journey.common.manager.NetherManager;
 import net.whimxiqal.journey.common.manager.PlayerManager;

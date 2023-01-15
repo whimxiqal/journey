@@ -1,7 +1,7 @@
 grammar Journey;
 
-journey: JOURNEY (setwaypoint | listwaypoints | waypoint | player | server | admin | surface | death | cancel)? EOF;
-journeyto: JOURNEY_TO journeytoTarget EOF;
+journey: JOURNEY (setwaypoint | listwaypoints | waypoint | player | server | admin | cancel)? EOF;
+journeyto: JOURNEY_TO journeytoTarget? EOF;
 
 setwaypoint: SET_WAYPOINT name=identifier+;
 listwaypoints: LIST_WAYPOINTS page=ID?;
@@ -22,8 +22,6 @@ renameServerWaypoint: RENAME newname=identifier;
 
 admin: ADMIN (debug | invalidate=INVALIDATE | reload=RELOAD | LIST_NETHER_PORTALS);
 debug: DEBUG target=identifier?;
-surface: SURFACE flagSet?;
-death: DEATH flagSet?;
 cancel: CANCEL;
 
 journeytoTarget: (identifier COLON)* identifier flagSet?;
@@ -38,7 +36,6 @@ digFlag: FLAG_DIG;
 ADMIN: 'admin';
 CANCEL: 'cancel';
 COLON: ':';
-DEATH: 'death';
 DEBUG: 'debug';
 FALSE: 'false';
 INVALIDATE: 'invalidate';
@@ -54,7 +51,6 @@ RENAME: 'rename';
 SERVER: 'server';
 SET: 'set';
 SET_WAYPOINT: 'setwaypoint';
-SURFACE: 'surface';
 TRUE: 'true';
 UNSET: 'unset';
 WAYPOINT: 'waypoint';
@@ -72,7 +68,6 @@ identifier: ident | SINGLE_QUOTE ident+ SINGLE_QUOTE | DOUBLE_QUOTE ident+ DOUBL
 ident: ID
         | ADMIN
         | CANCEL
-        | DEATH
         | DEBUG
         | FALSE
         | INVALIDATE
@@ -88,7 +83,6 @@ ident: ID
         | SERVER
         | SET
         | SET_WAYPOINT
-        | SURFACE
         | TRUE
         | UNSET
         | WAYPOINT;

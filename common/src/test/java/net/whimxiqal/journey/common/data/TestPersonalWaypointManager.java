@@ -105,7 +105,7 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
   }
 
   @Override
-  public Map<String, Cell> getAll(@NotNull UUID playerUuid) throws DataAccessException {
+  public Map<String, Cell> getAll(@NotNull UUID playerUuid, boolean justPublic) throws DataAccessException {
     Map<String, Cell> ret = waypoints.get(playerUuid);
     if (ret == null) {
       return Collections.emptyMap();
