@@ -1,0 +1,36 @@
+name: Journey
+version: ${version}
+main: net.whimxiqal.journey.bukkit.JourneyBukkit
+api-version: 1.17
+authors:
+  - whimxiqal
+description: A path-optimization Minecraft solution
+website: https://whimcproject.web.illinois.edu/
+softdepend:
+  - WHIMC-Portals
+  - Essentials
+permissions:
+  journey.admin:
+    default: false
+    description: Use all journey admin commands
+  journey.path.player:
+    default: true
+    description: Use command to create a path to any player
+  journey.path.death:
+    default: true
+    description: Use command to create a path to last death location
+  journey.path.private:
+    default: true
+    description: Use path command pertaining to private destinations
+  journey.path.surface:
+    default: true
+    description: Use surface command to navigate to the surface of overworld type worlds
+  journey.path.quest:
+    default: true
+    description: Use quest command to navigate to the next quest destination
+  journey.path.public:
+    default: true
+    description: Use all commands pertaining to public destinations
+  journey.edit.public:
+    default: false
+    description: Use commands that edit public destinations

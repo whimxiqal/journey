@@ -70,3 +70,36 @@ Details and usage of this API will be developed and documented in the future.
 ## Rating
 Our resource can be found on the [SpigotMC Forums](https://www.spigotmc.org/resources/journey-1-17.97117/). 
 You can leave a review there and discuss the resource with others in the Spigot community!
+
+## Ideas
+- Set default permissions better in server yml for bukkit
+- create "build mode" that just lets you "fly" but takes a cost of like 4 times the distance than other types of 
+  movement
+- create "dig" mode that lets you break through things but costs a multiplier based on type of mining tools the 
+  player has and how long it takes to mine them
+  - i.e. lower cost to break through sand (with a shovel) than through stone, even with an iron pick :)
+- color for path seems to be for "fly" mode when I try to go to Angel with journey without fly mode
+- boating on water seems to prioritize swimming, when clearly it should be boating
+- make the Euclidean_Distance equation really be about "time cost", and the approximation equation should really be 
+  based on "approximate time to get there", which is distance times expected speed (walking?) so now we can make it 
+  about cost and not about distance
+- Following path in a boat doesn't keep the particles going (probably because I'm slightly too low into the water 
+  to recognize it?)
+- Particles are showing for other people?
+- "Journey cancel" should also get rid of existing paths
+- For the GUI menu:
+  - there are "categories", each taking up some number of rows.
+  - In between categories are "blank" rows as separators
+  - The bottom row of the menu is the "control bar", where the user can page to new options/categories
+    - The "control bar" also has the "edit switch", which instead of "journeying" to the location, you may edit it 
+      (if you have permission)
+    - editing includes updating name, icon (in menu), and location (if applicable)
+  - Saving new locations is as simple as choosing the first item of each category (it will be some green item to 
+    symbolize creation)
+  - Anything that needs character input, like saving a new location or updating an existing one, will open the chat 
+    menu with a request for input
+- Searches should end in a final search from the origin to the player who called the search to connect them to the 
+  start of their path
+  - Also, it should search from the destination to the new destination to connect them too, if it moved, like if the 
+    destination is a moving object like a player
+- Put nether portals in db

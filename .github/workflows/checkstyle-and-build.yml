@@ -6,6 +6,15 @@ name: Java CI with Gradle
 on: [pull_request, push]
 
 jobs:
+  gradle_validation:
+    runs-on: ubuntu-latest
+    name: Gradle Wrapper Validation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Validate
+        uses: gradle/wrapper-validation-action@v1
+
   checkstyle_job:
     runs-on: ubuntu-latest
     name: Checkstyle
