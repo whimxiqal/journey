@@ -6,9 +6,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.ReentrantLock;
-import net.whimxiqal.journey.common.Journey;
-import net.whimxiqal.journey.common.navigation.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.ChunkSnapshot;
@@ -22,42 +21,41 @@ public class ThreadSafeBlockAccessor {
   private static final long CHUNK_SNAPSHOT_LIFETIME_MS = 10000L;
   private static final long MAX_CACHED_CHUNKS = 1024;
 
-  ChunkMap chunkMap = new ChunkMap();                     // protected by lock
-  Queue<ChunkItem> chunkList = new LinkedList<>();        // protected by lock
-  Queue<ChunkRequest> requestQueue = new LinkedList<>();  // protected by lock
-  ReentrantLock lock = new ReentrantLock();
+  ChunkMap chunkMap = new ChunkMap();                     // synchronized
+  Queue<ChunkItem> chunkList = new LinkedList<>();        // synchronized
+  Queue<ChunkRequest> requestQueue = new LinkedList<>();  // synchronized
   BukkitTask task;
 
   public void init() {
-    task = Bukkit.getScheduler().runTaskTimer(JourneyBukkit.getInstance(), () -> {
-      lock.lock();
-      long timeStampThreshold = System.currentTimeMillis() - CHUNK_SNAPSHOT_LIFETIME_MS;
-      while (!chunkList.isEmpty()) {
-        ChunkItem item = chunkList.peek();
-        if (item.timeMs < timeStampThreshold) {
-          chunkMap.drop(item.domainId, item.chunk);
-          chunkList.remove();
-        } else {
-          break;
+    task = Bukkit.getScheduler().runTaskTimer(JourneyBukkit.get(), () -> {
+      synchronized (this) {
+        long timeStampThreshold = System.currentTimeMillis() - CHUNK_SNAPSHOT_LIFETIME_MS;
+        while (!chunkList.isEmpty()) {
+          ChunkItem item = chunkList.peek();
+          if (item.timeMs < timeStampThreshold) {
+            chunkMap.drop(item.domainId, item.chunk);
+            chunkList.remove();
+          } else {
+            break;
+          }
         }
-      }
 
-      Map<ChunkRequest.Data, ChunkSnapshot> completedChunkRequests = new HashMap<>();
-      while (!requestQueue.isEmpty() && chunkMap.size() <= MAX_CACHED_CHUNKS) {
-        ChunkRequest req = requestQueue.remove();
-        ChunkSnapshot existingSnapshot = completedChunkRequests.get(req.data);
-        if (existingSnapshot != null) {
-          req.future.complete(existingSnapshot);
-          continue;
+        Map<ChunkRequest.Data, ChunkSnapshot> completedChunkRequests = new HashMap<>();
+        while (!requestQueue.isEmpty() && chunkMap.size() <= MAX_CACHED_CHUNKS) {
+          ChunkRequest req = requestQueue.remove();
+          ChunkSnapshot existingSnapshot = completedChunkRequests.get(req.data);
+          if (existingSnapshot != null) {
+            req.future.complete(existingSnapshot);
+            continue;
+          }
+          World world = BukkitUtil.getWorld(req.data.domainId);
+          ChunkSnapshot snapshot = world.getChunkAt(req.data.x, req.data.z).getChunkSnapshot();
+          chunkMap.save(req.data.domainId, snapshot);
+          chunkList.add(new ChunkItem(req.data.domainId, snapshot));
+          completedChunkRequests.put(req.data, snapshot);
+          req.future.complete(snapshot);
         }
-        World world = BukkitUtil.getWorld(req.data.domainId);
-        ChunkSnapshot snapshot = world.getChunkAt(req.data.x, req.data.z).getChunkSnapshot();
-        chunkMap.save(req.data.domainId, snapshot);
-        chunkList.add(new ChunkItem(req.data.domainId, snapshot));
-        completedChunkRequests.put(req.data, snapshot);
-        req.future.complete(snapshot);
       }
-      lock.unlock();
     }, 0, 1);
     Journey.get().proxy().logger().info("ThreadSafeBlockAccessor initialized");
   }
@@ -72,20 +70,20 @@ public class ThreadSafeBlockAccessor {
     if (Bukkit.isPrimaryThread()) {
       throw new RuntimeException("This method was called from the primary thread");  // programmer error
     }
-    lock.lock();
-    BlockData data = chunkMap.get(cell.domainId(), cell.getX(), cell.getY(), cell.getZ());
-    if (data != null) {
-      lock.unlock();
-      return data;
+    ChunkRequest request;
+    synchronized (this) {
+      BlockData data = chunkMap.get(cell.domainId(), cell.blockX(), cell.blockY(), cell.blockZ());
+      if (data != null) {
+        return data;
+      }
+      // data is not in lookup map, queue chunk
+      request = new ChunkRequest(cell.domainId(), Math.floorDiv(cell.blockX(), 16), Math.floorDiv(cell.blockZ(), 16));
+      requestQueue.add(request);
     }
-    // data is not in lookup map, queue chunk
-    ChunkRequest request = new ChunkRequest(cell.domainId(), Math.floorDiv(cell.getX(), 16), Math.floorDiv(cell.getZ(), 16));
-    requestQueue.add(request);
-    lock.unlock();
 
     // Wait for request to be completed
     ChunkSnapshot snapshot = BukkitUtil.waitUntil(request.future);
-    return snapshot.getBlockData(Math.floorMod(cell.getX(), 16), cell.getY(), Math.floorMod(cell.getZ(), 16));
+    return snapshot.getBlockData(Math.floorMod(cell.blockX(), 16), cell.blockY(), Math.floorMod(cell.blockZ(), 16));
   }
 
   private static class ChunkItem {

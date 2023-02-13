@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.util;
 
-import net.whimxiqal.journey.common.navigation.Cell;
+import net.whimxiqal.journey.Cell;
 
 /**
  * A utility class to calculate properties about locations in a grid space.
@@ -54,16 +54,16 @@ public final class LocationUtil {
       return false;  // Too high to jump, too low to fall
     }
 
-    int floorX = cell.getX() + (stepX ? 1 : 0) * (isPositive ? 1 : -1);
-    int floorY = cell.getY() - 1 + offY;
-    int floorZ = cell.getZ() + (stepX ? 0 : 1) * (isPositive ? 1 : -1);
+    int floorX = cell.blockX() + (stepX ? 1 : 0) * (isPositive ? 1 : -1);
+    int floorY = cell.blockY() - 1 + offY;
+    int floorZ = cell.blockZ() + (stepX ? 0 : 1) * (isPositive ? 1 : -1);
 
     if (BukkitUtil.getWorld(cell).getBlockAt(floorX, floorY, floorZ).isPassable()) {
       return false;  // There is no floor
     }
 
-    for (int columnY = Math.min(floorY, cell.getY()) + 1;
-         columnY <= Math.max(floorY, cell.getY()) + 1;
+    for (int columnY = Math.min(floorY, cell.blockY()) + 1;
+         columnY <= Math.max(floorY, cell.blockY()) + 1;
          columnY++) {
       if (!BukkitUtil.getWorld(cell).getBlockAt(floorX, columnY, floorY).isPassable()) {
         return false;

@@ -24,28 +24,29 @@
 package net.whimxiqal.journey.platform;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import net.whimxiqal.journey.common.JourneyPlayer;
-import net.whimxiqal.journey.common.math.Vector;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.ModeType;
-import net.whimxiqal.journey.common.navigation.PlatformProxy;
-import net.whimxiqal.journey.common.search.AnimationManager;
-import net.whimxiqal.journey.common.search.SearchSession;
-import net.whimxiqal.journey.common.search.flag.FlagSet;
-import net.whimxiqal.mantle.common.CommandSource;
+import java.util.function.Consumer;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.Tunnel;
+import net.whimxiqal.journey.math.Vector;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.navigation.PlatformProxy;
+import net.whimxiqal.journey.search.AnimationManager;
+import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.FlagSet;
+import org.bstats.charts.CustomChart;
 
 public class TestPlatformProxy implements PlatformProxy {
 
   public static Map<String, TestWorld> worlds = new HashMap<>();
   public static Map<String, Cell> pois = new HashMap<>();
-  public static List<TestPort> ports = new LinkedList<>();
+  public static List<Tunnel> tunnels = new LinkedList<>();
   public static List<JourneyPlayer> onlinePlayers = new LinkedList<>();
 
   @Override
@@ -96,7 +97,7 @@ public class TestPlatformProxy implements PlatformProxy {
   @Override
   public void prepareSearchSession(SearchSession searchSession, UUID player, FlagSet flags, boolean includePorts) {
     searchSession.registerMode(new WalkMode(searchSession));
-    ports.forEach(searchSession::registerPort);
+    tunnels.forEach(searchSession::registerTunnel);
   }
 
   @Override
@@ -125,7 +126,17 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public boolean sendGui(CommandSource source) {
+  public boolean sendGui(JourneyPlayer player) {
     return false;
+  }
+
+  @Override
+  public boolean synchronous() {
+    return true;
+  }
+
+  @Override
+  public Consumer<CustomChart> bStatsChartConsumer() {
+    return chart -> {/* nothing */};
   }
 }

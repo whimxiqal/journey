@@ -107,7 +107,6 @@ public final class MaterialGroups {
       case DEAD_TUBE_CORAL_WALL_FAN:
       case DETECTOR_RAIL:
       case FIRE:
-      case FROGSPAWN:
       case GLOW_BERRIES:
       case GLOW_LICHEN:
       case GRASS:
@@ -133,9 +132,6 @@ public final class MaterialGroups {
       case LIME_WALL_BANNER:
       case MAGENTA_BANNER:
       case MAGENTA_WALL_BANNER:
-      case MANGROVE_PRESSURE_PLATE:
-      case MANGROVE_SIGN:
-      case MANGROVE_WALL_SIGN:
       case MELON_SEEDS:
       case MOSS_CARPET:
       case NETHER_PORTAL:
@@ -172,7 +168,6 @@ public final class MaterialGroups {
       case RED_TULIP:
       case RED_WALL_BANNER:
       case ROSE_BUSH:
-      case SCULK_VEIN:
       case SEAGRASS:
       case SEA_PICKLE:
       case SMALL_DRIPLEAF:

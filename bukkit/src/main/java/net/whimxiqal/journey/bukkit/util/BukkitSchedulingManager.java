@@ -3,7 +3,7 @@ package net.whimxiqal.journey.bukkit.util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.whimxiqal.journey.common.manager.SchedulingManager;
+import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 
@@ -14,9 +14,9 @@ public class BukkitSchedulingManager implements SchedulingManager {
   @Override
   public void schedule(Runnable runnable, boolean async) {
     if (async) {
-      Bukkit.getScheduler().runTaskAsynchronously(JourneyBukkit.getInstance(), runnable);
+      Bukkit.getScheduler().runTaskAsynchronously(JourneyBukkit.get(), runnable);
     } else {
-      Bukkit.getScheduler().runTask(JourneyBukkit.getInstance(), runnable);
+      Bukkit.getScheduler().runTask(JourneyBukkit.get(), runnable);
     }
   }
 
@@ -26,9 +26,9 @@ public class BukkitSchedulingManager implements SchedulingManager {
       schedule(runnable, async);
     }
     if (async) {
-      Bukkit.getScheduler().runTaskLaterAsynchronously(JourneyBukkit.getInstance(), runnable, tickDelay);
+      Bukkit.getScheduler().runTaskLaterAsynchronously(JourneyBukkit.get(), runnable, tickDelay);
     } else {
-      Bukkit.getScheduler().runTaskLater(JourneyBukkit.getInstance(), runnable, tickDelay);
+      Bukkit.getScheduler().runTaskLater(JourneyBukkit.get(), runnable, tickDelay);
     }
   }
 
@@ -36,9 +36,9 @@ public class BukkitSchedulingManager implements SchedulingManager {
   public UUID scheduleRepeat(Runnable runnable, boolean async, int tickPeriod) {
     int id;
     if (async) {
-      id = Bukkit.getScheduler().runTaskTimerAsynchronously(JourneyBukkit.getInstance(), runnable, 0, tickPeriod).getTaskId();
+      id = Bukkit.getScheduler().runTaskTimerAsynchronously(JourneyBukkit.get(), runnable, 0, tickPeriod).getTaskId();
     } else {
-      id = Bukkit.getScheduler().runTaskTimer(JourneyBukkit.getInstance(), runnable, 0, tickPeriod).getTaskId();
+      id = Bukkit.getScheduler().runTaskTimer(JourneyBukkit.get(), runnable, 0, tickPeriod).getTaskId();
     }
     UUID uuid = UUID.randomUUID();
     uuidToId.put(uuid, id);

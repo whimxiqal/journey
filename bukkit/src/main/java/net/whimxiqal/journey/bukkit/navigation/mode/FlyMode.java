@@ -25,9 +25,9 @@ package net.whimxiqal.journey.bukkit.navigation.mode;
 
 import java.util.List;
 import java.util.Set;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.ModeType;
-import net.whimxiqal.journey.common.search.SearchSession;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;

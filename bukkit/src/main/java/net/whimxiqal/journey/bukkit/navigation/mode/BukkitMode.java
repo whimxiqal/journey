@@ -23,8 +23,8 @@
 
 package net.whimxiqal.journey.bukkit.navigation.mode;
 
-import net.whimxiqal.journey.common.navigation.Mode;
-import net.whimxiqal.journey.common.search.SearchSession;
+import net.whimxiqal.journey.navigation.Mode;
+import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import java.util.Set;
 import org.bukkit.Material;

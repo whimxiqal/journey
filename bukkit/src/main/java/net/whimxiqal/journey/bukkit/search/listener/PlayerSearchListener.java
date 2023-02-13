@@ -24,17 +24,17 @@
 package net.whimxiqal.journey.bukkit.search.listener;
 
 import java.util.UUID;
-import net.whimxiqal.journey.common.Journey;
-import net.whimxiqal.journey.common.message.Formatter;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.Itinerary;
-import net.whimxiqal.journey.common.navigation.journey.JourneySession;
-import net.whimxiqal.journey.common.navigation.journey.PlayerJourneySession;
-import net.whimxiqal.journey.common.search.PlayerDestinationGoalSearchSession;
-import net.whimxiqal.journey.common.search.PlayerSessionState;
-import net.whimxiqal.journey.common.search.PlayerSessionStateful;
-import net.whimxiqal.journey.common.search.SearchSession;
-import net.whimxiqal.journey.common.util.TimeUtil;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.navigation.Itinerary;
+import net.whimxiqal.journey.navigation.journey.JourneySession;
+import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
+import net.whimxiqal.journey.search.PlayerDestinationGoalSearchSession;
+import net.whimxiqal.journey.search.PlayerSessionState;
+import net.whimxiqal.journey.search.PlayerSessionStateful;
+import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.util.TimeUtil;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import net.whimxiqal.journey.bukkit.search.event.BukkitFoundSolutionEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitIgnoreCacheSearchEvent;
@@ -61,6 +61,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class PlayerSearchListener implements Listener {
 
   private static final double STEVE_RUNNING_SPEED = 5.621;  // blocks per second
+  public static final long VISITATION_TIMEOUT_MS = 10;  // Any visits with 10 ms
+
+  private long lastVisitTime = 0;
 
   /**
    * Handle the event fired when a new solution is found.
@@ -99,16 +102,9 @@ public class PlayerSearchListener implements Listener {
     }
     playerSessionState.setSolved(true);
 
-    // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
-    PlayerJourneySession journey = new PlayerJourneySession(player.getUniqueId(), session, itinerary);
-    journey.run();
-
-    // Save the journey
-    Journey.get().searchManager().putJourney(player.getUniqueId(), journey);
-
     // Set up a success notification that will be cancelled if a better one is found in some amount of time
     playerSessionState.setSuccessNotificationTaskId(Bukkit.getScheduler()
-        .runTaskLater(JourneyBukkit.getInstance(),
+        .runTaskLater(JourneyBukkit.get(),
             () -> {
               Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(Formatter.prefix()
                   .append(Component.text("Success! Please follow the path.")
@@ -133,6 +129,14 @@ public class PlayerSearchListener implements Listener {
                                   .append(Component.text(TimeUtil.toSimpleTime(
                                           Math.round((double) event.getSearchEvent().getExecutionTime() / 1000)))
                                       .color(Formatter.ACCENT)))))));
+
+              // Create a journey that is completed when the player reaches within 3 blocks of the endpoint
+              PlayerJourneySession journey = new PlayerJourneySession(player.getUniqueId(), session, itinerary);
+              journey.run();
+
+              // Save the journey
+              Journey.get().searchManager().putJourney(player.getUniqueId(), journey);
+
               playerSessionState.setSolutionPresented(true);
             },
             20 /* one second (20 ticks) */)
@@ -262,32 +266,15 @@ public class PlayerSearchListener implements Listener {
    */
   @EventHandler
   public void onPlayerMove(PlayerMoveEvent event) {
-
-    if (event.getTo() == null) {
+    long now = System.currentTimeMillis();
+    if (now < lastVisitTime + VISITATION_TIMEOUT_MS) {
+      // ignore movements if they're too frequent
       return;
     }
+    lastVisitTime = now;
     Cell cell = BukkitUtil.cell(event.getTo());
     UUID playerUuid = event.getPlayer().getUniqueId();
-    PlayerJourneySession playerJourney = Journey.get().searchManager().getJourney(playerUuid);
-
-    if (playerJourney == null) {
-      // We don't care about a player moving unless there's a journey happening
-      return;
-    }
-
-    Cell currentLocation = Journey.get().searchManager().getLocation(playerUuid);
-    if (currentLocation == null) {
-      // We couldn't outright get the player's location. Shouldn't happen, but just set the event "to"
-      Journey.get().searchManager().putLocation(playerUuid, cell);
-      return;
-    }
-
-    if (currentLocation.equals(cell)) {
-      return;
-    }
-
-    Journey.get().searchManager().putLocation(playerUuid, cell);
-    playerJourney.visit(cell);
+    Journey.get().searchManager().registerLocation(playerUuid, cell);
   }
 
   /**
@@ -299,15 +286,5 @@ public class PlayerSearchListener implements Listener {
   public void onQuit(PlayerQuitEvent event) {
     // Perform quit logic. Currently, nothing.
   }
-//
-//  private Optional<PlayerSessionStateful> getPlayerSearch(
-//      BukkitSearchEvent<?> event) {
-//    if (event.getSearchEvent().getSession() instanceof PlayerSessionStateful) {
-//      return Optional.of((PlayerSessionStateful)
-//          event.getSearchEvent().getSession());
-//    } else {
-//      return Optional.empty();
-//    }
-//  }
 
 }

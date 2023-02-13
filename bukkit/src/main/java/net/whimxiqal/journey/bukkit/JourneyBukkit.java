@@ -23,14 +23,11 @@
 
 package net.whimxiqal.journey.bukkit;
 
-import net.whimxiqal.journey.common.Journey;
-import net.whimxiqal.journey.common.ProxyImpl;
-import net.whimxiqal.journey.common.command.JourneyConnectorProvider;
-import net.whimxiqal.journey.common.data.integration.Integrator;
-import net.whimxiqal.journey.common.data.integration.PotentialIntegrator;
-import net.whimxiqal.journey.common.search.event.SearchDispatcher;
-import net.whimxiqal.journey.common.search.event.SearchEvent;
-import net.whimxiqal.journey.bukkit.integration.PotentialEssentialsIntegrator;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.ProxyImpl;
+import net.whimxiqal.journey.command.JourneyConnectorProvider;
+import net.whimxiqal.journey.search.event.SearchDispatcher;
+import net.whimxiqal.journey.search.event.SearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitFoundSolutionEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitIgnoreCacheSearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitModeFailureEvent;
@@ -52,10 +49,8 @@ import net.whimxiqal.journey.bukkit.search.listener.PlayerSearchListener;
 import net.whimxiqal.journey.bukkit.util.BukkitLogger;
 import net.whimxiqal.journey.bukkit.util.BukkitSchedulingManager;
 import net.whimxiqal.journey.bukkit.util.ThreadSafeBlockAccessor;
-import net.whimxiqal.mantle.bukkit.BukkitRegistrarProvider;
+import net.whimxiqal.mantle.paper.PaperRegistrarProvider;
 import net.whimxiqal.mantle.common.CommandRegistrar;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
-import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -71,7 +66,7 @@ public final class JourneyBukkit extends JavaPlugin {
    *
    * @return the instance
    */
-  public static JourneyBukkit getInstance() {
+  public static JourneyBukkit get() {
     return instance;
   }
 
@@ -90,15 +85,19 @@ public final class JourneyBukkit extends JavaPlugin {
       getLogger().info("Journey data folder created");
     }
 
-    // Set up Journey Common
+    // API
+    JourneyBukkitApiSupplier.set(new JourneyBukkitApiImpl());
+
+    // Set up Journey Proxy
     ProxyImpl proxy = new ProxyImpl();
     Journey.get().registerProxy(proxy);
     proxy.logger(new BukkitLogger());
     proxy.dataFolder(this.getDataFolder().toPath());
-    proxy.audienceProvider(BukkitAudiences.create(this));
+    proxy.audienceProvider(new PaperAudiences(this));
     proxy.configManager(BukkitConfigManager.initialize("config.yml"));
     proxy.schedulingManager(new BukkitSchedulingManager());
     proxy.platform(new BukkitPlatformProxy());
+    proxy.version(getDescription().getVersion());
 
     // Instantiate a SearchDispatcher. Keep registrations alphabetized
     SearchDispatcher.Editor<Event> dispatcher = Journey.get().dispatcher().editor();
@@ -120,7 +119,7 @@ public final class JourneyBukkit extends JavaPlugin {
     Journey.get().init();
 
     // Register command
-    CommandRegistrar registrar = BukkitRegistrarProvider.get(this);
+    CommandRegistrar registrar = PaperRegistrarProvider.get(this);
     registrar.register(JourneyConnectorProvider.connector());
 
     Bukkit.getPluginManager().registerEvents(new NetherListener(), this);
@@ -137,24 +136,8 @@ public final class JourneyBukkit extends JavaPlugin {
     Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
       // TODO initialize likely-used paths here (link to link)
       valid = true;
-      JourneyBukkit.getInstance().getLogger().info("Finished initializing Journey");
+      JourneyBukkit.get().getLogger().info("Finished initializing Journey");
     });
-
-    // bStats
-    Metrics metrics = new Metrics(this, 14192);
-
-    // Integrators
-    attemptIntegrator(new PotentialEssentialsIntegrator());
-  }
-
-  private void attemptIntegrator(PotentialIntegrator potential) {
-    if (potential.viable()) {
-      Integrator integrator = potential.integrator();
-      Journey.get().integrationManager().register(integrator);
-      Journey.logger().info("Added integrator: " + integrator.name());
-    } else {
-      Journey.logger().info("Did not add integrator");
-    }
   }
 
   @Override

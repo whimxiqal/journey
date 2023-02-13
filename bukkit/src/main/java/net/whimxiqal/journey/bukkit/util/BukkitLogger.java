@@ -26,7 +26,7 @@ package net.whimxiqal.journey.bukkit.util;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
-import net.whimxiqal.journey.common.util.CommonLogger;
+import net.whimxiqal.journey.util.CommonLogger;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 
@@ -72,10 +72,10 @@ public class BukkitLogger implements CommonLogger {
   }
 
   public void init() {
-    Bukkit.getScheduler().runTaskTimer(JourneyBukkit.getInstance(), () -> {
+    Bukkit.getScheduler().runTaskTimer(JourneyBukkit.get(), () -> {
       while (!messageQueue.isEmpty()) {
         Message message = messageQueue.remove();
-        Logger logger = JourneyBukkit.getInstance().getLogger();
+        Logger logger = JourneyBukkit.get().getLogger();
         switch (message.type) {
           case WARNING:
             logger.warning(message.message);

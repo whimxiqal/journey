@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.listener;
 
-import net.whimxiqal.journey.common.Journey;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

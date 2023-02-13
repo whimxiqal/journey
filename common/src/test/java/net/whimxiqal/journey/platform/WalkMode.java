@@ -24,10 +24,10 @@
 package net.whimxiqal.journey.platform;
 
 import java.util.List;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.Mode;
-import net.whimxiqal.journey.common.navigation.ModeType;
-import net.whimxiqal.journey.common.search.SearchSession;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.navigation.Mode;
+import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 
 public class WalkMode extends Mode {
@@ -39,10 +39,10 @@ public class WalkMode extends Mode {
   protected void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
     TestWorld world = TestPlatformProxy.worlds.get(origin.domainId());
     assert world != null;
-    for (int[] pair : new int[][]{{origin.getX() - 1, origin.getY()},
-        {origin.getX() + 1, origin.getY()},
-        {origin.getX(), origin.getY() - 1},
-        {origin.getX(), origin.getY() + 1}}) {
+    for (int[] pair : new int[][]{{origin.blockX() - 1, origin.blockY()},
+        {origin.blockX() + 1, origin.blockY()},
+        {origin.blockX(), origin.blockY() - 1},
+        {origin.blockX(), origin.blockY() + 1}}) {
       int x = pair[0];
       int y = pair[1];
       if (x < 0 || x >= world.lengthX || y < 0 || y >= world.lengthY) {

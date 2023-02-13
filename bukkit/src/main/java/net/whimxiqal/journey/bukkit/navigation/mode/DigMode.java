@@ -25,17 +25,17 @@ package net.whimxiqal.journey.bukkit.navigation.mode;
 
 import java.util.List;
 import java.util.Set;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.Mode;
-import net.whimxiqal.journey.common.navigation.ModeType;
-import net.whimxiqal.journey.common.search.SearchSession;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.navigation.Mode;
+import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 public class DigMode extends BukkitMode {
 
-  public final static double DIG_COST_MULTIPLIER = 10;
+  public final static double DIG_COST_MULTIPLIER = 32;
 
   /**
    * General constructor.

@@ -40,7 +40,7 @@
     </module>
 
     <module name="BeforeExecutionExclusionFileFilter">
-        <property name="fileNamePattern" value="^((?!-api).)*$"/>
+        <property name="fileNamePattern" value="^((?!api).)*$"/>
     </module>
 
     <module name="TreeWalker">

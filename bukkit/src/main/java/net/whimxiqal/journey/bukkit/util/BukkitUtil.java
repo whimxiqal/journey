@@ -26,17 +26,17 @@ package net.whimxiqal.journey.bukkit.util;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import net.whimxiqal.journey.common.navigation.Cell;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Snow;
@@ -47,13 +47,7 @@ import org.bukkit.util.Vector;
  */
 public final class BukkitUtil {
 
-  public static final double STEVE_HEIGHT = 1.8;
-  public static final double STEVE_HEIGHT_SNEAK = 1.5;
-  public static final double STEVE_HEIGHT_GLIDE = 0.6;
-  public static final double STEVE_HEIGHT_SWIM = 0.6;
-  public static final double STEVE_WIDTH = 0.6;
-
-  public static final double STEP_HEIGHT = 0.5;
+  private static Boolean isAtLeastMinecraft17 = null;
 
   /**
    * Return true if the given block can be possibly passed through vertically,
@@ -159,7 +153,7 @@ public final class BukkitUtil {
   }
 
   public static String getWorldId(World world) {
-    return world.getUID().toString();
+    return world.getKey().asString();
   }
 
   public static Cell cell(Location location) {
@@ -171,9 +165,13 @@ public final class BukkitUtil {
   }
 
   public static World getWorld(String domainId) {
-    World world = Bukkit.getWorld(UUID.fromString(domainId));
+    NamespacedKey key = NamespacedKey.fromString(domainId);
+    if (key == null) {
+      throw new IllegalArgumentException("Id " + domainId + " is not a name-spaced key");
+    }
+    World world = Bukkit.getWorld(key);
     if (world == null) {
-      throw new IllegalStateException("There is no world with id " + domainId);
+      throw new IllegalArgumentException("There is no world with id " + domainId);
     }
     return world;
   }
@@ -186,17 +184,17 @@ public final class BukkitUtil {
    */
   public static BlockData getBlock(Cell cell) {
     if (Bukkit.isPrimaryThread()) {
-      return getWorld(cell.domainId()).getBlockData(cell.getX(), cell.getY(), cell.getZ());
+      return getWorld(cell.domainId()).getBlockAt(cell.blockX(), cell.blockY(), cell.blockZ()).getBlockData();
     }
-    return JourneyBukkit.getInstance().getBlockAccessor().getBlock(cell);
+    return JourneyBukkit.get().getBlockAccessor().getBlock(cell);
   }
 
   public static Location toLocation(Cell cell) {
-    return new Location(getWorld(cell), cell.getX(), cell.getY(), cell.getZ());
+    return new Location(getWorld(cell), cell.blockX(), cell.blockY(), cell.blockZ());
   }
 
-  public static net.whimxiqal.journey.common.math.Vector toLocalVector(Vector vector) {
-    return new net.whimxiqal.journey.common.math.Vector(vector.getX(), vector.getY(), vector.getZ());
+  public static net.whimxiqal.journey.math.Vector toLocalVector(Vector vector) {
+    return new net.whimxiqal.journey.math.Vector(vector.getX(), vector.getY(), vector.getZ());
   }
 
   public static <T> T waitUntil(Future<T> future) {
@@ -217,7 +215,7 @@ public final class BukkitUtil {
       return;
     }
     CompletableFuture<Void> future = new CompletableFuture<>();
-    Bukkit.getScheduler().runTask(JourneyBukkit.getInstance(), () -> {
+    Bukkit.getScheduler().runTask(JourneyBukkit.get(), () -> {
       try {
         runnable.run();
       } catch (Exception e) {

@@ -1,10 +1,11 @@
 package net.whimxiqal.journey.platform;
 
 import java.util.UUID;
-import net.whimxiqal.journey.common.JourneyPlayer;
-import net.whimxiqal.journey.common.navigation.Cell;
+import net.kyori.adventure.audience.Audience;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.JourneyPlayerImpl;
 
-public class TestJourneyPlayer extends JourneyPlayer {
+public class TestJourneyPlayer extends JourneyPlayerImpl {
   public TestJourneyPlayer(UUID uuid) {
     super(uuid, uuid.toString());
   }
@@ -12,5 +13,10 @@ public class TestJourneyPlayer extends JourneyPlayer {
   @Override
   public Cell location() {
     return new Cell(0, 0, 0, WorldLoader.worldResources[0]);
+  }
+
+  @Override
+  public Audience audience() {
+    return Audience.empty();
   }
 }

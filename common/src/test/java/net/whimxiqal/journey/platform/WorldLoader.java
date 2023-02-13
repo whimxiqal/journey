@@ -31,8 +31,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.ModeType;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Tunnel;
 
 public final class WorldLoader {
 
@@ -72,27 +72,21 @@ public final class WorldLoader {
               TestPlatformProxy.pois.put(Character.toString(c), new Cell(x, y, 0, resource));
             }
 
-            // PORT
+            // TUNNEL
             if (Character.isLetter(c)) {
               Cell cell = new Cell(x, y, 0, resource);
               if (Character.isUpperCase(c)) {
                 if (pendingPorts.containsKey(Character.toLowerCase(c))) {
-                  // complete the port
-                  TestPlatformProxy.ports.add(new TestPort(pendingPorts.get(Character.toLowerCase(c)),
-                      cell,
-                      ModeType.PORT,
-                      1));
+                  // complete the tunnel
+                  TestPlatformProxy.tunnels.add(Tunnel.builder(pendingPorts.get(Character.toLowerCase(c)), cell).build());
                 } else {
                   pendingPorts.put(c, cell);
                 }
               } else {
                 // lower case
                 if (pendingPorts.containsKey(Character.toUpperCase(c))) {
-                  // complete the port
-                  TestPlatformProxy.ports.add(new TestPort(cell,
-                      pendingPorts.get(Character.toUpperCase(c)),
-                      ModeType.PORT,
-                      1));
+                  // complete the tunnel
+                  TestPlatformProxy.tunnels.add(Tunnel.builder(cell, pendingPorts.get(Character.toUpperCase(c))).build());
                 } else {
                   pendingPorts.put(c, cell);
                 }

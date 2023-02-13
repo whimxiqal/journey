@@ -1,5 +1,8 @@
 rootProject.name = 'journey'
 include (
+        'api',
         'common',
+        'bukkit-api',
         'bukkit',
 )
+

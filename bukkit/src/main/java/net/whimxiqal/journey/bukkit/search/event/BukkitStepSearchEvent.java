@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.search.event;
 
-import net.whimxiqal.journey.common.search.event.StepSearchEvent;
+import net.whimxiqal.journey.search.event.StepSearchEvent;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 

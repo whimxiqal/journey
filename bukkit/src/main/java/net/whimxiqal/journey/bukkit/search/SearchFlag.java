@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.search;
 
-import net.whimxiqal.journey.common.search.SearchSession;
+import net.whimxiqal.journey.search.SearchSession;
 
 /**
  * An enumeration of possible flags used to alter

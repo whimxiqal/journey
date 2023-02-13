@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.search.SearchSession;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
@@ -62,9 +62,9 @@ public abstract class RayTraceMode extends BukkitMode {
     final double halfCrossSectionalLengthX = crossSectionLengthX / 2;
     final double halfCrossSectionalLengthZ = crossSectionLengthZ / 2;
 
-    final double startX = origin.getX() + 0.5;
-    final double startY = origin.getY();
-    final double startZ = origin.getZ() + 0.5;
+    final double startX = origin.blockX() + 0.5;
+    final double startY = origin.blockY();
+    final double startZ = origin.blockZ() + 0.5;
 
     AtomicReference<Cell> result = new AtomicReference<>(null);
     BukkitUtil.runSync(() -> {

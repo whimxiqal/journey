@@ -23,9 +23,9 @@
 
 package net.whimxiqal.journey.bukkit.config;
 
-import net.whimxiqal.journey.common.config.ConfigManager;
-import net.whimxiqal.journey.common.config.Setting;
-import net.whimxiqal.journey.common.config.Settings;
+import net.whimxiqal.journey.config.ConfigManager;
+import net.whimxiqal.journey.config.Setting;
+import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import java.io.File;
 import java.io.FileInputStream;
@@ -82,21 +82,21 @@ public class BukkitConfigManager implements ConfigManager {
 
   private void dumpSettings() {
     getSettings().forEach((path, setting) ->
-        JourneyBukkit.getInstance().getConfig().set(path, setting.printValue()));
+        JourneyBukkit.get().getConfig().set(path, setting.printValue()));
   }
 
   @Override
   public void save() {
-    File configFile = new File(JourneyBukkit.getInstance().getDataFolder(), this.fileName);
+    File configFile = new File(JourneyBukkit.get().getDataFolder(), this.fileName);
     try {
       if (configFile.createNewFile()) {
-        JourneyBukkit.getInstance().getLogger().info("Created config file for Journey");
+        JourneyBukkit.get().getLogger().info("Created config file for Journey");
       }
       try (FileOutputStream fos = new FileOutputStream(configFile)) {
         // Stage static setting values into config object
         dumpSettings();
         // Write config to file
-        fos.write(JourneyBukkit.getInstance().getConfig().saveToString().getBytes(StandardCharsets.UTF_8));
+        fos.write(JourneyBukkit.get().getConfig().saveToString().getBytes(StandardCharsets.UTF_8));
       } catch (FileNotFoundException e) {
         e.printStackTrace();
       }
@@ -108,10 +108,10 @@ public class BukkitConfigManager implements ConfigManager {
 
   private void loadSettings() {
     getSettings().forEach((s, setting) -> {
-      if (JourneyBukkit.getInstance().getConfig().contains(s)) {
+      if (JourneyBukkit.get().getConfig().contains(s)) {
         parseAndSetValue(setting, s);
       } else {
-        JourneyBukkit.getInstance().getConfig().set(s, setting.getValue());
+        JourneyBukkit.get().getConfig().set(s, setting.getValue());
       }
     });
   }
@@ -124,29 +124,29 @@ public class BukkitConfigManager implements ConfigManager {
    * @param <X>         the type of setting
    */
   private <X> void parseAndSetValue(Setting<X> setting, String stringValue) {
-    setting.setValue(setting.parseValue(Objects.requireNonNull(JourneyBukkit.getInstance()
+    setting.setValue(setting.parseValue(Objects.requireNonNull(JourneyBukkit.get()
         .getConfig()
         .getString(stringValue))));
   }
 
   @Override
   public void load() {
-    File configFile = new File(JourneyBukkit.getInstance().getDataFolder(), this.fileName);
+    File configFile = new File(JourneyBukkit.get().getDataFolder(), this.fileName);
     try {
       if (configFile.createNewFile()) {
-        JourneyBukkit.getInstance().getLogger().info("Created config file for Journey");
+        JourneyBukkit.get().getLogger().info("Created config file for Journey");
       }
       try (FileInputStream fis = new FileInputStream(configFile)) {
         byte[] data = new byte[(int) configFile.length()];
         if (fis.read(data) < 0) {
-          JourneyBukkit.getInstance().getLogger().severe("Configuration file could not be read");
+          JourneyBukkit.get().getLogger().severe("Configuration file could not be read");
         }
         // Stage into config object
-        JourneyBukkit.getInstance().getConfig().loadFromString(new String(data, StandardCharsets.UTF_8));
+        JourneyBukkit.get().getConfig().loadFromString(new String(data, StandardCharsets.UTF_8));
         // Put config object into static settings
         loadSettings();
       } catch (InvalidConfigurationException e) {
-        JourneyBukkit.getInstance().getLogger().severe("Your configuration file is malformed!");
+        JourneyBukkit.get().getLogger().severe("Your configuration file is malformed!");
         e.printStackTrace();
       } catch (FileNotFoundException e) {
         e.printStackTrace();

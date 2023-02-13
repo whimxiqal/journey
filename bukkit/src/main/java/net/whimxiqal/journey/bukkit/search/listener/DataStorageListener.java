@@ -24,11 +24,11 @@
 package net.whimxiqal.journey.bukkit.search.listener;
 
 import java.util.stream.Collectors;
-import net.whimxiqal.journey.common.Journey;
-import net.whimxiqal.journey.common.data.DataAccessException;
-import net.whimxiqal.journey.common.navigation.Mode;
-import net.whimxiqal.journey.common.search.FlexiblePathTrial;
-import net.whimxiqal.journey.common.search.PathTrial;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.data.DataAccessException;
+import net.whimxiqal.journey.navigation.Mode;
+import net.whimxiqal.journey.search.FlexiblePathTrial;
+import net.whimxiqal.journey.search.PathTrial;
 import net.whimxiqal.journey.bukkit.search.event.BukkitStopPathSearchEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

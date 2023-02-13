@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.search.event;
 
-import net.whimxiqal.journey.common.search.event.IgnoreCacheSearchEvent;
+import net.whimxiqal.journey.search.event.IgnoreCacheSearchEvent;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 

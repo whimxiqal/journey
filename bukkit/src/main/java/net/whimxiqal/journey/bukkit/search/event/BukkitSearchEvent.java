@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.search.event;
 
-import net.whimxiqal.journey.common.search.event.SearchEvent;
+import net.whimxiqal.journey.search.event.SearchEvent;
 import org.bukkit.event.Event;
 
 /**
