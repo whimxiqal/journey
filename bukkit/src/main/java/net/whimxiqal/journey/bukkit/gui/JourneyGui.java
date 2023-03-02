@@ -136,16 +136,14 @@ public class JourneyGui {
       gui.setItem(1, 1, ItemBuilder.from(Material.BEDROCK)
           // assume only the home page has an empty name
           .name(Formatter.accent("Back to ___", previous.scope.wrappedScope().name().equals(Component.empty()) ? "Home Page" : previous.scope.wrappedScope().name()))
-          .asGuiItem(event -> {
-            previous.open();
-          }));
+          .asGuiItem(event -> previous.open()));
     }
 
     VirtualMap<InternalScope> subScopeSupplier = scope.subScopes(player);
     if (subScopeSupplier.size() < MAX_SCOPE_ITEM_COUNT) {
       subScopeSupplier.getAll().entrySet().stream()
           .sorted(Map.Entry.comparingByKey())
-          .filter(entry -> !player.hasPermission(entry.getValue().wrappedScope().permission().orElse(null)))
+          .filter(entry -> !ScopeUtil.restricted(entry.getValue().allPermissions(), player))
           .filter(entry -> entry.getValue().subScopes(player).size() > 0 || entry.getValue().sessions(player).size() > 0)
           .forEach(entry -> {
             ItemBuilder guiItem = ItemBuilder.from(getMaterial(entry.getKey(), scopeOptions))
@@ -170,9 +168,7 @@ public class JourneyGui {
             GuiItem guiItem = ItemBuilder.from(getMaterial(entry.getKey(), itemOptions))
                 .name(entry.getValue().name() == Component.empty() ? Formatter.accent(entry.getKey()) : entry.getValue().name())
                 .lore(entry.getValue().description())
-                .asGuiItem(event -> {
-                  Journey.get().searchManager().launchSearch(entry.getValue());
-                });
+                .asGuiItem(event -> Journey.get().searchManager().launchSearch(entry.getValue()));
             gui.addItem(guiItem);
           });
     }

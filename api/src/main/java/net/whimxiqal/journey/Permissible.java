@@ -25,6 +25,9 @@ package net.whimxiqal.journey;
 
 import java.util.Optional;
 
+/**
+ * An object that may or may not require a permission to use.
+ */
 public interface Permissible {
 
   /**

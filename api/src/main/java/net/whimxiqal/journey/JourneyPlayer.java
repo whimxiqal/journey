@@ -46,7 +46,7 @@ public interface JourneyPlayer {
   String name();
 
   /**
-   * The player's current location
+   * The player's current location.
    *
    * @return the location
    */

@@ -25,12 +25,27 @@ package net.whimxiqal.journey;
 
 import net.kyori.adventure.text.Component;
 
+/**
+ * A named place.
+ */
 public interface Destination extends Describable, Permissible {
 
+  /**
+   * Static constructor a builder.
+   *
+   * @param location the location
+   * @return the destination builder
+   */
   static DestinationBuilder builder(Cell location) {
     return new DestinationBuilder(location);
   }
 
+  /**
+   * Static constructor using just a location.
+   *
+   * @param location the location
+   * @return the unnamed destination
+   */
   static Destination of(Cell location) {
     return new DestinationImpl(Component.empty(), Component.empty(), location, null);
   }

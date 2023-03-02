@@ -87,6 +87,9 @@ class TunnelImpl implements Tunnel {
 
   @Override
   public String toString() {
-    return "TunnelImpl{" + origin + " -> " + destination + ", cost=" + cost + ", permission=" + permission + '}';
+    return "TunnelImpl{" + origin + " -> "
+        + destination + ", cost="
+        + cost + ", permission="
+        + permission + '}';
   }
 }

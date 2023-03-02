@@ -25,6 +25,9 @@ package net.whimxiqal.journey;
 
 import net.kyori.adventure.text.Component;
 
+/**
+ * A builder for a {@link Destination}.
+ */
 public class DestinationBuilder implements Builder<Destination> {
 
   private final Cell location;
@@ -58,6 +61,15 @@ public class DestinationBuilder implements Builder<Destination> {
     return this;
   }
 
+  /**
+   * Set the permission.
+   * A user will need both the given permission and also the permission "journey.path.your-permission"
+   * in order to see and use the resultant destination.
+   * If the permission itself starts with "journey.path", then only the given permission is required.
+   *
+   * @param permission the permission
+   * @return the builder, for chaining
+   */
   public DestinationBuilder permission(String permission) {
     this.permission = permission;
     return this;

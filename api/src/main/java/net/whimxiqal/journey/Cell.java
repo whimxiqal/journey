@@ -134,8 +134,12 @@ public class Cell implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     Cell cell = (Cell) o;
     return blockX == cell.blockX && blockY == cell.blockY && blockZ == cell.blockZ && domain == cell.domain;
   }

@@ -25,6 +25,9 @@ package net.whimxiqal.journey;
 
 import net.kyori.adventure.text.Component;
 
+/**
+ * An object that may be named and described using {@link Component}s.
+ */
 public interface Describable {
 
   /**

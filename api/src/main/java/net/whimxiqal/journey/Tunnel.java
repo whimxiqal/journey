@@ -31,6 +31,13 @@ public interface Tunnel extends Permissible {
 
   int DEFAULT_COST = 1;
 
+  /**
+   * Static constructor for a builder of a Tunnel.
+   *
+   * @param origin      the origin
+   * @param destination the destination
+   * @return the builder
+   */
   static TunnelBuilder builder(Cell origin, Cell destination) {
     return new TunnelBuilder(origin, destination);
   }

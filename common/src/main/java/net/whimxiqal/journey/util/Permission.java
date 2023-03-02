@@ -23,6 +23,9 @@
 
 package net.whimxiqal.journey.util;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public enum Permission {
 
   CANCEL("journey.cancel"),
@@ -62,8 +65,13 @@ public enum Permission {
     this.path = path;
   }
 
-  public static String journeyPathExtend(String perm) {
-    return JOURNEY_PATH_PERMISSION_PREFIX + "." + perm;
+  public static List<String> journeyPathExtend(String perm) {
+    List<String> list = new LinkedList<>();
+    list.add(perm);
+    if (!perm.startsWith(Permission.JOURNEY_PATH_PERMISSION_PREFIX)) {
+      list.add(JOURNEY_PATH_PERMISSION_PREFIX + "." + perm);
+    }
+    return list;
   }
 
   public String path() {

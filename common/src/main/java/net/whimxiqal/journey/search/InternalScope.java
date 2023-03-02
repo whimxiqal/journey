@@ -1,7 +1,10 @@
 package net.whimxiqal.journey.search;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;
@@ -36,21 +39,14 @@ public class InternalScope {
         SearchSession session = new PlayerDestinationGoalSearchSession(player.uuid(), player.location(), destination.location(), true);
         session.setName(destination.name());
         session.setDescription(destination.description());
-        destination.permission().ifPresent(perm -> {
-          session.addPermission(perm);
-          if (!perm.startsWith(Permission.JOURNEY_PATH_PERMISSION_PREFIX)) {
-            session.addPermission(Permission.journeyPathExtend(perm));
-          }
-        });
+        destination.permission().ifPresent(perm -> Permission.journeyPathExtend(perm).forEach(session::addPermission));
         sessionMap.put(name, session);
       });
       return sessionMap;
     }, sessions.apply(player).size() + scope.destinations(player).size());
     this.internalSubScopes = player -> VirtualMap.of(() -> {
       Map<String, InternalScope> scopesMap = new HashMap<>(internalScopes.apply(player).getAll());
-      scope.subScopes(player).getAll().forEach((name, subScope) -> {
-        scopesMap.put(name, new InternalScope(subScope));
-      });
+      scope.subScopes(player).getAll().forEach((name, subScope) -> scopesMap.put(name, new InternalScope(subScope)));
       return scopesMap;
     }, internalScopes.apply(player).size() + scope.subScopes(player).size());
   }
@@ -69,6 +65,10 @@ public class InternalScope {
 
   public Scope wrappedScope() {
     return scope;
+  }
+
+  public List<String> allPermissions() {
+    return wrappedScope().permission().map(Permission::journeyPathExtend).orElse(Collections.emptyList());
   }
 
 }

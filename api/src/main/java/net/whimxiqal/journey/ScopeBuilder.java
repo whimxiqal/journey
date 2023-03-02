@@ -130,11 +130,28 @@ public class ScopeBuilder implements Builder<Scope> {
     return this;
   }
 
+  /**
+   * Set the permission.
+   * A user will need both the given permission and also the permission "journey.path.your-permission"
+   * in order to see and use the resultant destination.
+   * If the permission itself starts with "journey.path", then only the given permission is required.
+   *
+   * @param permission the permission
+   * @return the builder, for chaining
+   */
   public ScopeBuilder permission(String permission) {
     this.permission = permission;
     return this;
   }
 
+  /**
+   * Set whether this scope is strict or not.
+   * A strict scope will require that a user specify any targets within this scope
+   * explicitly by naming the previous scope ids.
+   * Otherwise, targets within this scope may be specified even after omitting some scope ids.
+   *
+   * @return the builder
+   */
   public ScopeBuilder strict() {
     this.strict = true;
     return this;

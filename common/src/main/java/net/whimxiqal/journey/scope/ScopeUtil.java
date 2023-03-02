@@ -135,7 +135,7 @@ public final class ScopeUtil {
             + subScope.getKey() + ". Please notify the plugin owner.");
         continue;
       }
-      if (subScope.getValue().wrappedScope().permission().filter(perm -> !player.hasPermission(perm)).isPresent()) {
+      if (restricted(subScope.getValue().allPermissions(), player)) {
         continue;
       }
       scopeHistory.push(subScope.getKey());
@@ -188,7 +188,7 @@ public final class ScopeUtil {
       if (subScope == null) {
         return locationFromSubScopes(subScopes.getAll(), player, scopeHistory, scopedString);
       }
-      if (subScope.wrappedScope().permission().filter(perm -> !player.hasPermission(perm)).isPresent()) {
+      if (restricted(subScope.allPermissions(), player)) {
         return ScopedSessionResult.noPermission();
       }
       return session(subScope, player, scopeHistory + item + ":", tokens[1]);
@@ -203,7 +203,7 @@ public final class ScopeUtil {
       if (subScope.getValue().isStrict()) {
         continue;
       }
-      if (subScope.getValue().wrappedScope().permission().filter(perm -> !player.hasPermission(perm)).isPresent()) {
+      if (restricted(subScope.getValue().allPermissions(), player)) {
         continue;
       }
       ScopedSessionResult result = session(subScope.getValue(), player, scopeHistory + subScope.getKey() + ":", scopedString);
