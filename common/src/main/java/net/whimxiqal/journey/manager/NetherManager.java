@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.data.TunnelType;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.NetherTunnel;
@@ -51,7 +52,7 @@ public final class NetherManager {
   public void load() {
     Journey.get().dataManager()
         .netherPortalManager()
-        .getAllTunnels()
+        .getAllTunnels(TunnelType.NETHER)
         .forEach(tunnel -> portalConnections.put(tunnel.origin(), tunnel.destination()));
   }
 
@@ -70,7 +71,7 @@ public final class NetherManager {
         linksVerified.add(tunnel);
       } else {
         portalConnections.remove(tunnel.origin(), tunnel.destination());
-        Journey.get().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination());
+        Journey.get().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination(), TunnelType.NETHER);
       }
     }
     return linksVerified;
@@ -106,7 +107,7 @@ public final class NetherManager {
         return;  // We can't find the destination portal
       }
 
-      if (originGroup.tunnelLocation().domainId().equals(destinationGroup.get().tunnelLocation().domainId())) {
+      if (originGroup.tunnelLocation().domain() == destinationGroup.get().tunnelLocation().domain()) {
         // If they're in the same world, we have the same portal! We haven't actually teleported yet. Try again
         lookForPortal(resultantLocation, originGroup, count + 1);
         return;
@@ -136,10 +137,10 @@ public final class NetherManager {
           portalConnections.remove(old);
           Journey.get().dataManager()
               .netherPortalManager()
-              .getTunnelsWithOrigin(old)
+              .getTunnelsWithOrigin(old, TunnelType.NETHER)
               .forEach(tunnel -> Journey.get().dataManager()
                   .netherPortalManager()
-                  .removeTunnels(old, tunnel.destination()));
+                  .removeTunnels(old, tunnel.destination(), TunnelType.NETHER));
         }
       });
 
@@ -147,7 +148,8 @@ public final class NetherManager {
       Cell previous = portalConnections.put(originGroup.tunnelLocation(), destinationGroup.get().tunnelLocation());
       Journey.get().dataManager().netherPortalManager().addTunnel(originGroup.tunnelLocation(),
           destinationGroup.get().tunnelLocation(),
-          NetherTunnel.COST);
+          NetherTunnel.COST,
+          TunnelType.NETHER);
       if (previous == null) {
         Journey.get().debugManager().broadcast(Formatter.debug("Added nether tunnel:"
             + originGroup.tunnelLocation() + " -> "
@@ -158,7 +160,7 @@ public final class NetherManager {
 
   public void reset() {
     portalConnections.clear();
-    Journey.get().dataManager().netherPortalManager().removeTunnels();
+    Journey.get().dataManager().netherPortalManager().removeTunnels(TunnelType.NETHER);
   }
 
   /**
@@ -186,7 +188,7 @@ public final class NetherManager {
                                            int maxHeight) {
     Set<PortalGroup> portals = new HashSet<>();  // All PortalGroups found
     Set<Cell> stored = new HashSet<>();  // All Portal blocks found in the PortalGroups
-    String domain = origin.domainId();
+    int domain = origin.domain();
 
     int startY = Math.max(origin.blockY() - radius, minHeight);
     int endY = Math.min(origin.blockY() + radius, maxHeight);
@@ -243,7 +245,7 @@ public final class NetherManager {
       return null;
     }
 
-    PortalGroup group = portalBlock(new PortalGroup(cell.domainId()), cell);
+    PortalGroup group = portalBlock(new PortalGroup(cell.domain()), cell);
     return group.size() > 5 ? group : null;
   }
 
@@ -251,7 +253,7 @@ public final class NetherManager {
     for (int i = -1; i <= 1; i++) {
       for (int j = -1; j <= 1; j++) {
         for (int k = -1; k <= 1; k++) {
-          Cell offset = new Cell(cell.blockX() + i, cell.blockY() + j, cell.blockZ() + k, cell.domainId());
+          Cell offset = new Cell(cell.blockX() + i, cell.blockY() + j, cell.blockZ() + k, cell.domain());
           if (Journey.get().proxy().platform().isNetherPortal(offset) && group.add(offset)) {
             portalBlock(group, offset);
           }
@@ -267,17 +269,17 @@ public final class NetherManager {
   public static class PortalGroup {
     private final Set<Cell> portal = new HashSet<>();
     private final HashMap<Integer, Set<Cell>> blockY = new HashMap<>();
-    private final String domainId;
+    private final int domain;
     private Cell teleportTo;
     private int bottom = Integer.MAX_VALUE;
 
     /**
      * A group of Portal block for a Nether portal.
      *
-     * @param domainId The world the Portal blocks resides in.
+     * @param domain The world the Portal blocks resides in.
      */
-    public PortalGroup(String domainId) {
-      this.domainId = domainId;
+    public PortalGroup(int domain) {
+      this.domain = domain;
     }
 
     /**
@@ -347,7 +349,7 @@ public final class NetherManager {
       int minZ = Collections.min(bottomY, Comparator.comparingInt(Cell::blockZ)).blockZ();
       int maxZ = Collections.max(bottomY, Comparator.comparingInt(Cell::blockZ)).blockZ();
 
-      return new Cell((maxX + minX) / 2, bottom, (maxZ + minZ) / 2, domainId);
+      return new Cell((maxX + minX) / 2, bottom, (maxZ + minZ) / 2, domain);
     }
 
     @Override

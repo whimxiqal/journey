@@ -22,9 +22,11 @@ serverWaypoint: WAYPOINT name=identifier (serverUnsetWaypoint | serverRenameWayp
 serverUnsetWaypoint: UNSET;
 serverRenameWaypoint: RENAME newname=identifier;
 
-admin: ADMIN (debug | clearCache | reload=RELOAD | listNetherPortals);
+admin: ADMIN (debug | cache | reload=RELOAD | listNetherPortals);
 debug: DEBUG target=identifier?;
-clearCache: CLEAR_CACHE (portals=PORTALS | paths=PATHS);
+cache: CACHE (cachePortals | cachePaths);
+cachePortals: PORTALS (clear=CLEAR);
+cachePaths: PATHS (clear=CLEAR | build=BUILD);
 listNetherPortals: LIST_NETHER_PORTALS page=ID?;
 
 cancel: CANCEL;
@@ -39,8 +41,10 @@ doorFlag: FLAG_DOOR (EQUAL (TRUE | FALSE))?;
 digFlag: FLAG_DIG (EQUAL (TRUE | FALSE))?;
 
 ADMIN: 'admin';
+BUILD: 'build';
+CACHE: 'cache';
 CANCEL: 'cancel';
-CLEAR_CACHE: 'clearcache';
+CLEAR: 'clear';
 COLON: ':';
 DEBUG: 'debug';
 FALSE: 'false';
@@ -75,7 +79,10 @@ EQUAL: '=';
 identifier: ident | SINGLE_QUOTE ident+ SINGLE_QUOTE | DOUBLE_QUOTE ident+ DOUBLE_QUOTE;
 ident: ID
         | ADMIN
+        | BUILD
+        | CACHE
         | CANCEL
+        | CLEAR
         | DEBUG
         | FALSE
         | INVALIDATE

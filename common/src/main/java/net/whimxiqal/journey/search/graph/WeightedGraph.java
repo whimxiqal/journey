@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.function.Predicate;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.tools.AlternatingList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,10 +79,13 @@ public abstract class WeightedGraph<N, E> {
     return existingNode;
   }
 
+  protected final AlternatingList<N, E, Object> findMinimumPath(N origin, N destination, Predicate<E> edgeFilter) {
+    return findMinimumPath(origin, current -> current.equals(destination), edgeFilter);
+  }
+
   @Nullable
-  protected final AlternatingList<N, E, Object> findMinimumPath(N origin, N destination) {
+  protected final AlternatingList<N, E, Object> findMinimumPath(N origin, Predicate<N> done, Predicate<E> edgeFilter) {
     Node originNode = makeOrGetNode(origin);
-    Node destinationNode = makeOrGetNode(destination);
 
     PriorityQueue<Node> toVisit = new PriorityQueue<>(Comparator.comparingDouble(n -> n.distance));
     Set<Node> visited = new HashSet<>();
@@ -94,9 +99,9 @@ public abstract class WeightedGraph<N, E> {
       current = toVisit.poll();
       visited.add(current);
 
-      if (current.equals(destinationNode)) {
+      if (done.test(current.data)) {
         // We've reached destination. Package solution.
-        AlternatingList.Builder<N, E, Object> pathBuilder = AlternatingList.builder(destination);
+        AlternatingList.Builder<N, E, Object> pathBuilder = AlternatingList.builder(current.data);
         while (!current.equals(originNode)) {
           pathBuilder.addFirst(current.getPrevious().data,
               Objects.requireNonNull(this.edgeTable.getEdge(current.getPrevious(), current)));
@@ -114,7 +119,12 @@ public abstract class WeightedGraph<N, E> {
       for (Map.Entry<Node, E> outlet : edgeTable.edgesFrom(current).entrySet()) {
         // outlet.getKey() is destination
         // outlet.getValue() is edge from 'current' to destination
+        if (!edgeFilter.test(outlet.getValue())) {
+          // manually filtered out this edge
+          continue;
+        }
         if (visited.contains(outlet.getKey())) {
+          // we've already gotten to this node (in a faster way)
           continue;
         }
         // the outlet constructs with max double distance, aka, infinite distance

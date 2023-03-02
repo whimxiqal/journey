@@ -59,7 +59,6 @@ public class TestPathRecordManager implements PathRecordManager {
         trial.getDestination().blockY(),
         trial.getDestination().blockZ(),
         trial.getDomain(),
-        trial.getCostFunction().getType(),
         cells,
         modes
     );
@@ -81,9 +80,14 @@ public class TestPathRecordManager implements PathRecordManager {
   }
 
   @Override
-  public void clear() {
+  public void truncate() {
     pathTrialRecords.clear();
     pathTrialCellRecords.clear();
+  }
+
+  @Override
+  public int totalRecordCellCount() {
+    return pathTrialCellRecords.size();
   }
 
   @Override
@@ -93,14 +97,14 @@ public class TestPathRecordManager implements PathRecordManager {
 
   @Override
   public @Nullable PathTrialRecord getRecord(Cell origin, Cell destination, Set<ModeType> modeTypes) {
-    if (!origin.domainId().equals(destination.domainId())) {
+    if (origin.domain() != destination.domain()) {
       return null;
     }
     for (PathTrialRecord record : pathTrialRecords) {
       boolean sameLocations = record.originX() == origin.blockX()
           && record.originY() == origin.blockY()
           && record.originZ() == origin.blockZ()
-          && record.worldId().equals(origin.domainId())
+          && record.domain() == origin.domain()
           && record.destinationX() == destination.blockX()
           && record.destinationY() == destination.blockY()
           && record.destinationZ() == destination.blockZ();
@@ -134,7 +138,7 @@ public class TestPathRecordManager implements PathRecordManager {
           cell.distanceTo(steps.getLast().location()),
           record.cells().get(i).modeType()));
     }
-    return new Path(new Cell(record.originX(), record.originY(), record.originZ(), record.worldId()),
+    return new Path(new Cell(record.originX(), record.originY(), record.originZ(), record.domain()),
         steps,
         record.pathCost());
   }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.util.Validator;
@@ -89,7 +90,7 @@ public abstract class SqlWaypointManager extends SqlManager {
     statement.setString(1, playerUuid == null ? null : playerUuid.toString());
     statement.setString(2, name.toLowerCase());
     statement.setString(3, name);
-    statement.setString(4, cell.domainId());
+    statement.setString(4, Journey.get().domainManager().domainId(cell.domain()));
     statement.setInt(5, cell.blockX());
     statement.setInt(6, cell.blockY());
     statement.setInt(7, cell.blockZ());
@@ -113,7 +114,7 @@ public abstract class SqlWaypointManager extends SqlManager {
           "z"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, cell.domainId());
+      statement.setString(2, Journey.get().domainManager().domainId(cell.domain()));
       statement.setInt(3, cell.blockX());
       statement.setInt(4, cell.blockY());
       statement.setInt(5, cell.blockZ());
@@ -147,7 +148,7 @@ public abstract class SqlWaypointManager extends SqlManager {
   protected void renameWaypoint(@Nullable UUID uuid, String name, String newName) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "UPDATE %s SET %s = ? WHERE %s = ?;",
+          "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?;",
           WAYPOINT_TABLE_NAME,
           "name_id",
           "player_uuid",
@@ -183,7 +184,7 @@ public abstract class SqlWaypointManager extends SqlManager {
         return new Cell(resultSet.getInt("x"),
             resultSet.getInt("y"),
             resultSet.getInt("z"),
-            resultSet.getString("domain_id"));
+            Journey.get().domainManager().domainIndex(resultSet.getString("domain_id")));
       } else {
         return null;
       }
@@ -209,7 +210,7 @@ public abstract class SqlWaypointManager extends SqlManager {
           "z"));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, cell.domainId());
+      statement.setString(2, Journey.get().domainManager().domainId(cell.domain()));
       statement.setInt(3, cell.blockX());
       statement.setInt(4, cell.blockY());
       statement.setInt(5, cell.blockZ());
@@ -265,7 +266,7 @@ public abstract class SqlWaypointManager extends SqlManager {
           new Cell(resultSet.getInt("x"),
               resultSet.getInt("y"),
               resultSet.getInt("z"),
-              resultSet.getString("domain_id")));
+              Journey.get().domainManager().domainIndex(resultSet.getString("domain_id"))));
     }
     return endpoints;
   }

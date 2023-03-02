@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ public final class Validator {
     if (name.equalsIgnoreCase("help")) {
       return true;
     }
-    return !Pattern.matches("^[a-zA-Z][a-zA-Z0-9 -]{1,30}[a-zA-Z0-9]$", name);
+    return !Pattern.matches("^[a-zA-Z][a-zA-Z0-9 -_]{1,30}[a-zA-Z0-9]$", name);
   }
 
 }

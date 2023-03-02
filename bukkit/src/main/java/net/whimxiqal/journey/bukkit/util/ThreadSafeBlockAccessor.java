@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.bukkit.util;
 
 import java.util.HashMap;
@@ -33,7 +56,7 @@ public class ThreadSafeBlockAccessor {
         while (!chunkList.isEmpty()) {
           ChunkItem item = chunkList.peek();
           if (item.timeMs < timeStampThreshold) {
-            chunkMap.drop(item.domainId, item.chunk);
+            chunkMap.drop(item.domain, item.chunk);
             chunkList.remove();
           } else {
             break;
@@ -48,10 +71,10 @@ public class ThreadSafeBlockAccessor {
             req.future.complete(existingSnapshot);
             continue;
           }
-          World world = BukkitUtil.getWorld(req.data.domainId);
+          World world = BukkitUtil.getWorld(req.data.domain);
           ChunkSnapshot snapshot = world.getChunkAt(req.data.x, req.data.z).getChunkSnapshot();
-          chunkMap.save(req.data.domainId, snapshot);
-          chunkList.add(new ChunkItem(req.data.domainId, snapshot));
+          chunkMap.save(req.data.domain, snapshot);
+          chunkList.add(new ChunkItem(req.data.domain, snapshot));
           completedChunkRequests.put(req.data, snapshot);
           req.future.complete(snapshot);
         }
@@ -72,12 +95,12 @@ public class ThreadSafeBlockAccessor {
     }
     ChunkRequest request;
     synchronized (this) {
-      BlockData data = chunkMap.get(cell.domainId(), cell.blockX(), cell.blockY(), cell.blockZ());
+      BlockData data = chunkMap.get(cell.domain(), cell.blockX(), cell.blockY(), cell.blockZ());
       if (data != null) {
         return data;
       }
       // data is not in lookup map, queue chunk
-      request = new ChunkRequest(cell.domainId(), Math.floorDiv(cell.blockX(), 16), Math.floorDiv(cell.blockZ(), 16));
+      request = new ChunkRequest(cell.domain(), Math.floorDiv(cell.blockX(), 16), Math.floorDiv(cell.blockZ(), 16));
       requestQueue.add(request);
     }
 
@@ -87,11 +110,11 @@ public class ThreadSafeBlockAccessor {
   }
 
   private static class ChunkItem {
-    final String domainId;
+    final int domain;
     final ChunkSnapshot chunk;
     final long timeMs;
-    ChunkItem(String domainId, ChunkSnapshot chunk) {
-      this.domainId = domainId;
+    ChunkItem(int domain, ChunkSnapshot chunk) {
+      this.domain = domain;
       this.chunk = chunk;
       this.timeMs = System.currentTimeMillis();
     }
@@ -100,11 +123,11 @@ public class ThreadSafeBlockAccessor {
   private static class ChunkRequest {
 
     private static class Data {
-      final String domainId;
+      final int domain;
       final int x;
       final int z;
-      Data(String domainId, int x, int z) {
-        this.domainId = domainId;
+      Data(int domain, int x, int z) {
+        this.domain = domain;
         this.x = x;
         this.z = z;
       }
@@ -114,37 +137,40 @@ public class ThreadSafeBlockAccessor {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Data that = (Data) o;
-        return x == that.x && z == that.z && domainId.equals(that.domainId);
+        return x == that.x && z == that.z && domain == that.domain;
       }
 
       @Override
       public int hashCode() {
-        return Objects.hash(domainId, x, z);
+        return Objects.hash(domain, x, z);
       }
 
     }
     final Data data;
     final CompletableFuture<ChunkSnapshot> future;
-    ChunkRequest(String domainId, int x, int z) {
-      this.data = new Data(domainId, x, z);
+    ChunkRequest(int domain, int x, int z) {
+      this.data = new Data(domain, x, z);
       this.future = new CompletableFuture<>();
     }
 
     @Override
     public String toString() {
       return "ChunkRequest{" +
-          "domainId='" + data.domainId + '\'' +
+          "domainId='" + data.domain + '\'' +
           ", x=" + data.x +
           ", z=" + data.z +
           '}';
     }
   }
 
-  private static class ChunkMap extends HashMap<String, Map<Integer, Map<Integer, ChunkSnapshot>>> {
+  /**
+   * mapping domain -> (x -> (z -> chunk))
+   */
+  private static class ChunkMap extends HashMap<Integer, Map<Integer, Map<Integer, ChunkSnapshot>>> {
 
     @Nullable
-    public BlockData get(String domainId, int x, int y, int z) {
-      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domainId);
+    public BlockData get(int domain, int x, int y, int z) {
+      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domain);
       if (chunkCoordinates == null) {
         return null;
       }
@@ -159,14 +185,14 @@ public class ThreadSafeBlockAccessor {
       return snapshot.getBlockData(Math.floorMod(x, 16), y, Math.floorMod(z, 16));
     }
 
-    private void save(String domainId, ChunkSnapshot snapshot) {
-      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = computeIfAbsent(domainId, k -> new HashMap<>());
+    private void save(int domain, ChunkSnapshot snapshot) {
+      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = computeIfAbsent(domain, k -> new HashMap<>());
       Map<Integer, ChunkSnapshot> chunkCoordinates2 = chunkCoordinates.computeIfAbsent(snapshot.getX(), k -> new HashMap<>());
       chunkCoordinates2.put(snapshot.getZ(), snapshot);
     }
 
-    public void drop(String domainId, ChunkSnapshot chunkSnapshot) {
-      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domainId);
+    public void drop(int domain, ChunkSnapshot chunkSnapshot) {
+      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domain);
       if (chunkCoordinates == null) {
         throw new IllegalArgumentException("No chunk snapshots found with world " + chunkSnapshot.getWorldName());
       }

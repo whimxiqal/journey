@@ -25,11 +25,12 @@ package net.whimxiqal.journey.search.graph;
 
 import java.util.Collection;
 import java.util.Iterator;
+import net.whimxiqal.journey.JourneyTestHarness;
 import net.whimxiqal.journey.tools.AlternatingList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class WeightedGraphTest {
+class WeightedGraphTest extends JourneyTestHarness {
 
   @Test
   void findMinimumPath() {
@@ -49,7 +50,7 @@ class WeightedGraphTest {
     graph.addEdge(D, F, new Edge(2));
     graph.addEdge(E, D, new Edge(3));
     graph.addEdge(E, F, new Edge(15));
-    AlternatingList<Node, Edge, Object> result = graph.findMinimumPath(A, F);
+    AlternatingList<Node, Edge, Object> result = graph.findMinimumPath(A, F, e -> true);
     Assertions.assertNotNull(result);
 
     Collection<Node> nodes = result.getMajors();
@@ -87,14 +88,14 @@ class WeightedGraphTest {
     }
   }
 
-  private class Node {
+  private static class Node {
     Node(double weight) {
       this.weight = weight;
     }
     private final double weight;
   }
 
-  private class Edge {
+  private static class Edge {
     Edge(double length) {
       this.length = length;
     }

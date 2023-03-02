@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -75,10 +75,7 @@ public class PlayerSearchListener implements Listener {
   @EventHandler
   public void foundSolutionEvent(BukkitFoundSolutionEvent event) {
     SearchSession session = event.getSearchEvent().getSession();
-    PlayerSessionStateful playerSession;
-    if (session instanceof PlayerSessionStateful) {
-      playerSession = (PlayerSessionStateful) session;
-    } else {
+    if (!(session instanceof PlayerSessionStateful playerSession)) {
       return;
     }
     // Need to update the session state
@@ -164,7 +161,11 @@ public class PlayerSearchListener implements Listener {
     switch (session.getState()) {
       case STOPPED_FAILED:
         Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(
-            Formatter.error("Search ended. Either there's no path to it, or it's too far away!"));
+            Formatter.error("Search failed!"));
+        break;
+      case STOPPED_ERROR:
+        Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(
+            Formatter.error("An internal error ocurred! Please notify an administrator"));
         break;
       case STOPPED_CANCELED:
         Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(

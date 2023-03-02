@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,14 +37,16 @@ import net.whimxiqal.journey.common.JourneyBaseVisitor;
 import net.whimxiqal.journey.common.JourneyParser;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
 import net.whimxiqal.journey.data.PublicWaypointManager;
+import net.whimxiqal.journey.data.TunnelType;
 import net.whimxiqal.journey.manager.DebugManager;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.message.Pager;
 import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
 import net.whimxiqal.journey.scope.ScopeUtil;
-import net.whimxiqal.journey.scope.ScopedLocationResult;
+import net.whimxiqal.journey.scope.ScopedSessionResult;
+import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.PlayerDestinationGoalSearchSession;
-import net.whimxiqal.journey.search.PlayerSurfaceGoalSearchSession;
+import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.Permission;
@@ -106,17 +108,13 @@ public class JourneyExecutor implements CommandExecutor {
         visitChildren(ctx);  // populate flags
         String scopedText = String.join(":", cmd.identifiers().getAll());
 
-        if (scopedText.equalsIgnoreCase("surface")) {
-          if (notAllowed(Permission.PATH_SURFACE, true)) {
-            return CommandResult.failure();
-          }
-          return journeyToSurface();
-        }
-
-        ScopedLocationResult result = ScopeUtil.location(JourneyPlayerImpl.from(src), scopedText);
+        ScopedSessionResult result = ScopeUtil.session(JourneyPlayerImpl.from(src), scopedText);
         switch (result.type()) {
           case EXISTS:
-            return waypointSearch(result.location().get().location());
+            SearchSession session = result.session().get();
+            session.setFlags(flags);
+            Journey.get().searchManager().launchSearch(session);
+            return CommandResult.success();
           case AMBIGUOUS:
             src.audience().sendMessage(Formatter.error("That name is ambiguous between scopes ___ and ___",
                 result.ambiguousItem().get().scope1, result.ambiguousItem().get().scope2));
@@ -173,24 +171,26 @@ public class JourneyExecutor implements CommandExecutor {
       }
 
       @Override
-      public CommandResult visitClearCache(JourneyParser.ClearCacheContext ctx) {
-        if (ctx.portals != null) {
-          if (notAllowed(Permission.ADMIN_CACHE, false)) {
-            return CommandResult.failure();
-          }
+      public CommandResult visitCachePortals(JourneyParser.CachePortalsContext ctx) {
+        if (ctx.clear != null) {
           Journey.get().netherManager().reset();
           src.audience().sendMessage(Formatter.success("Cleared cached portals."));
           return CommandResult.success();
-        } else if (ctx.paths != null) {
-          if (notAllowed(Permission.ADMIN_CACHE, false)) {
-            return CommandResult.failure();
-          }
-          Journey.get().dataManager().pathRecordManager().clear();
+        }
+        return CommandResult.failure();
+      }
+
+      @Override
+      public CommandResult visitCachePaths(JourneyParser.CachePathsContext ctx) {
+        if (ctx.build != null) {
+          src.audience().sendMessage(Formatter.success("Building path cache... See console for progress."));
+          Journey.get().searchManager().launchSearch(new EverythingSearch());
+        } else if (ctx.clear != null) {
+          Journey.get().dataManager().pathRecordManager().truncate();
           src.audience().sendMessage(Formatter.success("Cleared cached paths."));
           return CommandResult.success();
         }
-        // never happens
-        return super.visitClearCache(ctx);
+        return CommandResult.failure();
       }
 
       @Override
@@ -202,7 +202,7 @@ public class JourneyExecutor implements CommandExecutor {
         Pager.of(Formatter.info("Known Nether Portals"),
                 Journey.get().dataManager()
                     .netherPortalManager()
-                    .getAllTunnels(),
+                    .getAllTunnels(TunnelType.NETHER),
                 tunnel -> Formatter.cell(tunnel.origin()),
                 tunnel -> Formatter.cell(tunnel.destination()))
             .sendPage(src.audience(), page.get());
@@ -332,7 +332,7 @@ public class JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.error("Could not find a waypoint called ___", name));
           return CommandResult.failure();
         }
-        return waypointSearch(endLocation);
+        return destinationSearch(endLocation);
       }
 
       private CommandResult publicWaypointSearch(String name) {
@@ -343,21 +343,21 @@ public class JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.error("Could not find a public waypoint called ___", name));
           return CommandResult.failure();
         }
-        return waypointSearch(endLocation);
+        return destinationSearch(endLocation);
       }
 
-      private CommandResult waypointSearch(Cell endLocation) {
+      private CommandResult destinationSearch(Cell endLocation) {
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
         if (!location.isPresent()) {
           src.audience().sendMessage(Formatter.error("Your location could not be found"));
           return CommandResult.failure();
         }
-        PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(src.uuid(), location.get(), endLocation, flags, true);
+        PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(src.uuid(), location.get(), endLocation, true);
+        session.setFlags(flags);
 
         Journey.get().searchManager().launchSearch(session);
         return CommandResult.success();
       }
-
 
       @Override
       public CommandResult visitUnsetWaypoint(JourneyParser.UnsetWaypointContext ctx) {
@@ -434,7 +434,7 @@ public class JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.error("The other player's location could not be found"));
           return CommandResult.failure();
         }
-        PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(src.uuid(), location.get(), otherLocation.get(), flags, false);
+        PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(src.uuid(), location.get(), otherLocation.get(), false);
 
         Journey.get().searchManager().launchSearch(session);
         return CommandResult.success();
@@ -473,7 +473,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
 
-        waypointSearch(manager.getWaypoint(dstPlayer, waypoint));
+        destinationSearch(manager.getWaypoint(dstPlayer, waypoint));
         return CommandResult.success();
       }
 
@@ -589,24 +589,6 @@ public class JourneyExecutor implements CommandExecutor {
 
         publicWaypointManager.renameWaypoint(name, newName);
         src.audience().sendMessage(Formatter.success("Renamed waypoint ___ to ___", name, newName));
-        return CommandResult.success();
-      }
-
-      private CommandResult journeyToSurface() {
-        Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
-        if (!location.isPresent()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
-          return CommandResult.failure();
-        }
-
-        if (Journey.get().proxy().platform().isAtSurface(location.get())) {
-          src.audience().sendMessage(Formatter.error("You are already at the surface!"));
-          return CommandResult.success();
-        }
-
-        PlayerSurfaceGoalSearchSession session = new PlayerSurfaceGoalSearchSession(src.uuid(), location.get(), flags);
-
-        Journey.get().searchManager().launchSearch(session);
         return CommandResult.success();
       }
 

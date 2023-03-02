@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,13 +33,17 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import net.kyori.adventure.audience.Audience;
-import net.whimxiqal.journey.Tunnel;
+import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.Describable;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.event.StopSearchEvent;
 import net.whimxiqal.journey.search.flag.FlagSet;
+import net.whimxiqal.journey.util.SimpleTimer;
 
 /**
  * A session to handle a pathfinding search.
@@ -48,22 +52,25 @@ import net.whimxiqal.journey.search.flag.FlagSet;
  *
  * <p>This class must be thread-safe because it will be called asynchronously
  */
-public abstract class SearchSession implements Resulted {
+public abstract class SearchSession implements Resulted, Describable {
 
   protected final List<Tunnel> tunnels = new LinkedList<>();
   protected final List<Mode> modes = new LinkedList<>();
   private final UUID callerId;
   private final UUID uuid = UUID.randomUUID();
   private final Caller callerType;
-  private final FlagSet flags;
+  private final List<String> permissions = new LinkedList<>();
+  protected FlagSet flags = new FlagSet();
   protected ResultState state = ResultState.IDLE;  // multithreaded access, must be synchronized
   protected CompletableFuture<ResultState> future = new CompletableFuture<>();
+  private Component name = Component.empty();
+  private Component description = Component.empty();
   private int algorithmStepDelay = 0;
+  protected final SimpleTimer timer = new SimpleTimer();
 
-  protected SearchSession(UUID callerId, Caller callerType, FlagSet flags) {
+  protected SearchSession(UUID callerId, Caller callerType) {
     this.callerId = callerId;
     this.callerType = callerType;
-    this.flags = flags;
   }
 
   /**
@@ -73,7 +80,9 @@ public abstract class SearchSession implements Resulted {
     // kick off the first portion
     doSearch();
     // Set up cancellation task
-    Journey.get().proxy().schedulingManager().schedule(() -> stop(false), false, timeout * 20 /* ticks per second */);
+    if (timeout > 0) {
+      Journey.get().proxy().schedulingManager().schedule(() -> stop(false), false, timeout * 20 /* ticks per second */);
+    }
     return future;
   }
 
@@ -87,7 +96,7 @@ public abstract class SearchSession implements Resulted {
     Journey.get().proxy().schedulingManager().schedule(() -> {
       try {
         if (this.getState() == ResultState.STOPPING_FAILED) {
-          audience().sendMessage(Formatter.error("Time limit surpassed. Canceling search..."));
+          audience().sendMessage(Formatter.error("Time limit surpassed. Cancelling search..."));
         }
         resumeSearch();
       } catch (Exception e) {
@@ -114,6 +123,17 @@ public abstract class SearchSession implements Resulted {
 
   public final CompletableFuture<ResultState> future() {
     return future;
+  }
+
+  /**
+   * Set state as stopped and send dispatch for stopped event. This method should be idempotent.
+   */
+  public synchronized void markStopped() {
+    ResultState previousState = state;
+    state = state.stoppedResult();
+    if (state != previousState) {
+      Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+    }
   }
 
   /**
@@ -212,8 +232,16 @@ public abstract class SearchSession implements Resulted {
     return callerType;
   }
 
+  public void setFlags(FlagSet flags) {
+    this.flags = flags;
+  }
+
   public FlagSet flags() {
     return flags;
+  }
+
+  public void initialize() {
+    // do nothing by default
   }
 
   @Override
@@ -239,7 +267,9 @@ public abstract class SearchSession implements Resulted {
    *
    * @return the search execution time, in milliseconds
    */
-  public abstract long executionTime();
+  public final long executionTime() {
+    return timer.elapsed();
+  }
 
   public abstract Audience audience();
 
@@ -249,6 +279,32 @@ public abstract class SearchSession implements Resulted {
 
   public void setAlgorithmStepDelay(int algorithmStepDelay) {
     this.algorithmStepDelay = algorithmStepDelay;
+  }
+
+  public void setName(Component name) {
+    this.name = name;
+  }
+
+  @Override
+  public Component name() {
+    return name;
+  }
+
+  public void setDescription(Component description) {
+    this.description = description;
+  }
+
+  @Override
+  public Component description() {
+    return description;
+  }
+
+  public void addPermission(String permission) {
+    this.permissions.add(permission);
+  }
+
+  public List<String> permissions() {
+    return permissions;
   }
 
   /**

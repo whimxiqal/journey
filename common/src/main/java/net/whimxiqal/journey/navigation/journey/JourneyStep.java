@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 public class JourneyStep implements Moded {
 
   private final UUID entityUuid;
-  private final String domainId;
+  private final int domain;
   private final Vector start;
   private final Vector path;
   private final Vector unitPath;
@@ -46,11 +46,11 @@ public class JourneyStep implements Moded {
   private double completedLength = 0;
 
   public JourneyStep(UUID entityUuid, Cell start, Cell destination, ModeType modeType) {
-    if (!start.domainId().equals(destination.domainId())) {
+    if (start.domain() != destination.domain()) {
       throw new IllegalArgumentException("The start and destination must be in the same domain");
     }
     this.entityUuid = entityUuid;
-    this.domainId = start.domainId();
+    this.domain = start.domain();
     this.start = new Vector(start.blockX() + 0.5, start.blockY() + 0.5, start.blockZ() + 0.5);
     this.path = new Vector(destination.blockX() - start.blockX(), destination.blockY() - start.blockY(), destination.blockZ() - start.blockZ());
     this.unitPath = path.unit();
@@ -111,7 +111,7 @@ public class JourneyStep implements Moded {
     while (distance < totalLength && (distance - startDistance) < PlayerJourneySession.CACHED_JOURNEY_STEPS_LENGTH) {
       Journey.get().proxy().platform().spawnModeParticle(entityUuid,
           modeType,
-          domainId,
+          domain,
           curX,
           curY,
           curZ,
@@ -129,8 +129,8 @@ public class JourneyStep implements Moded {
     return modeType;
   }
 
-  public String domainId() {
-    return domainId;
+  public int domain() {
+    return domain;
   }
 
   public Cell destination() {

@@ -37,7 +37,7 @@ public class WalkMode extends Mode {
 
   @Override
   protected void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
-    TestWorld world = TestPlatformProxy.worlds.get(origin.domainId());
+    TestWorld world = TestPlatformProxy.worlds.get(origin.domain());
     assert world != null;
     for (int[] pair : new int[][]{{origin.blockX() - 1, origin.blockY()},
         {origin.blockX() + 1, origin.blockY()},

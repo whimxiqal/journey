@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,9 @@
 package net.whimxiqal.journey.scope;
 
 import java.util.Optional;
-import net.whimxiqal.journey.Destination;
+import net.whimxiqal.journey.search.SearchSession;
 
-public class ScopedLocationResult {
+public class ScopedSessionResult {
 
   public enum Type {
     EXISTS,
@@ -47,34 +47,34 @@ public class ScopedLocationResult {
   }
 
   private final Type type;  // type of result
-  private final Destination destination;  // EXISTS: cell is result, else null
+  private final SearchSession session;  // EXISTS: cell is result, else null
   private final String scope;  // EXISTS: scope on which the result was found, else null
   private final String missing;  // NO_SCOPE: component that's missing, could be scope or item, else null
   private final AmbiguousItem ambiguousItem;  // AMBIGUOUS: ambiguous item info, else null
 
-  public static ScopedLocationResult exists(Destination destination, String scope) {
-    return new ScopedLocationResult(Type.EXISTS, destination, scope, null, null);
+  public static ScopedSessionResult exists(SearchSession destination, String scope) {
+    return new ScopedSessionResult(Type.EXISTS, destination, scope, null, null);
   }
 
-  public static ScopedLocationResult noScope(String scope) {
-    return new ScopedLocationResult(Type.NO_SCOPE, null, null, scope, null);
+  public static ScopedSessionResult noScope(String scope) {
+    return new ScopedSessionResult(Type.NO_SCOPE, null, null, scope, null);
   }
 
-  public static ScopedLocationResult none() {
-    return new ScopedLocationResult(Type.NONE, null, null, null, null);
+  public static ScopedSessionResult none() {
+    return new ScopedSessionResult(Type.NONE, null, null, null, null);
   }
 
-  public static ScopedLocationResult ambiguous(String scope1, String scope2) {
-    return new ScopedLocationResult(Type.AMBIGUOUS, null, null, null, new AmbiguousItem(scope1, scope2));
+  public static ScopedSessionResult ambiguous(String scope1, String scope2) {
+    return new ScopedSessionResult(Type.AMBIGUOUS, null, null, null, new AmbiguousItem(scope1, scope2));
   }
 
-  public static ScopedLocationResult noPermission() {
-    return new ScopedLocationResult(Type.NO_PERMISSION, null, null, null, null);
+  public static ScopedSessionResult noPermission() {
+    return new ScopedSessionResult(Type.NO_PERMISSION, null, null, null, null);
   }
 
-  public ScopedLocationResult(Type type, Destination destination, String scope, String missing, AmbiguousItem ambiguousItem) {
+  public ScopedSessionResult(Type type, SearchSession session, String scope, String missing, AmbiguousItem ambiguousItem) {
     this.type = type;
-    this.destination = destination;
+    this.session = session;
     this.scope = scope;
     this.missing = missing;
     this.ambiguousItem = ambiguousItem;
@@ -84,8 +84,8 @@ public class ScopedLocationResult {
     return type;
   }
 
-  public Optional<Destination> location() {
-    return Optional.ofNullable(destination);
+  public Optional<SearchSession> session() {
+    return Optional.ofNullable(session);
   }
 
   public Optional<String> scope() {

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ package net.whimxiqal.journey.bukkit;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
 import net.whimxiqal.journey.command.JourneyConnectorProvider;
+import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.event.SearchDispatcher;
 import net.whimxiqal.journey.search.event.SearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitFoundSolutionEvent;
@@ -131,13 +132,6 @@ public final class JourneyBukkit extends JavaPlugin {
     // Initialize tasks for async capabilities
     blockAccessor.init();
     ((BukkitLogger) proxy.logger()).init();
-
-    // Start doing a bunch of searches for common use cases
-    Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-      // TODO initialize likely-used paths here (link to link)
-      valid = true;
-      JourneyBukkit.get().getLogger().info("Finished initializing Journey");
-    });
   }
 
   @Override

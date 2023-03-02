@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ public final class Formatter {
   public static final TextColor ACCENT = TextColor.color(20, 166, 219);  // #14A6DB
   public static final TextColor DARK = TextColor.color(64, 64, 64);
   public static final TextColor DULL = TextColor.color(179, 179, 179);
-  public static final TextColor ERROR = TextColor.color(194, 12, 21);
+  public static final TextColor ERROR = TextColor.color(194, 56, 60);
   public static final String FORMAT_ACCENT_REGEX = "___";
   public static final TextColor GOLD = TextColor.color(222, 185, 0);
   public static final TextColor INFO = TextColor.color(255, 191, 245);
@@ -321,7 +321,7 @@ public final class Formatter {
         .append(Component.text(", z: ").color(DULL))
         .append(Component.text(cell.blockZ()).color(ACCENT))
         .append(Component.text("] (").color(DULL))
-        .append(Component.text(Journey.get().proxy().platform().worldIdToName(cell.domainId())).color(ACCENT))
+        .append(Component.text(Journey.get().proxy().platform().domainName(cell.domain())).color(ACCENT))
         .append(Component.text(")").color(DULL))
         .build();
   }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,6 @@ import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.search.PathTrial;
-import net.whimxiqal.journey.search.function.CostFunctionType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +57,9 @@ public interface PathRecordManager {
   /**
    * Clear all records. <b>Dangerous!</b>
    */
-  void clear();
+  void truncate();
+
+  int totalRecordCellCount();
 
   /**
    * Ger any records matching a start and end.
@@ -125,8 +126,7 @@ public interface PathRecordManager {
     int destinationX;
     int destinationY;
     int destinationZ;
-    String worldId;
-    CostFunctionType costFunctionType;
+    int domain;
     List<PathTrialCellRecord> cells;
     Collection<PathTrialModeRecord> modes;
   }
@@ -146,7 +146,7 @@ public interface PathRecordManager {
     ModeType modeType;
 
     public Cell toCell() {
-      return new Cell(x, y, z, record.worldId);
+      return new Cell(x, y, z, record.domain);
     }
   }
 

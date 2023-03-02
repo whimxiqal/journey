@@ -2,7 +2,7 @@ plugins {
     id 'org.cadixdev.licenser' version '0.6.1' apply false
 }
 
-defaultTasks 'licenseFormat', 'build'
+defaultTasks 'updateLicensesMain', 'build'
 
 static def patchVersion() {
     // TODO enable once a proper tag has been loaded
@@ -26,7 +26,6 @@ static def suffix() {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'maven-publish'
     apply plugin: 'org.cadixdev.licenser'
 
     project.ext.publish = false
@@ -55,8 +54,9 @@ subprojects {
     }
 
     license {
+        ignoreFailures = true
         header = rootProject.file('LICENSE.txt')
-        include 'src/**/*.java'
+        include '**/*.java'
         newLine = true
     }
 

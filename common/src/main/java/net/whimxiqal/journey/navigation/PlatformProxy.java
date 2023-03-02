@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,8 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -41,9 +43,9 @@ public interface PlatformProxy {
 
   void playSuccess(UUID playerUuid);
 
-  void spawnDestinationParticle(UUID playerUuid, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
+  void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
 
-  void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
+  void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
 
   Collection<JourneyPlayer> onlinePlayers();
 
@@ -65,11 +67,13 @@ public interface PlatformProxy {
 
   boolean resetBlockData(UUID player, Collection<Cell> locations);
 
-  String worldIdToName(String domainId);
+  String domainName(int domainId);
 
   boolean sendGui(JourneyPlayer source);
 
   boolean synchronous();
 
   Consumer<CustomChart> bStatsChartConsumer();
+
+  Map<String, Map<String, Integer>> domainResourceKeys();
 }

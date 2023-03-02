@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +49,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ItineraryTrial implements Resulted {
 
-  private final DestinationGoalSearchSession session;
+  private final GraphGoalSearchSession session;
   private final Cell origin;
   private final AlternatingList<Tunnel, PathTrial, Object> alternatingList;
   private ResultState state;
@@ -61,7 +61,7 @@ public class ItineraryTrial implements Resulted {
    * @param origin          the origin of the entire itinerary
    * @param alternatingList the list of stages
    */
-  public ItineraryTrial(DestinationGoalSearchSession session, Cell origin,
+  public ItineraryTrial(GraphGoalSearchSession session, Cell origin,
                         AlternatingList<Tunnel, PathTrial, Object> alternatingList) {
     this.session = session;
     this.origin = origin;

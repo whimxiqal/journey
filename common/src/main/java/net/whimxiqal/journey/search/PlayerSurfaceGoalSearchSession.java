@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,19 +34,9 @@ public class PlayerSurfaceGoalSearchSession extends LocalUpwardsGoalSearchSessio
 
   private final PlayerSessionState sessionState;
 
-  public PlayerSurfaceGoalSearchSession(UUID player, Cell origin, FlagSet flags) {
-    super(player, SearchSession.Caller.PLAYER, origin, flags);
+  public PlayerSurfaceGoalSearchSession(UUID player, Cell origin) {
+    super(player, SearchSession.Caller.PLAYER, origin);
     sessionState = new PlayerSessionState(player);
-    int stepDelay = flags.getValueFor(Flags.ANIMATE);
-    if (stepDelay > 0) {
-      sessionState.animationManager().setAnimating(true);
-      setAlgorithmStepDelay(stepDelay);
-    } else {
-      sessionState.animationManager().setAnimating(false);
-    }
-
-    // We don't need any tunnels for this!
-    Journey.get().proxy().platform().prepareSearchSession(this, player, flags, false);
   }
 
   public PlayerSessionState sessionState() {
@@ -61,5 +51,19 @@ public class PlayerSurfaceGoalSearchSession extends LocalUpwardsGoalSearchSessio
   @Override
   public Audience audience() {
     return Journey.get().proxy().audienceProvider().player(getCallerId());
+  }
+
+  @Override
+  public void initialize() {
+    int stepDelay = flags.getValueFor(Flags.ANIMATE);
+    if (stepDelay > 0) {
+      sessionState.animationManager().setAnimating(true);
+      setAlgorithmStepDelay(stepDelay);
+    } else {
+      sessionState.animationManager().setAnimating(false);
+    }
+
+    // We don't need any tunnels for this!
+    Journey.get().proxy().platform().prepareSearchSession(this, getCallerId(), flags, false);
   }
 }

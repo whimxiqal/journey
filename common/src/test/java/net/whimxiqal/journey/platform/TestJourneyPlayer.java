@@ -6,13 +6,14 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.JourneyPlayerImpl;
 
 public class TestJourneyPlayer extends JourneyPlayerImpl {
+  public static Cell LOCATION = new Cell(0, 0, 0, WorldLoader.domain(0));
   public TestJourneyPlayer(UUID uuid) {
     super(uuid, uuid.toString());
   }
 
   @Override
   public Cell location() {
-    return new Cell(0, 0, 0, WorldLoader.worldResources[0]);
+    return LOCATION;
   }
 
   @Override

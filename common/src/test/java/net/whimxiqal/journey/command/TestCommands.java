@@ -94,7 +94,7 @@ public class TestCommands extends JourneyTestHarness {
   }
 
   static void addHome() {
-    Journey.get().dataManager().personalWaypointManager().add(myUuid, new Cell(0, 0, 0, WorldLoader.worldResources[0]), "home");
+    Journey.get().dataManager().personalWaypointManager().add(myUuid, new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
   }
 
   void commandSuccess(String command) {
@@ -115,10 +115,22 @@ public class TestCommands extends JourneyTestHarness {
     addHome();
     commandSuccess("journeyto home");
     commandSuccess("journeyto personal:home");
-    Journey.get().dataManager().publicWaypointManager().add(new Cell(0, 0, 0, WorldLoader.worldResources[0]), "home");
+    Journey.get().dataManager().publicWaypointManager().add(new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
     commandFailure("journeyto home");
     commandSuccess("journeyto personal:home");
     commandSuccess("journeyto server:home");
+
+    commandSuccess("journeyto surface");
+    commandFailure("journeyto world:" + WorldLoader.worldResources[0]);  // we are already in world 0
+    Cell originalLocation = TestJourneyPlayer.LOCATION;
+    TestJourneyPlayer.LOCATION = new Cell(0, 0, 0, WorldLoader.domain(1));
+    commandSuccess("journeyto world:" + WorldLoader.worldResources[0]);
+    TestJourneyPlayer.LOCATION = originalLocation;
+    commandSuccess("journeyto world:" + WorldLoader.worldResources[1]);
+    commandFailure("journeyto death");
+    Journey.get().deathManager().setDeathLocation(myUuid, new Cell(0, 0, 0, 0));
+    commandSuccess("journeyto death");
+
     testProxy.revokeAllPermissions(myUuid);
     commandFailure("journeyto home");
   }
@@ -134,7 +146,7 @@ public class TestCommands extends JourneyTestHarness {
   @Test
   void complicatedScope() {
     JourneyApi api = JourneyApiProvider.get();
-    Destination destination = Destination.of(new Cell(0, 0, 0, ""));
+    Destination destination = Destination.of(new Cell(0, 0, 0, WorldLoader.domain(0)));
     testProxy.revokeAllPermissions(myUuid);
     api.registerScope("Journey", "complex", Scope.builder()
         .subScopes(() -> {
@@ -144,7 +156,7 @@ public class TestCommands extends JourneyTestHarness {
                 Map<String, Destination> destinations = new HashMap<>();
                 destinations.put("path-a-1", destination);
                 destinations.put("path-shared", destination);
-                destinations.put("no-permission", Destination.builder(new Cell(0, 0, 0, "")).permission("you-dont-have-this").build());
+                destinations.put("permission", Destination.builder(new Cell(0, 0, 0, WorldLoader.domain(0))).permission("you-dont-have-this").build());
                 return VirtualMap.of(destinations);
               }).build());
           scopes.put("path-b", Scope.builder()
@@ -164,7 +176,7 @@ public class TestCommands extends JourneyTestHarness {
                 return VirtualMap.of(destinations);
               }).strict()
               .build());
-          scopes.put("no-permission-scope", Scope.builder()
+          scopes.put("permission-scope", Scope.builder()
               .destinations(VirtualMap.ofSingleton("cant-reach", destination))
               .permission("you-also-dont-have-this")
               .build());
@@ -203,9 +215,9 @@ public class TestCommands extends JourneyTestHarness {
     Assertions.assertFalse(completions.contains("hidden"));
 
     // No Permission
-    String[] permissionRequired = {"path-a:no-permission", "no-permission", "no-permission-scope:cant-reach", "cant-reach"};
+    String[] permissionRequired = {"path-a:permission", "permission", "permission-scope:cant-reach", "cant-reach"};
     for (String string : permissionRequired) {
-      Assertions.assertFalse(completions.contains(string));
+      Assertions.assertFalse(completions.contains(string), "The scope target " + string + " should be disallowed by permission restriction, but isn't disallowed");
     }
     testProxy.grantAllPermissions(myUuid);
     completions = completions("journeyto ");

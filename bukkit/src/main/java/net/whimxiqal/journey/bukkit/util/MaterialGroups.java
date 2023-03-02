@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -106,6 +106,7 @@ public final class MaterialGroups {
       case DEAD_TUBE_CORAL_FAN:
       case DEAD_TUBE_CORAL_WALL_FAN:
       case DETECTOR_RAIL:
+      case END_PORTAL:
       case FIRE:
       case GLOW_BERRIES:
       case GLOW_LICHEN:

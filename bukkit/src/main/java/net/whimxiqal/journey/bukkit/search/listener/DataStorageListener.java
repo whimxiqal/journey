@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,12 @@ package net.whimxiqal.journey.bukkit.search.listener;
 
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.bukkit.search.event.BukkitStopPathSearchEvent;
+import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.navigation.Mode;
-import net.whimxiqal.journey.search.FlexiblePathTrial;
+import net.whimxiqal.journey.search.AbstractPathTrial;
 import net.whimxiqal.journey.search.PathTrial;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStopPathSearchEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -38,6 +39,8 @@ import org.bukkit.event.Listener;
  * this plugin proceed.
  */
 public class DataStorageListener implements Listener {
+
+  private boolean loggedMaxCacheHit = false;
 
   /**
    * Catch the event that a path trial stopped so that we can save the data of the calculation
@@ -50,19 +53,30 @@ public class DataStorageListener implements Listener {
     if (!event.getSearchEvent().shouldSave()) {
       return;
     }
-    FlexiblePathTrial flexiblePathTrial = event.getSearchEvent().getPathTrial();
-    if (flexiblePathTrial instanceof PathTrial) {
-      PathTrial pathTrial = (PathTrial) flexiblePathTrial;
-      if (pathTrial.getState().isSuccessful()) {
-        try {
-          Journey.get().dataManager().pathRecordManager().report(
-              pathTrial,
-              event.getSearchEvent().getPathTrial().getModes().stream().map(Mode::type).collect(Collectors.toSet()),
-              event.getSearchEvent().getExecutionTime());
-        } catch (DataAccessException e) {
-          e.printStackTrace();
-        }
+    AbstractPathTrial abstractPathTrial = event.getSearchEvent().getPathTrial();
+    if (!(abstractPathTrial instanceof PathTrial pathTrial)) {
+      return;
+    }
+    if (!pathTrial.getState().isStopped()) {
+      throw new RuntimeException(); // programmer error
+    }
+    if (!pathTrial.getState().isSuccessful()) {
+      return;
+    }
+    if (Journey.get().dataManager().pathRecordManager().totalRecordCellCount() + pathTrial.getLength() > Settings.MAX_CACHED_CELLS.getValue()) {
+      if (!loggedMaxCacheHit) {
+        Journey.logger().warn("The Journey database has cached the max number of cells allowed in the config file. Raise this number to continue caching results.");
+        loggedMaxCacheHit = true;
       }
+      return;
+    }
+    try {
+      Journey.get().dataManager().pathRecordManager().report(
+          pathTrial,
+          event.getSearchEvent().getPathTrial().getModes().stream().map(Mode::type).collect(Collectors.toSet()),
+          event.getSearchEvent().getExecutionTime());
+    } catch (DataAccessException e) {
+      e.printStackTrace();
     }
   }
 

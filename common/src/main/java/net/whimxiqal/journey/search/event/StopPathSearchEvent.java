@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 package net.whimxiqal.journey.search.event;
 
 import net.whimxiqal.journey.navigation.Path;
-import net.whimxiqal.journey.search.FlexiblePathTrial;
+import net.whimxiqal.journey.search.AbstractPathTrial;
 import net.whimxiqal.journey.search.PathTrial;
 import net.whimxiqal.journey.search.SearchSession;
 
@@ -37,7 +37,7 @@ import net.whimxiqal.journey.search.SearchSession;
  */
 public class StopPathSearchEvent extends SearchEvent {
 
-  private final FlexiblePathTrial pathTrial;
+  private final AbstractPathTrial pathTrial;
   private final long executionTime;
   private final boolean save;
 
@@ -48,7 +48,7 @@ public class StopPathSearchEvent extends SearchEvent {
    * @param pathTrial the path trial causing this event
    */
   public StopPathSearchEvent(SearchSession session,
-                             FlexiblePathTrial pathTrial,
+                             AbstractPathTrial pathTrial,
                              long executionTime,
                              boolean save) {
     super(session);
@@ -62,7 +62,7 @@ public class StopPathSearchEvent extends SearchEvent {
    *
    * @return the path trial
    */
-  public FlexiblePathTrial getPathTrial() {
+  public AbstractPathTrial getPathTrial() {
     return pathTrial;
   }
 

@@ -1,12 +1,38 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.bukkit;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.gui.JourneyGui;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.math.Vector;
@@ -35,6 +61,7 @@ import org.bstats.charts.CustomChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
@@ -63,16 +90,16 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void spawnDestinationParticle(UUID playerUuid, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     Player player = Bukkit.getPlayer(playerUuid);
-    if (player == null || !player.getWorld().equals(BukkitUtil.getWorld(domainId))) {
+    if (player == null || !player.getWorld().equals(BukkitUtil.getWorld(domain))) {
       return;
     }
     player.spawnParticle(Particle.SPELL_WITCH, x, y, z, count, offsetX, offsetY, offsetZ, 0);
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     Particle particle;
     int particleCount;
     int multiplier;
@@ -86,7 +113,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
     }
 
     Player player = Bukkit.getPlayer(playerUuid);
-    World world = BukkitUtil.getWorld(domainId);
+    World world = BukkitUtil.getWorld(domain);
     if (player == null || !player.getWorld().equals(world)) {
       return;
     }
@@ -134,16 +161,19 @@ public class BukkitPlatformProxy implements PlatformProxy {
 
     // Register modes in order of preference
     Player player = Bukkit.getPlayer(playerUuid);
-    if (player == null) {
-      return;
+    boolean fly = flags.getValueFor(Flags.FLY);
+    boolean boat = false;
+    if (player != null) {
+      fly &= player.getAllowFlight();
+      boat = MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType));
     }
-    if (player.getAllowFlight() && flags.getValueFor(Flags.FLY)) {
+    if (fly) {
       search.registerMode(new FlyMode(search, passableBlocks));
     } else {
       search.registerMode(new WalkMode(search, passableBlocks));
       search.registerMode(new JumpMode(search, passableBlocks));
       search.registerMode(new SwimMode(search, passableBlocks));
-      if (MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType))) {
+      if (boat) {
         search.registerMode(new BoatMode(search, passableBlocks));
       }
     }
@@ -175,7 +205,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
     int x = cell.blockX();
     int z = cell.blockZ();
     for (int y = cell.blockY() + 1; y <= Math.min(256, cell.blockY() + AT_SURFACE_HEIGHT); y++) {
-      if (BukkitUtil.getBlock(new Cell(x, y, z, cell.domainId())).getMaterial() != Material.AIR) {
+      if (BukkitUtil.getBlock(new Cell(x, y, z, cell.domain())).getMaterial() != Material.AIR) {
         return false;
       }
     }
@@ -241,8 +271,8 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public String worldIdToName(String domainId) {
-    return BukkitUtil.getWorld(domainId).getName();
+  public String domainName(int domain) {
+    return BukkitUtil.getWorld(domain).getName();
   }
 
   @Override
@@ -260,5 +290,15 @@ public class BukkitPlatformProxy implements PlatformProxy {
   @Override
   public Consumer<CustomChart> bStatsChartConsumer() {
     return metrics::addCustomChart;
+  }
+
+  @Override
+  public Map<String, Map<String, Integer>> domainResourceKeys() {
+    Map<String, Map<String, Integer>> domains = new HashMap<>();
+    for (World world : Bukkit.getWorlds()) {
+      NamespacedKey key = world.getKey();
+      domains.computeIfAbsent(key.namespace(), k -> new HashMap<>()).put(key.getKey(), BukkitUtil.getDomain(world));
+    }
+    return domains;
   }
 }

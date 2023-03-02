@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,15 +23,18 @@
 
 package net.whimxiqal.journey;
 
+import java.util.UUID;
 import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.data.DataManagerImpl;
 import net.whimxiqal.journey.data.DataVersion;
-import net.whimxiqal.journey.manager.TunnelManager;
-import net.whimxiqal.journey.scope.ScopeManager;
 import net.whimxiqal.journey.manager.DebugManager;
+import net.whimxiqal.journey.manager.DomainManager;
 import net.whimxiqal.journey.manager.NetherManager;
 import net.whimxiqal.journey.manager.PlayerManager;
 import net.whimxiqal.journey.manager.SearchManager;
+import net.whimxiqal.journey.manager.TunnelManager;
+import net.whimxiqal.journey.scope.ScopeManager;
+import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.event.SearchDispatcher;
 import net.whimxiqal.journey.search.event.SearchDispatcherImpl;
 import net.whimxiqal.journey.stats.StatsManager;
@@ -42,6 +45,7 @@ import net.whimxiqal.journey.util.Initializable;
 public final class Journey {
 
   public static final String NAME = "Journey";
+  public static final UUID JOURNEY_CALLER = UUID.randomUUID();
   private static final Journey instance = new Journey();
   private final SearchDispatcherImpl searchEventDispatcher = new SearchDispatcherImpl();
   private final PlayerManager playerManager = new PlayerManager();
@@ -51,6 +55,7 @@ public final class Journey {
   private final ScopeManager scopeManager = new ScopeManager();
   private final TunnelManager tunnelManager = new TunnelManager();
   private final StatsManager statsManager = new StatsManager();
+  private final DomainManager domainManager = new DomainManager();
   private DataManager dataManager = new DataManagerImpl();
   private Proxy proxy;
 
@@ -136,6 +141,10 @@ public final class Journey {
 
   public StatsManager statsManager() {
     return statsManager;
+  }
+
+  public DomainManager domainManager() {
+    return domainManager;
   }
 
 }

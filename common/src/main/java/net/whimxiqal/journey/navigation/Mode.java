@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -126,7 +126,7 @@ public abstract class Mode {
     final double cost;
 
     public static Option between(Cell origin, int destinationX, int destinationY, int destinationZ) {
-      Cell destination = new Cell(destinationX, destinationY, destinationZ, origin.domainId());
+      Cell destination = new Cell(destinationX, destinationY, destinationZ, origin.domain());
       return new Option(destination, origin.distanceTo(destination));
     }
 

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -118,6 +118,7 @@ public final class SearchManager implements Initializable {
   private void doLaunchSearch(UUID caller, Audience audience, SearchSession session) {
     Journey.get().statsManager().incrementSearches();
     playerSearches.put(caller, session);
+    session.initialize();
 
     AtomicReference<TextComponent> hoverText = new AtomicReference<>(Component.text("Search Parameters").color(Formatter.THEME));
     Flags.allFlags.forEach(flag -> hoverText.set(hoverText.get()

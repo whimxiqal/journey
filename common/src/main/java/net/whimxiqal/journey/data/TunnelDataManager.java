@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,18 +27,18 @@ import java.util.Collection;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Tunnel;
 
-public interface NetherTunnelDataManager {
+public interface TunnelDataManager {
 
-  void addTunnel(Cell origin, Cell destination, double cost);
+  void addTunnel(Cell origin, Cell destination, double cost, TunnelType type);
 
-  Collection<Tunnel> getTunnelsWithOrigin(Cell origin);
+  Collection<Tunnel> getTunnelsWithOrigin(Cell origin, TunnelType type);
 
-  Collection<Tunnel> getTunnelsWithDestination(Cell destination);
+  Collection<Tunnel> getTunnelsWithDestination(Cell destination, TunnelType type);
 
-  Collection<Tunnel> getAllTunnels();
+  Collection<Tunnel> getAllTunnels(TunnelType type);
 
-  void removeTunnels(Cell origin, Cell destination);
+  void removeTunnels(Cell origin, Cell destination, TunnelType type);
 
-  void removeTunnels();
+  void removeTunnels(TunnelType type);
 
 }

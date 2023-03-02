@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -157,7 +157,7 @@ public class PlayerJourneySession implements JourneySession {
       double closestDistanceSquared = locatable.distanceToSquared(traversal.get().getDestination());
       boolean foundLocation = false;
       for (JourneyStep step : journeySteps) {
-        if (locatable.domainId().equals(step.domainId())) {
+        if (locatable.domain() == step.domain()) {
           closestDistanceSquared = Math.min(closestDistanceSquared, locatable.distanceToSquared(step.destination()));
         }
         if (locatable.equals(step.destination())) {
@@ -220,7 +220,7 @@ public class PlayerJourneySession implements JourneySession {
       Cell pathDestination = currentPathDestination();
       Journey.get().proxy().platform().spawnDestinationParticle(
           playerUuid,
-          pathDestination.domainId(),
+          pathDestination.domain(),
           pathDestination.blockX() + 0.5,
           pathDestination.blockY() + 0.4f,
           pathDestination.blockZ() + 0.5,

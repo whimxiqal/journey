@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.bukkit.navigation.mode;
 
 import java.util.List;
@@ -20,7 +43,7 @@ public abstract class RayTraceMode extends BukkitMode {
   private final static double MAX_DISTANCE = 1024;
   private final static double MIN_VIABLE_DISTANCE_SQUARED = 10 * 10;  // anything smaller than this distance will discount this entire mode per check
   private final static double RAY_TRACE_MAX_SEPARATION = 0.2;  // number of blocks between each ray trace
-  private final String domainId;
+  private final int domain;
   private final Cell destinationCell;
   private final Location destination;
   private final double crossSectionLengthX;   // length x of bounding box (player or vehicle)
@@ -32,7 +55,7 @@ public abstract class RayTraceMode extends BukkitMode {
                       double crossSectionLengthX, double crossSectionLengthY, double crossSectionLengthZ,
                       FluidCollisionMode fluidCollisionMode) {
     super(session, forcePassable);
-    this.domainId = destination.domainId();
+    this.domain = destination.domain();
     this.destinationCell = destination;
     this.destination = BukkitUtil.toLocation(destination);
     this.crossSectionLengthX = crossSectionLengthX;
@@ -43,7 +66,7 @@ public abstract class RayTraceMode extends BukkitMode {
 
   @Override
   protected void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
-    if (!origin.domainId().equals(domainId)) {
+    if (origin.domain() != domain) {
       return;  // this can only be used when we're in the correct world
     }
     if (origin.equals(destinationCell)) {

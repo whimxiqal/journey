@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,14 @@ package net.whimxiqal.journey.bukkit.util;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -46,8 +48,6 @@ import org.bukkit.util.Vector;
  * A utility class to handle general odd Spigot Minecraft-related operations.
  */
 public final class BukkitUtil {
-
-  private static Boolean isAtLeastMinecraft17 = null;
 
   /**
    * Return true if the given block can be possibly passed through vertically,
@@ -152,28 +152,33 @@ public final class BukkitUtil {
         && !isVerticallyPassable(block, forcePassable);
   }
 
+  public static int getDomain(World world) {
+    return Journey.get().domainManager().domainIndex(getWorldId(world));
+  }
+
   public static String getWorldId(World world) {
-    return world.getKey().asString();
+    return world.getUID().toString();
   }
 
   public static Cell cell(Location location) {
-    return new Cell(location.getBlockX(), location.getBlockY(), location.getBlockZ(), getWorldId(Objects.requireNonNull(location.getWorld())));
+    return new Cell(location.getBlockX(), location.getBlockY(), location.getBlockZ(), getDomain(Objects.requireNonNull(location.getWorld())));
   }
 
   public static World getWorld(Cell cell) {
-    return getWorld(cell.domainId());
+    return getWorld(Journey.get().domainManager().domainId(cell.domain()));
   }
 
   public static World getWorld(String domainId) {
-    NamespacedKey key = NamespacedKey.fromString(domainId);
-    if (key == null) {
-      throw new IllegalArgumentException("Id " + domainId + " is not a name-spaced key");
-    }
-    World world = Bukkit.getWorld(key);
+    UUID uuid = UUID.fromString(domainId);
+    World world = Bukkit.getWorld(uuid);
     if (world == null) {
       throw new IllegalArgumentException("There is no world with id " + domainId);
     }
     return world;
+  }
+
+  public static World getWorld(int domain) {
+    return getWorld(Journey.get().domainManager().domainId(domain));
   }
 
   /**
@@ -184,7 +189,7 @@ public final class BukkitUtil {
    */
   public static BlockData getBlock(Cell cell) {
     if (Bukkit.isPrimaryThread()) {
-      return getWorld(cell.domainId()).getBlockAt(cell.blockX(), cell.blockY(), cell.blockZ()).getBlockData();
+      return getWorld(Journey.get().domainManager().domainId(cell.domain())).getBlockAt(cell.blockX(), cell.blockY(), cell.blockZ()).getBlockData();
     }
     return JourneyBukkit.get().getBlockAccessor().getBlock(cell);
   }

@@ -23,7 +23,9 @@
 
 package net.whimxiqal.journey.platform;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +33,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.math.Vector;
@@ -44,7 +48,7 @@ import org.bstats.charts.CustomChart;
 
 public class TestPlatformProxy implements PlatformProxy {
 
-  public static Map<String, TestWorld> worlds = new HashMap<>();
+  public static Map<Integer, TestWorld> worlds = new HashMap<>();  // domain -> world
   public static Map<String, Cell> pois = new HashMap<>();
   public static List<Tunnel> tunnels = new LinkedList<>();
   public static List<JourneyPlayer> onlinePlayers = new LinkedList<>();
@@ -60,12 +64,12 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void spawnDestinationParticle(UUID playerUuid, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     // ignore
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     // ignore
   }
 
@@ -86,7 +90,7 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public Optional<Cell> entityCellLocation(UUID entityUuid) {
-    return Optional.of(new Cell(0, 0, 0, WorldLoader.worldResources[0]));  // just say everything is at the origin
+    return Optional.of(new Cell(0, 0, 0, WorldLoader.domain(0)));  // just say everything is at the origin
   }
 
   @Override
@@ -107,7 +111,7 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public boolean isAtSurface(Cell cell) {
-    return true;
+    return false;
   }
 
   @Override
@@ -121,8 +125,8 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public String worldIdToName(String domainId) {
-    return domainId;
+  public String domainName(int domain) {
+    return worlds.get(domain).name;
   }
 
   @Override
@@ -138,5 +142,10 @@ public class TestPlatformProxy implements PlatformProxy {
   @Override
   public Consumer<CustomChart> bStatsChartConsumer() {
     return chart -> {/* nothing */};
+  }
+
+  @Override
+  public Map<String, Map<String, Integer>> domainResourceKeys() {
+    return Collections.singletonMap("whimxiqal", Arrays.stream(WorldLoader.worldResources).collect(Collectors.toMap(k -> k, k -> Journey.get().domainManager().domainIndex(k))));
   }
 }

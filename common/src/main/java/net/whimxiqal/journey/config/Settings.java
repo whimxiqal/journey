@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,10 +43,13 @@ public final class Settings {
       = new BooleanSetting("search.flag.default-dig", false);
 
   public static final Setting<Integer> MAX_PATH_BLOCK_COUNT
-      = new IntegerSetting("search.max-path-block-count", 100000);
+      = new IntegerSetting("search.max-path-block-count", 10000);
 
   public static final Setting<Integer> MAX_SEARCHES
       = new IntegerSetting("search.max-searches", 16);
+
+  public static final Setting<Integer> MAX_CACHED_CELLS
+      = new IntegerSetting("storage.cache.max_cells", 500000) /* Somewhere around 10-20 MB */;
 
   public static final Setting<String> STORAGE_ADDRESS
       = new StringSetting("storage.auth.address", "my.address");

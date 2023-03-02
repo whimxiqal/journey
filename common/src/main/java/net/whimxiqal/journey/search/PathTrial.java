@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,14 +29,13 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.search.function.CostFunction;
-import net.whimxiqal.journey.search.function.ManhattanDistanceCostFunction;
 import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
 
 /**
- * An extension of {@link FlexiblePathTrial} where the goal of the trial is to find a path to
+ * An extension of {@link AbstractPathTrial} where the goal of the trial is to find a path to
  * a specific predefined destination.
  */
-public class PathTrial extends FlexiblePathTrial {
+public class PathTrial extends AbstractPathTrial {
 
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
   @Getter
@@ -64,7 +63,7 @@ public class PathTrial extends FlexiblePathTrial {
   }
 
   private static CostFunction costFunction(Cell destination) {
-    return new ManhattanDistanceCostFunction(destination);
+    return new PlanarOrientedCostFunction(destination);
   }
 
   /**
@@ -123,7 +122,7 @@ public class PathTrial extends FlexiblePathTrial {
                                       boolean saveOnComplete) {
     return new PathTrial(session, origin, destination,
         modes,
-        new PlanarOrientedCostFunction(destination).apply(origin), null,
+        costFunction(destination).apply(origin), null,
         ResultState.IDLE, false, saveOnComplete);
   }
 

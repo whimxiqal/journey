@@ -28,34 +28,35 @@ import java.util.Collections;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Tunnel;
 
-public class TestNetherTunnelDataManager implements NetherTunnelDataManager {
+public class TestTunnelDataManager implements TunnelDataManager {
+
   @Override
-  public void addTunnel(Cell origin, Cell destination, double cost) {
+  public void addTunnel(Cell origin, Cell destination, double cost, TunnelType type) {
     // ignore
   }
 
   @Override
-  public Collection<Tunnel> getTunnelsWithOrigin(Cell origin) {
+  public Collection<Tunnel> getTunnelsWithOrigin(Cell origin, TunnelType type) {
     return Collections.emptyList();
   }
 
   @Override
-  public Collection<Tunnel> getTunnelsWithDestination(Cell destination) {
+  public Collection<Tunnel> getTunnelsWithDestination(Cell destination, TunnelType type) {
     return Collections.emptyList();
   }
 
   @Override
-  public Collection<Tunnel> getAllTunnels() {
+  public Collection<Tunnel> getAllTunnels(TunnelType type) {
     return Collections.emptyList();
   }
 
   @Override
-  public void removeTunnels(Cell origin, Cell destination) {
+  public void removeTunnels(Cell origin, Cell destination, TunnelType type) {
     // ignore
   }
 
   @Override
-  public void removeTunnels() {
+  public void removeTunnels(TunnelType type) {
     // ignore
   }
 }

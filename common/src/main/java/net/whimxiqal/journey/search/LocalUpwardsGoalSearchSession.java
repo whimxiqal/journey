@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.search.event.FoundSolutionEvent;
 import net.whimxiqal.journey.search.event.StartSearchEvent;
 import net.whimxiqal.journey.search.event.StopSearchEvent;
-import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.function.HeightCostFunction;
 import net.whimxiqal.journey.tools.AlternatingList;
 
@@ -42,23 +41,22 @@ import net.whimxiqal.journey.tools.AlternatingList;
 public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
 
   private final Cell origin;
-  private long executionStartTime = -1;
 
-  protected LocalUpwardsGoalSearchSession(UUID callerId, Caller callerType, Cell origin, FlagSet flags) {
-    super(callerId, callerType, flags);
+  protected LocalUpwardsGoalSearchSession(UUID callerId, Caller callerType, Cell origin) {
+    super(callerId, callerType);
     this.origin = origin;
   }
 
   @Override
   protected void resumeSearch() {
     // This implementation just runs once
-    executionStartTime = System.currentTimeMillis();
+    super.timer.start();
     Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
     synchronized (this) {
       state = ResultState.RUNNING;
     }
 
-    FlexiblePathTrial pathTrial = new FlexiblePathTrial(
+    AbstractPathTrial pathTrial = new AbstractPathTrial(
         this,
         origin,
         this.modes,
@@ -94,14 +92,6 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
     }
 
     Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
-  }
-
-  @Override
-  public final long executionTime() {
-    if (executionStartTime < 0) {
-      return -1;
-    }
-    return System.currentTimeMillis() - executionStartTime;
   }
 
   protected abstract boolean reachesGoal(Cell cell);

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,17 +28,20 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Destination;
-import net.whimxiqal.journey.JourneyPlayer;
-import net.whimxiqal.journey.VirtualMap;
-import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.Scope;
+import net.whimxiqal.journey.VirtualMap;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.search.InternalScope;
+import net.whimxiqal.journey.search.PlayerDomainGoalSearchSession;
+import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.journey.util.Validator;
 
 public class ScopeManager {
 
-  private final Map<String, Scope> scopes = new HashMap<>();
+  private final Map<String, InternalScope> scopes = new HashMap<>();
   private final Map<String, String> plugins = new HashMap<>();
 
   public void registerDefault() {
@@ -89,9 +92,26 @@ public class ScopeManager {
                 .strict()  // to access any player destinations, you must at least scope to the player
                 .build()))))
         .build());
+    Map<String, Map<String, Integer>> worldResourceKeys = Journey.get().proxy().platform().domainResourceKeys();
+    register(Journey.NAME, "world", new InternalScope(Scope.builder().build(),
+        p1 -> VirtualMap.empty(),
+        p1 -> VirtualMap.of(worldResourceKeys.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry ->
+            new InternalScope(Scope.builder().build(),
+                p2 -> VirtualMap.of(entry.getValue().entrySet().stream()
+                    .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
+                    .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
+                      SearchSession session = new PlayerDomainGoalSearchSession(p2, entry2.getValue());
+                      session.addPermission(Permission.PATH_WORLD.path());
+                      return session;
+                    }))),
+                p2 -> VirtualMap.empty()))))));
   }
 
   public void register(String plugin, String id, Scope scope) {
+    register(plugin, id, new InternalScope(scope));
+  }
+
+  private void register(String plugin, String id, InternalScope scope) {
     if (Validator.isInvalidDataName(id)) {
       throw new IllegalArgumentException("Scope id '" + id + "' is invalid");
     }
@@ -102,7 +122,7 @@ public class ScopeManager {
     plugins.put(id, plugin);
   }
 
-  public Map<String, Scope> scopes() {
+  public Map<String, InternalScope> scopes() {
     return scopes;
   }
 

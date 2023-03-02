@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,13 +58,15 @@ import org.jetbrains.annotations.Nullable;
  * @see SearchSession
  * @see ItineraryTrial
  */
-public class FlexiblePathTrial implements Resulted {
+public class AbstractPathTrial implements Resulted {
+
+  private final static double CALCULATION_MULTIPLIER_PER_BLOCK = 1.1;
 
   private final SearchSession session;
   @Getter
   private final Cell origin;
   @Getter
-  private final String domain;
+  private final int domain;
   @Getter
   private final CostFunction costFunction;
   private final Completer completer;
@@ -80,6 +82,7 @@ public class FlexiblePathTrial implements Resulted {
   @Getter
   private boolean fromCache;
   private long startExecutionTime = -1;
+  private int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
 
   /**
    * General constructor.
@@ -91,7 +94,7 @@ public class FlexiblePathTrial implements Resulted {
    * @param completer       the object to determine whether the path algorithm is complete and
    *                        the goal has been reached
    */
-  public FlexiblePathTrial(SearchSession session,
+  public AbstractPathTrial(SearchSession session,
                            Cell origin,
                            Collection<Mode> modes,
                            CostFunction costFunction,
@@ -99,14 +102,14 @@ public class FlexiblePathTrial implements Resulted {
                            boolean saveOnComplete) {
     this.session = session;
     this.origin = origin;
-    this.domain = origin.domainId();
+    this.domain = origin.domain();
     this.modes.addAll(modes);
     this.costFunction = costFunction;
     this.completer = completer;
     this.saveOnComplete = saveOnComplete;
   }
 
-  protected FlexiblePathTrial(SearchSession session,
+  protected AbstractPathTrial(SearchSession session,
                               Cell origin,
                               Collection<Mode> modes,
                               CostFunction costFunction,
@@ -118,7 +121,7 @@ public class FlexiblePathTrial implements Resulted {
                               boolean saveOnComplete) {
     this.session = session;
     this.origin = origin;
-    this.domain = origin.domainId();
+    this.domain = origin.domain();
     this.modes.addAll(modes);
     this.costFunction = costFunction;
     this.completer = completer;
@@ -129,7 +132,7 @@ public class FlexiblePathTrial implements Resulted {
     this.saveOnComplete = saveOnComplete;
   }
 
-  private FlexiblePathTrial.TrialResult resultFail() {
+  private AbstractPathTrial.TrialResult resultFail() {
     this.state = ResultState.STOPPED_FAILED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
@@ -137,7 +140,7 @@ public class FlexiblePathTrial implements Resulted {
     return new TrialResult(null, true);
   }
 
-  private FlexiblePathTrial.TrialResult resultSucceed(double length, List<Step> steps) {
+  private AbstractPathTrial.TrialResult resultSucceed(double length, List<Step> steps) {
     this.state = ResultState.STOPPED_SUCCESSFUL;
     this.length = length;
     this.path = new Path(origin, new ArrayList<>(steps), length);
@@ -146,7 +149,7 @@ public class FlexiblePathTrial implements Resulted {
     return new TrialResult(this.path, true);
   }
 
-  private FlexiblePathTrial.TrialResult resultCancel() {
+  private AbstractPathTrial.TrialResult resultCancel() {
     this.state = ResultState.STOPPED_CANCELED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
@@ -180,8 +183,7 @@ public class FlexiblePathTrial implements Resulted {
     Journey.get().dispatcher().dispatch(new StartPathSearchEvent(session, this));
     startExecutionTime = System.currentTimeMillis();
 
-    Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node ->
-        costFunction.apply(node.getData().location()) + node.getScore()));
+    Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> node.score + costFunction.apply(node.data.location()) * CALCULATION_MULTIPLIER_PER_BLOCK));
     Map<Cell, Node> visited = new HashMap<>();
 
     Node originNode = new Node(new Step(origin, 0, ModeType.NONE),
@@ -192,14 +194,14 @@ public class FlexiblePathTrial implements Resulted {
 
     Node current;
     while (!upcoming.isEmpty()) {
-      synchronized (this) {
+      synchronized (session) {
         if (session.state.shouldStop()) {
           // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
           return resultCancel();
         }
       }
 
-      if (visited.size() > Settings.MAX_PATH_BLOCK_COUNT.getValue()) {
+      if (visited.size() > maxCellCount) {
         // We ran out of allocated memory. Let's just call it here and say we failed and cache the failure.
         return resultFail();
       }
@@ -251,6 +253,10 @@ public class FlexiblePathTrial implements Resulted {
 
     // We've exhausted all possibilities. Fail.
     return resultFail();
+  }
+
+  public void setMaxCellCount(int maxCellCount) {
+    this.maxCellCount = maxCellCount;
   }
 
   /**
@@ -315,5 +321,7 @@ public class FlexiblePathTrial implements Resulted {
     }
 
   }
+
+
 
 }

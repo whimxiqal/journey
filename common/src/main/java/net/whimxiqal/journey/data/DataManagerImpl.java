@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.sql.SqlPathRecordManager;
 import net.whimxiqal.journey.data.sql.SqlPersonalWaypointManager;
-import net.whimxiqal.journey.data.sql.SqlNetherTunnelDataManager;
+import net.whimxiqal.journey.data.sql.SqlTunnelDataManager;
 import net.whimxiqal.journey.data.sql.SqlPublicWaypointManager;
 import net.whimxiqal.journey.data.sql.mysql.MySqlConnectionController;
 import net.whimxiqal.journey.data.sql.sqlite.SqliteConnectionController;
@@ -42,7 +42,7 @@ public class DataManagerImpl implements DataManager, Initializable {
   private PersonalWaypointManager personalWaypointManager;
   private PublicWaypointManager publicWaypointManager;
   private PathRecordManager pathRecordManager;
-  private NetherTunnelDataManager netherTunnelDataManager;
+  private TunnelDataManager tunnelDataManager;
 
   @Override
   public void initialize() {
@@ -53,14 +53,14 @@ public class DataManagerImpl implements DataManager, Initializable {
         personalWaypointManager = new SqlPersonalWaypointManager(sqliteController);
         publicWaypointManager = new SqlPublicWaypointManager(sqliteController);
         pathRecordManager = new SqlPathRecordManager(sqliteController);
-        netherTunnelDataManager = new SqlNetherTunnelDataManager(sqliteController);
+        tunnelDataManager = new SqlTunnelDataManager(sqliteController);
         break;
       case MYSQL:
         MySqlConnectionController mysqlController = new MySqlConnectionController();
         personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
         publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
         pathRecordManager = new SqlPathRecordManager(mysqlController);
-        netherTunnelDataManager = new SqlNetherTunnelDataManager(mysqlController);
+        tunnelDataManager = new SqlTunnelDataManager(mysqlController);
         break;
       default:
         throw new RuntimeException();
@@ -88,7 +88,7 @@ public class DataManagerImpl implements DataManager, Initializable {
   }
 
   @Override
-  public NetherTunnelDataManager netherPortalManager() {
-    return netherTunnelDataManager;
+  public TunnelDataManager netherPortalManager() {
+    return tunnelDataManager;
   }
 }

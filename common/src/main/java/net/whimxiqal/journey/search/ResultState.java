@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -135,6 +135,7 @@ public enum ResultState {
 
   /**
    * The result state of transitioning to a stopped state from the current state
+   *
    * @return stopped result state
    */
   public ResultState stoppedResult() {

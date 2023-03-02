@@ -28,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyTestHarness;
 import net.whimxiqal.journey.navigation.Itinerary;
-import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -37,16 +36,27 @@ public class BetterSearchTest extends JourneyTestHarness {
 
   private UUID lastSessionUuid;
 
-  private SearchSession session(String origin, String destination) {
+  private SearchSession destinationSession(String origin, String destination) {
     return new PlayerDestinationGoalSearchSession(UUID.randomUUID(),
         TestPlatformProxy.pois.get(origin),
         TestPlatformProxy.pois.get(destination),
-        new FlagSet(),
         true);
   }
 
-  private void runSearch(String origin, String destination, ResultState expectedResult) throws InterruptedException {
-    SearchSession session = session(origin, destination);
+  private SearchSession domainSession(String origin, int domainDestination) {
+    return new PlayerDomainGoalSearchSession(UUID.randomUUID(), TestPlatformProxy.pois.get(origin), domainDestination);
+  }
+
+  private void runDestinationSearch(String origin, String destination, ResultState expectedResult) throws InterruptedException {
+    runSearch(destinationSession(origin, destination), expectedResult);
+  }
+
+  private void runDomainSearch(String origin, String domainId, ResultState expectedResult) throws InterruptedException {
+    runSearch(domainSession(origin, Journey.get().domainManager().domainIndex(domainId)), expectedResult);
+  }
+
+  private void runSearch(SearchSession session, ResultState expectedResult) throws InterruptedException {
+    session.initialize();
     lastSessionUuid = session.uuid();
     Assertions.assertEquals(ResultState.IDLE, session.getState());
     CompletableFuture<ResultState> future = session.search(20);
@@ -62,16 +72,26 @@ public class BetterSearchTest extends JourneyTestHarness {
   }
 
   @Test
-  void searches() throws InterruptedException {
-    runSearch("1", "2", ResultState.STOPPED_SUCCESSFUL);
-    runSearch("1", "3", ResultState.STOPPED_SUCCESSFUL);
+  void destinationSearches() throws InterruptedException {
+    runDestinationSearch("1", "2", ResultState.STOPPED_SUCCESSFUL);
+    runDestinationSearch("1", "3", ResultState.STOPPED_SUCCESSFUL);
     Itinerary oneToThree = sessionItineraries.get(lastSessionUuid);
-    runSearch("3", "1", ResultState.STOPPED_FAILED);
-    runSearch("1", "4", ResultState.STOPPED_FAILED);
-    runSearch("2", "3", ResultState.STOPPED_SUCCESSFUL);
+    runDestinationSearch("3", "1", ResultState.STOPPED_FAILED);
+    runDestinationSearch("1", "4", ResultState.STOPPED_FAILED);
+    runDestinationSearch("2", "3", ResultState.STOPPED_SUCCESSFUL);
     Itinerary twoToThree = sessionItineraries.get(lastSessionUuid);
 
     Assertions.assertTrue(oneToThree.cost() < twoToThree.cost());
+  }
+
+  @Test
+  void domainSearches() throws InterruptedException {
+    runDomainSearch("1", "world1", ResultState.STOPPED_ERROR);  // cannot go to the same world
+    runDomainSearch("2", "world1", ResultState.STOPPED_ERROR);  // cannot go to the same world
+    runDomainSearch("3", "world1", ResultState.STOPPED_ERROR);  // cannot go to the same world
+    runDomainSearch("1", "world2", ResultState.STOPPED_SUCCESSFUL);
+    runDomainSearch("2", "world2", ResultState.STOPPED_SUCCESSFUL);
+    runDomainSearch("3", "world2", ResultState.STOPPED_FAILED);
   }
 
 }

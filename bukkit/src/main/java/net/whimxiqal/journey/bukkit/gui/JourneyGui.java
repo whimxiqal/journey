@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.bukkit.gui;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
@@ -18,6 +41,7 @@ import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.scope.ScopeUtil;
+import net.whimxiqal.journey.search.InternalScope;
 import net.whimxiqal.journey.search.PlayerDestinationGoalSearchSession;
 import net.whimxiqal.journey.search.PlayerSurfaceGoalSearchSession;
 import net.whimxiqal.journey.search.SearchSession;
@@ -72,7 +96,7 @@ public class JourneyGui {
   }
 
   private final JourneyPlayer player;
-  private final Scope scope;
+  private final InternalScope scope;
   private final JourneyGui previous;
   private final boolean root;
 
@@ -80,7 +104,7 @@ public class JourneyGui {
     this(player, ScopeUtil.root(), null, true);
   }
 
-  private JourneyGui(JourneyPlayer player, Scope scope, JourneyGui previous, boolean root) {
+  private JourneyGui(JourneyPlayer player, InternalScope scope, JourneyGui previous, boolean root) {
     this.player = player;
     this.scope = scope;
     this.previous = previous;
@@ -90,9 +114,9 @@ public class JourneyGui {
   public void open() {
     TextComponent.Builder title = Component.text();
     title.append(Component.text("Journey To").color(Formatter.THEME));
-    if (scope.name() != null) {
+    if (scope.wrappedScope().name() != null) {
       title.append(Formatter.dull(" % "));
-      title.append(scope.name());
+      title.append(scope.wrappedScope().name());
     }
     PaginatedGui gui = Gui.paginated()
         .title(title.build())
@@ -111,23 +135,23 @@ public class JourneyGui {
     if (previous != null) {
       gui.setItem(1, 1, ItemBuilder.from(Material.BEDROCK)
           // assume only the home page has an empty name
-          .name(Formatter.accent("Back to ___", previous.scope.name().equals(Component.empty()) ? "Home Page" : previous.scope.name()))
+          .name(Formatter.accent("Back to ___", previous.scope.wrappedScope().name().equals(Component.empty()) ? "Home Page" : previous.scope.wrappedScope().name()))
           .asGuiItem(event -> {
             previous.open();
           }));
     }
 
-    VirtualMap<Scope> subScopeSupplier = scope.subScopes(player);
+    VirtualMap<InternalScope> subScopeSupplier = scope.subScopes(player);
     if (subScopeSupplier.size() < MAX_SCOPE_ITEM_COUNT) {
       subScopeSupplier.getAll().entrySet().stream()
           .sorted(Map.Entry.comparingByKey())
-          .filter(entry -> !ScopeUtil.restricted(entry.getValue(), player))
-          .filter(entry -> entry.getValue().subScopes(player).size() > 0 || entry.getValue().destinations(player).size() > 0)
+          .filter(entry -> !player.hasPermission(entry.getValue().wrappedScope().permission().orElse(null)))
+          .filter(entry -> entry.getValue().subScopes(player).size() > 0 || entry.getValue().sessions(player).size() > 0)
           .forEach(entry -> {
             ItemBuilder guiItem = ItemBuilder.from(getMaterial(entry.getKey(), scopeOptions))
-                .name(entry.getValue().name());
-            if (!entry.getValue().description().equals(Component.empty())) {
-              guiItem.lore(entry.getValue().description());
+                .name(entry.getValue().wrappedScope().name());
+            if (!entry.getValue().wrappedScope().description().equals(Component.empty())) {
+              guiItem.lore(entry.getValue().wrappedScope().description());
             }
             gui.addItem(guiItem.asGuiItem(event -> {
               JourneyGui subScopeGui = new JourneyGui(player, entry.getValue(), this, false); // already loaded
@@ -136,33 +160,18 @@ public class JourneyGui {
           });
     }
 
-    VirtualMap<Destination> destinationSupplier = scope.destinations(player);
-    if (destinationSupplier.size() < MAX_SCOPE_ITEM_COUNT) {
-      destinationSupplier.getAll().entrySet().stream()
+    VirtualMap<SearchSession> sessionSupplier = scope.sessions(player);
+    if (sessionSupplier.size() < MAX_SCOPE_ITEM_COUNT) {
+      sessionSupplier.getAll().entrySet().stream()
           .sorted(Map.Entry.comparingByKey())
-          .filter(entry -> !ScopeUtil.restricted(entry.getValue(), player))
+          .filter(entry -> !ScopeUtil.restricted(entry.getValue().permissions(), player))
           .forEach(entry -> {
             boolean surfaceItem = root && entry.getKey().equals("surface");
             GuiItem guiItem = ItemBuilder.from(getMaterial(entry.getKey(), itemOptions))
                 .name(entry.getValue().name() == Component.empty() ? Formatter.accent(entry.getKey()) : entry.getValue().name())
-                .lore(surfaceItem ? Formatter.dull("Go to surface") : entry.getValue().description())
+                .lore(entry.getValue().description())
                 .asGuiItem(event -> {
-                  HumanEntity human = event.getWhoClicked();
-                  human.closeInventory();
-                  SearchSession session;
-                  if (surfaceItem) {
-                    // this is a special "surface" case
-                    session = new PlayerSurfaceGoalSearchSession(human.getUniqueId(),
-                        BukkitUtil.cell(human.getLocation()),
-                        new FlagSet());
-                  } else {
-                    // normal case
-                    session = new PlayerDestinationGoalSearchSession(human.getUniqueId(),
-                        BukkitUtil.cell(human.getLocation()),
-                        entry.getValue().location(), new FlagSet(),
-                        true);
-                  }
-                  Journey.get().searchManager().launchSearch(session);
+                  Journey.get().searchManager().launchSearch(entry.getValue());
                 });
             gui.addItem(guiItem);
           });

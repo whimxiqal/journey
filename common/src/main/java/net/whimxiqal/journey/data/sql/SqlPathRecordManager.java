@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.data.PathRecordManager;
 import net.whimxiqal.journey.Cell;
@@ -45,7 +46,6 @@ import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
 import net.whimxiqal.journey.search.PathTrial;
-import net.whimxiqal.journey.search.function.CostFunctionType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,8 +108,8 @@ public class SqlPathRecordManager
     long pathReportId = -1;
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-              "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-                  + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+              "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                  + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
               PATH_RECORD_TABLE_NAME,
               "timestamp",
               "duration",
@@ -120,8 +120,7 @@ public class SqlPathRecordManager
               "destination_x",
               "destination_y",
               "destination_z",
-              "domain_id",
-              "cost_function"),
+              "domain_id"),
           Statement.RETURN_GENERATED_KEYS);
 
       statement.setLong(1, System.currentTimeMillis() / 1000);
@@ -133,8 +132,7 @@ public class SqlPathRecordManager
       statement.setInt(7, trial.getDestination().blockX());
       statement.setInt(8, trial.getDestination().blockY());
       statement.setInt(9, trial.getDestination().blockZ());
-      statement.setString(10, trial.getDomain());
-      statement.setString(11, trial.getCostFunction().getType().name());
+      statement.setString(10, Journey.get().domainManager().domainId(trial.getDomain()));
 
       statement.execute();
 
@@ -199,12 +197,36 @@ public class SqlPathRecordManager
   }
 
   @Override
-  public void clear() {
+  public void truncate() {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s;",
+          PATH_RECORD_TABLE_NAME));
+      statement.execute();
+
+      statement = connection.prepareStatement(String.format(
+          "DELETE FROM %s;",
+          PATH_RECORD_CELL_TABLE_NAME));
+      statement.execute();
+
+      statement = connection.prepareStatement(String.format(
+          "DELETE FROM %s;",
           PATH_RECORD_MODE_TABLE_NAME));
       statement.execute();
+    } catch (SQLException e) {
+      e.printStackTrace();
+      throw new DataAccessException();
+    }
+  }
+
+  @Override
+  public int totalRecordCellCount() {
+    try (Connection connection = getConnectionController().establishConnection()) {
+      PreparedStatement statement = connection.prepareStatement(String.format(
+          "SELECT COUNT(*) FROM %s;",
+          PATH_RECORD_CELL_TABLE_NAME));
+      ResultSet result = statement.executeQuery();
+      return result.getInt(1);
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
@@ -231,7 +253,7 @@ public class SqlPathRecordManager
               + "destination_x = " + destination.blockX() + " AND "
               + "destination_y = " + destination.blockY() + " AND "
               + "destination_z = " + destination.blockZ() + " AND "
-              + "domain_id = '" + origin.domainId() + "'")
+              + "domain_id = '" + origin.domain() + "'")
           .executeQuery();
       List<PathTrialRecord> records = new LinkedList<>();
       while (recordResult.next()) {
@@ -380,8 +402,7 @@ public class SqlPathRecordManager
         resultSet.getInt("destination_x"),
         resultSet.getInt("destination_y"),
         resultSet.getInt("destination_z"),
-        resultSet.getString("domain_id"),
-        CostFunctionType.valueOf(resultSet.getString("cost_function")),
+        Journey.get().domainManager().domainIndex(resultSet.getString("domain_id")),
         new LinkedList<>(),
         new LinkedList<>()
     );
@@ -415,8 +436,7 @@ public class SqlPathRecordManager
           + "destination_x int(7) NOT NULL,"
           + "destination_y int(7) NOT NULL,"
           + "destination_z int(7) NOT NULL,"
-          + "domain_id char(36) NOT NULL, "
-          + "cost_function varchar(32) NOT NULL"
+          + "domain_id char(36) NOT NULL"
           + ");").execute();
 
       connection.prepareStatement("CREATE INDEX IF NOT EXISTS path_record_idx ON "

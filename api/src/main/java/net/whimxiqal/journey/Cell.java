@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@ package net.whimxiqal.journey;
 
 import java.io.Serializable;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A generic location within 3-dimensional domain.
@@ -37,21 +36,21 @@ public class Cell implements Serializable {
   private final int blockX;
   private final int blockY;
   private final int blockZ;
-  private final String domainId;
+  private final int domain;
 
   /**
    * General constructor.
    *
-   * @param x        the X coordinate
-   * @param y        the Y coordinate
-   * @param z        the Z coordinate
-   * @param domainId the identifier for the domain
+   * @param x      the X coordinate
+   * @param y      the Y coordinate
+   * @param z      the Z coordinate
+   * @param domain the id of the domain
    */
-  public Cell(int x, int y, int z, @NotNull String domainId) {
+  public Cell(int x, int y, int z, int domain) {
     this.blockX = x;
     this.blockY = y;
     this.blockZ = z;
-    this.domainId = Objects.requireNonNull(domainId);
+    this.domain = domain;
   }
 
   /**
@@ -86,8 +85,8 @@ public class Cell implements Serializable {
    *
    * @return the domain id
    */
-  public final String domainId() {
-    return domainId;
+  public final int domain() {
+    return domain;
   }
 
   /**
@@ -125,12 +124,12 @@ public class Cell implements Serializable {
    * @return the new Cell
    */
   public Cell atOffset(int x, int y, int z) {
-    return new Cell(blockX + x, blockY + y, blockZ + z, domainId);
+    return new Cell(blockX + x, blockY + y, blockZ + z, domain);
   }
 
   @Override
   public String toString() {
-    return "[x: " + blockX + ", y: " + blockY + ", z: " + blockZ + ", domain: '" + domainId + "']";
+    return "[x: " + blockX + ", y: " + blockY + ", z: " + blockZ + ", domain: '" + domain + "']";
   }
 
   @Override
@@ -138,12 +137,12 @@ public class Cell implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Cell cell = (Cell) o;
-    return blockX == cell.blockX && blockY == cell.blockY && blockZ == cell.blockZ && domainId.equals(cell.domainId);
+    return blockX == cell.blockX && blockY == cell.blockY && blockZ == cell.blockZ && domain == cell.domain;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(blockX, blockY, blockZ, domainId);
+    return Objects.hash(blockX, blockY, blockZ, domain);
   }
 
 }

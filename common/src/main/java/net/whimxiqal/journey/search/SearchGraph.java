@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,51 +33,25 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.graph.WeightedGraph;
-import net.whimxiqal.journey.tools.AlternatingList;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * An implementation of a weighted graph to be used for the overall search algorithm.
  */
-public final class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
+public abstract class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
 
-  private final DestinationGoalSearchSession session;
-  private final Cell origin;
-  private final Tunnel originNode;
-  private final Cell destination;
-  private final Tunnel destinationNode;
+  protected final GraphGoalSearchSession<?> session;
+  protected final Cell origin;
+  protected final Tunnel originNode;
 
-  /**
-   * General constructor.
-   *
-   * @param session     the search session
-   * @param origin      the origin of the entire problem
-   * @param destination the destination of the entire problem
-   */
-  public SearchGraph(DestinationGoalSearchSession session, Cell origin, Cell destination) {
+  public SearchGraph(GraphGoalSearchSession<?> session, Cell origin) {
     this.session = session;
     this.origin = origin;
     this.originNode = Tunnel.builder(origin, origin).cost(0).build();
-    this.destination = destination;
-    this.destinationNode = Tunnel.builder(destination, destination).cost(0).build();
   }
 
-  private Tunnel getOriginNode() {
+  protected Tunnel getOriginNode() {
     return originNode;
-  }
-
-  private Tunnel getDestinationNode() {
-    return destinationNode;
-  }
-
-  /**
-   * Add a path trial to the search graph that supposedly goes
-   * directly from the origin to the destination.
-   *
-   * @param modes the mode types to supposedly get from the origin to the destination
-   */
-  public void addPathTrialOriginToDestination(Collection<Mode> modes, boolean persistentEnds) {
-    addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modes, persistentEnds);
   }
 
   /**
@@ -96,21 +70,6 @@ public final class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
   }
 
   /**
-   * Add a path trial to the search graph that supposedly goes
-   * from a tunnel to the destination of the entire search
-   * The origin of the path, then, would be the destination of the tunnel.
-   *
-   * @param start the start of the path trial
-   * @param modes the mode types used to traverse the path
-   */
-  public void addPathTrialTunnelToDestination(Tunnel start, Collection<Mode> modes, boolean persistentDestination) {
-    addPathTrial(session,
-        start.destination(), destination,
-        start, getDestinationNode(),
-        modes, persistentDestination);
-  }
-
-  /**
    * Add a path trial to the search graph that goes from a tunnel to
    * another tunnel.
    * The destination of the start tunnel is the origin of this path trial,
@@ -120,12 +79,12 @@ public final class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
    * @param end   the ending tunnel
    * @param modes the mode types used to traverse the path
    */
-  public void addPathTrialPortToPort(Tunnel start, Tunnel end, Collection<Mode> modes) {
+  public void addPathTrialTunnelToTunnel(Tunnel start, Tunnel end, Collection<Mode> modes) {
     addPathTrial(session, start.destination(), end.origin(),
         start, end, modes, true);
   }
 
-  private void addPathTrial(SearchSession session, Cell origin, Cell destination,
+  protected void addPathTrial(SearchSession session, Cell origin, Cell destination,
                             Tunnel originNode,
                             Tunnel destinationNode,
                             Collection<Mode> modes, boolean saveOnComplete) {
@@ -156,22 +115,6 @@ public final class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
     addEdge(start, end, trial);
   }
 
-  /**
-   * Calculate an itinerary trial using this graph.
-   * If none is found, then return null.
-   *
-   * @return the itinerary trial
-   */
-  @Nullable
-  public ItineraryTrial calculate() {
-    AlternatingList<Tunnel, PathTrial, Object> graphPath = findMinimumPath(originNode, destinationNode);
-    if (graphPath == null) {
-      return null;
-    } else {
-      return new ItineraryTrial(session, origin, graphPath);
-    }
-  }
-
   @Override
   protected double nodeWeight(Tunnel nodeData) {
     return nodeData.cost();
@@ -181,4 +124,7 @@ public final class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
   protected double edgeLength(PathTrial edge) {
     return edge.getLength();
   }
+
+  @Nullable
+  abstract public ItineraryTrial calculate(boolean mustUseCache);
 }

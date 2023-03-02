@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DigMode extends BukkitMode {
 
-  public final static double DIG_COST_MULTIPLIER = 32;
+  public final static double DIG_COST_MULTIPLIER = 16;
 
   /**
    * General constructor.

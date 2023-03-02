@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 package net.whimxiqal.journey.search.function;
 
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
 
 /**
  * This scoring function is similar to the Euclidean distance function but operates under the assumption that
@@ -33,6 +34,7 @@ import net.whimxiqal.journey.Cell;
 public class PlanarOrientedCostFunction implements CostFunction {
 
   private final static double SQRT_TWO = Math.sqrt(2);
+  private final static double SQRT_THREE = Math.sqrt(3);
   private final Cell destination;
 
   public PlanarOrientedCostFunction(Cell destination) {
@@ -46,14 +48,55 @@ public class PlanarOrientedCostFunction implements CostFunction {
 
   @Override
   public Double apply(Cell cell) {
-    double diffX = cell.blockX() - destination.blockX();
-    double diffYAbs = Math.abs(cell.blockY() - destination.blockY());
-    double diffZ = cell.blockZ() - destination.blockZ();
+    // Sort coordinates in order of size
+    int xDiff = Math.abs(destination.blockX() - cell.blockX());
+    int yDiff = Math.abs(destination.blockY() - cell.blockY());
+    int zDiff = Math.abs(destination.blockZ() - cell.blockZ());
+    int first, second, third;
+    boolean isYFirst = false;
+    if (yDiff > xDiff && yDiff > zDiff) {
+      first = yDiff;
+      isYFirst = true;
+      if (xDiff > zDiff) {
+        second = xDiff;
+        third = zDiff;
+      } else {
+        second = zDiff;
+        third = xDiff;
+      }
+    } else if (xDiff > zDiff) {
+      first = xDiff;
+      if (yDiff > zDiff) {
+        second = yDiff;
+        third = zDiff;
+      } else {
+        second = zDiff;
+        third = yDiff;
+      }
+    } else {
+      first = zDiff;
+      if (xDiff > yDiff) {
+        second = xDiff;
+        third = yDiff;
+      } else {
+        second = yDiff;
+        third = xDiff;
+      }
+    }
 
-    double toXZPlane = SQRT_TWO * diffYAbs;
-    double diffXZ = Math.sqrt(diffX * diffX + diffZ * diffZ);
+    // Calculate distance to travel
+    double total = SQRT_THREE * third;
+    second -= third;
+    first -= third;
 
-    double alongXZ = Math.abs(diffXZ - diffYAbs);
-    return alongXZ + toXZPlane;
+    total += SQRT_TWO * second;
+    first -= second;
+
+    if (isYFirst) {
+      total += first * SQRT_TWO;
+    } else {
+      total += first;
+    }
+    return total;
   }
 }

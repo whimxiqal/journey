@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@ package net.whimxiqal.journey.search;
 
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.search.flag.FlagSet;
@@ -37,21 +38,9 @@ public class PlayerDestinationGoalSearchSession extends DestinationGoalSearchSes
 
   private final PlayerSessionState sessionState;
 
-  public PlayerDestinationGoalSearchSession(UUID player, Cell origin, Cell destination, FlagSet flags, boolean persistentDestination) {
-    super(player, Caller.PLAYER, flags, origin, destination, false, persistentDestination);
+  public PlayerDestinationGoalSearchSession(UUID player, Cell origin, Cell destination, boolean persistentDestination) {
+    super(player, Caller.PLAYER, origin, destination, false, persistentDestination);
     sessionState = new PlayerSessionState(player);
-    int stepDelay = flags.getValueFor(Flags.ANIMATE);
-    if (stepDelay > 0) {
-      sessionState.animationManager().setAnimating(true);
-      setAlgorithmStepDelay(stepDelay);
-    } else {
-      sessionState.animationManager().setAnimating(false);
-    }
-    Journey.get().proxy().platform().prepareSearchSession(this, player, flags, true);
-    Journey.get().proxy().platform().prepareDestinationSearchSession(this, player, flags, destination);
-    Journey.get().netherManager().makeTunnels().forEach(this::registerTunnel);
-    Journey.get().proxy().platform().onlinePlayer(player).ifPresent(jPlayer ->
-        Journey.get().tunnelManager().tunnels(jPlayer).forEach(this::registerTunnel));
   }
 
   public PlayerSessionState sessionState() {
@@ -61,5 +50,21 @@ public class PlayerDestinationGoalSearchSession extends DestinationGoalSearchSes
   @Override
   public Audience audience() {
     return Journey.get().proxy().audienceProvider().player(getCallerId());
+  }
+
+  @Override
+  public void initialize() {
+    int stepDelay = flags.getValueFor(Flags.ANIMATE);
+    if (stepDelay > 0) {
+      sessionState.animationManager().setAnimating(true);
+      setAlgorithmStepDelay(stepDelay);
+    } else {
+      sessionState.animationManager().setAnimating(false);
+    }
+    Journey.get().proxy().platform().prepareSearchSession(this, getCallerId(), flags, true);
+    Journey.get().proxy().platform().prepareDestinationSearchSession(this, getCallerId(), flags, destination);
+    Journey.get().netherManager().makeTunnels().forEach(this::registerTunnel);
+    Journey.get().proxy().platform().onlinePlayer(getCallerId()).ifPresent(jPlayer ->
+        Journey.get().tunnelManager().tunnels(jPlayer).forEach(this::registerTunnel));
   }
 }
