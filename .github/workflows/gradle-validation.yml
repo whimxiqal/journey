@@ -1,6 +1,6 @@
 name: Gradle Validation
 
-on: [pull_request, push]
+on: [pull_request]
 
 jobs:
   gradle_validation:
