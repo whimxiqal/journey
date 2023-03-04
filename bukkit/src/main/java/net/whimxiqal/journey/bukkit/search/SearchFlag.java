@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.search;
 
-import net.whimxiqal.journey.common.search.SearchSession;
+import net.whimxiqal.journey.search.SearchSession;
 
 /**
  * An enumeration of possible flags used to alter

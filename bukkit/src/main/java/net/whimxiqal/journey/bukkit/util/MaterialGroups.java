@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -106,8 +106,8 @@ public final class MaterialGroups {
       case DEAD_TUBE_CORAL_FAN:
       case DEAD_TUBE_CORAL_WALL_FAN:
       case DETECTOR_RAIL:
+      case END_PORTAL:
       case FIRE:
-      case FROGSPAWN:
       case GLOW_BERRIES:
       case GLOW_LICHEN:
       case GRASS:
@@ -133,9 +133,6 @@ public final class MaterialGroups {
       case LIME_WALL_BANNER:
       case MAGENTA_BANNER:
       case MAGENTA_WALL_BANNER:
-      case MANGROVE_PRESSURE_PLATE:
-      case MANGROVE_SIGN:
-      case MANGROVE_WALL_SIGN:
       case MELON_SEEDS:
       case MOSS_CARPET:
       case NETHER_PORTAL:
@@ -172,7 +169,6 @@ public final class MaterialGroups {
       case RED_TULIP:
       case RED_WALL_BANNER:
       case ROSE_BUSH:
-      case SCULK_VEIN:
       case SEAGRASS:
       case SEA_PICKLE:
       case SMALL_DRIPLEAF:

@@ -1,0 +1,103 @@
+version = project.ext.apiFullVersion
+
+repositories {
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    implementation project(':api')
+    compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
+}
+
+if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword') && project.ext.publish) {
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+
+    javadoc {
+        title = 'Journey Bukkit API (v' + project.ext.apiVersion + ')'
+        options.encoding = 'UTF-8'
+        options.charSet = 'UTF-8'
+        options.links(
+                'https://javadoc.io/doc/org.jetbrains/annotations/23.0.0'
+        )
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        archiveClassifier.set('sources')
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        archiveClassifier.set('javadoc')
+        from javadoc.destinationDir
+    }
+
+    publishing {
+        repositories {
+            maven {
+                name = "sonatype"
+                url = project.ext.snapshot
+                        ? "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                        : "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                credentials {
+                    username sonatypeUsername
+                    password sonatypePassword
+                }
+            }
+        }
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = 'net.whimxiqal.journey'
+                artifactId = 'bukkit-api'
+                version = project.ext.apiFullVersion
+                from components.java
+                artifact sourcesJar
+                artifact javadocJar
+                versionMapping {
+                    usage('java-api') {
+                        fromResolutionOf('runtimeClasspath')
+                    }
+                    usage('java-runtime') {
+                        fromResolutionResult()
+                    }
+                }
+                pom {
+                    name = 'Journey Bukkit API'
+                    description = 'The Bukkit API for Journey'
+                    url = 'https://github.com/whimxiqal/journey'
+                    licenses {
+                        license {
+                            name = 'MIT'
+                            url = 'https://opensource.org/licenses/MIT'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'whimxiqal'
+                            name = 'whimxiqal'
+                            url = 'https://whimxiqal.net'
+                            email = 'whimxiqal@gmail.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:git://github.com/whimxiqal/journey.git'
+                        developerConnection = 'scm:git:ssh://github.com:whimxiqal/journey.git'
+                        url = 'https://github.com/whimxiqal/journey'
+                    }
+                    issueManagement {
+                        system = 'GitHub'
+                        url = 'https://github.com/whimxiqal/journey/issues'
+                    }
+                }
+            }
+        }
+
+        signing {
+            useGpgCmd()
+            sign configurations.archives
+            sign publishing.publications.mavenJava
+            required = true
+        }
+    }
+}

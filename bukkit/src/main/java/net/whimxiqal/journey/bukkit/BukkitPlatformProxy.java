@@ -1,23 +1,48 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.bukkit;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.gui.JourneyGui;
-import net.whimxiqal.journey.common.Journey;
-import net.whimxiqal.journey.common.JourneyPlayer;
-import net.whimxiqal.journey.common.math.Vector;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.ModeType;
-import net.whimxiqal.journey.common.navigation.PlatformProxy;
-import net.whimxiqal.journey.common.search.AnimationManager;
-import net.whimxiqal.journey.common.search.SearchSession;
-import net.whimxiqal.journey.common.search.flag.FlagSet;
-import net.whimxiqal.journey.common.search.flag.Flags;
-import net.whimxiqal.journey.bukkit.external.whimcportals.WhimcPortalPort;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.math.Vector;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.navigation.PlatformProxy;
+import net.whimxiqal.journey.search.AnimationManager;
+import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.FlagSet;
+import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.bukkit.music.Song;
 import net.whimxiqal.journey.bukkit.navigation.mode.BoatMode;
 import net.whimxiqal.journey.bukkit.navigation.mode.ClimbMode;
@@ -30,14 +55,16 @@ import net.whimxiqal.journey.bukkit.navigation.mode.SwimMode;
 import net.whimxiqal.journey.bukkit.navigation.mode.WalkMode;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.bukkit.util.MaterialGroups;
-import net.whimxiqal.mantle.common.CommandSource;
+import net.whimxiqal.journey.util.BStatsUtil;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.CustomChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 public class BukkitPlatformProxy implements PlatformProxy {
@@ -46,6 +73,11 @@ public class BukkitPlatformProxy implements PlatformProxy {
    * The height of the space filled with air to be considered the surface of the world.
    */
   private static final int AT_SURFACE_HEIGHT = 64;
+  private final Metrics metrics;
+
+  public BukkitPlatformProxy() {
+    metrics = new Metrics(JourneyBukkit.get(), BStatsUtil.BSTATS_ID);
+  }
 
   @Override
   public boolean isNetherPortal(Cell cell) {
@@ -58,16 +90,16 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void spawnDestinationParticle(UUID playerUuid, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     Player player = Bukkit.getPlayer(playerUuid);
-    if (player == null || !player.getWorld().equals(BukkitUtil.getWorld(domainId))) {
+    if (player == null || !player.getWorld().equals(BukkitUtil.getWorld(domain))) {
       return;
     }
     player.spawnParticle(Particle.SPELL_WITCH, x, y, z, count, offsetX, offsetY, offsetZ, 0);
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     Particle particle;
     int particleCount;
     int multiplier;
@@ -81,7 +113,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
     }
 
     Player player = Bukkit.getPlayer(playerUuid);
-    World world = BukkitUtil.getWorld(domainId);
+    World world = BukkitUtil.getWorld(domain);
     if (player == null || !player.getWorld().equals(world)) {
       return;
     }
@@ -123,41 +155,39 @@ public class BukkitPlatformProxy implements PlatformProxy {
   public void prepareSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, boolean includePorts) {
     // MODES
     Set<Material> passableBlocks = new HashSet<>();
-    if (flags.hasFlag(Flags.NO_DOOR)) {
+    if (flags.getValueFor(Flags.DOOR)) {
       passableBlocks.add(Material.IRON_DOOR);
     }
 
     // Register modes in order of preference
     Player player = Bukkit.getPlayer(playerUuid);
-    if (player == null) {
-      return;
+    boolean fly = flags.getValueFor(Flags.FLY);
+    boolean boat = false;
+    if (player != null) {
+      fly &= player.getAllowFlight();
+      boat = MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType));
     }
-    if (player.getAllowFlight() && !flags.hasFlag(Flags.NO_FLY)) {
+    if (fly) {
       search.registerMode(new FlyMode(search, passableBlocks));
     } else {
       search.registerMode(new WalkMode(search, passableBlocks));
       search.registerMode(new JumpMode(search, passableBlocks));
       search.registerMode(new SwimMode(search, passableBlocks));
-      if (MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType))) {
+      if (boat) {
         search.registerMode(new BoatMode(search, passableBlocks));
       }
     }
     search.registerMode(new DoorMode(search, passableBlocks));
     search.registerMode(new ClimbMode(search, passableBlocks));
-    if (flags.hasFlag(Flags.DIG)) {
+    if (flags.getValueFor(Flags.DIG)) {
       search.registerMode(new DigMode(search, passableBlocks));
-    }
-
-    // PORTS
-    if (includePorts) {
-      WhimcPortalPort.addPortsTo(search, player::hasPermission);
     }
   }
 
   @Override
   public void prepareDestinationSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, Cell destination) {
     Set<Material> passableBlocks = new HashSet<>();
-    if (flags.hasFlag(Flags.NO_DOOR)) {
+    if (!flags.getValueFor(Flags.DOOR)) {
       passableBlocks.add(Material.IRON_DOOR);
     }
 
@@ -165,17 +195,17 @@ public class BukkitPlatformProxy implements PlatformProxy {
     if (player == null) {
       return;
     }
-    if (player.getAllowFlight() && !flags.hasFlag(Flags.NO_FLY)) {
+    if (player.getAllowFlight() && flags.getValueFor(Flags.FLY)) {
       search.registerMode(new FlyRayTraceMode(search, passableBlocks, destination));
     }
   }
 
   @Override
   public boolean isAtSurface(Cell cell) {
-    int x = cell.getX();
-    int z = cell.getZ();
-    for (int y = cell.getY() + 1; y <= Math.min(256, cell.getY() + AT_SURFACE_HEIGHT); y++) {
-      if (BukkitUtil.getBlock(new Cell(x, y, z, cell.domainId())).getMaterial() != Material.AIR) {
+    int x = cell.blockX();
+    int z = cell.blockZ();
+    for (int y = cell.blockY() + 1; y <= Math.min(256, cell.blockY() + AT_SURFACE_HEIGHT); y++) {
+      if (BukkitUtil.getBlock(new Cell(x, y, z, cell.domain())).getMaterial() != Material.AIR) {
         return false;
       }
     }
@@ -241,19 +271,34 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public String worldIdToName(String domainId) {
-    return BukkitUtil.getWorld(domainId).getName();
+  public String domainName(int domain) {
+    return BukkitUtil.getWorld(domain).getName();
   }
 
   @Override
-  public boolean sendGui(CommandSource source) {
-    Player player = Bukkit.getPlayer(source.uuid());
-    if (player == null) {
-      Journey.logger().error("Tried to send GUI to player with UUID but none exists: " + source.uuid().toString());
-      return false;
-    }
-    JourneyGui journeyGui = new JourneyGui(source);
-    journeyGui.open(player);
+  public boolean sendGui(JourneyPlayer player) {
+    JourneyGui journeyGui = new JourneyGui(player);
+    journeyGui.open();
     return true;
+  }
+
+  @Override
+  public boolean synchronous() {
+    return Bukkit.isPrimaryThread();
+  }
+
+  @Override
+  public Consumer<CustomChart> bStatsChartConsumer() {
+    return metrics::addCustomChart;
+  }
+
+  @Override
+  public Map<String, Map<String, Integer>> domainResourceKeys() {
+    Map<String, Map<String, Integer>> domains = new HashMap<>();
+    for (World world : Bukkit.getWorlds()) {
+      NamespacedKey key = world.getKey();
+      domains.computeIfAbsent(key.namespace(), k -> new HashMap<>()).put(key.getKey(), BukkitUtil.getDomain(world));
+    }
+    return domains;
   }
 }

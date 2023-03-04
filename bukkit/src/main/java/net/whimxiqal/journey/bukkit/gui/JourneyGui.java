@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.bukkit.gui;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
@@ -5,29 +28,32 @@ import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.PaginatedGui;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.whimxiqal.journey.Destination;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.VirtualMap;
+import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import net.whimxiqal.journey.common.Journey;
-import net.whimxiqal.journey.common.data.integration.Scope;
-import net.whimxiqal.journey.common.message.Formatter;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.search.PlayerDestinationGoalSearchSession;
-import net.whimxiqal.journey.common.search.PlayerSurfaceGoalSearchSession;
-import net.whimxiqal.journey.common.search.SearchSession;
-import net.whimxiqal.journey.common.search.flag.FlagSet;
-import net.whimxiqal.mantle.common.CommandSource;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.scope.ScopeUtil;
+import net.whimxiqal.journey.search.InternalScope;
+import net.whimxiqal.journey.search.PlayerDestinationGoalSearchSession;
+import net.whimxiqal.journey.search.PlayerSurfaceGoalSearchSession;
+import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.FlagSet;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 
 public class JourneyGui {
 
-  private static final int SCOPE_ENTRIES_PER_ROW = 7;
-  private static final int ROWS = 6;
-  private static final int COLUMNS = 9;
+  private static final int MAX_SCOPE_ITEM_COUNT = 1000;
   private static final List<Material> itemOptions;
   private static final List<Material> scopeOptions;
 
@@ -51,98 +77,106 @@ public class JourneyGui {
     itemOptions.add(Material.YELLOW_TERRACOTTA);
 
     scopeOptions = new ArrayList<>(16);
-    scopeOptions.add(Material.BLACK_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.BLUE_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.BROWN_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.CYAN_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.GRAY_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.GREEN_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.LIGHT_BLUE_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.LIME_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.MAGENTA_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.ORANGE_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.PINK_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.PURPLE_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.RED_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.WHITE_STAINED_GLASS_PANE);
-    scopeOptions.add(Material.YELLOW_STAINED_GLASS_PANE);
+//  Not black because black panes are used as filler items
+    scopeOptions.add(Material.BLUE_STAINED_GLASS);
+    scopeOptions.add(Material.BROWN_STAINED_GLASS);
+    scopeOptions.add(Material.CYAN_STAINED_GLASS);
+    scopeOptions.add(Material.GRAY_STAINED_GLASS);
+    scopeOptions.add(Material.GREEN_STAINED_GLASS);
+    scopeOptions.add(Material.LIGHT_BLUE_STAINED_GLASS);
+    scopeOptions.add(Material.LIGHT_GRAY_STAINED_GLASS);
+    scopeOptions.add(Material.LIME_STAINED_GLASS);
+    scopeOptions.add(Material.MAGENTA_STAINED_GLASS);
+    scopeOptions.add(Material.ORANGE_STAINED_GLASS);
+    scopeOptions.add(Material.PINK_STAINED_GLASS);
+    scopeOptions.add(Material.PURPLE_STAINED_GLASS);
+    scopeOptions.add(Material.RED_STAINED_GLASS);
+    scopeOptions.add(Material.WHITE_STAINED_GLASS);
+    scopeOptions.add(Material.YELLOW_STAINED_GLASS);
   }
 
-  private final Scope scope;
-  private final PaginatedGui gui;
+  private final JourneyPlayer player;
+  private final InternalScope scope;
+  private final JourneyGui previous;
+  private final boolean root;
 
-  public JourneyGui(CommandSource source) {
-    this(Scope.root(source), null);
+  public JourneyGui(JourneyPlayer player) {
+    this(player, ScopeUtil.root(), null, true);
   }
 
-  private JourneyGui(Scope scope, JourneyGui previous) {
+  private JourneyGui(JourneyPlayer player, InternalScope scope, JourneyGui previous, boolean root) {
+    this.player = player;
     this.scope = scope;
+    this.previous = previous;
+    this.root = root;
+  }
+
+  public void open() {
     TextComponent.Builder title = Component.text();
     title.append(Component.text("Journey To").color(Formatter.THEME));
-    if (scope.name() != null) {
+    if (scope.wrappedScope().name() != null) {
       title.append(Formatter.dull(" % "));
-      title.append(scope.name());
+      title.append(scope.wrappedScope().name());
     }
-    this.gui = Gui.paginated()
+    PaginatedGui gui = Gui.paginated()
         .title(title.build())
-        .rows(ROWS)
+        .rows(6)
         .create();
+    GuiItem fillerItem = ItemBuilder.from(Material.BLACK_STAINED_GLASS_PANE).asGuiItem();
+    gui.getFiller().fillTop(fillerItem);
+    gui.getFiller().fillBottom(fillerItem);
+    gui.setItem(6, 2, ItemBuilder.from(Material.PAPER).name(Formatter.accent("Previous")).asGuiItem(event -> gui.previous()));
+    gui.setItem(6, 8, ItemBuilder.from(Material.PAPER).name(Formatter.accent("Next")).asGuiItem(event -> gui.next()));
+    gui.setDefaultClickAction(event -> {
+      event.setCancelled(true);
+      event.getWhoClicked().playSound(Sound.sound(org.bukkit.Sound.UI_BUTTON_CLICK, Sound.Source.MASTER, 0.5f, 1));
+    });
 
     if (previous != null) {
-      gui.addItem(ItemBuilder.from(Material.BEDROCK)
-          .name(Component.text("Back to ").append(previous.scope.name()))
-          .asGuiItem(event -> {
-            previous.open(event.getWhoClicked());
-          }));
+      gui.setItem(1, 1, ItemBuilder.from(Material.BEDROCK)
+          // assume only the home page has an empty name
+          .name(Formatter.accent("Back to ___", previous.scope.wrappedScope().name().equals(Component.empty()) ? "Home Page" : previous.scope.wrappedScope().name()))
+          .asGuiItem(event -> previous.open()));
     }
 
-    List<Scope> subScopes = new ArrayList<>(scope.subScopes().values());
-    subScopes.sort(Comparator.comparing(Scope::id));
-    for (int i = 0; i < subScopes.size(); i++) {
-      Scope subScope = subScopes.get(i);
-      GuiItem guiItem = ItemBuilder.from(getMaterial(subScope.id(), scopeOptions))
-          .name(subScope.name())
-          .lore(subScope.description())
-          .asGuiItem(event -> {
-            JourneyGui subScopeGui = new JourneyGui(subScope, this);
-            subScopeGui.open(event.getWhoClicked());
-          });
-      gui.addItem(guiItem);
-    }
-
-    List<Map.Entry<String, Cell>> itemEntries = new ArrayList<>(scope.items().entrySet());
-    itemEntries.sort(Map.Entry.comparingByKey());
-    for (int i = 0; i < itemEntries.size(); i++) {
-      Map.Entry<String, Cell> item = itemEntries.get(i);
-      boolean surfaceItem = scope.id() == null && item.getKey().equals("surface");
-      GuiItem guiItem = ItemBuilder.from(getMaterial(item.getKey(), itemOptions))
-          .name(Formatter.accent(item.getKey()))
-          .lore(surfaceItem ? Formatter.dull("Go to surface") : Formatter.cell(item.getValue()))
-          .asGuiItem(event -> {
-            HumanEntity player = event.getWhoClicked();
-            player.closeInventory();
-            SearchSession session;
-            if (surfaceItem) {
-              // this is a special "surface" case
-              session = new PlayerSurfaceGoalSearchSession(player.getUniqueId(),
-                  BukkitUtil.cell(player.getLocation()),
-                   new FlagSet());
-            } else {
-              // normal case
-              session = new PlayerDestinationGoalSearchSession(player.getUniqueId(),
-                  BukkitUtil.cell(player.getLocation()),
-                  item.getValue(), new FlagSet(),
-                  true);
+    VirtualMap<InternalScope> subScopeSupplier = scope.subScopes(player);
+    if (subScopeSupplier.size() < MAX_SCOPE_ITEM_COUNT) {
+      subScopeSupplier.getAll().entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .filter(entry -> !ScopeUtil.restricted(entry.getValue().allPermissions(), player))
+          .filter(entry -> entry.getValue().subScopes(player).size() > 0 || entry.getValue().sessions(player).size() > 0)
+          .forEach(entry -> {
+            ItemBuilder guiItem = ItemBuilder.from(getMaterial(entry.getKey(), scopeOptions))
+                .name(entry.getValue().wrappedScope().name());
+            if (!entry.getValue().wrappedScope().description().equals(Component.empty())) {
+              guiItem.lore(entry.getValue().wrappedScope().description());
             }
-            Journey.get().searchManager().launchSearch(session);
+            gui.addItem(guiItem.asGuiItem(event -> {
+              JourneyGui subScopeGui = new JourneyGui(player, entry.getValue(), this, false); // already loaded
+              subScopeGui.open();
+            }));
           });
-      gui.addItem(guiItem);
     }
-  }
 
-  public void open(HumanEntity player) {
-    gui.open(player);
+    VirtualMap<SearchSession> sessionSupplier = scope.sessions(player);
+    if (sessionSupplier.size() < MAX_SCOPE_ITEM_COUNT) {
+      sessionSupplier.getAll().entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .filter(entry -> !ScopeUtil.restricted(entry.getValue().permissions(), player))
+          .forEach(entry -> {
+            boolean surfaceItem = root && entry.getKey().equals("surface");
+            GuiItem guiItem = ItemBuilder.from(getMaterial(entry.getKey(), itemOptions))
+                .name(entry.getValue().name() == Component.empty() ? Formatter.accent(entry.getKey()) : entry.getValue().name())
+                .lore(entry.getValue().description())
+                .asGuiItem(event -> Journey.get().searchManager().launchSearch(entry.getValue()));
+            gui.addItem(guiItem);
+          });
+    }
+    Player bukkitPlayer = Bukkit.getPlayer(player.uuid());
+    if (bukkitPlayer == null) {
+      throw new IllegalStateException("Could not find player " + player + " when trying to open their GUI");
+    }
+    gui.open(bukkitPlayer);
   }
 
   private Material getMaterial(String id, List<Material> materials) {

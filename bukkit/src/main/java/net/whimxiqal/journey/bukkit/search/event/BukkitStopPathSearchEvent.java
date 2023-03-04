@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.search.event;
 
-import net.whimxiqal.journey.common.search.event.StopPathSearchEvent;
+import net.whimxiqal.journey.search.event.StopPathSearchEvent;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 

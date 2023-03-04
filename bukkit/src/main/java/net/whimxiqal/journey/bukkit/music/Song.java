@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 
 /**
@@ -42,11 +43,7 @@ public class Song {
    * A single arpeggio to symbolize success.
    */
   public static final Song SUCCESS_CHORD = new Song(Arrays.asList(
-      new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1),
-      new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.75f, 3),
-      new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 5),
-      new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 1.1f, 7),
-      new Note(Sound.BLOCK_NOTE_BLOCK_PLING, 1.33f, 9)
+      new Note(Sound.ENTITY_GLOW_SQUID_AMBIENT, 1.5f, 0, 1.2f)
   ));
 
   private final List<Note> notes = new LinkedList<>();
@@ -81,9 +78,9 @@ public class Song {
   }
 
   private void playNote(Player player, int index) {
-    Bukkit.getScheduler().scheduleSyncDelayedTask(JourneyBukkit.getInstance(), () ->
+    Bukkit.getScheduler().scheduleSyncDelayedTask(JourneyBukkit.get(), () ->
             player.playSound(player.getLocation(), this.notes.get(index).sound,
-                1, this.notes.get(index).pitch),
+                SoundCategory.AMBIENT, this.notes.get(index).volume, this.notes.get(index).pitch),
         this.notes.get(index).delay);
   }
 
@@ -96,6 +93,7 @@ public class Song {
     Sound sound;
     float pitch;
     int delay;
+    float volume;
   }
 
 }

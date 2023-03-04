@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.bukkit.util;
 
 import java.util.HashMap;
@@ -6,9 +29,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.ReentrantLock;
-import net.whimxiqal.journey.common.Journey;
-import net.whimxiqal.journey.common.navigation.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.ChunkSnapshot;
@@ -22,42 +44,41 @@ public class ThreadSafeBlockAccessor {
   private static final long CHUNK_SNAPSHOT_LIFETIME_MS = 10000L;
   private static final long MAX_CACHED_CHUNKS = 1024;
 
-  ChunkMap chunkMap = new ChunkMap();                     // protected by lock
-  Queue<ChunkItem> chunkList = new LinkedList<>();        // protected by lock
-  Queue<ChunkRequest> requestQueue = new LinkedList<>();  // protected by lock
-  ReentrantLock lock = new ReentrantLock();
+  ChunkMap chunkMap = new ChunkMap();                     // synchronized
+  Queue<ChunkItem> chunkList = new LinkedList<>();        // synchronized
+  Queue<ChunkRequest> requestQueue = new LinkedList<>();  // synchronized
   BukkitTask task;
 
   public void init() {
-    task = Bukkit.getScheduler().runTaskTimer(JourneyBukkit.getInstance(), () -> {
-      lock.lock();
-      long timeStampThreshold = System.currentTimeMillis() - CHUNK_SNAPSHOT_LIFETIME_MS;
-      while (!chunkList.isEmpty()) {
-        ChunkItem item = chunkList.peek();
-        if (item.timeMs < timeStampThreshold) {
-          chunkMap.drop(item.domainId, item.chunk);
-          chunkList.remove();
-        } else {
-          break;
+    task = Bukkit.getScheduler().runTaskTimer(JourneyBukkit.get(), () -> {
+      synchronized (this) {
+        long timeStampThreshold = System.currentTimeMillis() - CHUNK_SNAPSHOT_LIFETIME_MS;
+        while (!chunkList.isEmpty()) {
+          ChunkItem item = chunkList.peek();
+          if (item.timeMs < timeStampThreshold) {
+            chunkMap.drop(item.domain, item.chunk);
+            chunkList.remove();
+          } else {
+            break;
+          }
         }
-      }
 
-      Map<ChunkRequest.Data, ChunkSnapshot> completedChunkRequests = new HashMap<>();
-      while (!requestQueue.isEmpty() && chunkMap.size() <= MAX_CACHED_CHUNKS) {
-        ChunkRequest req = requestQueue.remove();
-        ChunkSnapshot existingSnapshot = completedChunkRequests.get(req.data);
-        if (existingSnapshot != null) {
-          req.future.complete(existingSnapshot);
-          continue;
+        Map<ChunkRequest.Data, ChunkSnapshot> completedChunkRequests = new HashMap<>();
+        while (!requestQueue.isEmpty() && chunkMap.size() <= MAX_CACHED_CHUNKS) {
+          ChunkRequest req = requestQueue.remove();
+          ChunkSnapshot existingSnapshot = completedChunkRequests.get(req.data);
+          if (existingSnapshot != null) {
+            req.future.complete(existingSnapshot);
+            continue;
+          }
+          World world = BukkitUtil.getWorld(req.data.domain);
+          ChunkSnapshot snapshot = world.getChunkAt(req.data.x, req.data.z).getChunkSnapshot();
+          chunkMap.save(req.data.domain, snapshot);
+          chunkList.add(new ChunkItem(req.data.domain, snapshot));
+          completedChunkRequests.put(req.data, snapshot);
+          req.future.complete(snapshot);
         }
-        World world = BukkitUtil.getWorld(req.data.domainId);
-        ChunkSnapshot snapshot = world.getChunkAt(req.data.x, req.data.z).getChunkSnapshot();
-        chunkMap.save(req.data.domainId, snapshot);
-        chunkList.add(new ChunkItem(req.data.domainId, snapshot));
-        completedChunkRequests.put(req.data, snapshot);
-        req.future.complete(snapshot);
       }
-      lock.unlock();
     }, 0, 1);
     Journey.get().proxy().logger().info("ThreadSafeBlockAccessor initialized");
   }
@@ -72,28 +93,28 @@ public class ThreadSafeBlockAccessor {
     if (Bukkit.isPrimaryThread()) {
       throw new RuntimeException("This method was called from the primary thread");  // programmer error
     }
-    lock.lock();
-    BlockData data = chunkMap.get(cell.domainId(), cell.getX(), cell.getY(), cell.getZ());
-    if (data != null) {
-      lock.unlock();
-      return data;
+    ChunkRequest request;
+    synchronized (this) {
+      BlockData data = chunkMap.get(cell.domain(), cell.blockX(), cell.blockY(), cell.blockZ());
+      if (data != null) {
+        return data;
+      }
+      // data is not in lookup map, queue chunk
+      request = new ChunkRequest(cell.domain(), Math.floorDiv(cell.blockX(), 16), Math.floorDiv(cell.blockZ(), 16));
+      requestQueue.add(request);
     }
-    // data is not in lookup map, queue chunk
-    ChunkRequest request = new ChunkRequest(cell.domainId(), Math.floorDiv(cell.getX(), 16), Math.floorDiv(cell.getZ(), 16));
-    requestQueue.add(request);
-    lock.unlock();
 
     // Wait for request to be completed
     ChunkSnapshot snapshot = BukkitUtil.waitUntil(request.future);
-    return snapshot.getBlockData(Math.floorMod(cell.getX(), 16), cell.getY(), Math.floorMod(cell.getZ(), 16));
+    return snapshot.getBlockData(Math.floorMod(cell.blockX(), 16), cell.blockY(), Math.floorMod(cell.blockZ(), 16));
   }
 
   private static class ChunkItem {
-    final String domainId;
+    final int domain;
     final ChunkSnapshot chunk;
     final long timeMs;
-    ChunkItem(String domainId, ChunkSnapshot chunk) {
-      this.domainId = domainId;
+    ChunkItem(int domain, ChunkSnapshot chunk) {
+      this.domain = domain;
       this.chunk = chunk;
       this.timeMs = System.currentTimeMillis();
     }
@@ -102,11 +123,11 @@ public class ThreadSafeBlockAccessor {
   private static class ChunkRequest {
 
     private static class Data {
-      final String domainId;
+      final int domain;
       final int x;
       final int z;
-      Data(String domainId, int x, int z) {
-        this.domainId = domainId;
+      Data(int domain, int x, int z) {
+        this.domain = domain;
         this.x = x;
         this.z = z;
       }
@@ -116,37 +137,40 @@ public class ThreadSafeBlockAccessor {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Data that = (Data) o;
-        return x == that.x && z == that.z && domainId.equals(that.domainId);
+        return x == that.x && z == that.z && domain == that.domain;
       }
 
       @Override
       public int hashCode() {
-        return Objects.hash(domainId, x, z);
+        return Objects.hash(domain, x, z);
       }
 
     }
     final Data data;
     final CompletableFuture<ChunkSnapshot> future;
-    ChunkRequest(String domainId, int x, int z) {
-      this.data = new Data(domainId, x, z);
+    ChunkRequest(int domain, int x, int z) {
+      this.data = new Data(domain, x, z);
       this.future = new CompletableFuture<>();
     }
 
     @Override
     public String toString() {
       return "ChunkRequest{" +
-          "domainId='" + data.domainId + '\'' +
+          "domainId='" + data.domain + '\'' +
           ", x=" + data.x +
           ", z=" + data.z +
           '}';
     }
   }
 
-  private static class ChunkMap extends HashMap<String, Map<Integer, Map<Integer, ChunkSnapshot>>> {
+  /**
+   * mapping domain -> (x -> (z -> chunk))
+   */
+  private static class ChunkMap extends HashMap<Integer, Map<Integer, Map<Integer, ChunkSnapshot>>> {
 
     @Nullable
-    public BlockData get(String domainId, int x, int y, int z) {
-      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domainId);
+    public BlockData get(int domain, int x, int y, int z) {
+      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domain);
       if (chunkCoordinates == null) {
         return null;
       }
@@ -161,14 +185,14 @@ public class ThreadSafeBlockAccessor {
       return snapshot.getBlockData(Math.floorMod(x, 16), y, Math.floorMod(z, 16));
     }
 
-    private void save(String domainId, ChunkSnapshot snapshot) {
-      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = computeIfAbsent(domainId, k -> new HashMap<>());
+    private void save(int domain, ChunkSnapshot snapshot) {
+      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = computeIfAbsent(domain, k -> new HashMap<>());
       Map<Integer, ChunkSnapshot> chunkCoordinates2 = chunkCoordinates.computeIfAbsent(snapshot.getX(), k -> new HashMap<>());
       chunkCoordinates2.put(snapshot.getZ(), snapshot);
     }
 
-    public void drop(String domainId, ChunkSnapshot chunkSnapshot) {
-      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domainId);
+    public void drop(int domain, ChunkSnapshot chunkSnapshot) {
+      Map<Integer, Map<Integer, ChunkSnapshot>> chunkCoordinates = get(domain);
       if (chunkCoordinates == null) {
         throw new IllegalArgumentException("No chunk snapshots found with world " + chunkSnapshot.getWorldName());
       }

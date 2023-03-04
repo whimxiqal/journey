@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,11 +32,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import net.whimxiqal.journey.common.navigation.Cell;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Snow;
@@ -46,14 +48,6 @@ import org.bukkit.util.Vector;
  * A utility class to handle general odd Spigot Minecraft-related operations.
  */
 public final class BukkitUtil {
-
-  public static final double STEVE_HEIGHT = 1.8;
-  public static final double STEVE_HEIGHT_SNEAK = 1.5;
-  public static final double STEVE_HEIGHT_GLIDE = 0.6;
-  public static final double STEVE_HEIGHT_SWIM = 0.6;
-  public static final double STEVE_WIDTH = 0.6;
-
-  public static final double STEP_HEIGHT = 0.5;
 
   /**
    * Return true if the given block can be possibly passed through vertically,
@@ -158,24 +152,33 @@ public final class BukkitUtil {
         && !isVerticallyPassable(block, forcePassable);
   }
 
+  public static int getDomain(World world) {
+    return Journey.get().domainManager().domainIndex(getWorldId(world));
+  }
+
   public static String getWorldId(World world) {
     return world.getUID().toString();
   }
 
   public static Cell cell(Location location) {
-    return new Cell(location.getBlockX(), location.getBlockY(), location.getBlockZ(), getWorldId(Objects.requireNonNull(location.getWorld())));
+    return new Cell(location.getBlockX(), location.getBlockY(), location.getBlockZ(), getDomain(Objects.requireNonNull(location.getWorld())));
   }
 
   public static World getWorld(Cell cell) {
-    return getWorld(cell.domainId());
+    return getWorld(Journey.get().domainManager().domainId(cell.domain()));
   }
 
   public static World getWorld(String domainId) {
-    World world = Bukkit.getWorld(UUID.fromString(domainId));
+    UUID uuid = UUID.fromString(domainId);
+    World world = Bukkit.getWorld(uuid);
     if (world == null) {
-      throw new IllegalStateException("There is no world with id " + domainId);
+      throw new IllegalArgumentException("There is no world with id " + domainId);
     }
     return world;
+  }
+
+  public static World getWorld(int domain) {
+    return getWorld(Journey.get().domainManager().domainId(domain));
   }
 
   /**
@@ -186,17 +189,17 @@ public final class BukkitUtil {
    */
   public static BlockData getBlock(Cell cell) {
     if (Bukkit.isPrimaryThread()) {
-      return getWorld(cell.domainId()).getBlockData(cell.getX(), cell.getY(), cell.getZ());
+      return getWorld(Journey.get().domainManager().domainId(cell.domain())).getBlockAt(cell.blockX(), cell.blockY(), cell.blockZ()).getBlockData();
     }
-    return JourneyBukkit.getInstance().getBlockAccessor().getBlock(cell);
+    return JourneyBukkit.get().getBlockAccessor().getBlock(cell);
   }
 
   public static Location toLocation(Cell cell) {
-    return new Location(getWorld(cell), cell.getX(), cell.getY(), cell.getZ());
+    return new Location(getWorld(cell), cell.blockX(), cell.blockY(), cell.blockZ());
   }
 
-  public static net.whimxiqal.journey.common.math.Vector toLocalVector(Vector vector) {
-    return new net.whimxiqal.journey.common.math.Vector(vector.getX(), vector.getY(), vector.getZ());
+  public static net.whimxiqal.journey.math.Vector toLocalVector(Vector vector) {
+    return new net.whimxiqal.journey.math.Vector(vector.getX(), vector.getY(), vector.getZ());
   }
 
   public static <T> T waitUntil(Future<T> future) {
@@ -217,7 +220,7 @@ public final class BukkitUtil {
       return;
     }
     CompletableFuture<Void> future = new CompletableFuture<>();
-    Bukkit.getScheduler().runTask(JourneyBukkit.getInstance(), () -> {
+    Bukkit.getScheduler().runTask(JourneyBukkit.get(), () -> {
       try {
         runnable.run();
       } catch (Exception e) {

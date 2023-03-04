@@ -4,7 +4,9 @@ journey: JOURNEY (setwaypoint | listwaypoints | waypoint | player | server | adm
 journeyto: JOURNEY_TO journeytoTarget? EOF;
 
 setwaypoint: SET_WAYPOINT name=identifier+;
-listwaypoints: LIST_WAYPOINTS page=ID?;
+listwaypoints: LIST_WAYPOINTS (listwaypointsMine | listwaypointsPlayer);
+listwaypointsMine: page=ID?;
+listwaypointsPlayer: player user=identifier page=ID?;
 waypoint: WAYPOINT name=identifier (unsetWaypoint | renameWaypoint | publicWaypoint | flagSet)?;
 unsetWaypoint: UNSET;
 renameWaypoint: RENAME newname=identifier;
@@ -16,25 +18,33 @@ playerWaypoint: name=identifier;
 server: SERVER (serverSetWaypoint | serverListWaypoints | serverWaypoint);
 serverSetWaypoint: SET_WAYPOINT name=identifier;
 serverListWaypoints: LIST_WAYPOINTS page=ID?;
-serverWaypoint: WAYPOINT name=identifier (unsetServerWaypoint | renameServerWaypoint | flagSet)?;
-unsetServerWaypoint: UNSET name=identifier;
-renameServerWaypoint: RENAME newname=identifier;
+serverWaypoint: WAYPOINT name=identifier (serverUnsetWaypoint | serverRenameWaypoint | flagSet)?;
+serverUnsetWaypoint: UNSET;
+serverRenameWaypoint: RENAME newname=identifier;
 
-admin: ADMIN (debug | invalidate=INVALIDATE | reload=RELOAD | LIST_NETHER_PORTALS);
+admin: ADMIN (debug | cache | reload=RELOAD | listNetherPortals);
 debug: DEBUG target=identifier?;
+cache: CACHE (cachePortals | cachePaths);
+cachePortals: PORTALS (clear=CLEAR);
+cachePaths: PATHS (clear=CLEAR | build=BUILD);
+listNetherPortals: LIST_NETHER_PORTALS page=ID?;
+
 cancel: CANCEL;
 
-journeytoTarget: (identifier COLON)* identifier flagSet?;
+journeytoTarget: identifier flagSet?;
 
-flagSet: (timeoutFlag | animateFlag | noflyFlag | nodoorFlag | digFlag)+;
+flagSet: (timeoutFlag | animateFlag | flyFlag | doorFlag | digFlag)+;
 timeoutFlag: FLAG_TIMEOUT EQUAL timeout=ID;
 animateFlag: FLAG_ANIMATE (EQUAL delay=ID)?;
-noflyFlag: FLAG_NO_FLY;
-nodoorFlag: FLAG_NO_DOOR;
-digFlag: FLAG_DIG;
+flyFlag: FLAG_FLY (EQUAL (TRUE | FALSE))?;
+doorFlag: FLAG_DOOR (EQUAL (TRUE | FALSE))?;
+digFlag: FLAG_DIG (EQUAL (TRUE | FALSE))?;
 
 ADMIN: 'admin';
+BUILD: 'build';
+CACHE: 'cache';
 CANCEL: 'cancel';
+CLEAR: 'clear';
 COLON: ':';
 DEBUG: 'debug';
 FALSE: 'false';
@@ -44,7 +54,9 @@ JOURNEY_TO: 'journeyto';
 LIST_NETHER_PORTALS: 'listnetherportals';
 LIST_WAYPOINTS: 'listwaypoints';
 PATH: 'path';
+PATHS: 'paths';
 PLAYER: 'player';
+PORTALS: 'portals';
 PUBLIC: 'public';
 RELOAD: 'reload';
 RENAME: 'rename';
@@ -57,8 +69,8 @@ WAYPOINT: 'waypoint';
 
 FLAG_ANIMATE: '-animate';
 FLAG_DIG: '-dig';
-FLAG_NO_DOOR: '-nodoor';
-FLAG_NO_FLY: '-nofly';
+FLAG_DOOR: '-door';
+FLAG_FLY: '-fly';
 FLAG_TIMEOUT: '-timeout';
 
 EQUAL: '=';
@@ -67,7 +79,10 @@ EQUAL: '=';
 identifier: ident | SINGLE_QUOTE ident+ SINGLE_QUOTE | DOUBLE_QUOTE ident+ DOUBLE_QUOTE;
 ident: ID
         | ADMIN
+        | BUILD
+        | CACHE
         | CANCEL
+        | CLEAR
         | DEBUG
         | FALSE
         | INVALIDATE
@@ -86,7 +101,7 @@ ident: ID
         | TRUE
         | UNSET
         | WAYPOINT;
-ID: [a-zA-Z0-9\-_]+;
+ID: [a-zA-Z0-9\-_:]+;
 ID_SET: ID (COMMA ID)+;
 COMMA: ',';
 SINGLE_QUOTE: '\'';

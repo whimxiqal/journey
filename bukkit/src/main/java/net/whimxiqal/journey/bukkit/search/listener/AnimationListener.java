@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,11 +29,11 @@ import net.whimxiqal.journey.bukkit.search.event.BukkitSearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitStepSearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitStopPathSearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitStopSearchEvent;
-import net.whimxiqal.journey.common.search.AnimationManager;
-import net.whimxiqal.journey.common.search.PlayerSessionStateful;
-import net.whimxiqal.journey.common.search.event.StepSearchEvent;
-import net.whimxiqal.journey.common.search.event.StopPathSearchEvent;
-import net.whimxiqal.journey.common.search.event.StopSearchEvent;
+import net.whimxiqal.journey.search.AnimationManager;
+import net.whimxiqal.journey.search.PlayerSessionStateful;
+import net.whimxiqal.journey.search.event.StepSearchEvent;
+import net.whimxiqal.journey.search.event.StopPathSearchEvent;
+import net.whimxiqal.journey.search.event.StopSearchEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 

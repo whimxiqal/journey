@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.platform;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,21 +32,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import net.whimxiqal.journey.common.JourneyPlayer;
-import net.whimxiqal.journey.common.math.Vector;
-import net.whimxiqal.journey.common.navigation.Cell;
-import net.whimxiqal.journey.common.navigation.ModeType;
-import net.whimxiqal.journey.common.navigation.PlatformProxy;
-import net.whimxiqal.journey.common.search.AnimationManager;
-import net.whimxiqal.journey.common.search.SearchSession;
-import net.whimxiqal.journey.common.search.flag.FlagSet;
-import net.whimxiqal.mantle.common.CommandSource;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.Tunnel;
+import net.whimxiqal.journey.math.Vector;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.navigation.PlatformProxy;
+import net.whimxiqal.journey.search.AnimationManager;
+import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.FlagSet;
+import org.bstats.charts.CustomChart;
 
 public class TestPlatformProxy implements PlatformProxy {
 
-  public static Map<String, TestWorld> worlds = new HashMap<>();
+  public static Map<Integer, TestWorld> worlds = new HashMap<>();  // domain -> world
   public static Map<String, Cell> pois = new HashMap<>();
-  public static List<TestPort> ports = new LinkedList<>();
+  public static List<Tunnel> tunnels = new LinkedList<>();
   public static List<JourneyPlayer> onlinePlayers = new LinkedList<>();
 
   @Override
@@ -59,12 +64,12 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void spawnDestinationParticle(UUID playerUuid, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     // ignore
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, String domainId, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     // ignore
   }
 
@@ -85,7 +90,7 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public Optional<Cell> entityCellLocation(UUID entityUuid) {
-    return Optional.of(new Cell(0, 0, 0, WorldLoader.worldResources[0]));  // just say everything is at the origin
+    return Optional.of(new Cell(0, 0, 0, WorldLoader.domain(0)));  // just say everything is at the origin
   }
 
   @Override
@@ -96,7 +101,7 @@ public class TestPlatformProxy implements PlatformProxy {
   @Override
   public void prepareSearchSession(SearchSession searchSession, UUID player, FlagSet flags, boolean includePorts) {
     searchSession.registerMode(new WalkMode(searchSession));
-    ports.forEach(searchSession::registerPort);
+    tunnels.forEach(searchSession::registerTunnel);
   }
 
   @Override
@@ -106,7 +111,7 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public boolean isAtSurface(Cell cell) {
-    return true;
+    return false;
   }
 
   @Override
@@ -120,12 +125,27 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public String worldIdToName(String domainId) {
-    return domainId;
+  public String domainName(int domain) {
+    return worlds.get(domain).name;
   }
 
   @Override
-  public boolean sendGui(CommandSource source) {
+  public boolean sendGui(JourneyPlayer player) {
     return false;
+  }
+
+  @Override
+  public boolean synchronous() {
+    return true;
+  }
+
+  @Override
+  public Consumer<CustomChart> bStatsChartConsumer() {
+    return chart -> {/* nothing */};
+  }
+
+  @Override
+  public Map<String, Map<String, Integer>> domainResourceKeys() {
+    return Collections.singletonMap("whimxiqal", Arrays.stream(WorldLoader.worldResources).collect(Collectors.toMap(k -> k, k -> Journey.get().domainManager().domainIndex(k))));
   }
 }

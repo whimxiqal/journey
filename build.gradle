@@ -2,18 +2,48 @@ plugins {
     id 'org.cadixdev.licenser' version '0.6.1' apply false
 }
 
-defaultTasks 'licenseFormat', 'build'
+defaultTasks 'updateLicensesMain', 'build'
+
+static def patchVersion() {
+    // TODO enable once a proper tag has been loaded
+//    def tagInfo = 'git describe --tags'.execute().text.trim()
+//    if (!tagInfo.contains('-')) {
+//        return 0
+//    }
+//    return tagInfo.split("-")[1]
+    return '0'
+}
+
+static def suffix() {
+    // TODO enable once a proper tag has been loaded
+//    def journeyEnv = System.getenv('JOURNEY_ENV')
+//    if (journeyEnv == null || journeyEnv != 'PROD') {
+//        return '-dev-' + 'git rev-parse --short HEAD'.execute().text.trim()
+//    }
+    return ''
+}
+
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'maven-publish'
     apply plugin: 'org.cadixdev.licenser'
 
-    group = 'net.whimxiqal.journey'
-    version = '1.0.0'
+    project.ext.publish = false
+    project.ext.snapshot = true
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    project.ext.majorVersion = '1'
+    project.ext.minorVersion = '0'
+    project.ext.patchVersion = patchVersion()
+
+    project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
+    project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
+    project.ext.apiFullVersion = project.ext.apiVersion + project.ext.snapshotVersion
+    project.ext.fullVersion = project.ext.apiVersion + '.' + project.ext.patchVersion + suffix()
+    version = project.ext.fullVersion
+    group = 'net.whimxiqal.journey'
+
+    sourceCompatibility = 16
+    targetCompatibility = 16
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
@@ -24,8 +54,9 @@ subprojects {
     }
 
     license {
-        header = rootProject.file('HEADER.txt')
-        include 'src/**/*.java'
+        ignoreFailures = true
+        header = rootProject.file('LICENSE.txt')
+        include '**/*.java'
         newLine = true
     }
 
