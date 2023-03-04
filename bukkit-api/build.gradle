@@ -1,15 +1,12 @@
-plugins {
-    id 'java-library'
-}
-
 version = project.ext.apiFullVersion
 
-dependencies {
-    // IntelliJ Annotations
-    implementation 'org.jetbrains:annotations:22.0.0'
+repositories {
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+}
 
-    // Kyori Adventure
-    api 'net.kyori:adventure-api:4.11.0'
+dependencies {
+    implementation project(':api')
+    compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
 }
 
 if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword') && project.ext.publish) {
@@ -17,7 +14,7 @@ if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePass
     apply plugin: 'signing'
 
     javadoc {
-        title = 'Journey API (v' + project.ext.apiVersion + ')'
+        title = 'Journey Bukkit API (v' + project.ext.apiVersion + ')'
         options.encoding = 'UTF-8'
         options.charSet = 'UTF-8'
         options.links(
@@ -52,7 +49,7 @@ if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePass
         publications {
             mavenJava(MavenPublication) {
                 groupId = 'net.whimxiqal.journey'
-                artifactId = 'core-api'
+                artifactId = 'bukkit-api'
                 version = project.ext.apiFullVersion
                 from components.java
                 artifact sourcesJar
@@ -66,8 +63,8 @@ if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePass
                     }
                 }
                 pom {
-                    name = 'Journey Core API'
-                    description = 'The Core API for Journey'
+                    name = 'Journey Bukkit API'
+                    description = 'The Bukkit API for Journey'
                     url = 'https://github.com/whimxiqal/journey'
                     licenses {
                         license {
