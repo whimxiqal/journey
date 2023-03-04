@@ -2,14 +2,16 @@ plugins {
     id 'java-library'
 }
 
-version = project.ext.apiFullVersion
-
 dependencies {
     // IntelliJ Annotations
     implementation 'org.jetbrains:annotations:22.0.0'
 
     // Kyori Adventure
     api 'net.kyori:adventure-api:4.11.0'
+}
+
+build {
+    version = project.ext.apiFullVersion
 }
 
 if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword') && project.ext.publish) {
