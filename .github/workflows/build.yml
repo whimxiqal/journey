@@ -1,7 +1,17 @@
 name: Test and Build
 
-on: [pull_request]
-
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - 'main'
+      - 'release/*'
+      - 'feature/*'
+      - 'develop'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,7 +33,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --debug
+        run: ./gradlew build
 
       - name: Upload all artifacts
         uses: actions/upload-artifact@v3
