@@ -55,13 +55,6 @@ public class DataManagerImpl implements DataManager, Initializable {
         pathRecordManager = new SqlPathRecordManager(sqliteController);
         tunnelDataManager = new SqlTunnelDataManager(sqliteController);
         break;
-      case MYSQL:
-        MySqlConnectionController mysqlController = new MySqlConnectionController();
-        personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
-        publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
-        pathRecordManager = new SqlPathRecordManager(mysqlController);
-        tunnelDataManager = new SqlTunnelDataManager(mysqlController);
-        break;
       default:
         throw new RuntimeException();
     }
