@@ -67,7 +67,6 @@ public class SqlPathRecordManager
    */
   public SqlPathRecordManager(SqlConnectionController connectionController) {
     super(connectionController);
-    createTables();
   }
 
   @Override
@@ -418,67 +417,6 @@ public class SqlPathRecordManager
         resultSet.getInt("path_index"),
         ModeType.values()[resultSet.getInt("mode_type")]
     );
-  }
-
-  protected void createTables() {
-    try (Connection connection = getConnectionController().establishConnection()) {
-
-      // Create table of path trials
-      connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
-          + PATH_RECORD_TABLE_NAME + " ("
-          + "id integer PRIMARY KEY AUTOINCREMENT, "
-          + "timestamp integer NOT NULL, "
-          + "duration integer NOT NULL, "
-          + "path_length double(12, 5) NOT NULL, "
-          + "origin_x int(7) NOT NULL,"
-          + "origin_y int(7) NOT NULL,"
-          + "origin_z int(7) NOT NULL,"
-          + "destination_x int(7) NOT NULL,"
-          + "destination_y int(7) NOT NULL,"
-          + "destination_z int(7) NOT NULL,"
-          + "domain_id char(36) NOT NULL"
-          + ");").execute();
-
-      connection.prepareStatement("CREATE INDEX IF NOT EXISTS path_record_idx ON "
-              + PATH_RECORD_TABLE_NAME
-              + " (origin_x, origin_y, origin_z, destination_x, destination_y, destination_z, domain_id);")
-          .execute();
-
-      // Create table of nodes within the path trial calculation
-      connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
-          + PATH_RECORD_CELL_TABLE_NAME + " ("
-          + "path_record_id integer NOT NULL, "  // id of saved path trial (indexed)
-          + "x int(7) NOT NULL, "  // x coordinate
-          + "y int(7) NOT NULL, "  // y coordinate
-          + "z int(7) NOT NULL, "  // z coordinate
-          + "path_index int(10), "  // what is the index of this critical node (if not critical, null)
-          + "mode_type int(2) NOT NULL, "  // what is the mode type used to get here
-          + "FOREIGN KEY (path_record_id) REFERENCES " + PATH_RECORD_TABLE_NAME + "(id)"
-          + " ON DELETE CASCADE"
-          + " ON UPDATE CASCADE"
-          + ");").execute();
-
-      connection.prepareStatement("CREATE INDEX IF NOT EXISTS cell_path_record_id_idx ON "
-          + PATH_RECORD_CELL_TABLE_NAME
-          + " (path_record_id);").execute();
-
-      connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
-          + PATH_RECORD_MODE_TABLE_NAME + " ("
-          + "path_record_id integer NOT NULL, "
-          + "mode_type int(2) NOT NULL, "
-          + "FOREIGN KEY (path_record_id) REFERENCES " + PATH_RECORD_TABLE_NAME + "(id)"
-          + " ON DELETE CASCADE"
-          + " ON UPDATE CASCADE, "
-          + "UNIQUE(path_record_id, mode_type)"
-          + ");").execute();
-
-      connection.prepareStatement("CREATE INDEX IF NOT EXISTS mode_path_record_id_idx ON "
-          + PATH_RECORD_MODE_TABLE_NAME
-          + " (path_record_id);").execute();
-
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
   }
 
 }
