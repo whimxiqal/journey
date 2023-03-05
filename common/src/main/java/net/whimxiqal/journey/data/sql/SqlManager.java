@@ -42,4 +42,5 @@ public abstract class SqlManager {
   public SqlConnectionController getConnectionController() {
     return connectionController;
   }
+
 }

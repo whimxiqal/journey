@@ -101,7 +101,7 @@ public class ScopeManager {
                     .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
                     .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
                       SearchSession session = new PlayerDomainGoalSearchSession(p2, entry2.getValue());
-                      session.addPermission(Permission.PATH_WORLD.path());
+                      session.addPermission(Permission.PATH_WORLD.path() + "." + entry.getKey() + "." + entry2.getKey());
                       return session;
                     }))),
                 p2 -> VirtualMap.empty()))))));

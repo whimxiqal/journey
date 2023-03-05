@@ -44,37 +44,6 @@ public class SqlTunnelDataManager extends SqlManager implements TunnelDataManage
 
   public SqlTunnelDataManager(SqlConnectionController connectionController) {
     super(connectionController);
-    createTables();
-  }
-
-  private void createTables() {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      String tableStatement = "CREATE TABLE IF NOT EXISTS "
-          + NETHER_TUNNEL_TABLE_NAME + " ("
-          + "origin_domain_id char(36) NOT NULL, "
-          + "origin_x int(7) NOT NULL, "
-          + "origin_y int(7) NOT NULL, "
-          + "origin_z int(7) NOT NULL, "
-          + "destination_domain_id char(36) NOT NULL, "
-          + "destination_x int(7) NOT NULL, "
-          + "destination_y int(7) NOT NULL, "
-          + "destination_z int(7) NOT NULL, "
-          + "tunnel_type int(3) NOT NULL"
-          + ");";
-      connection.prepareStatement(tableStatement).execute();
-
-      String indexStatement = "CREATE INDEX IF NOT EXISTS origin_idx ON "
-          + NETHER_TUNNEL_TABLE_NAME
-          + " (origin_domain_id, origin_x, origin_y, origin_z);";
-      connection.prepareStatement(indexStatement).execute();
-
-      indexStatement = "CREATE INDEX IF NOT EXISTS destination_id ON "
-          + NETHER_TUNNEL_TABLE_NAME
-          + " (destination_domain_id, destination_x, destination_y, destination_z);";
-      connection.prepareStatement(indexStatement).execute();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
   }
 
   @Override

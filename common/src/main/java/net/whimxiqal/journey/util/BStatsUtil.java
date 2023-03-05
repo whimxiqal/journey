@@ -36,8 +36,8 @@ public class BStatsUtil {
   }
 
   public static void register(Consumer<CustomChart> chartConsumer) {
-    chartConsumer.accept(new SingleLineChart("Number of Searches per Hour", () -> Journey.get().statsManager().searches()));
-    chartConsumer.accept(new SingleLineChart("Blocks Travelled per Hour", () -> Journey.get().statsManager().blocksTravelled()));
+    chartConsumer.accept(new SingleLineChart("searches", () -> Journey.get().statsManager().searches()));
+    chartConsumer.accept(new SingleLineChart("blocks_travelled", () -> Journey.get().statsManager().blocksTravelled()));
   }
 
 }

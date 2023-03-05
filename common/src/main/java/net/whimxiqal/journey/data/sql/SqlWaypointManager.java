@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SqlWaypointManager extends SqlManager {
 
-  public static final String WAYPOINT_TABLE_NAME = "journey_waypoints";
+  public static final String QUERY_ADD_WAYPOINT = "/data/sql/query/add_waypoint.sql";
 
   /**
    * Default constructor.
@@ -52,7 +52,6 @@ public abstract class SqlWaypointManager extends SqlManager {
    */
   public SqlWaypointManager(SqlConnectionController connectionController) {
     super(connectionController);
-    createTables();
   }
 
   protected void addWaypoint(@Nullable UUID playerUuid,
@@ -74,6 +73,7 @@ public abstract class SqlWaypointManager extends SqlManager {
     if (!forceValidName && Validator.isInvalidDataName(name)) {
       throw new IllegalArgumentException("The given name is not valid: " + name);
     }
+    getClass().getResource(QUERY_ADD_WAYPOINT).get
     PreparedStatement statement = connection.prepareStatement(String.format(
         "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
         WAYPOINT_TABLE_NAME,
@@ -294,30 +294,6 @@ public abstract class SqlWaypointManager extends SqlManager {
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
-    }
-  }
-
-  protected void createTables() {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      String tableStatement = "CREATE TABLE IF NOT EXISTS "
-          + WAYPOINT_TABLE_NAME + " ("
-          + "player_uuid char(36), "
-          + "name_id varchar(32) NOT NULL, "
-          + "name varchar(32) NOT NULL, "
-          + "domain_id char(36) NOT NULL, "
-          + "x int(7) NOT NULL, "
-          + "y int(7) NOT NULL, "
-          + "z int(7) NOT NULL, "
-          + "timestamp integer NOT NULL"
-          + ");";
-      connection.prepareStatement(tableStatement).execute();
-
-      String indexStatement = "CREATE INDEX IF NOT EXISTS player_uuid_idx ON "
-          + WAYPOINT_TABLE_NAME
-          + " (player_uuid);";
-      connection.prepareStatement(indexStatement).execute();
-    } catch (SQLException e) {
-      e.printStackTrace();
     }
   }
 

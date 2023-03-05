@@ -24,6 +24,7 @@
 package net.whimxiqal.journey.command;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.JourneyPlayerImpl;
+import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.common.JourneyBaseVisitor;
 import net.whimxiqal.journey.common.JourneyParser;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
@@ -194,17 +196,23 @@ public class JourneyExecutor implements CommandExecutor {
       }
 
       @Override
-      public CommandResult visitListNetherPortals(JourneyParser.ListNetherPortalsContext ctx) {
+      public CommandResult visitListPortals(JourneyParser.ListPortalsContext ctx) {
         Optional<Integer> page = getPage(ctx.page);
         if (page.isEmpty()) {
           return CommandResult.failure();
         }
-        Pager.of(Formatter.info("Known Nether Portals"),
-                Journey.get().dataManager()
-                    .netherPortalManager()
-                    .getAllTunnels(TunnelType.NETHER),
-                tunnel -> Formatter.cell(tunnel.origin()),
-                tunnel -> Formatter.cell(tunnel.destination()))
+        Collection<Tunnel> netherTunnels = Journey.get().dataManager()
+            .netherPortalManager()
+            .getAllTunnels(TunnelType.NETHER);
+        if (netherTunnels.isEmpty()) {
+          src.audience().sendMessage(Formatter.info("No known portals yet"));
+        }
+        Pager.of(Formatter.info("Known portals:"),
+                netherTunnels,
+                tunnel -> Formatter.accent("Nether"),  // TODO allow other portals types (END!)
+                tunnel -> Formatter.cell(tunnel.origin())
+                    .append(Formatter.dull(" -> "))
+                    .append(Formatter.cell(tunnel.destination())))
             .sendPage(src.audience(), page.get());
         return CommandResult.success();
       }

@@ -22,12 +22,12 @@ serverWaypoint: WAYPOINT name=identifier (serverUnsetWaypoint | serverRenameWayp
 serverUnsetWaypoint: UNSET;
 serverRenameWaypoint: RENAME newname=identifier;
 
-admin: ADMIN (debug | cache | reload=RELOAD | listNetherPortals);
+admin: ADMIN (debug | cache | reload=RELOAD | listPortals);
 debug: DEBUG target=identifier?;
 cache: CACHE (cachePortals | cachePaths);
 cachePortals: PORTALS (clear=CLEAR);
 cachePaths: PATHS (clear=CLEAR | build=BUILD);
-listNetherPortals: LIST_NETHER_PORTALS page=ID?;
+listPortals: LIST_PORTALS page=ID?;
 
 cancel: CANCEL;
 
@@ -51,7 +51,7 @@ FALSE: 'false';
 INVALIDATE: 'invalidate';
 JOURNEY: 'journey';
 JOURNEY_TO: 'journeyto';
-LIST_NETHER_PORTALS: 'listnetherportals';
+LIST_PORTALS: 'listportals';
 LIST_WAYPOINTS: 'listwaypoints';
 PATH: 'path';
 PATHS: 'paths';

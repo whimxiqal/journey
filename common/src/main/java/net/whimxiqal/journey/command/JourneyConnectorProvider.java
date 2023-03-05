@@ -89,7 +89,7 @@ public class JourneyConnectorProvider {
         .addPermission(JourneyParser.RULE_serverRenameWaypoint, Permission.EDIT_SERVER.path())
         .addPermission(JourneyParser.RULE_debug, Permission.ADMIN_DEBUG.path())
         .addPermission(JourneyParser.RULE_cache, Permission.ADMIN_CACHE.path())
-        .addPermission(JourneyParser.RULE_listNetherPortals, Permission.ADMIN_INFO.path())
+        .addPermission(JourneyParser.RULE_listPortals, Permission.ADMIN_INFO.path())
         // other admin commands are handled in executor
         .addPermission(JourneyParser.RULE_cancel, Permission.CANCEL.path())
         .addPermission(JourneyParser.RULE_timeoutFlag, Permission.FLAG_TIMEOUT.path())
