@@ -23,6 +23,10 @@
 
 package net.whimxiqal.journey;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import net.kyori.adventure.text.Component;
@@ -33,7 +37,7 @@ import net.kyori.adventure.text.Component;
 public class ScopeBuilder implements Builder<Scope> {
 
   private Component name = Component.empty();
-  private Component description = Component.empty();
+  private List<Component> descriptions = Collections.emptyList();
   private Function<JourneyPlayer, VirtualMap<Scope>> subScopes;
   private Function<JourneyPlayer, VirtualMap<Destination>> destinations;
   private String permission = null;
@@ -60,7 +64,17 @@ public class ScopeBuilder implements Builder<Scope> {
    * @return the builder, for chaining
    */
   public ScopeBuilder description(Component description) {
-    this.description = description;
+    this.descriptions = Collections.singletonList(description);
+    return this;
+  }
+
+  /**
+   * Set the description with multiple lines.
+   * @param description the lines of the description
+   * @return the builder, for chaining
+   */
+  public ScopeBuilder description(Component... description) {
+    this.descriptions = Arrays.asList(description);
     return this;
   }
 
@@ -159,6 +173,6 @@ public class ScopeBuilder implements Builder<Scope> {
 
   @Override
   public Scope build() {
-    return new ScopeImpl(name, description, subScopes, destinations, permission, strict);
+    return new ScopeImpl(name, descriptions, subScopes, destinations, permission, strict);
   }
 }

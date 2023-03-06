@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;

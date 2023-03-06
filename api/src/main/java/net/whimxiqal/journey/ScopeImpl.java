@@ -23,7 +23,6 @@
 
 package net.whimxiqal.journey;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -32,19 +31,19 @@ import net.kyori.adventure.text.Component;
 class ScopeImpl implements Scope {
 
   private final Component name;
-  private final Component description;
+  private final List<Component> descriptions;
   private final Function<JourneyPlayer, VirtualMap<Scope>> subScopes;
   private final Function<JourneyPlayer, VirtualMap<Destination>> destinations;
   private final String permission;
   private final boolean strict;
 
-  ScopeImpl(Component name, Component description,
+  ScopeImpl(Component name, List<Component> descriptions,
             Function<JourneyPlayer, VirtualMap<Scope>> subScopes,
             Function<JourneyPlayer, VirtualMap<Destination>> destinations,
             String permission,
             boolean strict) {
     this.name = name;
-    this.description = description;
+    this.descriptions = descriptions;
     this.subScopes = subScopes;
     this.destinations = destinations;
     this.permission = permission;
@@ -57,8 +56,8 @@ class ScopeImpl implements Scope {
   }
 
   @Override
-  public Component description() {
-    return description;
+  public List<Component> description() {
+    return descriptions;
   }
 
   @Override

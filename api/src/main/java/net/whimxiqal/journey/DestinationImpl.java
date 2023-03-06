@@ -23,8 +23,6 @@
 
 package net.whimxiqal.journey;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -32,11 +30,11 @@ import net.kyori.adventure.text.Component;
 class DestinationImpl implements Destination {
 
   private final Component name;
-  private final Component description;
+  private final List<Component> description;
   private final Cell location;
   private final String permission;
 
-  DestinationImpl(Component name, Component description, Cell location, String permission) {
+  DestinationImpl(Component name, List<Component> description, Cell location, String permission) {
     this.name = name;
     this.description = description;
     this.location = location;
@@ -49,7 +47,7 @@ class DestinationImpl implements Destination {
   }
 
   @Override
-  public Component description() {
+  public List<Component> description() {
     return description;
   }
 

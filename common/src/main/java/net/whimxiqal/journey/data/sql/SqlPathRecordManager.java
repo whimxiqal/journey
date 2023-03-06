@@ -67,7 +67,7 @@ public class SqlPathRecordManager
    */
   public SqlPathRecordManager(SqlConnectionController connectionController) {
     super(connectionController);
-  }
+1  }
 
   @Override
   public void report(PathTrial trial,
