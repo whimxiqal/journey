@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Test, Build, and Upload
 
 on:
   push:
@@ -6,12 +6,7 @@ on:
       - 'main'
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - 'main'
-      - 'release/*'
-      - 'feature/*'
-      - 'develop'
+
 jobs:
   gradle_validation:
     name: Gradle Validation

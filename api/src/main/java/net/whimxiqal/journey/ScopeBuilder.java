@@ -25,7 +25,6 @@ package net.whimxiqal.journey;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -70,6 +69,7 @@ public class ScopeBuilder implements Builder<Scope> {
 
   /**
    * Set the description with multiple lines.
+   *
    * @param description the lines of the description
    * @return the builder, for chaining
    */
