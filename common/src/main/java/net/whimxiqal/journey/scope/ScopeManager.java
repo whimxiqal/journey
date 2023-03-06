@@ -68,9 +68,7 @@ public class ScopeManager {
         .build());
     register(Journey.NAME, "player", Scope.builder()
         .name(Component.text("Players"))
-        .description(Formatter.dull("Online players and their")
-            .append(Component.newline())
-            .append(Component.text("public personal waypoints").color(Formatter.DULL)))
+        .description(Component.text("Online players and their"), Component.text("public personal waypoints"))
         .subScopes(player -> VirtualMap.of(Journey.get().proxy().platform()
             .onlinePlayers()
             .stream()
@@ -93,10 +91,10 @@ public class ScopeManager {
                 .build()))))
         .build());
     Map<String, Map<String, Integer>> worldResourceKeys = Journey.get().proxy().platform().domainResourceKeys();
-    register(Journey.NAME, "world", new InternalScope(Scope.builder().build(),
+    register(Journey.NAME, "world", new InternalScope(Scope.builder().name(Component.text("Worlds")).build(),
         p1 -> VirtualMap.empty(),
         p1 -> VirtualMap.of(worldResourceKeys.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry ->
-            new InternalScope(Scope.builder().build(),
+            new InternalScope(Scope.builder().name(Component.text(entry.getKey())).build(),
                 p2 -> VirtualMap.of(entry.getValue().entrySet().stream()
                     .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
                     .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
