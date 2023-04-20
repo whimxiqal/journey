@@ -23,10 +23,22 @@
 
 package net.whimxiqal.journey.data.sql;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
 /**
  * A general SQL manager for storage purposes.
  */
 public abstract class SqlManager {
+
+  public static final String WAYPOINTS_TABLE = "journey_waypoints";
+  public static final String CACHED_PATHS_TABLE = "journey_cached_paths";
+  public static final String CACHED_PATH_CELLS_TABLE = "journey_cached_path_cells";
+  public static final String CACHED_PATH_MODES_TABLE = "journey_cached_path_modes";
+  public static final String TUNNELS_TABLE = "journey_tunnels";
 
   private final SqlConnectionController connectionController;
 

@@ -29,6 +29,7 @@ import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyTestHarness;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
+import net.whimxiqal.journey.platform.WorldLoader;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -51,8 +52,8 @@ public class BetterSearchTest extends JourneyTestHarness {
     runSearch(destinationSession(origin, destination), expectedResult);
   }
 
-  private void runDomainSearch(String origin, String domainId, ResultState expectedResult) throws InterruptedException {
-    runSearch(domainSession(origin, Journey.get().domainManager().domainIndex(domainId)), expectedResult);
+  private void runDomainSearch(String origin, String domainName, ResultState expectedResult) throws InterruptedException {
+    runSearch(domainSession(origin, Journey.get().domainManager().domainIndex(WorldLoader.getWorld(domainName).uuid)), expectedResult);
   }
 
   private void runSearch(SearchSession session, ResultState expectedResult) throws InterruptedException {

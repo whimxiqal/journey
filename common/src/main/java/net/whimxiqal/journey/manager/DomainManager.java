@@ -25,14 +25,15 @@ package net.whimxiqal.journey.manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import net.whimxiqal.journey.Journey;
 
 public class DomainManager {
 
-  private final Map<Integer, String> indexToId = new HashMap<>();
-  private final Map<String, Integer> idToIndex = new HashMap<>();
+  private final Map<Integer, UUID> indexToId = new HashMap<>();
+  private final Map<UUID, Integer> idToIndex = new HashMap<>();
 
-  public int domainIndex(String id) {
+  public int domainIndex(UUID id) {
     Integer index = idToIndex.get(id);
     if (index == null) {
       index = idToIndex.size();
@@ -42,8 +43,8 @@ public class DomainManager {
     return index;
   }
 
-  public String domainId(int index) {
-    String id = indexToId.get(index);
+  public UUID domainId(int index) {
+    UUID id = indexToId.get(index);
     if (id == null) {
       throw new IllegalArgumentException("There is no domain id with index: " + index);
     }

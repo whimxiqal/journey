@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
@@ -37,6 +38,7 @@ import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.data.TunnelDataManager;
 import net.whimxiqal.journey.data.TunnelType;
 import net.whimxiqal.journey.navigation.NetherTunnel;
+import net.whimxiqal.journey.util.UUIDUtil;
 
 public class SqlTunnelDataManager extends SqlManager implements TunnelDataManager {
 
@@ -62,11 +64,11 @@ public class SqlTunnelDataManager extends SqlManager implements TunnelDataManage
           "destination_z",
           "tunnel_type"));
 
-      statement.setString(1, Journey.get().domainManager().domainId(origin.domain()));
+      statement.setBytes(1, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(origin.domain())));
       statement.setInt(2, origin.blockX());
       statement.setInt(3, origin.blockY());
       statement.setInt(4, origin.blockZ());
-      statement.setString(5, Journey.get().domainManager().domainId(destination.domain()));
+      statement.setBytes(5, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(destination.domain())));
       statement.setInt(6, destination.blockX());
       statement.setInt(7, destination.blockY());
       statement.setInt(8, destination.blockZ());
@@ -100,7 +102,7 @@ public class SqlTunnelDataManager extends SqlManager implements TunnelDataManage
           cellTypePrefix + "_z",
           "tunnel_type"));
 
-      statement.setString(1, Journey.get().domainManager().domainId(cell.domain()));
+      statement.setBytes(1, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(cell.domain())));
       statement.setInt(2, cell.blockX());
       statement.setInt(3, cell.blockY());
       statement.setInt(4, cell.blockZ());
@@ -119,7 +121,7 @@ public class SqlTunnelDataManager extends SqlManager implements TunnelDataManage
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT * FROM %s WHERE %s = ?;",
           NETHER_TUNNEL_TABLE_NAME,
-          type.id()));
+          "tunnel_type"));
 
       statement.setInt(1, type.id());
 
@@ -142,11 +144,11 @@ public class SqlTunnelDataManager extends SqlManager implements TunnelDataManage
             new Cell(resultSet.getInt("origin_x"),
                 resultSet.getInt("origin_y"),
                 resultSet.getInt("origin_z"),
-                Journey.get().domainManager().domainIndex(resultSet.getString("origin_domain_id"))),
+                Journey.get().domainManager().domainIndex(UUIDUtil.bytesToUuid(resultSet.getBytes("origin_domain_id")))),
             new Cell(resultSet.getInt("destination_x"),
                 resultSet.getInt("destination_y"),
                 resultSet.getInt("destination_z"),
-                Journey.get().domainManager().domainIndex(resultSet.getString("destination_domain_id")))));
+                Journey.get().domainManager().domainIndex(UUIDUtil.bytesToUuid(resultSet.getBytes("destination_domain_id"))))));
         default -> throw new RuntimeException(); // programmer error
       }
     }
@@ -169,11 +171,11 @@ public class SqlTunnelDataManager extends SqlManager implements TunnelDataManage
           "destination_z",
           "tunnel_type"));
 
-      statement.setString(1, Journey.get().domainManager().domainId(origin.domain()));
+      statement.setBytes(1, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(origin.domain())));
       statement.setInt(2, origin.blockX());
       statement.setInt(3, origin.blockY());
       statement.setInt(4, origin.blockZ());
-      statement.setString(5, Journey.get().domainManager().domainId(destination.domain()));
+      statement.setBytes(5, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(destination.domain())));
       statement.setInt(6, destination.blockX());
       statement.setInt(7, destination.blockY());
       statement.setInt(8, destination.blockZ());

@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.config;
 
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.ConfigManager;
 import net.whimxiqal.journey.config.Setting;
 import net.whimxiqal.journey.config.Settings;
@@ -120,13 +121,25 @@ public class BukkitConfigManager implements ConfigManager {
    * Helper function to ensure proper typing.
    *
    * @param setting     the setting
-   * @param stringValue the string version of the setting value
+   * @param settingPath the string version of the setting value
    * @param <X>         the type of setting
    */
-  private <X> void parseAndSetValue(Setting<X> setting, String stringValue) {
-    setting.setValue(setting.parseValue(Objects.requireNonNull(JourneyBukkit.get()
+  private <X> void parseAndSetValue(Setting<X> setting, String settingPath) {
+    String configString = JourneyBukkit.get()
         .getConfig()
-        .getString(stringValue))));
+        .getString(settingPath);
+    if (configString == null) {
+      Journey.logger().error("Could not get config value for config setting: " + settingPath);
+      return;
+    }
+    X value = setting.parseValue(configString);
+    if (value == null) {
+      setting.setValue(setting.getDefaultValue());
+      Journey.logger().error("Invalid value " + configString + " for setting " + settingPath
+      + ". Using default: " + setting.printValue());
+    } else {
+      setting.setValue(value);
+    }
   }
 
   @Override

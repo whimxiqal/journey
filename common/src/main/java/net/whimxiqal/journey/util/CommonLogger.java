@@ -23,37 +23,83 @@
 
 package net.whimxiqal.journey.util;
 
-import net.whimxiqal.journey.Journey;
+import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Logger;
 import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.Journey;
 
 /**
  * A generic interface for common logging purposes.
  */
-public interface CommonLogger {
+public abstract class CommonLogger implements Initializable {
+
+  private final Queue<Message> messageQueue = new ConcurrentLinkedQueue<>();
+  private UUID messageTaskId;
+
+  abstract protected void submit(Message message);
 
   /**
    * Log something at the info-level.
    *
    * @param message the message
    */
-  void info(String message);
+  public void info(String message) {
+    log(MessageType.INFO, message);
+  }
 
   /**
    * Log something at the warn-level.
    */
-  void warn(String message);
+  public void warn(String message) {
+    log(MessageType.WARNING, message);
+  }
 
   /**
    * Log something at the sever-level.
    */
-  void error(String message);
+  public void error(String message) {
+    log(MessageType.SEVERE, message);
+  }
 
-  default void debug(String message) {
+  public void debug(String message) {
     debug(Component.text(message));
   }
 
-  default void debug(Component message) {
+  public void debug(Component message) {
     Journey.get().debugManager().broadcast(message);
+  }
+
+  private void log(MessageType type, String message) {
+    messageQueue.add(new Message(type, message));
+  }
+
+  @Override
+  public void initialize() {
+    messageTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::flush, false, 1);
+  }
+
+  public void shutdown() {
+    if (messageTaskId != null) {
+      Journey.get().proxy().schedulingManager().cancelTask(messageTaskId);
+    }
+    flush();
+  }
+
+  private void flush() {
+    while (!messageQueue.isEmpty()) {
+      submit(messageQueue.remove());
+    }
+  }
+
+  protected enum MessageType {
+    INFO,
+    WARNING,
+    SEVERE,
+  }
+
+  protected record Message(MessageType type, String message) {
   }
 
 }

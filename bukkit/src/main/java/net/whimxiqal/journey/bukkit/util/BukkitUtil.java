@@ -156,8 +156,8 @@ public final class BukkitUtil {
     return Journey.get().domainManager().domainIndex(getWorldId(world));
   }
 
-  public static String getWorldId(World world) {
-    return world.getUID().toString();
+  public static UUID getWorldId(World world) {
+    return world.getUID();
   }
 
   public static Cell cell(Location location) {
@@ -168,9 +168,8 @@ public final class BukkitUtil {
     return getWorld(Journey.get().domainManager().domainId(cell.domain()));
   }
 
-  public static World getWorld(String domainId) {
-    UUID uuid = UUID.fromString(domainId);
-    World world = Bukkit.getWorld(uuid);
+  public static World getWorld(UUID domainId) {
+    World world = Bukkit.getWorld(domainId);
     if (world == null) {
       throw new IllegalArgumentException("There is no world with id " + domainId);
     }
