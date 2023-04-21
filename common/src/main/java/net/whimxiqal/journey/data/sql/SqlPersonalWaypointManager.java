@@ -68,13 +68,13 @@ public class SqlPersonalWaypointManager
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?;",
-          WAYPOINT_TABLE_NAME,
-          "is_public",
+          SqlManager.WAYPOINTS_TABLE,
+          "publicity",
           "player_uuid",
           "name_id"));
 
       statement.setBoolean(1, isPublic);
-      statement.setString(2, playerUuid == null ? null : playerUuid.toString());
+      statement.setString(2, playerUuid.toString());
       statement.setString(3, name.toLowerCase());
 
       statement.executeUpdate();
@@ -107,11 +107,11 @@ public class SqlPersonalWaypointManager
   }
 
   @Override
-  public @Nullable boolean isPublic(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
+  public boolean isPublic(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
-          "SELECT is_public FROM %s WHERE %s = ? AND %s = ?;",
-          WAYPOINT_TABLE_NAME,
+          "SELECT publicity FROM %s WHERE %s = ? AND %s = ?;",
+          SqlManager.WAYPOINTS_TABLE,
           "player_uuid",
           "name_id"));
 
@@ -120,7 +120,7 @@ public class SqlPersonalWaypointManager
 
       ResultSet resultSet = statement.executeQuery();
       if (resultSet.next()) {
-        return resultSet.getBoolean("is_public");
+        return resultSet.getBoolean("publicity");
       } else {
         throw new RuntimeException("Checking is-public on non-existent waypoint: " + playerUuid + ", " + name);
       }
@@ -141,29 +141,4 @@ public class SqlPersonalWaypointManager
     return this.getWaypointCount(playerUuid, justPublic);
   }
 
-  @Override
-  protected void createTables() {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      String tableStatement = "CREATE TABLE IF NOT EXISTS "
-          + WAYPOINT_TABLE_NAME + " ("
-          + "player_uuid char(36), "
-          + "name_id varchar(32) NOT NULL, "
-          + "name varchar(32) NOT NULL, "
-          + "domain_id char(36) NOT NULL, "
-          + "x int(7) NOT NULL, "
-          + "y int(7) NOT NULL, "
-          + "z int(7) NOT NULL, "
-          + "timestamp integer NOT NULL, "
-          + "is_public " + getConnectionController().booleanType() + " NOT NULL"
-          + ");";
-      connection.prepareStatement(tableStatement).execute();
-
-      String indexStatement = "CREATE INDEX IF NOT EXISTS player_uuid_idx ON "
-          + WAYPOINT_TABLE_NAME
-          + " (player_uuid);";
-      connection.prepareStatement(indexStatement).execute();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
 }

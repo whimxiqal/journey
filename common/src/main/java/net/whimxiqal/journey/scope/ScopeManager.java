@@ -92,19 +92,21 @@ public class ScopeManager {
                 .strict()  // to access any player destinations, you must at least scope to the player
                 .build()))))
         .build());
-    Map<String, Map<String, Integer>> worldResourceKeys = Journey.get().proxy().platform().domainResourceKeys();
     register(Journey.NAME, "world", new InternalScope(Scope.builder().build(),
         p1 -> VirtualMap.empty(),
-        p1 -> VirtualMap.of(worldResourceKeys.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry ->
-            new InternalScope(Scope.builder().build(),
-                p2 -> VirtualMap.of(entry.getValue().entrySet().stream()
-                    .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
-                    .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
-                      SearchSession session = new PlayerDomainGoalSearchSession(p2, entry2.getValue());
-                      session.addPermission(Permission.PATH_WORLD.path());
-                      return session;
-                    }))),
-                p2 -> VirtualMap.empty()))))));
+        p1 -> VirtualMap.of(Journey.get().proxy().platform().domainResourceKeys()
+            .entrySet()
+            .stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, entry ->
+                new InternalScope(Scope.builder().build(),
+                    p2 -> VirtualMap.of(entry.getValue().entrySet().stream()
+                        .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
+                          SearchSession session = new PlayerDomainGoalSearchSession(p2, entry2.getValue());
+                          session.addPermission(Permission.PATH_WORLD.path());
+                          return session;
+                        }))),
+                    p2 -> VirtualMap.empty()))))));
   }
 
   public void register(String plugin, String id, Scope scope) {

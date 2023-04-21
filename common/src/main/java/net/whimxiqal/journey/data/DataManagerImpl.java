@@ -23,6 +23,16 @@
 
 package net.whimxiqal.journey.data;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.sql.SqlPathRecordManager;
@@ -36,7 +46,7 @@ import net.whimxiqal.journey.util.Initializable;
 /**
  * Implementation of the {@link DataManager} in Spigot Minecraft.
  */
-public class DataManagerImpl implements DataManager, Initializable {
+public class DataManagerImpl implements DataManager {
 
   public static final String DATABASE_FILE_NAME = "journey.db";
   private PersonalWaypointManager personalWaypointManager;
@@ -46,6 +56,7 @@ public class DataManagerImpl implements DataManager, Initializable {
 
   @Override
   public void initialize() {
+    boolean setupSchema = version() == DataVersion.V000;
     switch (Settings.STORAGE_TYPE.getValue()) {
       case SQLITE:
         String sqliteAddress = "jdbc:sqlite:" + Journey.get().proxy().dataFolder() + "/" + DATABASE_FILE_NAME;
@@ -54,22 +65,56 @@ public class DataManagerImpl implements DataManager, Initializable {
         publicWaypointManager = new SqlPublicWaypointManager(sqliteController);
         pathRecordManager = new SqlPathRecordManager(sqliteController);
         tunnelDataManager = new SqlTunnelDataManager(sqliteController);
+        if (setupSchema) {
+          try (Connection connection = sqliteController.establishConnection()) {
+            Statement statement = connection.createStatement();
+            addBatchesToStatement("/data/sql/schema/sqlite.sql", statement);
+            statement.executeBatch();
+          } catch (SQLException e) {
+            setupSchema = false;
+            e.printStackTrace();
+          }
+        }
         break;
-      case MYSQL:
-        MySqlConnectionController mysqlController = new MySqlConnectionController();
-        personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
-        publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
-        pathRecordManager = new SqlPathRecordManager(mysqlController);
-        tunnelDataManager = new SqlTunnelDataManager(mysqlController);
-        break;
+//      case MYSQL:
+//        MySqlConnectionController mysqlController = new MySqlConnectionController();
+//        personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
+//        publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
+//        pathRecordManager = new SqlPathRecordManager(mysqlController);
+//        tunnelDataManager = new SqlTunnelDataManager(mysqlController);
+//        if (setupSchema) {
+//          try (Connection connection = mysqlController.establishConnection()) {
+//            Statement statement = connection.createStatement();
+//            addBatchesToStatement("/data/sql/schema/mysql.sql", statement);
+//            statement.executeBatch();
+//          } catch (SQLException e) {
+//            setupSchema = false;
+//            e.printStackTrace();
+//          }
+//        }
+//        break;
       default:
         throw new RuntimeException();
+    }
+    if (setupSchema) {
+      DataVersion.writeVersion(DataVersion.latest());
+    }
+  }
+
+  private void addBatchesToStatement(String queryResource, Statement statement) throws SQLException {
+    InputStream resourceStream = this.getClass().getResourceAsStream(queryResource);
+    if (resourceStream == null) {
+      throw new NoSuchElementException("Cannot find resource at path " + queryResource);
+    }
+    for (String query : new BufferedReader(new InputStreamReader(resourceStream))
+        .lines().collect(Collectors.joining("\n")).split(";")) {
+      statement.addBatch(query);
     }
   }
 
   @Override
   public DataVersion version() {
-    return DataVersionManager.version();
+    return DataVersion.version();
   }
 
   @Override

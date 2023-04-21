@@ -148,8 +148,4 @@ public class TestPathRecordManager implements PathRecordManager {
     return getRecord(origin, destination, modeTypes) != null;
   }
 
-  @Override
-  public @NotNull Collection<PathTrialCellRecord> getAllCells() {
-    return pathTrialCellRecords;
-  }
 }

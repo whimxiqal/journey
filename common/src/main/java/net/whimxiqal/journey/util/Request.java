@@ -57,7 +57,7 @@ public final class Request {
         return;
       }
       JsonObject obj = Json.createReader(content).readObject();
-      future.complete(UUID.nameUUIDFromBytes(obj.getString("id").getBytes(StandardCharsets.UTF_8)));
+      future.complete(UUIDUtil.bytesToUuid(obj.getString("id").getBytes(StandardCharsets.UTF_8)));
     }, true);
     return future;
   }
