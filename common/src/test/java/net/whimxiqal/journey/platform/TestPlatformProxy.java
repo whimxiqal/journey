@@ -146,6 +146,6 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public Map<String, Map<String, Integer>> domainResourceKeys() {
-    return Collections.singletonMap("whimxiqal", Arrays.stream(WorldLoader.worldResources).collect(Collectors.toMap(k -> k, k -> Journey.get().domainManager().domainIndex(k))));
+    return Collections.singletonMap("whimxiqal", TestPlatformProxy.worlds.values().stream().collect(Collectors.toMap(k -> k.name, k -> Journey.get().domainManager().domainIndex(k.uuid))));
   }
 }

@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
@@ -47,7 +48,7 @@ public final class WorldLoader {
   }
 
   public static int domain(int index) {
-    return Journey.get().domainManager().domainIndex(worldResources[index]);
+    return Journey.get().domainManager().domainIndex(TestPlatformProxy.worlds.get(index).uuid);
   }
 
   public static void initWorlds() {
@@ -55,7 +56,8 @@ public final class WorldLoader {
 
     for (int resourceIdx = 0; resourceIdx < worldResources.length; resourceIdx++) {
       String resource = worldResources[resourceIdx];
-      int domain = domain(resourceIdx);
+      UUID uuid = UUID.randomUUID();
+      int domain = Journey.get().domainManager().domainIndex(uuid);
       TestWorld world = new TestWorld();
       world.name = resource;
 
@@ -108,6 +110,7 @@ public final class WorldLoader {
         e.printStackTrace();
       }
 
+      world.uuid = uuid;
       world.lengthX = maxLineLength;
       world.lengthY = allLines.size();
       world.cells = new CellType[world.lengthY][world.lengthX];
@@ -120,6 +123,15 @@ public final class WorldLoader {
 
       TestPlatformProxy.worlds.put(domain, world);
     }
+  }
+
+  public static TestWorld getWorld(String name) {
+    for (TestWorld world : TestPlatformProxy.worlds.values()) {
+      if (world.name.equals(name)) {
+        return world;
+      }
+    }
+    throw new IllegalArgumentException();
   }
 
 }

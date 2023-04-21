@@ -80,9 +80,8 @@ public final class Journey {
 
   public void init() {
     JourneyApiSupplier.set(new JourneyApiImpl());
-    if (dataManager instanceof Initializable) {
-      ((Initializable) dataManager).initialize();
-    }
+    proxy.logger().initialize();
+    dataManager.initialize();
     netherManager.load();
     searchEventDispatcher.initialize();
     searchManager.initialize();
@@ -90,8 +89,7 @@ public final class Journey {
     statsManager.initialize();
     BStatsUtil.register(proxy.platform().bStatsChartConsumer());
 
-    // Database version -- not yet relevant since we haven't needed to migrate data
-    if (dataManager.version() != DataVersion.V001) {
+    if (dataManager.version() != DataVersion.latest()) {
       logger().error("The Journey database is using an invalid version.");
     }
   }
@@ -101,6 +99,7 @@ public final class Journey {
     searchManager.shutdown();
     proxy.audienceProvider().close();
     statsManager.shutdown();
+    proxy.logger().shutdown();
   }
 
   public DataManager dataManager() {

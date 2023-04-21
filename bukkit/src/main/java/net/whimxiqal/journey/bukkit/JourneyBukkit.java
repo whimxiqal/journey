@@ -53,6 +53,7 @@ import net.whimxiqal.journey.bukkit.util.ThreadSafeBlockAccessor;
 import net.whimxiqal.mantle.paper.PaperRegistrarProvider;
 import net.whimxiqal.mantle.common.CommandRegistrar;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -131,7 +132,6 @@ public final class JourneyBukkit extends JavaPlugin {
 
     // Initialize tasks for async capabilities
     blockAccessor.init();
-    ((BukkitLogger) proxy.logger()).init();
   }
 
   @Override

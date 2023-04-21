@@ -23,11 +23,15 @@
 
 package net.whimxiqal.journey.util;
 
+import net.whimxiqal.journey.Journey;
+
 public interface Initializable {
 
   /**
    * Initialize anything that must be initialized.
    */
-  void initialize();
+  default void initialize() {
+    // do nothing by default;
+  }
 
 }

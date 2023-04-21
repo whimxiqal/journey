@@ -23,11 +23,14 @@
 
 package net.whimxiqal.journey.platform;
 
+import java.util.UUID;
+
 public class TestWorld {
 
-  String name;
-  CellType[][] cells;
-  int lengthX;
-  int lengthY;
+  public String name;
+  public UUID uuid;
+  public CellType[][] cells;
+  public int lengthX;
+  public int lengthY;
 
 }

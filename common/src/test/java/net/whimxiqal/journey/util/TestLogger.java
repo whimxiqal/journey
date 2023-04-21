@@ -23,19 +23,14 @@
 
 package net.whimxiqal.journey.util;
 
-public class TestLogger implements CommonLogger {
+public class TestLogger extends CommonLogger {
   @Override
-  public void info(String message) {
-    System.out.println("INFO: " + message);
-  }
-
-  @Override
-  public void warn(String message) {
-    System.out.println("WARN: " + message);
-  }
-
-  @Override
-  public void error(String message) {
-    System.out.println("ERROR: " + message);
+  protected void submit(Message message) {
+    switch (message.type()) {
+      case INFO -> System.out.println("INFO: " + message);
+      case WARNING -> System.out.println("WARN: " + message);
+      case SEVERE -> System.out.println("ERROR: " + message);
+      default -> System.out.println(message);
+    }
   }
 }

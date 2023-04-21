@@ -93,7 +93,7 @@ public interface PathRecordManager {
   Path getPath(Cell origin, Cell destination, Set<ModeType> modeTypes);
 
   /**
-   * Return whether a record exists with the given critera.
+   * Return whether a record exists with the given criteria.
    *
    * @param origin      the original cell
    * @param destination the destination cell
@@ -101,13 +101,6 @@ public interface PathRecordManager {
    * @return whether it exists
    */
   boolean containsRecord(Cell origin, Cell destination, Set<ModeType> modeTypes);
-
-  /**
-   * Get all the cells. Dangerous if the database is large!
-   *
-   * @return all cells
-   */
-  @NotNull Collection<PathTrialCellRecord> getAllCells();
 
   /**
    * A record that represents a saved {@link PathTrial}.

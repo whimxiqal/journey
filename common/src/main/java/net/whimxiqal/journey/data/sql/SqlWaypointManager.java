@@ -34,6 +34,7 @@ import java.util.UUID;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.util.UUIDUtil;
 import net.whimxiqal.journey.util.Validator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +44,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SqlWaypointManager extends SqlManager {
 
-  public static final String WAYPOINT_TABLE_NAME = "journey_waypoints";
-
   /**
    * Default constructor.
    *
@@ -52,7 +51,6 @@ public abstract class SqlWaypointManager extends SqlManager {
    */
   public SqlWaypointManager(SqlConnectionController connectionController) {
     super(connectionController);
-    createTables();
   }
 
   protected void addWaypoint(@Nullable UUID playerUuid,
@@ -76,7 +74,7 @@ public abstract class SqlWaypointManager extends SqlManager {
     }
     PreparedStatement statement = connection.prepareStatement(String.format(
         "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
-        WAYPOINT_TABLE_NAME,
+        SqlManager.WAYPOINTS_TABLE,
         "player_uuid",
         "name_id",
         "name",
@@ -84,13 +82,13 @@ public abstract class SqlWaypointManager extends SqlManager {
         "x",
         "y",
         "z",
-        "timestamp",
-        "is_public"));
+        "created",
+        "publicity"));
 
-    statement.setString(1, playerUuid == null ? null : playerUuid.toString());
+    statement.setBytes(1, playerUuid == null ? null : UUIDUtil.uuidToBytes(playerUuid));
     statement.setString(2, name.toLowerCase());
     statement.setString(3, name);
-    statement.setString(4, Journey.get().domainManager().domainId(cell.domain()));
+    statement.setBytes(4, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(cell.domain())));
     statement.setInt(5, cell.blockX());
     statement.setInt(6, cell.blockY());
     statement.setInt(7, cell.blockZ());
@@ -105,7 +103,7 @@ public abstract class SqlWaypointManager extends SqlManager {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
-          WAYPOINT_TABLE_NAME,
+          SqlManager.WAYPOINTS_TABLE,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
           "domain_id",
@@ -113,8 +111,8 @@ public abstract class SqlWaypointManager extends SqlManager {
           "y",
           "z"));
 
-      statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, Journey.get().domainManager().domainId(cell.domain()));
+      statement.setBytes(1, playerUuid == null ? null : UUIDUtil.uuidToBytes(playerUuid));
+      statement.setBytes(2, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(cell.domain())));
       statement.setInt(3, cell.blockX());
       statement.setInt(4, cell.blockY());
       statement.setInt(5, cell.blockZ());
@@ -130,12 +128,12 @@ public abstract class SqlWaypointManager extends SqlManager {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s WHERE %s %s ? AND %s = ?;",
-          WAYPOINT_TABLE_NAME,
+          SqlManager.WAYPOINTS_TABLE,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
           "name_id"));
 
-      statement.setString(1, playerUuid == null ? null : playerUuid.toString());
+      statement.setBytes(1, playerUuid == null ? null : UUIDUtil.uuidToBytes(playerUuid));
       statement.setString(2, name.toLowerCase());
 
       statement.execute();
@@ -149,13 +147,13 @@ public abstract class SqlWaypointManager extends SqlManager {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?;",
-          WAYPOINT_TABLE_NAME,
+          SqlManager.WAYPOINTS_TABLE,
           "name_id",
           "player_uuid",
           "name_id"));
 
       statement.setString(1, newName.toLowerCase(Locale.ENGLISH));
-      statement.setString(2, uuid == null ? null : uuid.toString());
+      statement.setBytes(2, uuid == null ? null : UUIDUtil.uuidToBytes(uuid));
       statement.setString(3, name.toLowerCase(Locale.ENGLISH));
 
       statement.executeUpdate();
@@ -171,12 +169,12 @@ public abstract class SqlWaypointManager extends SqlManager {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT * FROM %s WHERE %s %s ? AND %s = ?;",
-          WAYPOINT_TABLE_NAME,
+          SqlManager.WAYPOINTS_TABLE,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
           "name_id"));
 
-      statement.setString(1, playerUuid == null ? null : playerUuid.toString());
+      statement.setBytes(1, playerUuid == null ? null : UUIDUtil.uuidToBytes(playerUuid));
       statement.setString(2, name.toLowerCase());
 
       ResultSet resultSet = statement.executeQuery();
@@ -184,7 +182,7 @@ public abstract class SqlWaypointManager extends SqlManager {
         return new Cell(resultSet.getInt("x"),
             resultSet.getInt("y"),
             resultSet.getInt("z"),
-            Journey.get().domainManager().domainIndex(resultSet.getString("domain_id")));
+            Journey.get().domainManager().domainIndex(UUIDUtil.bytesToUuid(resultSet.getBytes("domain_id"))));
       } else {
         return null;
       }
@@ -201,7 +199,7 @@ public abstract class SqlWaypointManager extends SqlManager {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT * FROM %s WHERE %s %s ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
-          WAYPOINT_TABLE_NAME,
+          SqlManager.WAYPOINTS_TABLE,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
           "domain_id",
@@ -209,8 +207,8 @@ public abstract class SqlWaypointManager extends SqlManager {
           "y",
           "z"));
 
-      statement.setString(1, playerUuid == null ? null : playerUuid.toString());
-      statement.setString(2, Journey.get().domainManager().domainId(cell.domain()));
+      statement.setBytes(1, playerUuid == null ? null : UUIDUtil.uuidToBytes(playerUuid));
+      statement.setBytes(2, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(cell.domain())));
       statement.setInt(3, cell.blockX());
       statement.setInt(4, cell.blockY());
       statement.setInt(5, cell.blockZ());
@@ -249,10 +247,10 @@ public abstract class SqlWaypointManager extends SqlManager {
                                          boolean justPublic) throws SQLException {
     PreparedStatement statement = connection.prepareStatement(String.format(
         "SELECT * FROM %s WHERE %s %s ? %s;",
-        WAYPOINT_TABLE_NAME,
+        SqlManager.WAYPOINTS_TABLE,
         "player_uuid",
         playerUuid == null ? "IS" : "=",
-        justPublic ? "AND is_public = ?" : ""));
+        justPublic ? "AND publicity = ?" : ""));
 
     statement.setString(1, playerUuid == null ? null : playerUuid.toString());
     if (justPublic) {
@@ -266,7 +264,7 @@ public abstract class SqlWaypointManager extends SqlManager {
           new Cell(resultSet.getInt("x"),
               resultSet.getInt("y"),
               resultSet.getInt("z"),
-              Journey.get().domainManager().domainIndex(resultSet.getString("domain_id"))));
+              Journey.get().domainManager().domainIndex(UUIDUtil.bytesToUuid(resultSet.getBytes("domain_id")))));
     }
     return endpoints;
   }
@@ -275,10 +273,10 @@ public abstract class SqlWaypointManager extends SqlManager {
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT COUNT(*) FROM %s WHERE %s %s ? %s;",
-          WAYPOINT_TABLE_NAME,
+          SqlManager.WAYPOINTS_TABLE,
           "player_uuid",
           playerUuid == null ? "IS" : "=",
-          justPublic ? "AND is_public = ?" : ""));
+          justPublic ? "AND publicity = ?" : ""));
 
       statement.setString(1, playerUuid == null ? null : playerUuid.toString());
       if (justPublic) {
@@ -294,30 +292,6 @@ public abstract class SqlWaypointManager extends SqlManager {
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
-    }
-  }
-
-  protected void createTables() {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      String tableStatement = "CREATE TABLE IF NOT EXISTS "
-          + WAYPOINT_TABLE_NAME + " ("
-          + "player_uuid char(36), "
-          + "name_id varchar(32) NOT NULL, "
-          + "name varchar(32) NOT NULL, "
-          + "domain_id char(36) NOT NULL, "
-          + "x int(7) NOT NULL, "
-          + "y int(7) NOT NULL, "
-          + "z int(7) NOT NULL, "
-          + "timestamp integer NOT NULL"
-          + ");";
-      connection.prepareStatement(tableStatement).execute();
-
-      String indexStatement = "CREATE INDEX IF NOT EXISTS player_uuid_idx ON "
-          + WAYPOINT_TABLE_NAME
-          + " (player_uuid);";
-      connection.prepareStatement(indexStatement).execute();
-    } catch (SQLException e) {
-      e.printStackTrace();
     }
   }
 

@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
@@ -46,6 +47,7 @@ import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
 import net.whimxiqal.journey.search.PathTrial;
+import net.whimxiqal.journey.util.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,10 +58,6 @@ public class SqlPathRecordManager
     extends SqlManager
     implements PathRecordManager {
 
-  private static final String PATH_RECORD_TABLE_NAME = "path_record";
-  private static final String PATH_RECORD_CELL_TABLE_NAME = "path_record_cell";
-  private static final String PATH_RECORD_MODE_TABLE_NAME = "path_record_mode";
-
   /**
    * General constructor.
    *
@@ -67,7 +65,6 @@ public class SqlPathRecordManager
    */
   public SqlPathRecordManager(SqlConnectionController connectionController) {
     super(connectionController);
-    createTables();
   }
 
   @Override
@@ -94,7 +91,7 @@ public class SqlPathRecordManager
         }
         if (modeTypes.containsAll(oldRecord.modes().stream().map(PathTrialModeRecord::modeType).collect(Collectors.toList()))) {
           // this path cost is better and can do it in the same or fewer modes, so delete the current one
-          connection.prepareStatement("DELETE FROM " + PATH_RECORD_TABLE_NAME
+          connection.prepareStatement("DELETE FROM " + SqlManager.CACHED_PATHS_TABLE
                   + " WHERE "
                   + "id = " + oldRecord.id())
               .execute();
@@ -110,8 +107,8 @@ public class SqlPathRecordManager
       PreparedStatement statement = connection.prepareStatement(String.format(
               "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-              PATH_RECORD_TABLE_NAME,
-              "timestamp",
+              SqlManager.CACHED_PATHS_TABLE,
+              "created",
               "duration",
               "path_length",
               "origin_x",
@@ -132,7 +129,7 @@ public class SqlPathRecordManager
       statement.setInt(7, trial.getDestination().blockX());
       statement.setInt(8, trial.getDestination().blockY());
       statement.setInt(9, trial.getDestination().blockZ());
-      statement.setString(10, Journey.get().domainManager().domainId(trial.getDomain()));
+      statement.setBytes(10, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(trial.getDomain())));
 
       statement.execute();
 
@@ -157,8 +154,8 @@ public class SqlPathRecordManager
         PreparedStatement statement = connection.prepareStatement(String.format(
             "INSERT INTO %s (%s, %s, %s, %s, %s, %s) "
                 + "VALUES (?, ?, ?, ?, ?, ?);",
-            PATH_RECORD_CELL_TABLE_NAME,
-            "path_record_id",
+            SqlManager.CACHED_PATH_CELLS_TABLE,
+            "path_id",
             "x", "y", "z",
             "path_index",
             "mode_type"));
@@ -180,8 +177,8 @@ public class SqlPathRecordManager
       try (Connection connection = getConnectionController().establishConnection()) {
         PreparedStatement statement = connection.prepareStatement(String.format(
             "INSERT INTO %s (%s, %s) VALUES (?, ?);",
-            PATH_RECORD_MODE_TABLE_NAME,
-            "path_record_id",
+            SqlManager.CACHED_PATH_MODES_TABLE,
+            "path_id",
             "mode_type"));
 
         statement.setLong(1, pathReportId);
@@ -201,17 +198,17 @@ public class SqlPathRecordManager
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "DELETE FROM %s;",
-          PATH_RECORD_TABLE_NAME));
+          SqlManager.CACHED_PATHS_TABLE));
       statement.execute();
 
       statement = connection.prepareStatement(String.format(
           "DELETE FROM %s;",
-          PATH_RECORD_CELL_TABLE_NAME));
+          SqlManager.CACHED_PATH_CELLS_TABLE));
       statement.execute();
 
       statement = connection.prepareStatement(String.format(
           "DELETE FROM %s;",
-          PATH_RECORD_MODE_TABLE_NAME));
+          SqlManager.CACHED_PATH_MODES_TABLE));
       statement.execute();
     } catch (SQLException e) {
       e.printStackTrace();
@@ -224,7 +221,7 @@ public class SqlPathRecordManager
     try (Connection connection = getConnectionController().establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT COUNT(*) FROM %s;",
-          PATH_RECORD_CELL_TABLE_NAME));
+          SqlManager.CACHED_PATH_CELLS_TABLE));
       ResultSet result = statement.executeQuery();
       return result.getInt(1);
     } catch (SQLException e) {
@@ -245,7 +242,7 @@ public class SqlPathRecordManager
   private List<PathTrialRecord> getRecordsWithoutCells(Cell origin, Cell destination) {
     try (Connection connection = getConnectionController().establishConnection()) {
       ResultSet recordResult = connection.prepareStatement("SELECT * FROM "
-              + PATH_RECORD_TABLE_NAME
+              + SqlManager.CACHED_PATHS_TABLE
               + " WHERE "
               + "origin_x = " + origin.blockX() + " AND "
               + "origin_y = " + origin.blockY() + " AND "
@@ -259,9 +256,9 @@ public class SqlPathRecordManager
       while (recordResult.next()) {
         PathTrialRecord record = extractRecord(recordResult);
         ResultSet modeResult = connection.prepareStatement("SELECT * FROM "
-            + PATH_RECORD_MODE_TABLE_NAME
+            + SqlManager.CACHED_PATH_MODES_TABLE
             + " WHERE "
-            + "path_record_id = " + record.id()).executeQuery();
+            + "path_id = " + record.id()).executeQuery();
         while (modeResult.next()) {
           record.modes().add(new PathTrialModeRecord(record,
               ModeType.values()[(modeResult.getInt("mode_type"))]));
@@ -284,9 +281,9 @@ public class SqlPathRecordManager
       // Add the subcomponents (modes and cells) to the previously empty records
       for (PathTrialRecord emptyRecord : emptyRecords) {
         ResultSet cellResult = connection.prepareStatement("SELECT * FROM "
-            + PATH_RECORD_CELL_TABLE_NAME
+            + SqlManager.CACHED_PATH_CELLS_TABLE
             + " WHERE "
-            + "path_record_id = " + emptyRecord.id()).executeQuery();
+            + "path_id = " + emptyRecord.id()).executeQuery();
         while (cellResult.next()) {
           emptyRecord.cells().add(extractCell(emptyRecord, cellResult));
         }
@@ -323,9 +320,9 @@ public class SqlPathRecordManager
           modeTypeGroup);
 
       ResultSet cellResult = connection.prepareStatement("SELECT * FROM "
-          + PATH_RECORD_CELL_TABLE_NAME
+          + SqlManager.CACHED_PATH_CELLS_TABLE
           + " WHERE "
-          + "path_record_id = " + record.id()).executeQuery();
+          + "path_id = " + record.id()).executeQuery();
       while (cellResult.next()) {
         record.cells().add(extractCell(record, cellResult));
       }
@@ -363,37 +360,10 @@ public class SqlPathRecordManager
     }
   }
 
-  @Override
-  public @NotNull Collection<PathTrialCellRecord> getAllCells() {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      ResultSet result = connection.prepareStatement("SELECT * FROM "
-          + PATH_RECORD_TABLE_NAME + " "
-          + "JOIN " + PATH_RECORD_CELL_TABLE_NAME + " "
-          + "ON " + PATH_RECORD_TABLE_NAME + ".id = "
-          + PATH_RECORD_CELL_TABLE_NAME + ".path_record_id"
-          + ";").executeQuery();
-      List<PathTrialCellRecord> cells = new LinkedList<>();
-      Map<Long, PathTrialRecord> records = new HashMap<>();
-      while (result.next()) {
-        PathTrialRecord record = extractRecord(result);
-        if (records.containsKey(record.id())) {
-          record = records.get(record.id());
-        } else {
-          records.put(record.id(), record);
-        }
-        cells.add(extractCell(record, result));
-      }
-      return cells;
-    } catch (SQLException e) {
-      e.printStackTrace();
-      return Collections.emptyList();
-    }
-  }
-
   private PathTrialRecord extractRecord(final ResultSet resultSet) throws SQLException {
     return new PathTrialRecord(
         resultSet.getLong("id"),
-        resultSet.getDate("timestamp"),
+        resultSet.getDate("created"),
         resultSet.getLong("duration"),
         resultSet.getLong("path_length"),
         resultSet.getInt("origin_x"),
@@ -402,7 +372,7 @@ public class SqlPathRecordManager
         resultSet.getInt("destination_x"),
         resultSet.getInt("destination_y"),
         resultSet.getInt("destination_z"),
-        Journey.get().domainManager().domainIndex(resultSet.getString("domain_id")),
+        Journey.get().domainManager().domainIndex(UUIDUtil.bytesToUuid(resultSet.getBytes("domain_id"))),
         new LinkedList<>(),
         new LinkedList<>()
     );
@@ -418,67 +388,6 @@ public class SqlPathRecordManager
         resultSet.getInt("path_index"),
         ModeType.values()[resultSet.getInt("mode_type")]
     );
-  }
-
-  protected void createTables() {
-    try (Connection connection = getConnectionController().establishConnection()) {
-
-      // Create table of path trials
-      connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
-          + PATH_RECORD_TABLE_NAME + " ("
-          + "id integer PRIMARY KEY AUTOINCREMENT, "
-          + "timestamp integer NOT NULL, "
-          + "duration integer NOT NULL, "
-          + "path_length double(12, 5) NOT NULL, "
-          + "origin_x int(7) NOT NULL,"
-          + "origin_y int(7) NOT NULL,"
-          + "origin_z int(7) NOT NULL,"
-          + "destination_x int(7) NOT NULL,"
-          + "destination_y int(7) NOT NULL,"
-          + "destination_z int(7) NOT NULL,"
-          + "domain_id char(36) NOT NULL"
-          + ");").execute();
-
-      connection.prepareStatement("CREATE INDEX IF NOT EXISTS path_record_idx ON "
-              + PATH_RECORD_TABLE_NAME
-              + " (origin_x, origin_y, origin_z, destination_x, destination_y, destination_z, domain_id);")
-          .execute();
-
-      // Create table of nodes within the path trial calculation
-      connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
-          + PATH_RECORD_CELL_TABLE_NAME + " ("
-          + "path_record_id integer NOT NULL, "  // id of saved path trial (indexed)
-          + "x int(7) NOT NULL, "  // x coordinate
-          + "y int(7) NOT NULL, "  // y coordinate
-          + "z int(7) NOT NULL, "  // z coordinate
-          + "path_index int(10), "  // what is the index of this critical node (if not critical, null)
-          + "mode_type int(2) NOT NULL, "  // what is the mode type used to get here
-          + "FOREIGN KEY (path_record_id) REFERENCES " + PATH_RECORD_TABLE_NAME + "(id)"
-          + " ON DELETE CASCADE"
-          + " ON UPDATE CASCADE"
-          + ");").execute();
-
-      connection.prepareStatement("CREATE INDEX IF NOT EXISTS cell_path_record_id_idx ON "
-          + PATH_RECORD_CELL_TABLE_NAME
-          + " (path_record_id);").execute();
-
-      connection.prepareStatement("CREATE TABLE IF NOT EXISTS "
-          + PATH_RECORD_MODE_TABLE_NAME + " ("
-          + "path_record_id integer NOT NULL, "
-          + "mode_type int(2) NOT NULL, "
-          + "FOREIGN KEY (path_record_id) REFERENCES " + PATH_RECORD_TABLE_NAME + "(id)"
-          + " ON DELETE CASCADE"
-          + " ON UPDATE CASCADE, "
-          + "UNIQUE(path_record_id, mode_type)"
-          + ");").execute();
-
-      connection.prepareStatement("CREATE INDEX IF NOT EXISTS mode_path_record_id_idx ON "
-          + PATH_RECORD_MODE_TABLE_NAME
-          + " (path_record_id);").execute();
-
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
   }
 
 }
