@@ -23,6 +23,8 @@
 
 package net.whimxiqal.journey;
 
+import java.util.Collections;
+import java.util.List;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -42,8 +44,8 @@ public interface Describable {
    *
    * @return the description
    */
-  default Component description() {
-    return Component.empty();
+  default List<Component> description() {
+    return Collections.emptyList();
   }
 
 }

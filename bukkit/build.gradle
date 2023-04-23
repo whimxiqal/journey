@@ -87,8 +87,12 @@ build {
 }
 
 processResources {
+    // Rerun this every time to account for changed version
+    outputs.upToDateWhen {
+        false
+    }
     filesMatching('plugin.yml') {
-        expand 'version': version
+        expand 'version': project.version
     }
 }
 

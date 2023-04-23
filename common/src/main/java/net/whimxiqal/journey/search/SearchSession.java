@@ -24,7 +24,9 @@
 package net.whimxiqal.journey.search;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -64,7 +66,7 @@ public abstract class SearchSession implements Resulted, Describable {
   protected ResultState state = ResultState.IDLE;  // multithreaded access, must be synchronized
   protected CompletableFuture<ResultState> future = new CompletableFuture<>();
   private Component name = Component.empty();
-  private Component description = Component.empty();
+  private List<Component> description = Collections.emptyList();
   private int algorithmStepDelay = 0;
   protected final SimpleTimer timer = new SimpleTimer();
 
@@ -290,12 +292,16 @@ public abstract class SearchSession implements Resulted, Describable {
     return name;
   }
 
-  public void setDescription(Component description) {
+  public void setDescription(Component... description) {
+    this.description = Arrays.asList(description);
+  }
+
+  public void setDescription(List<Component> description) {
     this.description = description;
   }
 
   @Override
-  public Component description() {
+  public List<Component> description() {
     return description;
   }
 

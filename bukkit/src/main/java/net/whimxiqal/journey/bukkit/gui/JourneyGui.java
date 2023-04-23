@@ -33,22 +33,15 @@ import java.util.Map;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import net.whimxiqal.journey.Destination;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.VirtualMap;
-import net.whimxiqal.journey.Scope;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.search.InternalScope;
-import net.whimxiqal.journey.search.PlayerDestinationGoalSearchSession;
-import net.whimxiqal.journey.search.PlayerSurfaceGoalSearchSession;
 import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
 public class JourneyGui {
@@ -98,17 +91,15 @@ public class JourneyGui {
   private final JourneyPlayer player;
   private final InternalScope scope;
   private final JourneyGui previous;
-  private final boolean root;
 
   public JourneyGui(JourneyPlayer player) {
-    this(player, ScopeUtil.root(), null, true);
+    this(player, ScopeUtil.root(), null);
   }
 
-  private JourneyGui(JourneyPlayer player, InternalScope scope, JourneyGui previous, boolean root) {
+  private JourneyGui(JourneyPlayer player, InternalScope scope, JourneyGui previous) {
     this.player = player;
     this.scope = scope;
     this.previous = previous;
-    this.root = root;
   }
 
   public void open() {
@@ -147,12 +138,10 @@ public class JourneyGui {
           .filter(entry -> entry.getValue().subScopes(player).size() > 0 || entry.getValue().sessions(player).size() > 0)
           .forEach(entry -> {
             ItemBuilder guiItem = ItemBuilder.from(getMaterial(entry.getKey(), scopeOptions))
-                .name(entry.getValue().wrappedScope().name());
-            if (!entry.getValue().wrappedScope().description().equals(Component.empty())) {
-              guiItem.lore(entry.getValue().wrappedScope().description());
-            }
+                .name(entry.getValue().wrappedScope().name() == Component.empty() ? Formatter.accent(entry.getKey()) : entry.getValue().wrappedScope().name())
+                .lore(entry.getValue().wrappedScope().description());
             gui.addItem(guiItem.asGuiItem(event -> {
-              JourneyGui subScopeGui = new JourneyGui(player, entry.getValue(), this, false); // already loaded
+              JourneyGui subScopeGui = new JourneyGui(player, entry.getValue(), this); // already loaded
               subScopeGui.open();
             }));
           });
@@ -164,11 +153,13 @@ public class JourneyGui {
           .sorted(Map.Entry.comparingByKey())
           .filter(entry -> !ScopeUtil.restricted(entry.getValue().permissions(), player))
           .forEach(entry -> {
-            boolean surfaceItem = root && entry.getKey().equals("surface");
             GuiItem guiItem = ItemBuilder.from(getMaterial(entry.getKey(), itemOptions))
                 .name(entry.getValue().name() == Component.empty() ? Formatter.accent(entry.getKey()) : entry.getValue().name())
                 .lore(entry.getValue().description())
-                .asGuiItem(event -> Journey.get().searchManager().launchSearch(entry.getValue()));
+                .asGuiItem(event -> {
+                  Journey.get().searchManager().launchSearch(entry.getValue());
+                  event.getWhoClicked().closeInventory();
+                });
             gui.addItem(guiItem);
           });
     }

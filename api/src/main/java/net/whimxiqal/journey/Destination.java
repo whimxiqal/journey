@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey;
 
+import java.util.Collections;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -47,7 +48,7 @@ public interface Destination extends Describable, Permissible {
    * @return the unnamed destination
    */
   static Destination of(Cell location) {
-    return new DestinationImpl(Component.empty(), Component.empty(), location, null);
+    return new DestinationImpl(Component.empty(), Collections.emptyList(), location, null);
   }
 
   /**

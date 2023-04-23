@@ -252,7 +252,7 @@ public abstract class SqlWaypointManager extends SqlManager {
         playerUuid == null ? "IS" : "=",
         justPublic ? "AND publicity = ?" : ""));
 
-    statement.setString(1, playerUuid == null ? null : playerUuid.toString());
+    statement.setBytes(1, playerUuid == null ? null : UUIDUtil.uuidToBytes(playerUuid));
     if (justPublic) {
       statement.setBoolean(2, true);
     }
@@ -278,7 +278,7 @@ public abstract class SqlWaypointManager extends SqlManager {
           playerUuid == null ? "IS" : "=",
           justPublic ? "AND publicity = ?" : ""));
 
-      statement.setString(1, playerUuid == null ? null : playerUuid.toString());
+      statement.setBytes(1, playerUuid == null ? null : UUIDUtil.uuidToBytes(playerUuid));
       if (justPublic) {
         statement.setBoolean(2, true);
       }
