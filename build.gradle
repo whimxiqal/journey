@@ -6,23 +6,26 @@ defaultTasks 'updateLicensesMain', 'build'
 
 static def suffix() {
     def journeyEnv = System.getenv('JOURNEY_ENV')
-    int commitsSinceMajorVersion;
+    int commitsSinceMajorVersion
     def tagInfo = 'git describe --tags'.execute().text.trim()
     if (!tagInfo.contains('-')) {
         commitsSinceMajorVersion = 0
     } else {
         commitsSinceMajorVersion = Integer.parseInt((String) tagInfo.split("-")[1])
     }
-    if (journeyEnv == null || journeyEnv != 'PROD') {
+    if (journeyEnv != null && journeyEnv == 'PROD') {
+        // Production build
+        return '.' + commitsSinceMajorVersion
+    } else {
         // Non-production
-        boolean prerelease = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim().startsWith('release');
-        StringBuilder builder = new StringBuilder();
+        boolean prerelease = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim().startsWith('release')
+        StringBuilder builder = new StringBuilder()
         if (!prerelease) {
-            String numberOfDevCommits = 'git rev-list HEAD --not origin/main --count'.execute().text.trim();
+            String numberOfDevCommits = 'git rev-list HEAD --not origin/main --count'.execute().text.trim()
             if (!numberOfDevCommits.isEmpty()) {
-                commitsSinceMajorVersion -= Integer.parseInt(numberOfDevCommits);
+                commitsSinceMajorVersion -= Integer.parseInt(numberOfDevCommits)
             }
-            builder.append('.').append(commitsSinceMajorVersion);
+            builder.append('.').append(commitsSinceMajorVersion)
         }
         builder.append('-')
         if (prerelease) {
@@ -30,11 +33,8 @@ static def suffix() {
         } else {
             builder.append('dev')
         }
-        builder.append('-').append((String) 'git rev-parse --short HEAD'.execute().text.trim());
+        builder.append('-').append((String) 'git rev-parse --short HEAD'.execute().text.trim())
         return builder.toString()
-    } else {
-        // Production build
-        return '.' + commitsSinceMajorVersion;
     }
 }
 
@@ -52,7 +52,7 @@ subprojects {
     project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
     project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
     project.ext.apiFullVersion = project.ext.apiVersion + project.ext.snapshotVersion
-    project.ext.fullVersion = project.ext.apiVersion + suffix();
+    project.ext.fullVersion = project.ext.apiVersion + suffix()
     version = project.ext.fullVersion
     group = 'net.whimxiqal.journey'
 

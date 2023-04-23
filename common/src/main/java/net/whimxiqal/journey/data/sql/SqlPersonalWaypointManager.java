@@ -32,6 +32,7 @@ import java.util.UUID;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.util.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +75,7 @@ public class SqlPersonalWaypointManager
           "name_id"));
 
       statement.setBoolean(1, isPublic);
-      statement.setString(2, playerUuid.toString());
+      statement.setBytes(2, UUIDUtil.uuidToBytes(playerUuid));
       statement.setString(3, name.toLowerCase());
 
       statement.executeUpdate();
@@ -102,7 +103,10 @@ public class SqlPersonalWaypointManager
   }
 
   @Override
-  public @Nullable Cell getWaypoint(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
+  public @Nullable Cell getWaypoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
+    if (playerUuid == null) {
+      throw new IllegalArgumentException("Personal waypoints may only be accessed with a valid player uuid");
+    }
     return super.getWaypoint(playerUuid, name);
   }
 
@@ -115,7 +119,7 @@ public class SqlPersonalWaypointManager
           "player_uuid",
           "name_id"));
 
-      statement.setString(1, playerUuid.toString());
+      statement.setBytes(1, UUIDUtil.uuidToBytes(playerUuid));
       statement.setString(2, name.toLowerCase());
 
       ResultSet resultSet = statement.executeQuery();

@@ -23,6 +23,9 @@
 
 package net.whimxiqal.journey;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -32,7 +35,7 @@ public class DestinationBuilder implements Builder<Destination> {
 
   private final Cell location;
   private Component name = Component.empty();
-  private Component description = Component.empty();
+  private List<Component> description = Collections.emptyList();
   private String permission = null;
 
   DestinationBuilder(Cell location) {
@@ -56,7 +59,18 @@ public class DestinationBuilder implements Builder<Destination> {
    * @param description the description
    * @return the builder, for chaining
    */
-  public DestinationBuilder description(Component description) {
+  public DestinationBuilder description(Component... description) {
+    this.description = Arrays.asList(description);
+    return this;
+  }
+
+  /**
+   * Set the description.
+   *
+   * @param description the description
+   * @return the builder, for chaining
+   */
+  public DestinationBuilder description(List<Component> description) {
     this.description = description;
     return this;
   }
