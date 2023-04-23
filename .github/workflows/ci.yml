@@ -11,14 +11,13 @@ on:
       - 'main'
       - 'release/*'
       - 'feature/*'
-      - 'develop'
 jobs:
   gradle_validation:
     name: Gradle Validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Validate
         uses: gradle/wrapper-validation-action@v1
 
@@ -27,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run check style
         uses: nikitasavinov/checkstyle-action@master
         with:
