@@ -11,14 +11,14 @@ static def suffix() {
     if (!tagInfo.contains('-')) {
         commitsSinceMajorVersion = 0
     } else {
-        commitsSinceMajorVersion = tagInfo.split("-")[1]
+        commitsSinceMajorVersion = Integer.parseInt((String) tagInfo.split("-")[1])
     }
     if (journeyEnv == null || journeyEnv != 'PROD') {
         // Non-production
         boolean prerelease = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim().startsWith('release');
         StringBuilder builder = new StringBuilder();
         if (!prerelease) {
-            String numberOfDevCommits = 'git rev-list HEAD --not origin/main'.execute().text.trim();
+            String numberOfDevCommits = 'git rev-list HEAD --not origin/main --count'.execute().text.trim();
             if (!numberOfDevCommits.isEmpty()) {
                 commitsSinceMajorVersion -= Integer.parseInt(numberOfDevCommits);
             }
