@@ -31,13 +31,15 @@ import org.bstats.charts.SingleLineChart;
 public class BStatsUtil {
 
   public static final int BSTATS_ID = 17665;
+  public static final String SEARCHES_PER_HOUR_ID = "searches";
+  public static final String BLOCKS_TRAVELLED_PER_HOUR_ID = "blocks_travelled";
 
   private BStatsUtil() {
   }
 
   public static void register(Consumer<CustomChart> chartConsumer) {
-    chartConsumer.accept(new SingleLineChart("Number of Searches per Hour", () -> Journey.get().statsManager().searches()));
-    chartConsumer.accept(new SingleLineChart("Blocks Travelled per Hour", () -> Journey.get().statsManager().blocksTravelled()));
+    chartConsumer.accept(new SingleLineChart(SEARCHES_PER_HOUR_ID, () -> Journey.get().statsManager().searches()));
+    chartConsumer.accept(new SingleLineChart(BLOCKS_TRAVELLED_PER_HOUR_ID, () -> Journey.get().statsManager().blocksTravelled()));
   }
 
 }

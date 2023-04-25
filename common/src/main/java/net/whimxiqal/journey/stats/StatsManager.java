@@ -28,28 +28,35 @@ import net.whimxiqal.journey.Journey;
 
 public class StatsManager {
 
-  private static final int TICK_PERIOD = 20 * 60 * 60;  // one hour
+  private static final int MS_PER_HOUR = 1000 * 60 * 60;
+  private static final int UPDATE_PERIOD = 20 * 60 * 10;  // 10 minutes
   private UUID task;
-  private int searches = 0;
-  private double blocksTravelled = 0;
+  private long lastStored = 0;
+  private int searches = 0;  // per hour
+  private double blocksTravelled = 0; // per hour
 
-  private int storedSearches = 0;
-  private int storedBlocksTravelled = 0;
+  private int storedSearches = 0; // per hour
+  private int storedBlocksTravelled = 0;  // per hour
 
   public void initialize() {
     if (task != null) {
       throw new IllegalStateException("We're already initialized");
     }
+    lastStored = System.currentTimeMillis();
     reset();
-    task = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
-        store();
-        reset();
-    }, false, TICK_PERIOD);
+    task = Journey.get().proxy().schedulingManager().scheduleRepeat(this::store, false, UPDATE_PERIOD);
   }
 
   private synchronized void store() {
+    long now = System.currentTimeMillis();
+    if (now - lastStored < MS_PER_HOUR) {
+      return;
+    }
+
+    lastStored = now;
     storedSearches = searches;
     storedBlocksTravelled = (int) Math.floor(blocksTravelled);
+    reset();
   }
 
   private synchronized void reset() {
