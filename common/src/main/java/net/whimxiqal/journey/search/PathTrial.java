@@ -61,7 +61,7 @@ public class PathTrial extends AbstractPathTrial {
     this.destination = destination;
   }
 
-  private static CostFunction costFunction(Cell destination) {return new CustomCostFunction(destination);}
+  private static CostFunction costFunction(Cell destination) {return new EuclideanPlanarAverageCostFunction(destination);}
 
   /**
    * Get a path trial that is already determined to be successful.

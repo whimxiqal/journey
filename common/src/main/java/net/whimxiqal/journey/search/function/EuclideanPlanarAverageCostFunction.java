@@ -25,7 +25,7 @@ package net.whimxiqal.journey.search.function;
 
 import net.whimxiqal.journey.Cell;
 
-public class CustomCostFunction implements CostFunction {
+public class EuclideanPlanarAverageCostFunction implements CostFunction {
   @Override
   public CostFunctionType getType() {
     return CostFunctionType.OTHER;
@@ -36,7 +36,7 @@ public class CustomCostFunction implements CostFunction {
 
   private final Cell destination;
 
-  public CustomCostFunction(Cell destination) {
+  public EuclideanPlanarAverageCostFunction(Cell destination) {
     this.destination = destination;
   }
 
