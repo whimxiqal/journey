@@ -28,7 +28,7 @@ import net.whimxiqal.journey.Cell;
 public class EuclideanPlanarAverageCostFunction implements CostFunction {
   @Override
   public CostFunctionType getType() {
-    return CostFunctionType.OTHER;
+    return CostFunctionType.EUCLIDEAN_PLANAR_AVERAGE;
   }
 
   private final static double SQRT_TWO = Math.sqrt(2);
