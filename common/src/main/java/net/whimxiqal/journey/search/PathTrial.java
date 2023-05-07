@@ -28,8 +28,7 @@ import lombok.Getter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.Path;
-import net.whimxiqal.journey.search.function.CostFunction;
-import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
+import net.whimxiqal.journey.search.function.*;
 
 /**
  * An extension of {@link AbstractPathTrial} where the goal of the trial is to find a path to
@@ -62,9 +61,7 @@ public class PathTrial extends AbstractPathTrial {
     this.destination = destination;
   }
 
-  private static CostFunction costFunction(Cell destination) {
-    return new PlanarOrientedCostFunction(destination);
-  }
+  private static CostFunction costFunction(Cell destination) {return new CustomCostFunction(destination);}
 
   /**
    * Get a path trial that is already determined to be successful.
