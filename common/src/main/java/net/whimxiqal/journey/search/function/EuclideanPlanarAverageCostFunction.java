@@ -96,8 +96,8 @@ public class EuclideanPlanarAverageCostFunction implements CostFunction {
 
     double planarCost = total;
 
-    double euclideanExponent = 1.45;
-    double planarMulti = 0.5;
+    double euclideanExponent = 1.3;
+    double planarMulti = 1.0;
 
     double avgCost = (Math.pow(euclideanCost, euclideanExponent) + (planarCost * planarMulti)) / 2.0;
 
