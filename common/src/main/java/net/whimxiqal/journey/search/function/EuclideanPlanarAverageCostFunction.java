@@ -102,7 +102,6 @@ public class EuclideanPlanarAverageCostFunction implements CostFunction {
     double avgCost = (Math.pow(euclideanCost, euclideanExponent) + (planarCost * planarMulti)) / 2.0;
 
     if (destination.blockY() > 30) avgCost *= Math.max(1.0, Math.log(Math.min(destination.blockY(), 55.0) / Math.max(1.0, cell.blockY())) * 8);
-    else if (cell.blockY() > destination.blockY()) avgCost *= ((double) (cell.blockY() - destination.blockY())) / 10.0;
 
     return avgCost;
   }
