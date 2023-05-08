@@ -24,6 +24,7 @@
 package net.whimxiqal.journey.search.function;
 
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
 
 public class EuclideanPlanarAverageCostFunction implements CostFunction {
   @Override
@@ -99,6 +100,8 @@ public class EuclideanPlanarAverageCostFunction implements CostFunction {
     double planarMulti = 0.5;
 
     double avgCost = (Math.pow(euclideanCost, euclideanExponent) + (planarCost * planarMulti)) / 2.0;
+
+    avgCost *= Math.max(1.0, Math.log(55.0 / (double) cell.blockY()) * 8);
 
     return avgCost;
   }
