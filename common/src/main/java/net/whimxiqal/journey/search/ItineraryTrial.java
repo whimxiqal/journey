@@ -95,14 +95,16 @@ public class ItineraryTrial implements Resulted {
 
     // Collect trials as they finish.
     while (!failed && !pathTrialFutures.isEmpty()) {
-      if (session.state.shouldStop()) {
-        // Cancel all incomplete paths.
-        pathTrialFutures.forEach(trialFuture -> {
-          trialFuture.cancel(false);
-        });
+      synchronized (this) {
+        if (session.state.shouldStop()) {
+          // Cancel all incomplete paths.
+          pathTrialFutures.forEach(trialFuture -> {
+            trialFuture.cancel(false);
+          });
 
-        session.markStopped();
-        return new TrialResult(Optional.empty(), true);
+          session.markStopped();
+          return new TrialResult(Optional.empty(), true);
+        }
       }
 
       try {
