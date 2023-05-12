@@ -125,15 +125,6 @@ public class ItineraryTrial implements Resulted {
       }
     }
 
-    // Collect all remaining trials, if any incomplete ones exist.
-    pathTrialFutures.forEach(trialFuture -> {
-      try {
-        completedPathTrials.add(trialFuture.get());
-      } catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
-    });
-
     // Finish up processing trials.
     boolean changedProblem = false;
 
@@ -149,6 +140,22 @@ public class ItineraryTrial implements Resulted {
       Journey.get().dispatcher().dispatch(new StopItinerarySearchEvent(session, this));
       pathTrialFutures.forEach(trialFuture -> {
         trialFuture.cancel(false);
+      });
+
+      // Collect all remaining trials, if any incomplete ones exist.
+      pathTrialFutures.forEach(trialFuture -> {
+        try {
+          completedPathTrials.add(trialFuture.get());
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+      });
+
+      // Process PathTrial for cache reasons if it succeeded, even on fail.
+      completedPathTrials.forEach(pathTrial -> {
+        if (pathTrial.path().isPresent()) {
+
+        }
       });
 
       return new TrialResult(Optional.empty(), changedProblem);
