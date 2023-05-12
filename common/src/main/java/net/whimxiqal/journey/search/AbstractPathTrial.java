@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.Setter;
@@ -84,6 +85,8 @@ public class AbstractPathTrial implements Resulted {
   private long startExecutionTime = -1;
   private int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
 
+  @Getter
+  private CompletableFuture<TrialResult> future = new CompletableFuture<>();
   /**
    * General constructor.
    *
@@ -163,8 +166,7 @@ public class AbstractPathTrial implements Resulted {
    * @param useCacheIfPossible whether the cache should be used for retrieving previous results
    * @return a result object
    */
-  @NotNull
-  public TrialResult attempt(boolean useCacheIfPossible) {
+  public void attempt(boolean useCacheIfPossible) {
 
     // Return the saved states, but only if we want that result.
     //  If we don't want to use the cache, but this result is from the cache,
@@ -172,10 +174,12 @@ public class AbstractPathTrial implements Resulted {
     if (!this.fromCache || useCacheIfPossible) {
       if (this.state == ResultState.STOPPED_SUCCESSFUL) {
         if (path.test(modes)) {
-          return new TrialResult(path, false);
+          future.complete(new TrialResult(path, false));
+          return;
         }
       } else if (this.state == ResultState.STOPPED_FAILED) {
-        return new TrialResult(null, false);
+        future.complete(new TrialResult(null, false));
+        return;
       }
     }
 
@@ -194,16 +198,18 @@ public class AbstractPathTrial implements Resulted {
 
     Node current;
     while (!upcoming.isEmpty()) {
-      synchronized (session) {
-        if (session.state.shouldStop()) {
+      synchronized (this) {
+        if (future.isCancelled() || session.state.shouldStop()) {
           // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
-          return resultCancel();
+          future.complete(resultCancel());
+          return;
         }
       }
 
       if (visited.size() > maxCellCount) {
         // We ran out of allocated memory. Let's just call it here and say we failed and cache the failure.
-        return resultFail();
+        future.complete(resultFail());
+        return;
       }
 
       current = upcoming.poll();
@@ -219,7 +225,8 @@ public class AbstractPathTrial implements Resulted {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        return resultSucceed(length, steps);
+        future.complete(resultSucceed(length, steps));
+        return;
       }
 
       // Need to keep going
@@ -252,7 +259,7 @@ public class AbstractPathTrial implements Resulted {
     }
 
     // We've exhausted all possibilities. Fail.
-    return resultFail();
+    future.complete(resultFail());
   }
 
   public void setMaxCellCount(int maxCellCount) {
