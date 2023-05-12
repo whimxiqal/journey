@@ -24,6 +24,8 @@
 package net.whimxiqal.journey.search;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.Itinerary;
@@ -65,33 +67,41 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
         false
     );
 
-    PathTrial.TrialResult result = pathTrial.attempt(false);
+    try {
+      pathTrial.attempt(false);
+      PathTrial.TrialResult result = pathTrial.getFuture().get();
 
-    synchronized (this) {
-      if (state.shouldStop()) {
-        // this was stopped while attempting the path trial
-        state = state.stoppedResult();
-        Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
-        return;
-      } else {
-        state = pathTrial.getState();
+      synchronized (this) {
+        if (state.shouldStop()) {
+          // this was stopped while attempting the path trial
+          state = state.stoppedResult();
+          Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+          return;
+        } else {
+          state = pathTrial.getState();
+        }
       }
+
+      if (result.path().isPresent()) {
+        AlternatingList.Builder<Path, Path, Path> stages
+                = AlternatingList.builder(Path.stationary(origin));
+        stages.addLast(result.path().get(), Path.stationary(result.path().get().getDestination()));
+
+        Journey.get().dispatcher().dispatch(new FoundSolutionEvent(
+                this,
+                new Itinerary(this.origin,
+                        result.path().get().getSteps(),
+                        stages.build(),
+                        result.path().get().getCost())));
+      }
+
+      Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+    } catch (ExecutionException | InterruptedException e) {
+      state = ResultState.STOPPED_ERROR;
+      Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+
+      throw new RuntimeException(e);
     }
-
-    if (result.path().isPresent()) {
-      AlternatingList.Builder<Path, Path, Path> stages
-          = AlternatingList.builder(Path.stationary(origin));
-      stages.addLast(result.path().get(), Path.stationary(result.path().get().getDestination()));
-
-      Journey.get().dispatcher().dispatch(new FoundSolutionEvent(
-          this,
-          new Itinerary(this.origin,
-              result.path().get().getSteps(),
-              stages.build(),
-              result.path().get().getCost())));
-    }
-
-    Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
   }
 
   protected abstract boolean reachesGoal(Cell cell);
