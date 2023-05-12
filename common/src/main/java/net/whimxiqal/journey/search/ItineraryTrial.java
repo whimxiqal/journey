@@ -23,10 +23,11 @@
 
 package net.whimxiqal.journey.search;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import lombok.Value;
 import lombok.experimental.Accessors;
 import net.whimxiqal.journey.Tunnel;
@@ -54,6 +55,10 @@ public class ItineraryTrial implements Resulted {
   private final AlternatingList<Tunnel, PathTrial, Object> alternatingList;
   private ResultState state;
 
+  private final ArrayList<CompletableFuture<AbstractPathTrial.TrialResult>> pathTrialFutures = new ArrayList<>();
+
+  private final ArrayList<AbstractPathTrial.TrialResult> completedPathTrials = new ArrayList<>();
+
   /**
    * General constructor.
    *
@@ -75,34 +80,75 @@ public class ItineraryTrial implements Resulted {
    * @param useCacheIfPossible whether the cache should be used for retrieving previous results
    * @return a result object
    */
-  @NotNull
+
   public TrialResult attempt(boolean useCacheIfPossible) {
     Journey.get().dispatcher().dispatch(new StartItinerarySearchEvent(session, this));
 
     state = ResultState.RUNNING;
-    boolean failed = false;
-    boolean changedProblem = false;
     for (PathTrial pathTrial : alternatingList.getMinors()) {
+      pathTrialFutures.add(pathTrial.getFuture());
 
-      synchronized (this) {
-        if (session.state.shouldStop()) {
-          // officially stop
-          session.markStopped();
-          return new TrialResult(Optional.empty(), true);  // doesn't really matter if changed problem
+      Journey.get().proxy().schedulingManager().schedule(() -> { pathTrial.attempt(useCacheIfPossible);}, true);
+    }
+
+    boolean failed = false;
+
+    // Collect trials as they finish.
+    while (!failed && !pathTrialFutures.isEmpty()) {
+      if (session.state.shouldStop()) {
+        // Cancel all incomplete paths.
+        pathTrialFutures.forEach(trialFuture -> {
+          trialFuture.cancel(false);
+        });
+
+        session.markStopped();
+        return new TrialResult(Optional.empty(), true);
+      }
+
+      try {
+        // Slow down the loops, does this actually need to be done?
+        Thread.sleep(100);
+        for (CompletableFuture<AbstractPathTrial.TrialResult> trialResultFuture : new ArrayList<>(pathTrialFutures)) {
+          if (trialResultFuture.isDone()) {
+            AbstractPathTrial.TrialResult trialResult = trialResultFuture.get();
+
+            if (trialResult.path().isEmpty()) failed = true;
+
+            completedPathTrials.add(trialResult);
+            pathTrialFutures.remove(trialResultFuture);
+          }
         }
-      }
-
-      PathTrial.TrialResult pathTrialResult = pathTrial.attempt(useCacheIfPossible);
-      if (pathTrialResult.changedProblem()) {
-        changedProblem = true;
-      }
-      if (!pathTrialResult.path().isPresent()) {
-        failed = true;
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
       }
     }
+
+    // Collect all remaining trials, if any incomplete ones exist.
+    pathTrialFutures.forEach(trialFuture -> {
+      try {
+        completedPathTrials.add(trialFuture.get());
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    // Finish up processing trials.
+    boolean changedProblem = false;
+
+    for (AbstractPathTrial.TrialResult pathTrial : completedPathTrials) {
+      if (pathTrial.changedProblem()) {
+        changedProblem = true;
+        break;
+      }
+    }
+
     if (failed) {
       state = ResultState.STOPPED_FAILED;
       Journey.get().dispatcher().dispatch(new StopItinerarySearchEvent(session, this));
+      pathTrialFutures.forEach(trialFuture -> {
+        trialFuture.cancel(false);
+      });
+
       return new TrialResult(Optional.empty(), changedProblem);
     }
 
@@ -131,11 +177,14 @@ public class ItineraryTrial implements Resulted {
       }
     }
     state = ResultState.STOPPED_SUCCESSFUL;
+
+    // For some reason the session keeps trying to attempt the trial if I don't change the state manually.
+    session.state = ResultState.STOPPED_SUCCESSFUL;
     Journey.get().dispatcher().dispatch(new StopItinerarySearchEvent(session, this));
     return new TrialResult(Optional.of(new Itinerary(origin,
-        allSteps,
-        alternatingList.convert(tunnel -> Path.fromTunnel(tunnel), pathTrial -> Objects.requireNonNull(pathTrial.getPath())),
-        length)), changedProblem);
+            allSteps,
+            alternatingList.convert(tunnel -> Path.fromTunnel(tunnel), pathTrial -> Objects.requireNonNull(pathTrial.getPath())),
+            length)), changedProblem);
   }
 
   @Override
