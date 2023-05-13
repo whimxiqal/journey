@@ -25,6 +25,9 @@ package net.whimxiqal.journey;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import net.whimxiqal.journey.search.PlayerDestinationGoalSearchSession;
+import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.mantle.common.CommandSource;
 import net.whimxiqal.mantle.common.Mantle;
 
@@ -68,5 +71,13 @@ public abstract class JourneyPlayerImpl implements JourneyPlayer {
   @Override
   public String toString() {
     return name + " (" + uuid + ")";
+  }
+
+  @Override
+  public void createItineraryTo(Cell origin, Cell destination) {
+    SearchSession searchSession = new PlayerDestinationGoalSearchSession(uuid(), origin, destination, true);
+    searchSession.initialize();
+
+    Journey.get().searchManager().launchSearch(searchSession);
   }
 }
