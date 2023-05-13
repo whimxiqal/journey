@@ -24,9 +24,11 @@
 package net.whimxiqal.journey.bukkit;
 
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 public class JourneyBukkitApiImpl implements JourneyBukkitApi {
   @Override
@@ -37,5 +39,10 @@ public class JourneyBukkitApiImpl implements JourneyBukkitApi {
   @Override
   public Cell toCell(Location location) {
     return BukkitUtil.cell(location);
+  }
+
+  @Override
+  public JourneyPlayer toJourneyPlayer(Player player) {
+    return BukkitUtil.journeyPlayer(player);
   }
 }

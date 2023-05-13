@@ -34,6 +34,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.bukkit.BukkitJourneyPlayer;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -42,6 +44,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Snow;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 /**
@@ -162,6 +165,10 @@ public final class BukkitUtil {
 
   public static Cell cell(Location location) {
     return new Cell(location.getBlockX(), location.getBlockY(), location.getBlockZ(), getDomain(Objects.requireNonNull(location.getWorld())));
+  }
+
+  public static BukkitJourneyPlayer journeyPlayer(Player player) {
+    return new BukkitJourneyPlayer(player);
   }
 
   public static World getWorld(Cell cell) {

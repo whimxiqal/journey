@@ -24,8 +24,10 @@
 package net.whimxiqal.journey.bukkit;
 
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.JourneyPlayer;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 /**
  * The interface for Bukkit-specific external-facing endpoints for Journey.
@@ -48,5 +50,13 @@ public interface JourneyBukkitApi {
    * @return the cell
    */
   Cell toCell(Location location);
+
+  /**
+   * Convert a {@link Player} to a {@link JourneyPlayer}, which is just Journey's version of a player.
+   * @param player the player
+   * @return the journey player
+   */
+
+  JourneyPlayer toJourneyPlayer(Player player);
 
 }
