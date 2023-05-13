@@ -31,4 +31,7 @@ public class FakeJourneyPlayer implements JourneyPlayer {
   public Audience audience() {
     return Journey.get().proxy().audienceProvider().console();
   }
+
+  @Override
+  public void createItineraryTo(Cell origin, Cell destination) {}
 }
