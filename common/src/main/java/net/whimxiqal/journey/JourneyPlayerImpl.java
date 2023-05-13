@@ -74,7 +74,7 @@ public abstract class JourneyPlayerImpl implements JourneyPlayer {
   }
 
   @Override
-  public void createItineraryTo(Cell origin, Cell destination) {
+  public void createItinerary(Cell origin, Cell destination) {
     SearchSession searchSession = new PlayerDestinationGoalSearchSession(uuid(), origin, destination, true);
     searchSession.initialize();
 

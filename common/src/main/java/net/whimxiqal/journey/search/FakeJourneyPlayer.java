@@ -33,5 +33,5 @@ public class FakeJourneyPlayer implements JourneyPlayer {
   }
 
   @Override
-  public void createItineraryTo(Cell origin, Cell destination) {}
+  public void createItinerary(Cell origin, Cell destination) {}
 }

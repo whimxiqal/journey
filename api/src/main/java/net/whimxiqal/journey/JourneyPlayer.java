@@ -73,5 +73,5 @@ public interface JourneyPlayer {
    * @param origin The starting point of the itinerary.
    * @param destination The ending point of the itinerary.
    */
-  void createItineraryTo(Cell origin, Cell destination);
+  void createItinerary(Cell origin, Cell destination);
 }
