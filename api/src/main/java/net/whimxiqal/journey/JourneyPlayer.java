@@ -70,8 +70,8 @@ public interface JourneyPlayer {
 
   /**
    * Creates an itinerary for this journey player to the given {@link Cell}
-   * @param origin The starting point of the path.
-   * @param destination The ending point of the path.
+   * @param origin The starting point of the itinerary.
+   * @param destination The ending point of the itinerary.
    */
   void createItineraryTo(Cell origin, Cell destination);
 }
