@@ -102,7 +102,8 @@ public class EuclideanPlanarAverageCostFunction implements CostFunction {
 
     double avgCost = (Math.pow(euclideanCost, euclideanExponent) + (planarCost * planarMulti)) / 2.0;
 
-    // Try to avoid caves.
+    // Limit going under sea level when destination is above Y50
+    // This is mostly to help stop the algorithm from wandering into a cave and getting stuck.
     if (destination.blockY() > 50)
       avgCost *= Math.max(1.0, Math.log(Math.min(destination.blockY(), 55.0) / Math.max(1.0, cell.blockY())) * 8);
 
