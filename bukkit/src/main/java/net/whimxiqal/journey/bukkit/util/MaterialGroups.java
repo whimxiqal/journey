@@ -223,15 +223,6 @@ public final class MaterialGroups {
   public static boolean isVerticallySpecialPassable(Material material) {
     switch (material) {
       case LADDER:
-      case VINE:
-      case SCAFFOLDING:
-      case WATER:
-      case TWISTING_VINES:
-      case WEEPING_VINES:
-      case CAVE_VINES:
-      case TWISTING_VINES_PLANT:
-      case WEEPING_VINES_PLANT:
-      case CAVE_VINES_PLANT:
         return true;
       default:
         return false;
@@ -259,16 +250,6 @@ public final class MaterialGroups {
       case GREEN_CARPET:
       case RED_CARPET:
       case BLACK_CARPET:
-
-      case WATER:
-      case SCAFFOLDING:
-      case CAVE_VINES:
-      case CAVE_VINES_PLANT:
-      case VINE:
-      case TWISTING_VINES:
-      case TWISTING_VINES_PLANT:
-      case WEEPING_VINES:
-      case WEEPING_VINES_PLANT:
 
       case WHEAT:
       case BEETROOTS:
