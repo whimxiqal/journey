@@ -28,7 +28,8 @@ import lombok.Getter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.Path;
-import net.whimxiqal.journey.search.function.*;
+import net.whimxiqal.journey.search.function.CostFunction;
+import net.whimxiqal.journey.search.function.EuclideanPlanarAverageCostFunction;
 
 /**
  * An extension of {@link AbstractPathTrial} where the goal of the trial is to find a path to
