@@ -250,6 +250,15 @@ public final class MaterialGroups {
       case GREEN_CARPET:
       case RED_CARPET:
       case BLACK_CARPET:
+
+      case WHEAT:
+      case BEETROOTS:
+      case PUMPKIN_STEM:
+      case MELON_STEM:
+      case CARROTS:
+      case POTATOES:
+      case NETHER_WART:
+
         return true;
       default:
         return false;
@@ -261,6 +270,7 @@ public final class MaterialGroups {
       case AIR:
       case CAVE_AIR:
         return 0;
+
       default:
         return 1;
     }
