@@ -28,8 +28,6 @@ public enum CostFunctionType {
   PLANAR_ORIENTED,
   MANHATTAN_DISTANCE,
   HEIGHT,
-
   EUCLIDEAN_PLANAR_AVERAGE,
-
   OTHER
 }
