@@ -32,18 +32,12 @@ public class StatsManager {
   private static final int UPDATE_PERIOD = 20 * 60 * 10;  // 10 minutes
   private UUID task;
   private long lastStored = 0;
-  private int searches = 0;  // per hour
-  private double blocksTravelled = 0; // per hour
-
-  private int storedSearches = 0; // per hour
-  private int storedBlocksTravelled = 0;  // per hour
 
   public void initialize() {
     if (task != null) {
       throw new IllegalStateException("We're already initialized");
     }
     lastStored = System.currentTimeMillis();
-    reset();
     task = Journey.get().proxy().schedulingManager().scheduleRepeat(this::store, false, UPDATE_PERIOD);
   }
 
@@ -54,44 +48,8 @@ public class StatsManager {
     }
 
     lastStored = now;
-    storedSearches = searches;
-    storedBlocksTravelled = (int) Math.floor(blocksTravelled);
-    reset();
-  }
-
-  private synchronized void reset() {
-    searches = 0;
-    blocksTravelled = 0;
-  }
-
-  /**
-   * Increment the number of searches that have occurred. Thread-safe.
-   */
-  public synchronized void incrementSearches() {
-    searches++;
-  }
-
-  /**
-   * Get the number of searches in the last hour. Thread-safe.
-   * @return searches
-   */
-  public synchronized int searches() {
-    return storedSearches;
-  }
-
-  /**
-   * Increment the number of blocks that have been travelled. Thread-safe.
-   */
-  public synchronized void addBlocksTravelled(double blocks) {
-    blocksTravelled += blocks;
-  }
-
-  /**
-   * Get the number of blocks travelled in the last hour. Thread-safe.
-   * @return blocks travelled
-   */
-  public synchronized int blocksTravelled() {
-    return storedBlocksTravelled;
+    Statistics.SEARCHES_PER_HOUR.store();
+    Statistics.BLOCKS_TRAVELLED_PER_HOUR.store();
   }
 
   public void shutdown() {

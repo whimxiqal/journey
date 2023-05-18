@@ -26,7 +26,6 @@ package net.whimxiqal.journey.bukkit;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
 import net.whimxiqal.journey.command.JourneyConnectorProvider;
-import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.event.SearchDispatcher;
 import net.whimxiqal.journey.search.event.SearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitFoundSolutionEvent;
@@ -53,7 +52,6 @@ import net.whimxiqal.journey.bukkit.util.ThreadSafeBlockAccessor;
 import net.whimxiqal.mantle.paper.PaperRegistrarProvider;
 import net.whimxiqal.mantle.common.CommandRegistrar;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 

@@ -40,6 +40,7 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.whimxiqal.journey.stats.Statistics;
 import net.whimxiqal.journey.util.Initializable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +117,7 @@ public final class SearchManager implements Initializable {
   }
 
   private void doLaunchSearch(UUID caller, Audience audience, SearchSession session) {
-    Journey.get().statsManager().incrementSearches();
+    Statistics.SEARCHES_PER_HOUR.update(searches -> searches + 1);
     playerSearches.put(caller, session);
     session.initialize();
 

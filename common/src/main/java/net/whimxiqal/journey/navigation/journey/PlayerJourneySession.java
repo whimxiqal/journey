@@ -33,6 +33,7 @@ import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
 import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.stats.Statistics;
 import net.whimxiqal.journey.tools.AlternatingList;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,7 +144,7 @@ public class PlayerJourneySession implements JourneySession {
         madeProgress = true;
       }
       journeyStepsLength -= progress;
-      Journey.get().statsManager().addBlocksTravelled(progress);
+      Statistics.BLOCKS_TRAVELLED_PER_HOUR.update(blocks -> blocks + progress);
       if (!next.done()) {
         break;
       }
@@ -167,7 +168,6 @@ public class PlayerJourneySession implements JourneySession {
         ++i;
       }
       if (foundLocation) {
-        madeProgress = true;
         // go back and remove every one up to index i
         for (int j = 0; j <= i; j++) {
           journeySteps.pop();
