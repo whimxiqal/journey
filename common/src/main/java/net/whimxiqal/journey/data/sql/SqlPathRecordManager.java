@@ -25,19 +25,17 @@ package net.whimxiqal.journey.data.sql;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
@@ -120,7 +118,7 @@ public class SqlPathRecordManager
               "domain_id"),
           Statement.RETURN_GENERATED_KEYS);
 
-      statement.setLong(1, System.currentTimeMillis() / 1000);
+      statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
       statement.setInt(2, (int) executionTime);
       statement.setDouble(3, trial.getLength());
       statement.setInt(4, trial.getOrigin().blockX());

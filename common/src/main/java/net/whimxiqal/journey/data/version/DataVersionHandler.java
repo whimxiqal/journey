@@ -21,16 +21,24 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.data;
+package net.whimxiqal.journey.data.version;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Scanner;
-import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.data.DataVersion;
 
-public class DataVersionManager {
+public interface DataVersionHandler {
+    DataVersion version();
 
+    /**
+     * @param currentDataVersion
+     * @return {@link DataVersion} the final data version after migration.
+     */
+    DataVersion runMigrations(DataVersion currentDataVersion);
 
+    /**
+     * @param filePath The path of the batch to run.
+     * @return boolean - Whether the batch was run successfully.
+     */
+    boolean runBatch(String filePath);
+
+    void saveDataVersion(DataVersion version);
 }

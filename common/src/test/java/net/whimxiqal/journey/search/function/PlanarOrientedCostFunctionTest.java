@@ -4,8 +4,6 @@ import net.whimxiqal.journey.Cell;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class PlanarOrientedCostFunctionTest {
 
   private static final double DELTA = 0.001;

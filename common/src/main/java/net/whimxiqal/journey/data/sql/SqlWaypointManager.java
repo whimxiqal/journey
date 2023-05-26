@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -92,7 +93,7 @@ public abstract class SqlWaypointManager extends SqlManager {
     statement.setInt(5, cell.blockX());
     statement.setInt(6, cell.blockY());
     statement.setInt(7, cell.blockZ());
-    statement.setLong(8, System.currentTimeMillis() / 1000);
+    statement.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
     statement.setBoolean(9, false);
 
     statement.execute();

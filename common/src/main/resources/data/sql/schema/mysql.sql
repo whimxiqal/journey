@@ -85,4 +85,13 @@ CREATE TABLE journey_tunnels (
     )
 );
 
+-- Journey Database Version Tracker
+
+CREATE TABLE journey_db_version (
+    db_version INT,
+    INDEX journey_db_version_idx (
+        db_version
+    )
+);
+
 COMMIT;
