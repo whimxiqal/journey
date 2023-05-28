@@ -31,6 +31,7 @@ import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.proxy.JourneyBlock;
@@ -60,7 +61,7 @@ public interface PlatformProxy {
    * Convert a cell to a {@link JourneyBlock} with real-world data.
    *
    * <b>Must be called on the main server thread!</b>
-   * If you need a block asynchronously, use a {@link net.whimxiqal.journey.chunk.SynchronousChunkCache}
+   * If you need a block asynchronously, use a {@link ChunkCacheBlockProvider}
    * or the {@link net.whimxiqal.journey.chunk.CentralChunkCache}.
    *
    * @param cell the cell with the location information for the block

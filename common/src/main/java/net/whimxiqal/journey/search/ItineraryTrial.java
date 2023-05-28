@@ -29,13 +29,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import lombok.Value;
-import lombok.experimental.Accessors;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.chunk.BlockProvider;
-import net.whimxiqal.journey.chunk.SynchronousChunkCache;
+import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
@@ -75,7 +73,7 @@ public class ItineraryTrial implements Resulted {
     this.session = session;
     this.origin = origin;
     this.alternatingList = alternatingList;
-    this.blockProvider = new SynchronousChunkCache(session.flags());
+    this.blockProvider = new ChunkCacheBlockProvider(AbstractPathTrial.MAX_CACHED_CHUNKS_PER_SEARCH, session.flags());
     this.state = ResultState.IDLE;
   }
 

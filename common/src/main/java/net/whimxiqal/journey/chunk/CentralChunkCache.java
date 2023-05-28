@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.chunk;
 
 import java.util.Collection;
@@ -12,13 +35,15 @@ import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.search.AbstractPathTrial;
 
 /**
- * Thread-safe cache of chunks.
+ * Wrapper of a {@link ChunkCache} that may be accessed through thread-safe methods.
+ * Requests are made to the server thread and completed when the server-thread processes the request
+ * and gives a read-only copy of the world chunk.
  */
 public class CentralChunkCache {
 
-  public static final int MAX_CACHED_CHUNKS_PER_SEARCH = 128;
   private final Map<ChunkId, ChunkRequest> requestMap = new HashMap<>();  // this tracks requests keyed by chunk id
   private final Queue<ChunkRequest> requestQueue = new LinkedList<>();  // this tracks requests in order of appearance
   private final Object lock = new Object();
@@ -36,7 +61,7 @@ public class CentralChunkCache {
    * Call on the main thread.
    */
   public void initialize() {
-    chunkCache = new ChunkCache(MAX_CACHED_CHUNKS_PER_SEARCH * Settings.MAX_SEARCHES.getValue());
+    chunkCache = new ChunkCache(AbstractPathTrial.MAX_CACHED_CHUNKS_PER_SEARCH * Settings.MAX_SEARCHES.getValue());
     requestTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::executeRequests,
         false, 1);  // Once per tick
     loggingTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::broadcastLogs,
@@ -83,7 +108,7 @@ public class CentralChunkCache {
   private void broadcastLogs() {
     synchronized (lock) {
       if (retrieved != 0 || replaced != 0 || pruned != 0) {
-        Journey.get().debugManager().broadcast(Formatter.debug("[Chunk Cache] Queued: ___, Retrieved: ___, Replaced: ___, Pruned: ___,",
+        Journey.get().debugManager().broadcast(Formatter.debug("[Chunk Cache] Queued: ___, Retrieved: ___, Replaced: ___, Pruned: ___",
             requestQueue.size(),
             retrieved, replaced, pruned));
         retrieved = 0;

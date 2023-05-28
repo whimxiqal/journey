@@ -41,7 +41,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.chunk.SynchronousChunkCache;
+import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.manager.WorkItem;
 import net.whimxiqal.journey.navigation.Mode;
@@ -72,9 +72,14 @@ public class AbstractPathTrial implements WorkItem, Resulted {
    * Left un-final for testing.
    */
   public static double CELLS_PER_EXECUTION_CYCLE = 1000;
+
+  /**
+   * How many chunks we want to cache during
+   */
+  public static final int MAX_CACHED_CHUNKS_PER_SEARCH = 128;
   @Getter
   protected final Cell origin;
-  protected final SynchronousChunkCache chunkCache;
+  protected final ChunkCacheBlockProvider chunkCache;
   protected final Queue<Node> upcoming;
   private final SearchSession session;
   @Getter
@@ -146,7 +151,7 @@ public class AbstractPathTrial implements WorkItem, Resulted {
     this.state = state;
     this.fromCache = fromCache;
     this.saveOnComplete = saveOnComplete;
-    this.chunkCache = new SynchronousChunkCache(session.flags());
+    this.chunkCache = new ChunkCacheBlockProvider(MAX_CACHED_CHUNKS_PER_SEARCH, session.flags());
     this.upcoming = new PriorityQueue<>(Comparator.<Node>comparingDouble(node -> node.score + costFunction.apply(node.data.location()))
         .thenComparingDouble(node -> secondaryCostFunction.apply(node.data.location())));
   }
