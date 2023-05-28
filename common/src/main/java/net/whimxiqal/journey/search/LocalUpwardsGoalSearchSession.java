@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.search;
 
+import java.util.Optional;
 import java.util.UUID;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Cell;
@@ -30,8 +31,8 @@ import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.search.event.FoundSolutionEvent;
 import net.whimxiqal.journey.search.event.StartSearchEvent;
-import net.whimxiqal.journey.search.event.StopSearchEvent;
 import net.whimxiqal.journey.search.function.HeightCostFunction;
+import net.whimxiqal.journey.search.function.ZeroCostFunction;
 import net.whimxiqal.journey.tools.AlternatingList;
 
 /**
@@ -48,7 +49,7 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
   }
 
   @Override
-  protected void resumeSearch() {
+  public void asyncSearch() {
     // This implementation just runs once
     super.timer.start();
     Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
@@ -61,37 +62,40 @@ public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
         origin,
         this.modes,
         new HeightCostFunction(),
+        new ZeroCostFunction(),
         node -> reachesGoal(node.getData().location()),
         false
     );
 
-    PathTrial.TrialResult result = pathTrial.attempt(false);
+    Journey.get().workManager().schedule(pathTrial);
 
-    synchronized (this) {
-      if (state.shouldStop()) {
-        // this was stopped while attempting the path trial
-        state = state.stoppedResult();
-        Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
-        return;
-      } else {
-        state = pathTrial.getState();
+    pathTrial.future().thenAccept(result -> {
+      synchronized (this) {
+        if (state.shouldStop()) {
+          // this was stopped while attempting the path trial
+          state = state.stoppedResult();
+          complete();
+          return;
+        } else {
+          state = pathTrial.getState();
+        }
       }
-    }
 
-    if (result.path().isPresent()) {
-      AlternatingList.Builder<Path, Path, Path> stages
-          = AlternatingList.builder(Path.stationary(origin));
-      stages.addLast(result.path().get(), Path.stationary(result.path().get().getDestination()));
+      if (result.path().isPresent()) {
+        AlternatingList.Builder<Path, Path, Path> stages
+            = AlternatingList.builder(Path.stationary(origin));
+        stages.addLast(result.path().get(), Path.stationary(result.path().get().getDestination()));
 
-      Journey.get().dispatcher().dispatch(new FoundSolutionEvent(
-          this,
-          new Itinerary(this.origin,
-              result.path().get().getSteps(),
-              stages.build(),
-              result.path().get().getCost())));
-    }
+        Journey.get().dispatcher().dispatch(new FoundSolutionEvent(
+            this,
+            new Itinerary(this.origin,
+                result.path().get().getSteps(),
+                stages.build(),
+                result.path().get().getCost())));
+      }
 
-    Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+      complete();
+    });
   }
 
   protected abstract boolean reachesGoal(Cell cell);

@@ -28,21 +28,27 @@ import java.util.UUID;
 import net.whimxiqal.mantle.common.CommandSource;
 import net.whimxiqal.mantle.common.Mantle;
 
-public abstract class JourneyPlayerImpl implements JourneyPlayer {
+/**
+ * A {@link JourneyPlayer} with extra information for internal Journey purposes,
+ * not to be exposed to the API.
+ *
+ * This is not a thread-safe object, so all calls must be on the main thread.
+ */
+public abstract class InternalJourneyPlayer implements JourneyPlayer {
 
   protected final UUID uuid;
   protected final String name;
 
-  public JourneyPlayerImpl(UUID uuid, String name) {
+  public InternalJourneyPlayer(UUID uuid, String name) {
     this.uuid = uuid;
     this.name = name;
   }
 
-  public static JourneyPlayer from(CommandSource source) {
+  public static InternalJourneyPlayer from(CommandSource source) {
     if (source.type() != CommandSource.Type.PLAYER) {
       throw new IllegalArgumentException("Can only create a JourneyPlayer from a player type CommandSource");
     }
-    Optional<JourneyPlayer> optional = Journey.get().proxy().platform().onlinePlayer(source.uuid());
+    Optional<InternalJourneyPlayer> optional = Journey.get().proxy().platform().onlinePlayer(source.uuid());
     if (optional.isEmpty()) {
       throw new IllegalStateException("Player " + source.uuid() + " cannot be found");
     }
@@ -69,4 +75,18 @@ public abstract class JourneyPlayerImpl implements JourneyPlayer {
   public String toString() {
     return name + " (" + uuid + ")";
   }
+
+  /**
+   * Can the player fly?
+   *
+   * @return yes if flight is enabled
+   */
+  public abstract boolean canFly();
+
+  /**
+   * Does the player have a boat?
+   *
+   * @return yes if the player has a boat
+   */
+  public abstract boolean hasBoat();
 }

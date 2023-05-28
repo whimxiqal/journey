@@ -21,51 +21,46 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.navigation.mode;
+package net.whimxiqal.journey.navigation.mode;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
-import java.util.List;
-import java.util.Set;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import net.whimxiqal.journey.bukkit.util.MaterialGroups;
-import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Implementation of {@link Mode}
  * to check the places a player may jump to in Minecraft.
  */
-public class JumpMode extends BukkitMode {
+public class JumpMode extends Mode {
 
-  /**
-   * General constructor.
-   *
-   * @param session       the search session
-   * @param forcePassable the set of passable materials
-   */
-  public JumpMode(SearchSession session, Set<Material> forcePassable) {
-    super(session, forcePassable);
+  public JumpMode(@NotNull SearchSession session) {
+    super(session);
   }
 
   @Override
-  public void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
+  public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
+    List<Option> options = new LinkedList<>();
     Cell cell;
 
     cell = origin.atOffset(0, -1, 0);
-    if (isVerticallyPassable(BukkitUtil.getBlock(cell))) {
+    if (blockProvider.getBlock(cell).isVerticallyPassable()) {
       // Nothing to jump off of
       reject(cell);
-      return;
+      return options;
     }
 
     cell = origin.atOffset(0, 2, 0);
-    if (!isVerticallyPassable(BukkitUtil.getBlock(cell))) {
+    if (!blockProvider.getBlock(cell).isVerticallyPassable()) {
       // No room to jump
       reject(cell);
-      return;
+      return options;
     }
     // 1 block up
     accept(origin.atOffset(0, 1, 0), 1.0d, options);
@@ -84,7 +79,7 @@ public class JumpMode extends BukkitMode {
                 insideOffX * offX /* get sign back */,
                 1,
                 insideOffZ * offZ /* get sign back */);
-            if (!isLaterallyPassable(BukkitUtil.getBlock(cell))) {
+            if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
               reject(cell);
               continue outerZ;
             }
@@ -92,19 +87,19 @@ public class JumpMode extends BukkitMode {
                 insideOffX * offX /* get sign back */,
                 2,
                 insideOffZ * offZ /* get sign back */);
-            if (!isPassable(BukkitUtil.getBlock(cell))) {
+            if (!blockProvider.getBlock(cell).isPassable()) {
               reject(cell);
               continue outerZ;
             }
           }
         }
-        double jumpDistance = MaterialGroups.height(BukkitUtil.getBlock(origin.atOffset(offX, 1, offZ)).getMaterial())
+        double jumpDistance = blockProvider.getBlock(origin.atOffset(offX, 1, offZ)).height()
             + 1.0
-            - (MaterialGroups.isPassable(BukkitUtil.getBlock(origin.atOffset(0, 0, 0)).getMaterial())
-            ? MaterialGroups.height(BukkitUtil.getBlock(origin.atOffset(0, -1, 0)).getMaterial()) - 1
-            : MaterialGroups.height(BukkitUtil.getBlock(origin.atOffset(0, 0, 0)).getMaterial()));
+            - (blockProvider.getBlock(origin.atOffset(0, 0, 0)).isPassable()
+            ? blockProvider.getBlock(origin.atOffset(0, -1, 0)).height() - 1
+            : blockProvider.getBlock(origin.atOffset(0, 0, 0)).height());
         Cell other = origin.atOffset(offX, 1, offZ);
-        if (!isVerticallyPassable(BukkitUtil.getBlock(origin.atOffset(offX, 0, offZ)))
+        if (!blockProvider.getBlock(origin.atOffset(offX, 0, offZ)).isVerticallyPassable()
             && jumpDistance <= 1.2) {
           // Can stand here
           accept(other, origin.distanceTo(other), options);
@@ -113,6 +108,7 @@ public class JumpMode extends BukkitMode {
         }
       }
     }
+    return options;
   }
 
   @Override

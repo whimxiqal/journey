@@ -41,7 +41,7 @@ public class TunnelManager {
     List<Tunnel> tunnels = new LinkedList<>();
     for (TunnelSupplier supplier : tunnelSuppliers) {
       for (Tunnel tunnel : supplier.tunnels(player)) {
-        if (tunnel.permission().stream().allMatch(player::hasPermission)) {
+        if (player == null || tunnel.permission().stream().allMatch(player::hasPermission)) {
           tunnels.add(tunnel);
         }
       }

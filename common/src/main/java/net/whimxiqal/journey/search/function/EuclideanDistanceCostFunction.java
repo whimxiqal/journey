@@ -42,4 +42,11 @@ public class EuclideanDistanceCostFunction implements CostFunction {
   public Double apply(Cell cell) {
     return cell.distanceToSquared(destination);
   }
+
+  @Override
+  public String toString() {
+    return "EuclideanDistanceCostFunction{" +
+        "destination=" + destination +
+        '}';
+  }
 }

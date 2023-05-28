@@ -51,12 +51,6 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
   protected final boolean persistentOrigin;
   protected State stateInfo = null;
 
-  enum CachingStatus {
-    ALWAYS_USE,
-    USE_IF_POSSIBLE,
-    NEVER_USE,
-  }
-
   public GraphGoalSearchSession(UUID callerId, Caller callerType,
                                 Cell origin, boolean persistentOrigin) {
     super(callerId, callerType);
@@ -65,18 +59,16 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
   }
 
   @Override
-  protected void resumeSearch() {
-    boolean shouldInit = false;
+  public void asyncSearch() {
     synchronized (this) {
       if (state == ResultState.IDLE) {
-        shouldInit = true;
         state = ResultState.RUNNING;
+      } else {
+        throw new RuntimeException();  // programmer error
       }
     }
-    if (shouldInit) {
-      initSearch();
-    }
-    runSearchUnit();
+    initSearch();
+    Journey.get().proxy().schedulingManager().schedule(this::runSearchUnit, true);
   }
 
   private void initSearch() {
@@ -133,54 +125,92 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
   }
 
   private void runSearchUnit() {
-    synchronized (this) {
-      if (state.shouldStop()) {
-        markStopped();
-        return;
-      }
+    if (evaluateState()) {
+      // Could have canceled at this point
+      return;
     }
 
     // Create itinerary
     ItineraryTrial itineraryTrial = stateInfo.searchGraph.calculate(stateInfo.cachingStatus == CachingStatus.ALWAYS_USE);
 
+    if (evaluateState()) {
+      // even if itinerary trial exists, we were too late :(
+      return;
+    }
+
     synchronized (this) {
-      if (state.shouldStop() || itineraryTrial == null) {
-        // even if itinerary trial exists, we were too late :(
-        markStopped();
+      if (itineraryTrial == null) {
+        if (stateInfo.cachingStatus == CachingStatus.ALWAYS_USE) {
+          // We were forcing ourselves to use the cache, and we failed. Loosen the restriction and retry
+          stateInfo.cachingStatus = CachingStatus.USE_IF_POSSIBLE;
+          Journey.get().proxy().schedulingManager().schedule(this::runSearchUnit, true);
+          return;
+        }
+        // The graph search did not find any possible itineraries, so there is no solution
+        state = state.stoppedResult();
+        complete();
         return;
       }
     }
 
     // Solve itinerary (We have an overall solution with individual paths that aren't verified/calculated)
-    ItineraryTrial.TrialResult trialResult = itineraryTrial.attempt(stateInfo.cachingStatus != CachingStatus.NEVER_USE);
-
-    synchronized (this) {
-      if (trialResult.itinerary().isPresent()) {
-        // There is an itinerary solution!
-        if (stateInfo.bestItinerary == null || trialResult.itinerary().get().cost() < stateInfo.bestItinerary.cost()) {
-          stateInfo.bestItinerary = trialResult.itinerary().get();
-          state = ResultState.RUNNING_SUCCESSFUL;
-          Journey.get().dispatcher().dispatch(new FoundSolutionEvent(this, trialResult.itinerary().get()));
+    itineraryTrial.attempt(stateInfo.cachingStatus != CachingStatus.NEVER_USE).thenAccept(result -> {
+      synchronized (this) {
+        if (itineraryTrial.getState() == ResultState.STOPPED_ERROR) {
+          Journey.get().debugManager().broadcast(Formatter.debug("Stopping search due to error in itinerary calculation"), getCallerId());
+          state = ResultState.STOPPED_ERROR;
+        } else if (result.itinerary().isPresent()) {
+          // There is an itinerary solution!
+          if (stateInfo.bestItinerary == null || result.itinerary().get().cost() < stateInfo.bestItinerary.cost()) {
+            stateInfo.bestItinerary = result.itinerary().get();
+            state = ResultState.STOPPING_SUCCESSFUL;
+            Journey.get().dispatcher().dispatch(new FoundSolutionEvent(this, result.itinerary().get()));
+          }
+        } else if (!result.changedProblem()) {
+          // This result did not change the problem.
+          // If run again, then, we would get the same solution to the graph.
+          if (stateInfo.cachingStatus == CachingStatus.ALWAYS_USE) {
+            // Turn off the use of the cache. Maybe we can find better solution by re-solving some paths.
+            Journey.get().debugManager().broadcast(Formatter.debug("Itinerary failed: using cache only if possible"), getCallerId());
+            stateInfo.cachingStatus = CachingStatus.USE_IF_POSSIBLE;
+            // continue...
+          } else if (stateInfo.cachingStatus == CachingStatus.USE_IF_POSSIBLE) {
+            Journey.get().dispatcher().dispatch(new IgnoreCacheSearchEvent(this));
+            Journey.get().debugManager().broadcast(Formatter.debug("Itinerary failed: disabling cache"), getCallerId());
+            stateInfo.cachingStatus = CachingStatus.NEVER_USE;
+          } else {
+            // The problem hasn't changed, and we aren't using the cache,
+            // so no better solutions are possible.
+            Journey.get().debugManager().broadcast(Formatter.debug("Itinerary failed: no solution available"), getCallerId());
+            state = state.stoppingResult(false);
+          }
         }
       }
 
-      if (!trialResult.changedProblem()) {
-        // This result did not change the problem.
-        // If run again, then, we would get the same solution to the graph.
-        if (stateInfo.cachingStatus == CachingStatus.ALWAYS_USE) {
-          // Turn off the use of the cache. Maybe we can find better solution by re-solving some paths.
-          stateInfo.cachingStatus = CachingStatus.USE_IF_POSSIBLE;
-          // continue...
-        } else if (stateInfo.cachingStatus == CachingStatus.USE_IF_POSSIBLE) {
-          Journey.get().dispatcher().dispatch(new IgnoreCacheSearchEvent(this));
-          stateInfo.cachingStatus = CachingStatus.NEVER_USE;
-        } else {
-          // The problem hasn't changed, and we aren't using the cache,
-          // so no better solutions are possible.
-          markStopped();
-        }
+      if (evaluateState()) {
+        return;
       }
-    }
+
+      Journey.get().proxy().schedulingManager().schedule(this::runSearchUnit, true);
+    });
+  }
+
+  @Override
+  public String toString() {
+    return "GraphGoalSearchSession{" +
+        "origin=" + origin +
+        ", stateInfo=" + stateInfo +
+        ", callerId=" + callerId +
+        ", uuid=" + uuid +
+        ", state=" + state +
+        ", future done=" + future.isDone() +
+        '}';
+  }
+
+  enum CachingStatus {
+    ALWAYS_USE,
+    USE_IF_POSSIBLE,
+    NEVER_USE,
   }
 
   protected class State {
@@ -191,5 +221,4 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
     Itinerary bestItinerary = null;
     GraphGoalSearchSession.CachingStatus cachingStatus = GraphGoalSearchSession.CachingStatus.ALWAYS_USE;
   }
-
 }

@@ -21,54 +21,41 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.navigation.mode;
+package net.whimxiqal.journey.navigation.mode;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
-public class DigMode extends BukkitMode {
+/**
+ * Determines whether a humanoid entity can swim to various locations.
+ */
+public class SwimMode extends Mode {
 
-  public final static double DIG_COST_MULTIPLIER = 16;
-
-  /**
-   * General constructor.
-   *
-   * @param session       the session
-   * @param forcePassable the list of passable materials
-   */
-  public DigMode(SearchSession session, Set<Material> forcePassable) {
-    super(session, forcePassable);
+  public SwimMode(@NotNull SearchSession session) {
+    super(session);
   }
 
   @Override
-  protected void collectDestinations(@NotNull Cell origin, @NotNull List<Mode.Option> options) {
-    // Can we even stand here?
-    if (!canStandOn(BukkitUtil.getBlock(origin.atOffset(0, -1, 0)))
-        && !canStandIn(BukkitUtil.getBlock(origin.atOffset(0, 0, 0)))) {
-      return;
-    }
+  public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
+    List<Option> options = new LinkedList<>();
     Cell cell;
-    // Check every block in a 3x3 grid centered around the current location
+    // Check every block in a 3x3 grid centered around the current location (complex)
     for (int offX = -1; offX <= 1; offX++) {
       for (int offY = -1; offY <= 1; offY++) {
         outerZ:
         // Label so we can continue from these main loops when all checks fail
         for (int offZ = -1; offZ <= 1; offZ++) {
-          if (offX == 0 && offY == 1 && offZ == 0) {
-            // we cannot dig straight up
-            continue;
-          }
           // Checks for the block -- checks between the offset block and the original block,
           //  which would be 1 for just 1 offset variable, 4 for 2 offset variables,
           //  and 8 for 3 offset variables.
-          float digTime = 0;
           for (int insideOffX = offX * offX /* normalize sign */; insideOffX >= 0; insideOffX--) {
             for (int insideOffY = offY * offY /* normalize sign */; insideOffY >= 0; insideOffY--) {
               for (int insideOffZ = offZ * offZ /* normalize sign */; insideOffZ >= 0; insideOffZ--) {
@@ -81,14 +68,9 @@ public class DigMode extends BukkitMode {
                     insideOffX * offX /* get sign back */,
                     insideOffY * offY /* get sign back */,
                     insideOffZ * offZ /* get sign back */);
-                if (!isLaterallyPassable(BukkitUtil.getBlock(cell))) {
-                  // we must break it
-                  if (BukkitUtil.getBlock(cell).getMaterial().getHardness() < 0) {
-                    reject(cell);
-                    continue outerZ;
-                  } else {
-                    digTime += BukkitUtil.getBlock(cell).getMaterial().getHardness();
-                  }
+                if (!blockProvider.getBlock(cell).isWater()) {
+                  reject(cell);
+                  continue outerZ;
                 }
                 for (int h = 0; h <= insideOffY; h++) {
                   // The rest of the pillar above the floor
@@ -98,27 +80,26 @@ public class DigMode extends BukkitMode {
                           + h
                           + (1 - insideOffY) /* for if offYIn is 0 */,
                       insideOffZ * offZ /* get sign back */);
-                  if (!isPassable(BukkitUtil.getBlock(cell))) {
-                    if (BukkitUtil.getBlock(cell).getMaterial().getHardness() < 0) {
-                      reject(cell);
-                      continue outerZ;
-                    } else {
-                      digTime += BukkitUtil.getBlock(cell).getMaterial().getHardness();
-                    }
+                  if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
+                    reject(cell);
+                    continue outerZ;
                   }
                 }
               }
             }
           }
           Cell other = origin.atOffset(offX, offY, offZ);
-          accept(other, origin.distanceTo(other) + digTime * DIG_COST_MULTIPLIER, options);
+          accept(other, origin.distanceTo(other), options);
         }
       }
     }
+    // TODO check simple ones (just 1 in each of the 6 directions -- if we are already in water,
+    //  and water is above us, then we may move to any water block in any of the 6 directions
+    return options;
   }
 
   @Override
   public @NotNull ModeType type() {
-    return ModeType.DIG;
+    return ModeType.SWIM;
   }
 }

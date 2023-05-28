@@ -69,7 +69,7 @@ public interface PathRecordManager {
    * @return any records
    */
   @NotNull
-  List<PathTrialRecord> getRecords(Cell origin, Cell destination);
+  Collection<PathTrialRecord> getRecords(Cell origin, Cell destination);
 
   /**
    * Get a specific record, if it exists.
@@ -105,39 +105,17 @@ public interface PathRecordManager {
   /**
    * A record that represents a saved {@link PathTrial}.
    */
-  @Value
-  @Accessors(fluent = true)
-  @SuppressWarnings("checkstyle:MethodName")
-  class PathTrialRecord {
-    long id;
-    Date date;
-    long duration;
-    double pathCost;
-    int originX;
-    int originY;
-    int originZ;
-    int destinationX;
-    int destinationY;
-    int destinationZ;
-    int domain;
-    List<PathTrialCellRecord> cells;
-    Collection<PathTrialModeRecord> modes;
+  record PathTrialRecord(long id, Date date, long duration, double pathCost, int originX, int originY,
+                         int originZ, int destinationX, int destinationY, int destinationZ, int domain,
+                         List<PathTrialCellRecord> cells,
+                         Collection<PathTrialModeRecord> modes) {
   }
 
   /**
    * A record that represents a saved {@link Cell} within a {@link PathTrial}.
    */
-  @Value
-  @Accessors(fluent = true)
-  @SuppressWarnings("checkstyle:MemberName")
-  class PathTrialCellRecord {
-    PathTrialRecord record;
-    int x;
-    int y;
-    int z;
-    Integer index;
-    ModeType modeType;
-
+  record PathTrialCellRecord(PathTrialRecord record, int x, int y, int z,
+                             Integer index, ModeType modeType) {
     public Cell toCell() {
       return new Cell(x, y, z, record.domain);
     }
@@ -146,11 +124,8 @@ public interface PathRecordManager {
   /**
    * A record to store a {@link Mode}.
    */
-  @Value
-  @Accessors(fluent = true)
-  class PathTrialModeRecord {
-    PathTrialRecord record;
-    ModeType modeType;
+  record PathTrialModeRecord(PathTrialRecord record,
+                             ModeType modeType) {
   }
 
 }

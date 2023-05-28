@@ -28,11 +28,11 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.Getter;
-import lombok.Setter;
-import net.whimxiqal.journey.Journey;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.whimxiqal.journey.Journey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,32 +43,34 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DebugManager {
 
-  private final Map<UUID, Target> debuggers = new ConcurrentHashMap<>();
-  @Setter
-  @Getter
-  private boolean consoleDebugging = false;
+  private final Map<UUID, Targeter> debuggers = new ConcurrentHashMap<>();
+  private final PlainTextComponentSerializer componentSerializer = PlainTextComponentSerializer.plainText();
+  private final AtomicBoolean consoleDebugging = new AtomicBoolean(false);
 
   /**
    * Begin debugging for a specific player.
+   * Thread-safe.
    *
    * @param debugger the player doing the debugging
    * @param target   the player for which the debugger is debugging
    */
   public void startDebuggingPlayer(@NotNull UUID debugger, @NotNull UUID target) {
-    this.debuggers.put(debugger, Target.player(target));
+    this.debuggers.put(debugger, Targeter.player(target));
   }
 
   /**
    * Begin debugging for all players.
+   * Thread-safe.
    *
    * @param debugger the player doing the debugging
    */
   public void startDebuggingAll(@NotNull UUID debugger) {
-    this.debuggers.put(debugger, Target.all());
+    this.debuggers.put(debugger, Targeter.all());
   }
 
   /**
    * Stop debugging for a player altogether, no matter who he/she was targeting.
+   * Thread-safe.
    *
    * @param player the player doing the debugging
    */
@@ -77,18 +79,8 @@ public final class DebugManager {
   }
 
   /**
-   * Get the target of a player debugging.
-   *
-   * @param debugger the player doing the debugging
-   * @return the target, either a specific player or everyone
-   */
-  @Nullable
-  public Target getDebuggingTarget(@NotNull UUID debugger) {
-    return debuggers.get(debugger);
-  }
-
-  /**
    * Determine whether a player is currently in debug mode.
+   * Thread-safe.
    *
    * @param player the player potentially doing the debugging
    * @return true if debugging
@@ -97,31 +89,41 @@ public final class DebugManager {
     return debuggers.containsKey(player);
   }
 
+  public boolean isConsoleDebugging() {
+    return consoleDebugging.get();
+  }
+
+  public void setConsoleDebugging(boolean debug) {
+    consoleDebugging.set(debug);
+  }
+
   /**
    * Broadcast a message to everyone in debug-mode and targeting this player.
+   * Thread-safe.
    *
    * @param message the message
    */
   public void broadcast(Component message, UUID cause) {
-    debuggers.forEach((debugger, target) -> {
+    debuggers.forEach((debugger, targeter) -> {
       Audience audience = Journey.get().proxy().audienceProvider().player(debugger);
-      if (target.targets(cause)) {
+      if (targeter.targets(cause)) {
         audience.sendMessage(message);
       }
     });
-    if (consoleDebugging) {
-      Journey.get().proxy().audienceProvider().console().sendMessage(message);
+    if (consoleDebugging.get()) {
+      Journey.logger().debug(componentSerializer.serialize(message));
     }
   }
 
   /**
    * Broadcast a message to everyone in debugging mode.
+   * Thread-safe.
    *
    * @param message the message
    */
   public void broadcast(Component message) {
-    debuggers.forEach((debugger, target) -> Journey.get().proxy().audienceProvider().player(debugger).sendMessage(message));
-    if (consoleDebugging) {
+    debuggers.forEach((debugger, targeter) -> Journey.get().proxy().audienceProvider().player(debugger).sendMessage(message));
+    if (consoleDebugging.get()) {
       Journey.get().proxy().audienceProvider().console().sendMessage(message);
     }
   }
@@ -130,25 +132,21 @@ public final class DebugManager {
    * A class to determine how a player is debugging: either getting debug messages for a specific player
    * or for everyone on the server.
    */
-  public static class Target {
+  public static class Targeter {
 
     @Nullable
     private final UUID target;
 
-    private Target(@Nullable UUID target) {
+    private Targeter(@Nullable UUID target) {
       this.target = target;
     }
 
-    private static Target player(@NotNull UUID player) {
-      return new Target(player);
+    private static Targeter player(@NotNull UUID player) {
+      return new Targeter(player);
     }
 
-    private static Target all() {
-      return new Target(null);
-    }
-
-    boolean targetsAll() {
-      return target == null;
+    private static Targeter all() {
+      return new Targeter(null);
     }
 
     boolean targets(@NotNull UUID playerUuid) {
@@ -172,7 +170,7 @@ public final class DebugManager {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      Target that = (Target) o;
+      Targeter that = (Targeter) o;
       return Objects.equals(target, that.target);
     }
 

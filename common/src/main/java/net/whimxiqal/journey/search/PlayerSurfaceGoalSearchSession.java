@@ -26,7 +26,6 @@ package net.whimxiqal.journey.search;
 import java.util.UUID;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.kyori.adventure.audience.Audience;
 
@@ -64,6 +63,6 @@ public class PlayerSurfaceGoalSearchSession extends LocalUpwardsGoalSearchSessio
     }
 
     // We don't need any tunnels for this!
-    Journey.get().proxy().platform().prepareSearchSession(this, getCallerId(), flags, false);
+    SearchSession.registerPlayerModes(this, getCallerId(), flags);
   }
 }

@@ -34,6 +34,7 @@ public enum ResultState {
   STOPPING_CANCELED("stopping (canceled)"), // manually canceled
   STOPPING_FAILED("stopping (failed)"),
   STOPPING_SUCCESSFUL("stopping (successful)"),
+  STOPPING_ERROR("stopping (error)"),
   STOPPED_FAILED("stopped (failed)"),
   STOPPED_SUCCESSFUL("stopped (successful)"),
   STOPPED_CANCELED("stopped (canceled)"),
@@ -81,6 +82,13 @@ public enum ResultState {
     }
   }
 
+  public boolean isStopping() {
+    return switch (this) {
+      case STOPPING_FAILED, STOPPING_SUCCESSFUL, STOPPING_CANCELED, STOPPING_ERROR -> true;
+      default -> false;
+    };
+  }
+
   /**
    * Determine if this state is implying the process had or will have a successful result upon completion.
    *
@@ -97,15 +105,16 @@ public enum ResultState {
   }
 
   /**
-   * Determine if this state was canceled at any point, whether a successful result had been found or not.
+   * Determine if the state signals a stopping state, whether a successful result had been found or not.
    *
-   * @return true if canceled (manually stopped)
+   * @return true if stopping
    */
   public boolean shouldStop() {
     switch (this) {
       case STOPPING_FAILED:
       case STOPPING_SUCCESSFUL:
       case STOPPING_CANCELED:
+      case STOPPING_ERROR:
       case STOPPED_CANCELED:
       case STOPPED_ERROR:
       case STOPPED_FAILED:
@@ -149,6 +158,8 @@ public enum ResultState {
         return STOPPED_SUCCESSFUL;
       case STOPPING_CANCELED:
         return STOPPED_CANCELED;
+      case STOPPING_ERROR:
+        return STOPPED_ERROR;
       default:
         // already is stopped
         return this;

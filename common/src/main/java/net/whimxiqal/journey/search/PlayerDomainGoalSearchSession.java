@@ -40,8 +40,7 @@ public class PlayerDomainGoalSearchSession extends DomainGoalSearchSession imple
       sessionState.animationManager().setAnimating(false);
     }
 
-    Journey.get().proxy().platform().prepareSearchSession(this, getCallerId(), flags, false);
-    Journey.get().netherManager().makeTunnels().forEach(this::registerTunnel);
+    SearchSession.registerPlayerModes(this, getCallerId(), flags);
     Journey.get().proxy().platform().onlinePlayer(getCallerId()).ifPresent(jPlayer ->
         Journey.get().tunnelManager().tunnels(jPlayer).forEach(this::registerTunnel));
   }

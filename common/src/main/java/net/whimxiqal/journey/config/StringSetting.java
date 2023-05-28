@@ -43,4 +43,9 @@ public class StringSetting extends Setting<String> {
   public String printValue() {
     return getValue();
   }
+
+  @Override
+  public boolean isValid() {
+    return true;
+  }
 }

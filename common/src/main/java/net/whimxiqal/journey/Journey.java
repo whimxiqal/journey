@@ -24,23 +24,25 @@
 package net.whimxiqal.journey;
 
 import java.util.UUID;
+import net.whimxiqal.journey.chunk.CentralChunkCache;
+import net.whimxiqal.journey.config.Setting;
+import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.data.DataManagerImpl;
 import net.whimxiqal.journey.data.DataVersion;
 import net.whimxiqal.journey.manager.DebugManager;
+import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.manager.DomainManager;
 import net.whimxiqal.journey.manager.NetherManager;
 import net.whimxiqal.journey.manager.PlayerManager;
 import net.whimxiqal.journey.manager.SearchManager;
 import net.whimxiqal.journey.manager.TunnelManager;
 import net.whimxiqal.journey.scope.ScopeManager;
-import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.event.SearchDispatcher;
 import net.whimxiqal.journey.search.event.SearchDispatcherImpl;
 import net.whimxiqal.journey.stats.StatsManager;
 import net.whimxiqal.journey.util.BStatsUtil;
 import net.whimxiqal.journey.util.CommonLogger;
-import net.whimxiqal.journey.util.Initializable;
 
 public final class Journey {
 
@@ -56,6 +58,8 @@ public final class Journey {
   private final TunnelManager tunnelManager = new TunnelManager();
   private final StatsManager statsManager = new StatsManager();
   private final DomainManager domainManager = new DomainManager();
+  private final CentralChunkCache centralChunkCache = new CentralChunkCache();
+  private DistributedWorkManager workManager;
   private DataManager dataManager = new DataManagerImpl();
   private Proxy proxy;
 
@@ -80,18 +84,23 @@ public final class Journey {
 
   public void init() {
     JourneyApiSupplier.set(new JourneyApiImpl());
+
+    Settings.validate();  // Settings should already have been loaded from config by now
     proxy.logger().initialize();
     dataManager.initialize();
-    netherManager.load();
+    netherManager.initialize();
     searchEventDispatcher.initialize();
     searchManager.initialize();
     scopeManager.initialize();
     statsManager.initialize();
     BStatsUtil.register(proxy.platform().bStatsChartConsumer());
+    centralChunkCache.initialize();
 
     if (dataManager.version() != DataVersion.latest()) {
       logger().error("The Journey database is using an invalid version.");
     }
+
+    workManager = new DistributedWorkManager(Settings.DEDICATED_THREADS.getValue(), Settings.MAX_SEARCHES.getValue());
   }
 
   public void shutdown() {
@@ -99,6 +108,7 @@ public final class Journey {
     searchManager.shutdown();
     proxy.audienceProvider().close();
     statsManager.shutdown();
+    centralChunkCache.shutdown();
     proxy.logger().shutdown();
   }
 
@@ -144,6 +154,14 @@ public final class Journey {
 
   public DomainManager domainManager() {
     return domainManager;
+  }
+
+  public CentralChunkCache getCentralChunkCache() {
+    return centralChunkCache;
+  }
+
+  public DistributedWorkManager workManager() {
+    return workManager;
   }
 
 }

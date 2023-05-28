@@ -34,8 +34,11 @@ import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 public class FlyRayTraceMode extends RayTraceMode {
-  public FlyRayTraceMode(SearchSession session, Set<Material> forcePassable, Cell destination) {
-    super(session, forcePassable, destination, 0.6, 1.8, 0.6, FluidCollisionMode.NEVER);
+
+  private static final int VOLUMETRIC_FREQUENCY = 16;
+
+  public FlyRayTraceMode(SearchSession session, Cell destination) {
+    super(session, destination, 0.6, 1.8, 0.6, FluidCollisionMode.NEVER);
   }
 
   @Override
@@ -44,11 +47,13 @@ public class FlyRayTraceMode extends RayTraceMode {
   }
 
   @Override
-  protected boolean check(Cell origin) {
-    return Journey.get().proxy().platform().isAtSurface(origin);
+  protected boolean shouldAttemptCalculation(Cell origin) {
+    return Math.floorMod(origin.blockX(), VOLUMETRIC_FREQUENCY) == 0
+        && Math.floorMod(origin.blockY(), VOLUMETRIC_FREQUENCY) == 0
+        && Math.floorMod(origin.blockZ(), VOLUMETRIC_FREQUENCY) == 0;
   }
 
-  protected void finish(Cell origin, Cell destination, List<Option> options) {
+  protected void completeWith(Cell origin, Cell destination, List<Option> options) {
     options.add(Option.between(origin, destination, 1));
   }
 }

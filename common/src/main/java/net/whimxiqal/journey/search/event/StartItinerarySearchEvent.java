@@ -63,4 +63,11 @@ public class StartItinerarySearchEvent extends SearchEvent {
   EventType type() {
     return EventType.START_ITINERARY;
   }
+
+  @Override
+  public String toString() {
+    return "StartItinerarySearchEvent{" +
+        "itineraryTrial=" + itineraryTrial +
+        '}';
+  }
 }

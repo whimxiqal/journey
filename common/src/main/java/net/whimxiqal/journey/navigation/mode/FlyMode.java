@@ -21,35 +21,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.navigation.mode;
+package net.whimxiqal.journey.navigation.mode;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A mode to determine which nearby locations are reachable
  * when having the ability to fly.
  */
-public class FlyMode extends BukkitMode {
+public class FlyMode extends Mode {
 
-  /**
-   * General constructor.
-   *
-   * @param session       the session
-   * @param forcePassable the set of all passable materials
-   */
-  public FlyMode(SearchSession session, Set<Material> forcePassable) {
-    super(session, forcePassable);
+  public FlyMode(SearchSession session) {
+    super(session);
   }
 
   @Override
-  public void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
+  public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
+    List<Option> options = new LinkedList<>();
     Cell cell;
     // Check every block in a 3x3 grid centered around the current location
     for (int offX = -1; offX <= 1; offX++) {
@@ -72,7 +69,7 @@ public class FlyMode extends BukkitMode {
                     insideOffX * offX /* get sign back */,
                     insideOffY * offY /* get sign back */,
                     insideOffZ * offZ /* get sign back */);
-                if (!isLaterallyPassable(BukkitUtil.getBlock(cell))) {
+                if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
                   reject(cell);
                   continue outerZ;
                 }
@@ -84,7 +81,7 @@ public class FlyMode extends BukkitMode {
                           + h
                           + (1 - insideOffY) /* for if offYIn is 0 */,
                       insideOffZ * offZ /* get sign back */);
-                  if (!isPassable(BukkitUtil.getBlock(cell))) {
+                  if (!blockProvider.getBlock(cell).isPassable()) {
                     reject(cell);
                     continue outerZ;
                   }
@@ -98,6 +95,7 @@ public class FlyMode extends BukkitMode {
       }
     }
 
+    return options;
   }
 
   @Override

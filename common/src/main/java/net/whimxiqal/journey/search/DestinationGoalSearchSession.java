@@ -1,7 +1,6 @@
 package net.whimxiqal.journey.search;
 
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Tunnel;
 
@@ -30,11 +29,10 @@ public abstract class DestinationGoalSearchSession extends GraphGoalSearchSessio
     }
 
     for (Integer domain : stateInfo.allDomains) {
+      // Path trials from tunnel -> destination
       for (Tunnel pathTrialOriginTunnel : stateInfo.tunnelsByDestinationDomain.get(domain)) {
-        for (Tunnel pathTrialDestinationTunnel : stateInfo.tunnelsByOriginDomain.get(domain)) {
-          if (domain.equals(destination.domain())) {
-            stateInfo.searchGraph.addPathTrialTunnelToDestination(pathTrialOriginTunnel, this.modes, persistentDestination);
-          }
+        if (domain.equals(destination.domain())) {
+          stateInfo.searchGraph.addPathTrialTunnelToDestination(pathTrialOriginTunnel, this.modes, persistentDestination);
         }
       }
     }

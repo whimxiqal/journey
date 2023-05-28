@@ -29,7 +29,7 @@ import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.common.JourneyLexer;
 import net.whimxiqal.journey.common.JourneyParser;
-import net.whimxiqal.journey.JourneyPlayerImpl;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.mantle.common.CommandSource;
@@ -67,7 +67,7 @@ public class JourneyConnectorProvider {
                 .options(ctx -> Journey.get().dataManager().publicWaypointManager().getAll().keySet())
                 .build())
             .addParameter(Parameter.builder("scope")
-                .options(ctx -> ScopeUtil.options(JourneyPlayerImpl.from(ctx.source())))
+                .options(ctx -> ScopeUtil.options(InternalJourneyPlayer.from(ctx.source())))
                 .build())
             .registerCompletion(JourneyParser.RULE_waypoint, 0, "waypoint")
             .registerCompletion(JourneyParser.RULE_serverWaypoint, 0, "server-waypoint")

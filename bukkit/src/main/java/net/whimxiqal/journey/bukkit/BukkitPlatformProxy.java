@@ -25,36 +25,30 @@ package net.whimxiqal.journey.bukkit;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.bukkit.gui.JourneyGui;
-import net.whimxiqal.journey.JourneyPlayer;
-import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyBlock;
+import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyChunk;
+import net.whimxiqal.journey.bukkit.gui.JourneyGui;
+import net.whimxiqal.journey.bukkit.music.Song;
+import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
+import net.whimxiqal.journey.bukkit.util.BukkitUtil;
+import net.whimxiqal.journey.chunk.ChunkId;
+import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
+import net.whimxiqal.journey.proxy.JourneyBlock;
+import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.search.AnimationManager;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
-import net.whimxiqal.journey.bukkit.music.Song;
-import net.whimxiqal.journey.bukkit.navigation.mode.BoatMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.ClimbMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.DigMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.DoorMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.FlyMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.JumpMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.SwimMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.WalkMode;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import net.whimxiqal.journey.bukkit.util.MaterialGroups;
 import net.whimxiqal.journey.util.BStatsUtil;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.CustomChart;
@@ -80,8 +74,14 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public boolean isNetherPortal(Cell cell) {
-    return BukkitUtil.getBlock(cell).getMaterial() == Material.NETHER_PORTAL;
+  public JourneyChunk toChunk(ChunkId chunkId) {
+    World world = BukkitUtil.getWorld(chunkId.domain());
+    return new BukkitSessionJourneyChunk(world.getChunkAt(chunkId.x(), chunkId.z()).getChunkSnapshot(), world.getUID());
+  }
+
+  @Override
+  public JourneyBlock toBlock(Cell cell) {
+    return new BukkitSessionJourneyBlock(cell, BukkitUtil.getBlock(cell), new FlagSet());
   }
 
   @Override
@@ -127,17 +127,17 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Collection<JourneyPlayer> onlinePlayers() {
+  public Collection<InternalJourneyPlayer> onlinePlayers() {
     return Bukkit.getOnlinePlayers().stream().map(BukkitJourneyPlayer::new).collect(Collectors.toList());
   }
 
   @Override
-  public Optional<JourneyPlayer> onlinePlayer(UUID uuid) {
+  public Optional<InternalJourneyPlayer> onlinePlayer(UUID uuid) {
     return Optional.ofNullable(Bukkit.getPlayer(uuid)).map(BukkitJourneyPlayer::new);
   }
 
   @Override
-  public Optional<JourneyPlayer> onlinePlayer(String name) {
+  public Optional<InternalJourneyPlayer> onlinePlayer(String name) {
     return Optional.ofNullable(Bukkit.getPlayer(name)).map(BukkitJourneyPlayer::new);
   }
 
@@ -152,51 +152,13 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void prepareSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, boolean includePorts) {
-    // MODES
-    Set<Material> passableBlocks = new HashSet<>();
-    if (flags.getValueFor(Flags.DOOR)) {
-      passableBlocks.add(Material.IRON_DOOR);
-    }
-
-    // Register modes in order of preference
-    Player player = Bukkit.getPlayer(playerUuid);
-    boolean fly = flags.getValueFor(Flags.FLY);
-    boolean boat = false;
-    if (player != null) {
-      fly &= player.getAllowFlight();
-      boat = MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType));
-    }
-    if (fly) {
-      search.registerMode(new FlyMode(search, passableBlocks));
-    } else {
-      search.registerMode(new WalkMode(search, passableBlocks));
-      search.registerMode(new JumpMode(search, passableBlocks));
-      search.registerMode(new SwimMode(search, passableBlocks));
-      if (boat) {
-        search.registerMode(new BoatMode(search, passableBlocks));
-      }
-    }
-    search.registerMode(new DoorMode(search, passableBlocks));
-    search.registerMode(new ClimbMode(search, passableBlocks));
-    if (flags.getValueFor(Flags.DIG)) {
-      search.registerMode(new DigMode(search, passableBlocks));
-    }
-  }
-
-  @Override
   public void prepareDestinationSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, Cell destination) {
-    Set<Material> passableBlocks = new HashSet<>();
-    if (!flags.getValueFor(Flags.DOOR)) {
-      passableBlocks.add(Material.IRON_DOOR);
-    }
-
     Player player = Bukkit.getPlayer(playerUuid);
     if (player == null) {
       return;
     }
     if (player.getAllowFlight() && flags.getValueFor(Flags.FLY)) {
-      search.registerMode(new FlyRayTraceMode(search, passableBlocks, destination));
+      search.registerMode(new FlyRayTraceMode(search, destination));
     }
   }
 

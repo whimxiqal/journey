@@ -12,14 +12,16 @@ public abstract class DomainGoalSearchSession extends GraphGoalSearchSession<Dom
   }
 
   @Override
-  protected void resumeSearch() {
+  public void asyncSearch() {
+    // Do an initial check to make sure we're not in the given domain, then run the normal execution
     if (domain == origin.domain()) {
       synchronized (this) {
         state = ResultState.STOPPED_ERROR;
+        complete();
       }
       return;
     }
-    super.resumeSearch();
+    super.asyncSearch();
   }
 
   @Override

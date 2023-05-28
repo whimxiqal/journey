@@ -24,22 +24,49 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
+import net.whimxiqal.journey.proxy.JourneyBlock;
+import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.search.AnimationManager;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bstats.charts.CustomChart;
 
+/**
+ * An interface to the specific platform/engine that is running Minecraft.
+ * All calls to this proxy must be made synchronously on the main server thread.
+ */
 public interface PlatformProxy {
 
-  boolean isNetherPortal(Cell cell);
+  /**
+   * Convert chunk id to a {@link JourneyChunk}.
+   *
+   * <b>Must be called on the main server thread!</b>
+   *
+   * @param chunkId the chunk id
+   * @return the journey chunk
+   */
+  JourneyChunk toChunk(ChunkId chunkId);
+
+  /**
+   * Convert a cell to a {@link JourneyBlock} with real-world data.
+   *
+   * <b>Must be called on the main server thread!</b>
+   * If you need a block asynchronously, use a {@link net.whimxiqal.journey.chunk.SynchronousChunkCache}
+   * or the {@link net.whimxiqal.journey.chunk.CentralChunkCache}.
+   *
+   * @param cell the cell with the location information for the block
+   * @return the block
+   */
+  JourneyBlock toBlock(Cell cell);
 
   void playSuccess(UUID playerUuid);
 
@@ -47,17 +74,15 @@ public interface PlatformProxy {
 
   void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
 
-  Collection<JourneyPlayer> onlinePlayers();
+  Collection<InternalJourneyPlayer> onlinePlayers();
 
-  Optional<JourneyPlayer> onlinePlayer(UUID uuid);
+  Optional<InternalJourneyPlayer> onlinePlayer(UUID uuid);
 
-  Optional<JourneyPlayer> onlinePlayer(String name);
+  Optional<InternalJourneyPlayer> onlinePlayer(String name);
 
   Optional<Cell> entityCellLocation(UUID entityUuid);
 
   Optional<Vector> entityVector(UUID entityUuid);
-
-  void prepareSearchSession(SearchSession searchSession, UUID player, FlagSet flags, boolean includePorts);
 
   void prepareDestinationSearchSession(SearchSession searchSession, UUID player, FlagSet flags, Cell destination);
 
