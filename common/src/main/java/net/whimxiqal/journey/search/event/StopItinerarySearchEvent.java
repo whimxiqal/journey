@@ -63,4 +63,11 @@ public class StopItinerarySearchEvent extends SearchEvent {
   EventType type() {
     return EventType.STOP_ITINERARY;
   }
+
+  @Override
+  public String toString() {
+    return "StopItinerarySearchEvent{" +
+        "itineraryTrial=" + itineraryTrial +
+        '}';
+  }
 }

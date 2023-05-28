@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -37,14 +38,24 @@ import java.util.stream.Collectors;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Describable;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.navigation.mode.BoatMode;
+import net.whimxiqal.journey.navigation.mode.ClimbMode;
+import net.whimxiqal.journey.navigation.mode.DigMode;
+import net.whimxiqal.journey.navigation.mode.DoorMode;
+import net.whimxiqal.journey.navigation.mode.FlyMode;
+import net.whimxiqal.journey.navigation.mode.JumpMode;
+import net.whimxiqal.journey.navigation.mode.SwimMode;
+import net.whimxiqal.journey.navigation.mode.WalkMode;
 import net.whimxiqal.journey.search.event.StopSearchEvent;
 import net.whimxiqal.journey.search.flag.FlagSet;
+import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.SimpleTimer;
 
 /**
@@ -58,9 +69,10 @@ public abstract class SearchSession implements Resulted, Describable {
 
   protected final List<Tunnel> tunnels = new LinkedList<>();
   protected final List<Mode> modes = new LinkedList<>();
-  private final UUID callerId;
-  private final UUID uuid = UUID.randomUUID();
-  private final Caller callerType;
+  protected final SimpleTimer timer = new SimpleTimer();
+  protected final UUID callerId;
+  protected final UUID uuid = UUID.randomUUID();
+  protected final Caller callerType;
   private final List<String> permissions = new LinkedList<>();
   protected FlagSet flags = new FlagSet();
   protected ResultState state = ResultState.IDLE;  // multithreaded access, must be synchronized
@@ -68,11 +80,38 @@ public abstract class SearchSession implements Resulted, Describable {
   private Component name = Component.empty();
   private List<Component> description = Collections.emptyList();
   private int algorithmStepDelay = 0;
-  protected final SimpleTimer timer = new SimpleTimer();
 
   protected SearchSession(UUID callerId, Caller callerType) {
     this.callerId = callerId;
     this.callerType = callerType;
+  }
+
+  protected static void registerPlayerModes(SearchSession session, UUID playerUuid, FlagSet flags) {
+    boolean fly;
+    boolean boat;
+    Optional<InternalJourneyPlayer> player = Journey.get().proxy().platform().onlinePlayer(playerUuid);
+    if (player.isPresent()) {
+      fly = flags.getValueFor(Flags.FLY) && player.get().canFly();
+      boat = player.get().hasBoat();
+    } else {
+      fly = false;
+      boat = false;
+    }
+    if (fly) {
+      session.registerMode(new FlyMode(session));
+    } else {
+      session.registerMode(new WalkMode(session));
+      session.registerMode(new JumpMode(session));
+      session.registerMode(new SwimMode(session));
+      if (boat) {
+        session.registerMode(new BoatMode(session));
+      }
+    }
+    session.registerMode(new DoorMode(session));
+    session.registerMode(new ClimbMode(session));
+    if (flags.getValueFor(Flags.DIG)) {
+      session.registerMode(new DigMode(session));
+    }
   }
 
   /**
@@ -80,7 +119,7 @@ public abstract class SearchSession implements Resulted, Describable {
    */
   public final CompletableFuture<ResultState> search(int timeout) {
     // kick off the first portion
-    doSearch();
+    Journey.get().proxy().schedulingManager().schedule(this::asyncSearch, true);
     // Set up cancellation task
     if (timeout > 0) {
       Journey.get().proxy().schedulingManager().schedule(() -> stop(false), false, timeout * 20 /* ticks per second */);
@@ -88,54 +127,36 @@ public abstract class SearchSession implements Resulted, Describable {
     return future;
   }
 
-  private void doSearch() throws SearchException {
+  /**
+   * Begin asynchronous portion of search.
+   */
+  protected abstract void asyncSearch();
+
+  protected boolean evaluateState() {
     synchronized (this) {
-      if (state.isStopped()) {
-        future.complete(state);
-        return;
-      }
-    }
-    Journey.get().proxy().schedulingManager().schedule(() -> {
-      try {
+      if (state.isStopping()) {
+        // this was stopped while attempting the path trial
         if (this.getState() == ResultState.STOPPING_FAILED) {
           audience().sendMessage(Formatter.error("Time limit surpassed. Cancelling search..."));
+        } else if (this.getState() == ResultState.STOPPING_ERROR) {
+          if (callerType == Caller.PLAYER) {
+            Journey.get().proxy().audienceProvider().player(callerId).sendMessage(Formatter.error("A problem occurred with your search. Please notify an administrator"));
+          }
         }
-        resumeSearch();
-      } catch (Exception e) {
-        if (callerType == Caller.PLAYER) {
-          Journey.get().proxy().audienceProvider().player(callerId).sendMessage(Formatter.error("A problem occurred with your search. Please notify an administrator"));
-        }
-        synchronized (this) {
-          state = ResultState.STOPPED_ERROR;
-        }
-        e.printStackTrace();
+        state = state.stoppedResult();
+        complete();
       }
-      doSearch();
-    }, true);
+      return state.isStopped();
+    }
   }
 
-  /**
-   * Resume the search by running a portion of the search algorithm but quitting before spending too long.
-   * The purpose of this method is to split up the execution of searches into multiple tasks so many
-   * concurrent searches may make progress even with limited async threads.
-   *
-   * @throws SearchException search exception
-   */
-  protected abstract void resumeSearch() throws SearchException;
+  protected final void complete() {
+    future.complete(state);
+    Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+  }
 
   public final CompletableFuture<ResultState> future() {
     return future;
-  }
-
-  /**
-   * Set state as stopped and send dispatch for stopped event. This method should be idempotent.
-   */
-  public synchronized void markStopped() {
-    ResultState previousState = state;
-    state = state.stoppedResult();
-    if (state != previousState) {
-      Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
-    }
   }
 
   /**
@@ -321,6 +342,7 @@ public abstract class SearchSession implements Resulted, Describable {
    */
   public enum Caller {
     PLAYER,
+    CONSOLE,
     OTHER
   }
 }

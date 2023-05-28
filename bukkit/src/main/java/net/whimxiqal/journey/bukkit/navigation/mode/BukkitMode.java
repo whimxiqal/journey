@@ -25,49 +25,19 @@ package net.whimxiqal.journey.bukkit.navigation.mode;
 
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import java.util.Set;
-import org.bukkit.Material;
-import org.bukkit.block.data.BlockData;
 
 /**
  * A general implementation of modes used in Spigot Minecraft.
  */
 public abstract class BukkitMode extends Mode {
 
-  private final Set<Material> forcePassable;
-
   /**
    * General constructor.
    *
-   * @param session       the session
-   * @param forcePassable the list of passable materials
+   * @param session the session
    */
-  public BukkitMode(SearchSession session, Set<Material> forcePassable) {
+  public BukkitMode(SearchSession session) {
     super(session);
-    this.forcePassable = forcePassable;
-  }
-
-  // TODO move all of these methods into a static file
-  //  and possibly get it from Baritone
-  protected boolean isVerticallyPassable(BlockData block) {
-    return BukkitUtil.isVerticallyPassable(block, forcePassable);
-  }
-
-  protected boolean isLaterallyPassable(BlockData block) {
-    return BukkitUtil.isLaterallyPassable(block, forcePassable);
-  }
-
-  protected boolean isPassable(BlockData block) {
-    return BukkitUtil.isPassable(block, forcePassable);
-  }
-
-  protected boolean canStandOn(BlockData block) {
-    return BukkitUtil.canStandOn(block, forcePassable);
-  }
-
-  protected boolean canStandIn(BlockData block) {
-    return BukkitUtil.canStandIn(block, forcePassable);
   }
 
 }

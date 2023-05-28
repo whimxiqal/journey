@@ -67,6 +67,10 @@ public final class AlternatingList<A extends C, B extends C, C> {
     this.minors.addAll(minors);
   }
 
+  public int size() {
+    return majors.size() * 2 - 1;
+  }
+
   /**
    * Get a builder for creating an alternating list.
    * This is the only way to create an {@link AlternatingList} because

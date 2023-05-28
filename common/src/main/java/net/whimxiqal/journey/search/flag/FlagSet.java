@@ -23,14 +23,14 @@
 
 package net.whimxiqal.journey.search.flag;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 public class FlagSet {
 
-  private final Map<Flag<?>, Object> flags = new HashMap<>();
+  private final Map<Flag<?>, Object> flags = new ConcurrentHashMap<>();
 
   public <T> void addFlag(Flag<T> flag, T value) {
     this.flags.put(flag, value);

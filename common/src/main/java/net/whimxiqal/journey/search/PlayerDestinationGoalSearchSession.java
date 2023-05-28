@@ -25,10 +25,8 @@ package net.whimxiqal.journey.search;
 
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 
 /**
@@ -61,9 +59,8 @@ public class PlayerDestinationGoalSearchSession extends DestinationGoalSearchSes
     } else {
       sessionState.animationManager().setAnimating(false);
     }
-    Journey.get().proxy().platform().prepareSearchSession(this, getCallerId(), flags, true);
+    SearchSession.registerPlayerModes(this, getCallerId(), flags);
     Journey.get().proxy().platform().prepareDestinationSearchSession(this, getCallerId(), flags, destination);
-    Journey.get().netherManager().makeTunnels().forEach(this::registerTunnel);
     Journey.get().proxy().platform().onlinePlayer(getCallerId()).ifPresent(jPlayer ->
         Journey.get().tunnelManager().tunnels(jPlayer).forEach(this::registerTunnel));
   }

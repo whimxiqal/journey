@@ -26,7 +26,6 @@ package net.whimxiqal.journey.bukkit;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
 import net.whimxiqal.journey.command.JourneyConnectorProvider;
-import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.event.SearchDispatcher;
 import net.whimxiqal.journey.search.event.SearchEvent;
 import net.whimxiqal.journey.bukkit.search.event.BukkitFoundSolutionEvent;
@@ -45,23 +44,18 @@ import net.whimxiqal.journey.bukkit.config.BukkitConfigManager;
 import net.whimxiqal.journey.bukkit.listener.DeathListener;
 import net.whimxiqal.journey.bukkit.listener.NetherListener;
 import net.whimxiqal.journey.bukkit.search.listener.AnimationListener;
-import net.whimxiqal.journey.bukkit.search.listener.DataStorageListener;
 import net.whimxiqal.journey.bukkit.search.listener.PlayerSearchListener;
 import net.whimxiqal.journey.bukkit.util.BukkitLogger;
 import net.whimxiqal.journey.bukkit.util.BukkitSchedulingManager;
-import net.whimxiqal.journey.bukkit.util.ThreadSafeBlockAccessor;
 import net.whimxiqal.mantle.paper.PaperRegistrarProvider;
 import net.whimxiqal.mantle.common.CommandRegistrar;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class JourneyBukkit extends JavaPlugin {
 
   private static JourneyBukkit instance;
-
-  private boolean valid = false;
 
   /**
    * Get the instance that is currently run on the Spigot server.
@@ -71,8 +65,6 @@ public final class JourneyBukkit extends JavaPlugin {
   public static JourneyBukkit get() {
     return instance;
   }
-
-  private final ThreadSafeBlockAccessor blockAccessor = new ThreadSafeBlockAccessor();
 
   @Override
   public void onLoad() {
@@ -126,24 +118,13 @@ public final class JourneyBukkit extends JavaPlugin {
 
     Bukkit.getPluginManager().registerEvents(new NetherListener(), this);
     Bukkit.getPluginManager().registerEvents(new AnimationListener(), this);
-    Bukkit.getPluginManager().registerEvents(new DataStorageListener(), this);
     Bukkit.getPluginManager().registerEvents(new PlayerSearchListener(), this);
     Bukkit.getPluginManager().registerEvents(new DeathListener(), this);
-
-    // Initialize tasks for async capabilities
-    blockAccessor.init();
   }
 
   @Override
   public void onDisable() {
     // Common Journey shutdown
     Journey.get().shutdown();
-
-    // Plugin shutdown logic
-    blockAccessor.shutdown();
-  }
-
-  public ThreadSafeBlockAccessor getBlockAccessor() {
-    return blockAccessor;
   }
 }

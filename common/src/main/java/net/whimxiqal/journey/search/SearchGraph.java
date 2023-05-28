@@ -26,10 +26,10 @@ package net.whimxiqal.journey.search;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
-import net.whimxiqal.journey.Tunnel;
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.Tunnel;
+import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.graph.WeightedGraph;
@@ -85,9 +85,9 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
   }
 
   protected void addPathTrial(SearchSession session, Cell origin, Cell destination,
-                            Tunnel originNode,
-                            Tunnel destinationNode,
-                            Collection<Mode> modes, boolean saveOnComplete) {
+                              Tunnel originNode,
+                              Tunnel destinationNode,
+                              Collection<Mode> modes, boolean saveOnComplete) {
     // First, try to access a cached path
     Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
     boolean added = false;

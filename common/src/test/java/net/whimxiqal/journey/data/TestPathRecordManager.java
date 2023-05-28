@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,11 @@ package net.whimxiqal.journey.data;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
@@ -39,8 +41,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestPathRecordManager implements PathRecordManager {
 
-  private final List<PathTrialRecord> pathTrialRecords = new LinkedList<>();
-  private final List<PathTrialCellRecord> pathTrialCellRecords = new LinkedList<>();
+  private final Deque<PathTrialRecord> pathTrialRecords = new ConcurrentLinkedDeque<>();
+  private final Deque<PathTrialCellRecord> pathTrialCellRecords = new ConcurrentLinkedDeque<>();
   private long pathTrialRecordId = 0;
 
   @Override
@@ -91,7 +93,7 @@ public class TestPathRecordManager implements PathRecordManager {
   }
 
   @Override
-  public @NotNull List<PathTrialRecord> getRecords(Cell origin, Cell destination) {
+  public @NotNull Collection<PathTrialRecord> getRecords(Cell origin, Cell destination) {
     return pathTrialRecords;
   }
 

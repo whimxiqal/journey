@@ -229,6 +229,19 @@ public final class MaterialGroups {
     }
   }
 
+  public static boolean isClimbable(Material material) {
+    switch (material) {
+      case LADDER:
+      case VINE:
+      case CAVE_VINES:
+      case TWISTING_VINES:
+      case WEEPING_VINES:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   /**
    * Anything that a player can squeeze through laterally, other than the obvious.
    */

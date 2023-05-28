@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,14 +52,12 @@ import org.junit.jupiter.api.Test;
 public class TestCommands extends JourneyTestHarness {
 
   private final static Map<String, MantleCommand> commands = new HashMap<>();
-  private final static UUID myUuid = UUID.randomUUID();
   private final static TestProxy testProxy = new TestProxy();
 
   @BeforeAll
   static void init() {
     Mantle.setProxy(testProxy);
     register(JourneyConnectorProvider.connector());
-    TestPlatformProxy.onlinePlayers.add(new TestJourneyPlayer(myUuid));
   }
 
   static void register(CommandConnector connector) {
@@ -77,7 +75,7 @@ public class TestCommands extends JourneyTestHarness {
       return CommandResult.failure();
     }
     return mantleCommand.process(new CommandSource(CommandSource.Type.PLAYER,
-        myUuid,
+        PLAYER_UUID,
         Journey.get().proxy().audienceProvider().console()), baseCommand.length > 1 ? baseCommand[1] : "");
   }
 
@@ -89,12 +87,12 @@ public class TestCommands extends JourneyTestHarness {
       return Collections.emptyList();
     }
     return mantleCommand.complete(new CommandSource(CommandSource.Type.PLAYER,
-        myUuid,
+        PLAYER_UUID,
         Journey.get().proxy().audienceProvider().console()), baseCommand.length > 1 ? baseCommand[1] : "");
   }
 
   static void addHome() {
-    Journey.get().dataManager().personalWaypointManager().add(myUuid, new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
+    Journey.get().dataManager().personalWaypointManager().add(PLAYER_UUID, new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
   }
 
   void commandSuccess(String command) {
@@ -128,10 +126,10 @@ public class TestCommands extends JourneyTestHarness {
     TestJourneyPlayer.LOCATION = originalLocation;
     commandSuccess("journeyto world:" + WorldLoader.worldResources[1]);
     commandFailure("journeyto death");
-    Journey.get().deathManager().setDeathLocation(myUuid, new Cell(0, 0, 0, 0));
+    Journey.get().deathManager().setDeathLocation(PLAYER_UUID, new Cell(0, 0, 0, 0));
     commandSuccess("journeyto death");
 
-    testProxy.revokeAllPermissions(myUuid);
+    testProxy.revokeAllPermissions(PLAYER_UUID);
     commandFailure("journeyto home");
   }
 
@@ -147,7 +145,7 @@ public class TestCommands extends JourneyTestHarness {
   void complicatedScope() {
     JourneyApi api = JourneyApiProvider.get();
     Destination destination = Destination.of(new Cell(0, 0, 0, WorldLoader.domain(0)));
-    testProxy.revokeAllPermissions(myUuid);
+    testProxy.revokeAllPermissions(PLAYER_UUID);
     api.registerScope("Journey", "complex", Scope.builder()
         .subScopes(() -> {
           Map<String, Scope> scopes = new HashMap<>();
@@ -219,7 +217,7 @@ public class TestCommands extends JourneyTestHarness {
     for (String string : permissionRequired) {
       Assertions.assertFalse(completions.contains(string), "The scope target " + string + " should be disallowed by permission restriction, but isn't disallowed");
     }
-    testProxy.grantAllPermissions(myUuid);
+    testProxy.grantAllPermissions(PLAYER_UUID);
     completions = completions("journeyto ");
     for (String string : permissionRequired) {
       Assertions.assertTrue(completions.contains(string));
@@ -266,11 +264,11 @@ public class TestCommands extends JourneyTestHarness {
     commandFailure("journeyto hidden");
 
     // no permission
-    testProxy.revokeAllPermissions(myUuid);
+    testProxy.revokeAllPermissions(PLAYER_UUID);
     for (String string : permissionRequired) {
       commandFailure("journeyto " + string);
     }
-    testProxy.grantAllPermissions(myUuid);
+    testProxy.grantAllPermissions(PLAYER_UUID);
     for (String string : permissionRequired) {
       commandSuccess("journeyto " + string);
     }

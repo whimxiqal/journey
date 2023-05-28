@@ -36,10 +36,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class Setting<T> {
 
   protected final Class<T> clazz;
-  private final String path;
-  private final T defaultValue;
-  boolean initialized = false;
-  private T value;
+  protected final String path;
+  protected final T defaultValue;
+  protected T value;
+  protected boolean initialized = false;
 
   Setting(@NotNull String path, @NotNull T defaultValue, @NotNull Class<T> clazz) {
     if (!clazz.isInstance(defaultValue)) {
@@ -47,6 +47,7 @@ public abstract class Setting<T> {
     }
     this.path = Objects.requireNonNull(path);
     this.defaultValue = Objects.requireNonNull(defaultValue);
+    this.value = defaultValue;
     this.clazz = clazz;
   }
 
@@ -110,5 +111,11 @@ public abstract class Setting<T> {
    */
   @NotNull
   public abstract String printValue();
+
+  public abstract boolean isValid();
+
+  public final void setToDefault() {
+    setValue(getDefaultValue());
+  }
 
 }

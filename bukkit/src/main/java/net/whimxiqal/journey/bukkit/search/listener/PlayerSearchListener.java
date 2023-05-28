@@ -165,7 +165,7 @@ public class PlayerSearchListener implements Listener {
         break;
       case STOPPED_ERROR:
         Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(
-            Formatter.error("An internal error ocurred! Please notify an administrator"));
+            Formatter.error("An internal error occurred! Please notify an administrator"));
         break;
       case STOPPED_CANCELED:
         Journey.get().proxy().audienceProvider().player(player.getUniqueId()).sendMessage(

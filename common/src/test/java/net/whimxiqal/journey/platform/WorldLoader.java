@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -78,12 +78,12 @@ public final class WorldLoader {
 
             // POI
             if (Character.isDigit(c)) {
-              TestPlatformProxy.pois.put(Character.toString(c), new Cell(x, y, 0, domain));
+              TestPlatformProxy.pois.put(Character.toString(c), new Cell(x, 0, y, domain));
             }
 
             // TUNNEL
             if (Character.isLetter(c)) {
-              Cell cell = new Cell(x, y, 0, domain);
+              Cell cell = new Cell(x, 0, y, domain);
               if (Character.isUpperCase(c)) {
                 if (pendingPorts.containsKey(Character.toLowerCase(c))) {
                   // complete the tunnel

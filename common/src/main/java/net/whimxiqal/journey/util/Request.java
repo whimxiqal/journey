@@ -23,41 +23,46 @@
 
 package net.whimxiqal.journey.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import javax.json.Json;
-import javax.json.JsonObject;
 import net.whimxiqal.journey.Journey;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 public final class Request {
   private Request() {
   }
 
-  public static CompletableFuture<UUID> getPlayerUuid(String player) {
+  /**
+   * Asynchronously call the Mojang API for the UUID of the player with the given name.
+   * Player names may be changed, so this should only be called for requesting temporary information,
+   * like for a user command to access a player by their name for an immediate one-time request.
+   * @param player the player
+   * @return the uuid
+   */
+  public static CompletableFuture<UUID> getPlayerUuidAsync(String player) {
     CompletableFuture<UUID> future = new CompletableFuture<>();
     Journey.get().proxy().schedulingManager().schedule(() -> {
-      HttpClient client = HttpClientBuilder.create().build();
-      HttpGet request = new HttpGet("https://api.mojang.com/users/profiles/minecraft/" + player);
-      request.addHeader("accept", "application/json");
-      HttpResponse response;
-      InputStream content;
       try {
-        response = client.execute(request);
-        content = response.getEntity().getContent();
-      } catch (IOException e) {
+        URL apiUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + player);
+        URLConnection yc = apiUrl.openConnection();
+        JSONObject obj = new JSONObject(new JSONTokener(new InputStreamReader(yc.getInputStream())));
+
+        String hexString = obj.getString("id");
+        byte[] uuidBytes = new byte[hexString.length() / 2];
+
+        for (int i = 0; i < uuidBytes.length; i++) {
+          int stringIndex = i * 2;
+          uuidBytes[i] = (byte) Integer.parseInt(hexString.substring(stringIndex, stringIndex + 2), 16);
+        }
+        future.complete(UUIDUtil.bytesToUuid(uuidBytes));
+      } catch (Exception e) {
         e.printStackTrace();
         future.complete(null);
-        return;
       }
-      JsonObject obj = Json.createReader(content).readObject();
-      future.complete(UUIDUtil.bytesToUuid(obj.getString("id").getBytes(StandardCharsets.UTF_8)));
     }, true);
     return future;
   }

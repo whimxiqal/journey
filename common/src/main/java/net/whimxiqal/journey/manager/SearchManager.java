@@ -28,18 +28,17 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.config.Settings;
-import net.whimxiqal.journey.message.Formatter;
-import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigation.journey.JourneySession;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
-import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.search.flag.Flags;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.navigation.journey.JourneySession;
+import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
+import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.Initializable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,10 +48,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class SearchManager implements Initializable {
 
-  private final Map<UUID, PlayerJourneySession> playerJourneys = new ConcurrentHashMap<>();
-  private final Map<UUID, Cell> cachedPlayerLocations = new ConcurrentHashMap<>();
+  // A random UUID that represents the console, for identification purposes
+  public static final UUID CONSOLE_UUID = UUID.randomUUID();
+  // Currently-executing searches for each player
   private final Map<UUID, SearchSession> playerSearches = new ConcurrentHashMap<>();
+  // Queued searches for each player to run after the currently-executing search stops
   private final ConcurrentHashMap<UUID, SearchSession> nextPlayerSearches = new ConcurrentHashMap<>();
+
+  // Current journeying-sessions for players that have a completed search
+  private final Map<UUID, PlayerJourneySession> playerJourneys = new ConcurrentHashMap<>();
+  // Known player locations, updated lazily and used for updating the journey sessions
+  private final Map<UUID, Cell> cachedPlayerLocations = new ConcurrentHashMap<>();
+
+  // Task id for the task that updates players' locations
   private UUID locationUpdateTaskId;
 
   /**
@@ -92,6 +100,9 @@ public final class SearchManager implements Initializable {
       case PLAYER:
         audience = Journey.get().proxy().audienceProvider().player(caller);
         break;
+      case CONSOLE:
+        audience = Journey.get().proxy().audienceProvider().console();
+        break;
       case OTHER:
       default:
         audience = Audience.empty();
@@ -106,15 +117,18 @@ public final class SearchManager implements Initializable {
       return;
     }
 
-    if (playerSearches.size() >= Settings.MAX_SEARCHES.getValue()) {
-      audience.sendMessage(Formatter.error("There are too many people searching right now, try again later."));
-      return;
-    }
-
     // launch
     doLaunchSearch(caller, audience, session);
   }
 
+  /**
+   * A helper method that may be called again for the purposes of re-queueing the request
+   * if another search is still executing, and we must wait for it to stop
+   *
+   * @param caller   the caller
+   * @param audience the audience of the caller
+   * @param session  the session we wish to run
+   */
   private void doLaunchSearch(UUID caller, Audience audience, SearchSession session) {
     Journey.get().statsManager().incrementSearches();
     playerSearches.put(caller, session);
@@ -137,7 +151,7 @@ public final class SearchManager implements Initializable {
       } else {
         playerSearches.remove(caller);
       }
-    }, false, 0));
+    }, false));
   }
 
   /**

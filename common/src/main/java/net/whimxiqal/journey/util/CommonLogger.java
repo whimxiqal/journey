@@ -64,11 +64,7 @@ public abstract class CommonLogger implements Initializable {
   }
 
   public void debug(String message) {
-    debug(Component.text(message));
-  }
-
-  public void debug(Component message) {
-    Journey.get().debugManager().broadcast(message);
+    log(MessageType.DEBUG, message);
   }
 
   private void log(MessageType type, String message) {
@@ -94,12 +90,23 @@ public abstract class CommonLogger implements Initializable {
   }
 
   protected enum MessageType {
-    INFO,
-    WARNING,
-    SEVERE,
+    DEBUG("DEBUG"),
+    INFO("INFO "),
+    WARNING("WARN "),
+    SEVERE("SEVER");
+
+    final String label;
+
+    MessageType(String label) {
+      this.label = label;
+    }
   }
 
   protected record Message(MessageType type, String message) {
+    @Override
+    public String toString() {
+      return "[" + type.label + "] " + message;
+    }
   }
 
 }

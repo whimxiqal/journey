@@ -27,9 +27,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Tunnel;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,9 +51,9 @@ public class Path implements Serializable {
    *
    * @param origin the origin of the whole path
    * @param steps  the steps required to get there
-   * @param cost the cost of the path
+   * @param cost   the cost of the path
    */
-  public Path(Cell origin, @NotNull Collection<Step> steps, double cost, Runnable prompt, Predicate<Cell> completedWith) {
+  public Path(Cell origin, @NotNull List<Step> steps, double cost, Runnable prompt, Predicate<Cell> completedWith) {
     this.origin = origin;
     this.steps = new ArrayList<>(steps);
     this.cost = cost;
@@ -58,7 +61,7 @@ public class Path implements Serializable {
     this.completedWith = completedWith;
   }
 
-  public Path(Cell origin, @NotNull Collection<Step> steps, double cost) {
+  public Path(Cell origin, @NotNull List<Step> steps, double cost) {
     this.origin = origin;
     this.steps = new ArrayList<>(steps);
     this.cost = cost;
@@ -147,11 +150,11 @@ public class Path implements Serializable {
    * @param modes all modes
    * @return true if the path can be traversed, or false if it is impassable
    */
-  public boolean test(Collection<Mode> modes) {
+  public boolean test(Collection<Mode> modes, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     stepLoop:
     for (int i = 0; i < steps.size() - 1; i++) {
       for (Mode mode : modes) {
-        for (Mode.Option option : mode.getDestinations(steps.get(i).location())) {
+        for (Mode.Option option : mode.getDestinations(steps.get(i).location(), blockProvider)) {
           if (steps.get(i + 1).location().equals(option.location())) {
             continue stepLoop;  // we found a mode that gave us a fitting option. Continue to the next step.
           }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,21 @@
 package net.whimxiqal.journey.manager;
 
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class TestSchedulingManager implements SchedulingManager {
 
   public static final int TICK_PERIOD_MS = 10;
-  private final PriorityQueue<Task> queue;
-  private final ReentrantLock queueLock = new ReentrantLock();
+  private final PriorityBlockingQueue<Task> queue;
   private final Set<UUID> canceledTasks;
-  private final ReentrantLock cancelLock = new ReentrantLock();
+
   public TestSchedulingManager() {
-    queue = new PriorityQueue<>(Comparator.comparing(task -> task.executionTime));
-    canceledTasks = new HashSet<>();
+    queue = new PriorityBlockingQueue<>(10, Comparator.comparing(task -> task.executionTime));
+    canceledTasks = ConcurrentHashMap.newKeySet();
   }
 
   @Override
@@ -70,12 +68,7 @@ public class TestSchedulingManager implements SchedulingManager {
       Task task = new Task();
       task.runnable = runnable;
       task.executionTime = System.currentTimeMillis() + delayMs;
-      try {
-        queueLock.lock();
-        queue.add(task);
-      } finally {
-        queueLock.unlock();
-      }
+      queue.add(task);
     }
   }
 
@@ -86,14 +79,9 @@ public class TestSchedulingManager implements SchedulingManager {
     if (async) {
       Thread thread = new Thread(() -> {
         while (true) {
-          try {
-            cancelLock.lock();
-            if (canceledTasks.contains(taskUuid)) {
-              canceledTasks.remove(taskUuid);
-              break;
-            }
-          } finally {
-            cancelLock.unlock();
+          if (canceledTasks.contains(taskUuid)) {
+            canceledTasks.remove(taskUuid);
+            break;
           }
           try {
             Thread.sleep(periodMs);
@@ -107,25 +95,15 @@ public class TestSchedulingManager implements SchedulingManager {
     } else {
       AtomicReference<Runnable> repeatable = new AtomicReference<>();
       repeatable.set(() -> {
-        try {
-          cancelLock.lock();
-          if (canceledTasks.contains(taskUuid)) {
-            canceledTasks.remove(taskUuid);
-            return;
-          }
-        } finally {
-          cancelLock.unlock();
+        if (canceledTasks.contains(taskUuid)) {
+          canceledTasks.remove(taskUuid);
+          return;
         }
         runnable.run();
         Task task = new Task();
         task.runnable = repeatable.get();
         task.executionTime = System.currentTimeMillis() + periodMs;
-        try {
-          queueLock.lock();
-          queue.add(task);
-        } finally {
-          queueLock.unlock();
-        }
+        queue.add(task);
       });
       repeatable.get().run();
     }
@@ -134,25 +112,15 @@ public class TestSchedulingManager implements SchedulingManager {
 
   @Override
   public void cancelTask(UUID taskId) {
-    try {
-      cancelLock.lock();
-      canceledTasks.add(taskId);
-    } finally {
-      cancelLock.unlock();
-    }
+    canceledTasks.add(taskId);
   }
 
   public void startMainThread() {
     Thread thread = new Thread(() -> {
       while (true) {
         long currentTime = System.currentTimeMillis();
-        try {
-          queueLock.lock();
-          while (!queue.isEmpty() && queue.peek().executionTime < currentTime) {
-            queue.remove().runnable.run();
-          }
-        } finally {
-          queueLock.unlock();
+        while (!queue.isEmpty() && queue.peek().executionTime < currentTime) {
+          queue.remove().runnable.run();
         }
         try {
           Thread.sleep(TICK_PERIOD_MS);

@@ -21,36 +21,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.navigation.mode;
+package net.whimxiqal.journey.navigation.mode;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
-import java.util.List;
-import java.util.Set;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Implementation of {@link Mode}
  * for normal walking in Minecraft.
  */
-public class WalkMode extends BukkitMode {
+public class WalkMode extends Mode {
 
-  /**
-   * General constructor.
-   *
-   * @param session       the session
-   * @param forcePassable list of passable materials
-   */
-  public WalkMode(SearchSession session, Set<Material> forcePassable) {
-    super(session, forcePassable);
+  public WalkMode(@NotNull SearchSession session) {
+    super(session);
   }
 
   @Override
-  public void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
+  public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
+    List<Option> options = new LinkedList<>();
     Cell cell;
     Cell cell1;
     Cell cell2;
@@ -63,9 +59,9 @@ public class WalkMode extends BukkitMode {
 //    }
 
     // Can we even stand here?
-    if (!canStandOn(BukkitUtil.getBlock(origin.atOffset(0, -1, 0)))
-        && !canStandIn(BukkitUtil.getBlock(origin))) {
-      return;
+    if (!blockProvider.getBlock(origin.atOffset(0, -1, 0)).canStandOn()
+        && !blockProvider.getBlock(origin).canStandIn()) {
+      return options;
     }
 
     // 1 block away
@@ -83,7 +79,7 @@ public class WalkMode extends BukkitMode {
               cell = origin.atOffset(insideOffX * offX /* get sign back */,
                   offY,
                   insideOffZ * offZ /*get sign back */);
-              if (!isLaterallyPassable(BukkitUtil.getBlock(cell))) {
+              if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
                 reject(cell);
                 continue outerZ;  // Barrier - invalid move
               }
@@ -96,7 +92,7 @@ public class WalkMode extends BukkitMode {
         cell = origin.atOffset(offX, 0, offZ);
         if (offX != 0 || offZ != 0) {
           // we are inquiring about other than origin
-          if (canStandIn(BukkitUtil.getBlock(cell))) {
+          if (blockProvider.getBlock(cell).canStandIn()) {
             // We can just stand right here (carpets, etc.)
             accept(cell, origin.distanceTo(cell), options);
             continue;
@@ -108,18 +104,18 @@ public class WalkMode extends BukkitMode {
           cell = origin.atOffset(offX, offY, offZ);  // floor
           cell1 = cell.atOffset(0, 1, 0);  // feet
           cell2 = cell.atOffset(0, 2, 0);  // head
-          if (!isVerticallyPassable(BukkitUtil.getBlock(cell2)) || BukkitUtil.getBlock(cell2).getMaterial().equals(Material.WATER)) {
+          if (!blockProvider.getBlock(cell2).isVerticallyPassable() || blockProvider.getBlock(cell2).isWater()) {
             // we cannot "fall through" this cell, which means we can't land on the block below
             // or, we are drowning
             reject(cell1);
             break;
           }
-          if (!isVerticallyPassable(BukkitUtil.getBlock(cell1))) {
+          if (!blockProvider.getBlock(cell1).isVerticallyPassable()) {
             // we cannot put our feet in here
             reject(cell1);
             continue;
           }
-          if (!canStandOn(BukkitUtil.getBlock(cell))) {
+          if (!blockProvider.getBlock(cell).canStandOn()) {
             // we cannot stand on here
             reject(cell1);
             continue;
@@ -130,6 +126,7 @@ public class WalkMode extends BukkitMode {
         }
       }
     }
+    return options;
   }
 
   @Override

@@ -24,22 +24,16 @@
 package net.whimxiqal.journey.search.function;
 
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.Journey;
 
 /**
  * This scoring function is similar to the Euclidean distance function but operates under the assumption that
  * a player should "walk" in the x-z dimensions and must move in the Y dimension using stairs or some path
  * 45 degrees offset from the x-z plane.
  */
-public class PlanarOrientedCostFunction implements CostFunction {
+public record PlanarOrientedCostFunction(Cell destination) implements CostFunction {
 
   private final static double SQRT_TWO = Math.sqrt(2);
   private final static double SQRT_THREE = Math.sqrt(3);
-  private final Cell destination;
-
-  public PlanarOrientedCostFunction(Cell destination) {
-    this.destination = destination;
-  }
 
   @Override
   public CostFunctionType getType() {
@@ -98,5 +92,10 @@ public class PlanarOrientedCostFunction implements CostFunction {
       total += first;
     }
     return total;
+  }
+
+  @Override
+  public String toString() {
+    return "PlanarOrientedCostFunction{destination:" + destination + "}";
   }
 }

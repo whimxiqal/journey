@@ -49,11 +49,12 @@ public final class NetherManager {
 
   private final Map<Cell, Cell> portalConnections = new ConcurrentHashMap<>();
 
-  public void load() {
+  public void initialize() {
     Journey.get().dataManager()
         .netherPortalManager()
         .getAllTunnels(TunnelType.NETHER)
         .forEach(tunnel -> portalConnections.put(tunnel.origin(), tunnel.destination()));
+    Journey.get().tunnelManager().register(player -> Journey.get().netherManager().makeTunnels());
   }
 
   /**
@@ -63,8 +64,7 @@ public final class NetherManager {
    */
   public Collection<NetherTunnel> makeTunnels() {
     List<NetherTunnel> linksUnverified = portalConnections.entrySet().stream()
-        .map(entry -> new NetherTunnel(entry.getKey(), entry.getValue()))
-        .collect(Collectors.toList());
+        .map(entry -> new NetherTunnel(entry.getKey(), entry.getValue())).toList();
     List<NetherTunnel> linksVerified = new LinkedList<>();
     for (NetherTunnel tunnel : linksUnverified) {
       if (tunnel.verify()) {
@@ -85,7 +85,7 @@ public final class NetherManager {
         .stream()
         .min(Comparator.comparingDouble(group ->
             group.tunnelLocation().distanceToSquared(origin)));
-    if (!originGroup.isPresent()) {
+    if (originGroup.isEmpty()) {
       return;  // We can't find the origin portal
     }
     lookForPortal(destination, originGroup.get(), 0);
@@ -103,7 +103,7 @@ public final class NetherManager {
           resultantLocation.get().blockY() + 16)
           .stream()
           .findFirst();
-      if (!destinationGroup.isPresent() || destinationGroup.get().blocks().isEmpty()) {
+      if (destinationGroup.isEmpty() || destinationGroup.get().blocks().isEmpty()) {
         return;  // We can't find the destination portal
       }
 
@@ -241,7 +241,7 @@ public final class NetherManager {
    * @return A PortalGroup of all the found Portal blocks. Otherwise, returns null.
    */
   private PortalGroup getPortalBlocks(Cell cell) {
-    if (!Journey.get().proxy().platform().isNetherPortal(cell)) {
+    if (!Journey.get().proxy().platform().toBlock(cell).isNetherPortal()) {
       return null;
     }
 
@@ -254,7 +254,7 @@ public final class NetherManager {
       for (int j = -1; j <= 1; j++) {
         for (int k = -1; k <= 1; k++) {
           Cell offset = new Cell(cell.blockX() + i, cell.blockY() + j, cell.blockZ() + k, cell.domain());
-          if (Journey.get().proxy().platform().isNetherPortal(offset) && group.add(offset)) {
+          if (Journey.get().proxy().platform().toBlock(offset).isNetherPortal() && group.add(offset)) {
             portalBlock(group, offset);
           }
         }
@@ -290,7 +290,7 @@ public final class NetherManager {
      */
     public boolean add(Cell cell) {
       // Check to see if the block is a Portal block.
-      if (!Journey.get().proxy().platform().isNetherPortal(cell)) {
+      if (!Journey.get().proxy().platform().toBlock(cell).isNetherPortal()) {
         return false;
       }
 
@@ -359,8 +359,7 @@ public final class NetherManager {
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof PortalGroup) {
-        PortalGroup pg = (PortalGroup) o;
+      if (o instanceof PortalGroup pg) {
         return portal.equals(pg.portal);
       }
       return portal.equals(o);

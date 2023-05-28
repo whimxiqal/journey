@@ -32,7 +32,6 @@ import net.whimxiqal.journey.search.SearchSession;
  * in a {@link PathTrial}.
  *
  * @see SearchSession
- * @see PathTrial#attempt(boolean)
  * @see SearchDispatcher
  */
 public class StartPathSearchEvent extends SearchEvent {
@@ -62,5 +61,12 @@ public class StartPathSearchEvent extends SearchEvent {
   @Override
   EventType type() {
     return EventType.START_PATH;
+  }
+
+  @Override
+  public String toString() {
+    return "StartPathSearchEvent{" +
+        "pathTrial=" + pathTrial +
+        '}';
   }
 }

@@ -21,19 +21,20 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.navigation.mode;
+package net.whimxiqal.journey.navigation.mode;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.chunk.Direction;
+import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.proxy.JourneyDoor;
 import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import net.whimxiqal.journey.bukkit.util.MaterialGroups;
-import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.type.Door;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,41 +42,36 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see SearchSession
  */
-public final class DoorMode extends BukkitMode {
+public final class DoorMode extends Mode {
 
-  /**
-   * Default constructor.
-   *
-   * @param forcePassable set of materials that we can always pass through
-   */
-  public DoorMode(SearchSession session, Set<Material> forcePassable) {
-    super(session, forcePassable);
+  public DoorMode(@NotNull SearchSession session) {
+    super(session);
   }
 
   @Override
-  public void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
+  public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     // TODO check if there are buttons or levers nearby that may open the door
-
+    List<Option> options = new LinkedList<>();
     Cell cell;
-    BlockData block;
+    boolean standingOnPressurePlate = blockProvider.getBlock(origin).isPressurePlate();
+
     // Pos X - East
     cell = origin.atOffset(1, 0, 0);
-    block = BukkitUtil.getBlock(cell);
+    Optional<JourneyDoor> door = blockProvider.getBlock(cell).asDoor();
     // Check if we found a door
-    if (block instanceof Door) {
+    if (door.isPresent()) {
       // Check it's a solid floor
-      if (!isVerticallyPassable(BukkitUtil.getBlock(origin.atOffset(1, -1, 0)))) {
-        Door doorBlock = (Door) block;
-        if (block.getMaterial().equals(Material.IRON_DOOR)) {
+      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+        if (door.get().isIron()) {
           // Need to check if the door is blocking
-          if (doorBlock.getFacing().equals(BlockFace.NORTH)
-              || doorBlock.getFacing().equals(BlockFace.SOUTH)
-              || doorBlock.isOpen()) {
+          if (door.get().direction() == Direction.POSITIVE_Z
+              || door.get().direction() == Direction.NEGATIVE_Z
+              || door.get().isOpen()) {
             // Nothing blocking
             accept(origin.atOffset(1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(BukkitUtil.getBlock(origin).getMaterial())) {
+            if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(1, 0, 0), 1.0d, options);
             } else {
@@ -96,22 +92,21 @@ public final class DoorMode extends BukkitMode {
 
     // Pos Z - North
     cell = origin.atOffset(0, 0, 1);
-    block = BukkitUtil.getBlock(cell);
+    door = blockProvider.getBlock(cell).asDoor();
     // Check if we found a door
-    if (block instanceof Door) {
+    if (door.isPresent()) {
       // Check it's a solid floor
-      if (!isVerticallyPassable(BukkitUtil.getBlock(origin.atOffset(0, -1, 1)))) {
-        Door doorBlock = (Door) block;
-        if (block.getMaterial().equals(Material.IRON_DOOR)) {
+      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+        if (door.get().isIron()) {
           // Need to check if the door is blocking
-          if (doorBlock.getFacing().equals(BlockFace.EAST)
-              || doorBlock.getFacing().equals(BlockFace.WEST)
-              || doorBlock.isOpen()) {
+          if (door.get().direction() == Direction.POSITIVE_X
+              || door.get().direction() == Direction.NEGATIVE_X
+              || door.get().isOpen()) {
             // Nothing blocking
             accept(origin.atOffset(0, 0, 1), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(BukkitUtil.getBlock(origin).getMaterial())) {
+            if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(0, 0, 1), 1.0d, options);
             } else {
@@ -132,22 +127,21 @@ public final class DoorMode extends BukkitMode {
 
     // Neg X - West
     cell = origin.atOffset(-1, 0, 0);
-    block = BukkitUtil.getBlock(cell);
+    door = blockProvider.getBlock(cell).asDoor();
     // Check if we found a door
-    if (block instanceof Door) {
+    if (door.isPresent()) {
       // Check it's a solid floor
-      if (!isVerticallyPassable(BukkitUtil.getBlock(origin.atOffset(-1, -1, 0)))) {
-        Door doorBlock = (Door) block;
-        if (block.getMaterial().equals(Material.IRON_DOOR)) {
+      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+        if (door.get().isIron()) {
           // Need to check if the door is blocking
-          if (doorBlock.getFacing().equals(BlockFace.NORTH)
-              || doorBlock.getFacing().equals(BlockFace.SOUTH)
-              || doorBlock.isOpen()) {
+          if (door.get().direction() == Direction.POSITIVE_Z
+              || door.get().direction() == Direction.NEGATIVE_Z
+              || door.get().isOpen()) {
             // Nothing blocking
             accept(origin.atOffset(-1, 0, 0), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(BukkitUtil.getBlock(origin).getMaterial())) {
+            if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(-1, 0, 0), 1.0d, options);
             } else {
@@ -168,22 +162,21 @@ public final class DoorMode extends BukkitMode {
 
     // Neg Z - South
     cell = origin.atOffset(0, 0, -1);
-    block = BukkitUtil.getBlock(cell);
+    door = blockProvider.getBlock(cell).asDoor();
     // Check if we found a door
-    if (block instanceof Door) {
+    if (door.isPresent()) {
       // Check it's a solid floor
-      if (!isVerticallyPassable(BukkitUtil.getBlock(origin.atOffset(0, -1, -1)))) {
-        Door doorBlock = (Door) block;
-        if (block.getMaterial().equals(Material.IRON_DOOR)) {
+      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+        if (door.get().isIron()) {
           // Need to check if the door is blocking
-          if (doorBlock.getFacing().equals(BlockFace.EAST)
-              || doorBlock.getFacing().equals(BlockFace.WEST)
-              || doorBlock.isOpen()) {
+          if (door.get().direction() == Direction.POSITIVE_X
+              || door.get().direction() == Direction.NEGATIVE_X
+              || door.get().isOpen()) {
             // Nothing blocking
             accept(origin.atOffset(0, 0, -1), 1.0d, options);
           } else {
             // We need to be able to open the door
-            if (MaterialGroups.PRESSURE_PLATES.contains(BukkitUtil.getBlock(origin).getMaterial())) {
+            if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
               accept(origin.atOffset(0, 0, -1), 1.0d, options);
             } else {
@@ -202,6 +195,7 @@ public final class DoorMode extends BukkitMode {
       reject(cell);
     }
 
+    return options;
   }
 
   @Override

@@ -24,20 +24,17 @@
 package net.whimxiqal.journey.scope;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Destination;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
-import net.whimxiqal.journey.Permissible;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
 import net.whimxiqal.journey.search.InternalScope;

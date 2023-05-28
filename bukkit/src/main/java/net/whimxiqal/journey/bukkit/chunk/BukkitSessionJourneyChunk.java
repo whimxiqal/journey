@@ -21,52 +21,34 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey;
+package net.whimxiqal.journey.bukkit.chunk;
 
-import java.util.Optional;
 import java.util.UUID;
-import net.whimxiqal.mantle.common.CommandSource;
-import net.whimxiqal.mantle.common.Mantle;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.chunk.ChunkId;
+import net.whimxiqal.journey.proxy.JourneyBlock;
+import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.search.flag.FlagSet;
+import org.bukkit.ChunkSnapshot;
 
-public abstract class JourneyPlayerImpl implements JourneyPlayer {
+public class BukkitSessionJourneyChunk implements JourneyChunk {
 
-  protected final UUID uuid;
-  protected final String name;
+  private final ChunkId id;
+  private final ChunkSnapshot chunk;
 
-  public JourneyPlayerImpl(UUID uuid, String name) {
-    this.uuid = uuid;
-    this.name = name;
-  }
-
-  public static JourneyPlayer from(CommandSource source) {
-    if (source.type() != CommandSource.Type.PLAYER) {
-      throw new IllegalArgumentException("Can only create a JourneyPlayer from a player type CommandSource");
-    }
-    Optional<JourneyPlayer> optional = Journey.get().proxy().platform().onlinePlayer(source.uuid());
-    if (optional.isEmpty()) {
-      throw new IllegalStateException("Player " + source.uuid() + " cannot be found");
-    }
-    return optional.get();
+  public BukkitSessionJourneyChunk(ChunkSnapshot chunk, UUID worldUuid) {
+    this.id = new ChunkId(Journey.get().domainManager().domainIndex(worldUuid), chunk.getX(), chunk.getZ());
+    this.chunk = chunk;
   }
 
   @Override
-  public UUID uuid() {
-    return uuid;
+  public ChunkId id() {
+    return id;
   }
 
   @Override
-  public String name() {
-    return name;
-  }
-
-  @Override
-  public boolean hasPermission(String permission) {
-    // Piggyback off Mantle
-    return Mantle.getProxy().hasPermission(uuid, permission);
-  }
-
-  @Override
-  public String toString() {
-    return name + " (" + uuid + ")";
+  public JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
+    return new BukkitSessionJourneyBlock(new Cell(id.x() * 16 + x, y, id.z() * 16 + z, id.domain()), chunk.getBlockData(x, y, z), flagSet);
   }
 }

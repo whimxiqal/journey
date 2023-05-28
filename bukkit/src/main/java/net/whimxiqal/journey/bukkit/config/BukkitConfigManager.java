@@ -66,23 +66,8 @@ public class BukkitConfigManager implements ConfigManager {
     return configManager;
   }
 
-  private Map<String, Setting<?>> getSettings() {
-    return Arrays.stream(Settings.class.getDeclaredFields())
-        .map(field -> {
-          try {
-            return field.get(this);
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
-          }
-        })
-        .filter(object -> object instanceof Setting)
-        .map(object -> ((Setting<?>) object))
-        .collect(Collectors.toMap(Setting::getPath, setting -> setting));
-  }
-
   private void dumpSettings() {
-    getSettings().forEach((path, setting) ->
+    Settings.ALL_SETTINGS.forEach((path, setting) ->
         JourneyBukkit.get().getConfig().set(path, setting.printValue()));
   }
 
@@ -108,7 +93,7 @@ public class BukkitConfigManager implements ConfigManager {
   }
 
   private void loadSettings() {
-    getSettings().forEach((s, setting) -> {
+    Settings.ALL_SETTINGS.forEach((s, setting) -> {
       if (JourneyBukkit.get().getConfig().contains(s)) {
         parseAndSetValue(setting, s);
       } else {

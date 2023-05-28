@@ -24,14 +24,15 @@
 package net.whimxiqal.journey.bukkit;
 
 import net.kyori.adventure.audience.Audience;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.JourneyPlayerImpl;
+import net.whimxiqal.journey.bukkit.util.BukkitUtil;
+import net.whimxiqal.journey.bukkit.util.MaterialGroups;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class BukkitJourneyPlayer extends JourneyPlayerImpl {
+public class BukkitJourneyPlayer extends InternalJourneyPlayer {
 
   public BukkitJourneyPlayer(Player player) {
     super(player.getUniqueId(), player.getName());
@@ -51,4 +52,23 @@ public class BukkitJourneyPlayer extends JourneyPlayerImpl {
     return Journey.get().proxy().audienceProvider().player(uuid);
   }
 
+  @Override
+  public boolean canFly() {
+    Player player = player();
+    if (player == null) {
+      // player is outdated
+      return false;
+    }
+    return player.getAllowFlight();
+  }
+
+  @Override
+  public boolean hasBoat() {
+    Player player = player();
+    if (player == null) {
+      // player is outdated
+      return false;
+    }
+    return MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType));
+  }
 }

@@ -33,12 +33,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.Setter;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.config.Settings;
+import net.whimxiqal.journey.manager.WorkItem;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
@@ -58,21 +63,37 @@ import org.jetbrains.annotations.Nullable;
  * @see SearchSession
  * @see ItineraryTrial
  */
-public class AbstractPathTrial implements Resulted {
+public class AbstractPathTrial implements WorkItem, Resulted {
 
-  private final static double CALCULATION_MULTIPLIER_PER_BLOCK = 1.1;
+  /**
+   * How many cells to run per cycle.
+   * The fewer the cells, the more cycles this has to run to complete the search,
+   * but the more opportunities other searches get to override this to make room for other necessary work.
+   * Left un-final for testing.
+   */
+  public static double CELLS_PER_EXECUTION_CYCLE = 1000;
 
-  private final SearchSession session;
+  /**
+   * How many chunks we want to cache during
+   */
+  public static final int MAX_CACHED_CHUNKS_PER_SEARCH = 128;
   @Getter
-  private final Cell origin;
+  protected final Cell origin;
+  protected final ChunkCacheBlockProvider chunkCache;
+  protected final Queue<Node> upcoming;
+  private final SearchSession session;
   @Getter
   private final int domain;
   @Getter
   private final CostFunction costFunction;
+  private final CostFunction secondaryCostFunction;
   private final Completer completer;
   @Getter
   private final List<Mode> modes = new LinkedList<>();
   private final boolean saveOnComplete;
+  private final CompletableFuture<TrialResult> future = new CompletableFuture<>();
+  private final Map<Cell, Node> visited = new HashMap<>();
+  protected long startExecutionTime = -1;
   @Getter
   private double length;
   @Getter
@@ -81,38 +102,37 @@ public class AbstractPathTrial implements Resulted {
   private ResultState state;
   @Getter
   private boolean fromCache;
-  private long startExecutionTime = -1;
   private int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
+  // Search State
+  private boolean firstCycle = true;
+  private long nextAllowedRunTime = 0;
 
   /**
    * General constructor.
    *
-   * @param session         the session requesting this path trial run
-   * @param origin          the origin
-   * @param costFunction the object to score various possibilities when stepping to new locations
-   *                        throughout the algorithm
-   * @param completer       the object to determine whether the path algorithm is complete and
-   *                        the goal has been reached
+   * @param session               the session requesting this path trial run
+   * @param origin                the origin
+   * @param costFunction          the object to score various possibilities when stepping to new locations
+   *                              throughout the algorithm
+   * @param secondaryCostFunction a secondary function to evaluate after the cost function
+   * @param completer             the object to determine whether the path algorithm is complete and
+   *                              the goal has been reached
    */
   public AbstractPathTrial(SearchSession session,
                            Cell origin,
                            Collection<Mode> modes,
                            CostFunction costFunction,
+                           CostFunction secondaryCostFunction,
                            Completer completer,
                            boolean saveOnComplete) {
-    this.session = session;
-    this.origin = origin;
-    this.domain = origin.domain();
-    this.modes.addAll(modes);
-    this.costFunction = costFunction;
-    this.completer = completer;
-    this.saveOnComplete = saveOnComplete;
+    this(session, origin, modes, costFunction, secondaryCostFunction, completer, 0, null, ResultState.IDLE, false, saveOnComplete);
   }
 
   protected AbstractPathTrial(SearchSession session,
                               Cell origin,
                               Collection<Mode> modes,
                               CostFunction costFunction,
+                              CostFunction secondaryCostFunction,
                               Completer completer,
                               double length,
                               @Nullable Path path,
@@ -124,86 +144,137 @@ public class AbstractPathTrial implements Resulted {
     this.domain = origin.domain();
     this.modes.addAll(modes);
     this.costFunction = costFunction;
+    this.secondaryCostFunction = secondaryCostFunction;
     this.completer = completer;
     this.length = length;
     this.path = path;
     this.state = state;
     this.fromCache = fromCache;
     this.saveOnComplete = saveOnComplete;
+    this.chunkCache = new ChunkCacheBlockProvider(MAX_CACHED_CHUNKS_PER_SEARCH, session.flags());
+    this.upcoming = new PriorityQueue<>(Comparator.<Node>comparingDouble(node -> node.score + costFunction.apply(node.data.location()))
+        .thenComparingDouble(node -> secondaryCostFunction.apply(node.data.location())));
   }
 
-  private AbstractPathTrial.TrialResult resultFail() {
+  private void resultFail() {
     this.state = ResultState.STOPPED_FAILED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
     Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime, saveOnComplete));
-    return new TrialResult(null, true);
+    future.complete(new TrialResult(null, true));
   }
 
-  private AbstractPathTrial.TrialResult resultSucceed(double length, List<Step> steps) {
+  private void resultSucceed(double length, List<Step> steps) {
     this.state = ResultState.STOPPED_SUCCESSFUL;
     this.length = length;
     this.path = new Path(origin, new ArrayList<>(steps), length);
     this.fromCache = false;
+    if (saveOnComplete) {
+      cacheSuccess();
+    }
     Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime, saveOnComplete));
-    return new TrialResult(this.path, true);
+    future.complete(new TrialResult(this.path, true));
   }
 
-  private AbstractPathTrial.TrialResult resultCancel() {
+  private void resultCancel() {
     this.state = ResultState.STOPPED_CANCELED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
     Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime, false));
-    return new TrialResult(null, true);
+    future.complete(new TrialResult(null, true));
+  }
+
+  private void resultError() {
+    this.state = ResultState.STOPPED_ERROR;
+    this.length = Double.MAX_VALUE;
+    this.fromCache = false;
+    Journey.get().dispatcher().dispatch(new StopPathSearchEvent(session, this, System.currentTimeMillis() - startExecutionTime, false));
+    future.complete(new TrialResult(null, true));
+  }
+
+  @Override
+  public void reset() {
+    firstCycle = true;
+    upcoming.clear();
+    visited.clear();
+    state = ResultState.IDLE;
+  }
+
+  protected void prepareIo() {
+    // nothing by default
   }
 
   /**
    * Attempt to calculate a path given some modes of transportation.
-   *
-   * @param useCacheIfPossible whether the cache should be used for retrieving previous results
-   * @return a result object
    */
-  @NotNull
-  public TrialResult attempt(boolean useCacheIfPossible) {
+  @Override
+  public boolean run() {
+    try {
+      return runSafe();
+    } catch (Exception e) {
+      e.printStackTrace();
+      resultError();
+      return true;
+    }
+  }
 
-    // Return the saved states, but only if we want that result.
-    //  If we don't want to use the cache, but this result is from the cache,
-    //  then don't return this.
-    if (!this.fromCache || useCacheIfPossible) {
-      if (this.state == ResultState.STOPPED_SUCCESSFUL) {
-        if (path.test(modes)) {
-          return new TrialResult(path, false);
-        }
-      } else if (this.state == ResultState.STOPPED_FAILED) {
-        return new TrialResult(null, false);
+  private boolean runSafe() {
+    if (state.isStopped()) {
+      return true;
+    }
+    // Dispatch a starting event
+    if (state == ResultState.IDLE) {
+      Journey.get().dispatcher().dispatch(new StartPathSearchEvent(session, this));
+      startExecutionTime = System.currentTimeMillis();
+      state = ResultState.RUNNING;
+    }
+
+    if (firstCycle) {
+      Node originNode = new Node(new Step(origin, 0, ModeType.NONE),
+          null, 0);
+      upcoming.add(originNode);
+      visited.put(origin, originNode);
+      Journey.get().dispatcher().dispatch(new VisitationSearchEvent(session, originNode.getData()));
+      firstCycle = false;
+    }
+
+    if (session.getAlgorithmStepDelay() != 0) {
+      // We need to track our times that we run so that we can delay appropriately
+      long now = System.currentTimeMillis();
+      if (nextAllowedRunTime > now) {
+        // we cannot run now, wait for next run
+        return false;
+      } else {
+        // We can run since we're past the allowed run time, but set the next one
+        nextAllowedRunTime = now + session.getAlgorithmStepDelay();
       }
     }
 
-    // Dispatch a starting event
-    Journey.get().dispatcher().dispatch(new StartPathSearchEvent(session, this));
-    startExecutionTime = System.currentTimeMillis();
-
-    Queue<Node> upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> node.score + costFunction.apply(node.data.location()) * CALCULATION_MULTIPLIER_PER_BLOCK));
-    Map<Cell, Node> visited = new HashMap<>();
-
-    Node originNode = new Node(new Step(origin, 0, ModeType.NONE),
-        null, 0);
-    upcoming.add(originNode);
-    visited.put(origin, originNode);
-    Journey.get().dispatcher().dispatch(new VisitationSearchEvent(session, originNode.getData()));
+    // Start actual execution
+    int startingCycleCount = visited.size();  // tracker to make sure we have short work cycles
 
     Node current;
     while (!upcoming.isEmpty()) {
+      // Queue any IO we will likely needed
+      prepareIo();
+
       synchronized (session) {
         if (session.state.shouldStop()) {
           // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
-          return resultCancel();
+          resultCancel();
+          return true;
         }
       }
 
       if (visited.size() > maxCellCount) {
         // We ran out of allocated memory. Let's just call it here and say we failed and cache the failure.
-        return resultFail();
+        resultFail();
+        return true;
+      }
+
+      if (visited.size() >= startingCycleCount + CELLS_PER_EXECUTION_CYCLE) {
+        // Quit after a certain number of blocks to allow other searches to run
+        return false;  // (not done)
       }
 
       current = upcoming.poll();
@@ -219,12 +290,20 @@ public class AbstractPathTrial implements Resulted {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
-        return resultSucceed(length, steps);
+        resultSucceed(length, steps);
+        return true;
       }
 
       // Need to keep going
       for (Mode mode : modes) {
-        for (Mode.Option option : mode.getDestinations(current.getData().location())) {
+        Collection<Mode.Option> options;
+        try {
+          options = mode.getDestinations(current.getData().location(), chunkCache);
+        } catch (ExecutionException | InterruptedException e) {
+          Journey.logger().error(String.format("An %s occurred during the following path trial: %s", e.getClass().getName(), this));
+          continue;
+        }
+        for (Mode.Option option : options) {
           if (visited.containsKey(option.location())) {
             // Already visited, but see if it is better to come from this new direction
             Node that = visited.get(option.location());
@@ -249,14 +328,43 @@ public class AbstractPathTrial implements Resulted {
           }
         }
       }
+      if (session.getAlgorithmStepDelay() != 0) {
+        // delay the algorithm per the request of the session (animation purposes)
+        return false;
+      }
     }
 
     // We've exhausted all possibilities. Fail.
-    return resultFail();
+    resultFail();
+    return true;
+  }
+
+  protected void cacheSuccess() {
+    // do nothing by default
   }
 
   public void setMaxCellCount(int maxCellCount) {
     this.maxCellCount = maxCellCount;
+  }
+
+  @Override
+  public UUID owner() {
+    // "Owner" is just the session id
+    return session.uuid();
+  }
+
+  @Override
+  public String toString() {
+    return "PathTrial{state: " + state
+        + ", origin:" + origin
+        + ", costFunction:" + costFunction
+        + ", secondaryCostFunction:" + secondaryCostFunction
+        + ", fromCache:" + fromCache
+        + "}";
+  }
+
+  public CompletableFuture<TrialResult> future() {
+    return future;
   }
 
   /**
@@ -269,7 +377,7 @@ public class AbstractPathTrial implements Resulted {
   }
 
   /**
-   * A result object to return the result of the {@link #attempt} method.
+   * A result object to return the result of the overall search.
    */
   public static class TrialResult {
     Path path;
@@ -321,7 +429,6 @@ public class AbstractPathTrial implements Resulted {
     }
 
   }
-
 
 
 }

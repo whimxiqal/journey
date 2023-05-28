@@ -24,11 +24,16 @@
 package net.whimxiqal.journey.search;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.config.Settings;
+import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.search.function.CostFunction;
+import net.whimxiqal.journey.search.function.EuclideanDistanceCostFunction;
 import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
 
 /**
@@ -38,6 +43,8 @@ import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
 public class PathTrial extends AbstractPathTrial {
 
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
+  private static final int MAX_PREPARED_CHUNKS = 10;
+  private static boolean loggedMaxCacheHit = false;  // only log this message once
   @Getter
   private final Cell destination;
 
@@ -52,6 +59,7 @@ public class PathTrial extends AbstractPathTrial {
                     boolean saveOnComplete) {
     super(session, origin, modes,
         costFunction(destination),
+        new EuclideanDistanceCostFunction(destination),
         node -> node.getData().location().distanceToSquared(destination)
             <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
         length,
@@ -141,9 +149,35 @@ public class PathTrial extends AbstractPathTrial {
                                  Path path) {
     return new PathTrial(session, origin, destination,
         modes,
-        path == null ? origin.distanceTo(destination) : path.getCost(), path,
-        path == null ? ResultState.STOPPED_FAILED : ResultState.STOPPED_SUCCESSFUL,
+        path.getCost(), path,
+        ResultState.STOPPED_SUCCESSFUL,
         true, false);
+  }
+
+  @Override
+  protected void prepareIo() {
+    chunkCache.prepareChunks(upcoming.peek().getData().location(), destination, MAX_PREPARED_CHUNKS);
+  }
+
+  @Override
+  protected void cacheSuccess() {
+    Journey.get().proxy().schedulingManager().schedule(() -> {
+      if (Journey.get().dataManager().pathRecordManager().totalRecordCellCount() + getLength() > Settings.MAX_CACHED_CELLS.getValue()) {
+        if (!loggedMaxCacheHit) {
+          Journey.logger().warn("The Journey database has cached the max number of cells allowed in the config file. Raise this number to continue caching results.");
+          loggedMaxCacheHit = true;
+        }
+        return;
+      }
+      try {
+        Journey.get().dataManager().pathRecordManager().report(
+            this,
+            getModes().stream().map(Mode::type).collect(Collectors.toSet()),
+            System.currentTimeMillis() - startExecutionTime);
+      } catch (DataAccessException e) {
+        Journey.logger().error("SQL error trying to cache a path.");
+      }
+    }, true);
   }
 
 }

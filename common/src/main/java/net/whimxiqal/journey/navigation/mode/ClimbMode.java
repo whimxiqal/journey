@@ -21,61 +21,56 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.navigation.mode;
+package net.whimxiqal.journey.navigation.mode;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A mode to provide the results to whether a player can climb blocks around them,
  * like ladders or vines.
  */
-public final class ClimbMode extends BukkitMode {
+public final class ClimbMode extends Mode {
 
-  private static final Set<Material> climbable = new HashSet<>(Arrays.asList(Material.LADDER, Material.VINE));
-
-  /**
-   * General constructor.
-   *
-   * @param forcePassable a set of materials deemed passable
-   */
-  public ClimbMode(SearchSession session, Set<Material> forcePassable) {
-    super(session, forcePassable);
+  public ClimbMode(@NotNull SearchSession session) {
+    super(session);
   }
 
   @Override
-  protected void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options) {
+  public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
+    List<Option> options = new LinkedList<>();
 
     // TODO we have to make sure that the ladders and vines are oriented correctly
     //  and that the vines have a solid block behind it
-    tryToClimbAdjacent(origin.atOffset(1, 0, 0), options);
-    tryToClimbAdjacent(origin.atOffset(-1, 0, 0), options);
-    tryToClimbAdjacent(origin.atOffset(0, 0, 1), options);
-    tryToClimbAdjacent(origin.atOffset(0, 0, -1), options);
-    tryToClimbAdjacent(origin.atOffset(0, -1, 0), options);
+    tryToClimbAdjacent(origin.atOffset(1, 0, 0), blockProvider, options);
+    tryToClimbAdjacent(origin.atOffset(-1, 0, 0), blockProvider, options);
+    tryToClimbAdjacent(origin.atOffset(0, 0, 1), blockProvider, options);
+    tryToClimbAdjacent(origin.atOffset(0, 0, -1), blockProvider, options);
+    tryToClimbAdjacent(origin.atOffset(0, -1, 0), blockProvider, options);
 
     // Going up is a different story
-    if (climbable.contains(BukkitUtil.getBlock(origin).getMaterial())) {
-      if (isVerticallyPassable(BukkitUtil.getBlock(origin.atOffset(0, 1, 0)))
-          && isVerticallyPassable(BukkitUtil.getBlock(origin.atOffset(0, 2, 0)))) {
+    if (blockProvider.getBlock(origin).isClimbable()) {
+      if (blockProvider.getBlock(origin.atOffset(0, 1, 0)).isVerticallyPassable()
+          && blockProvider.getBlock(origin.atOffset(0, 2, 0)).isVerticallyPassable()) {
         accept(origin.atOffset(0, 1, 0), 1.0d, options);
       } else {
         reject(origin.atOffset(0, 1, 0));
       }
     }
 
+    return options;
   }
 
-  private void tryToClimbAdjacent(Cell cell, List<Option> options) {
-    if (climbable.contains(BukkitUtil.getBlock(cell).getMaterial())) {
+  private void tryToClimbAdjacent(Cell cell, BlockProvider blockProvider, List<Option> options) throws ExecutionException, InterruptedException {
+    if (blockProvider.getBlock(cell).isClimbable()) {
       accept(cell, 1.0d, options);
     } else {
       reject(cell);

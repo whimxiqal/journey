@@ -24,10 +24,11 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.event.ModeFailureEvent;
 import net.whimxiqal.journey.search.event.ModeSuccessEvent;
@@ -41,11 +42,6 @@ public abstract class Mode {
 
   private final SearchSession session;
 
-  /**
-   * General constructor.
-   *
-   * @param session the search session requesting information from this mode
-   */
   public Mode(@NotNull SearchSession session) {
     this.session = session;
   }
@@ -57,13 +53,10 @@ public abstract class Mode {
    *
    * @param origin the original (current) location
    * @return all options
+   * @throws ExecutionException   if the async retrieval of a block had an error
+   * @throws InterruptedException if the async retrieval of a block was interrupted
    */
-  @NotNull
-  public final Collection<Option> getDestinations(@NotNull Cell origin) {
-    List<Option> options = new LinkedList<>();
-    collectDestinations(origin, options);
-    return options;
-  }
+  public abstract Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException;
 
   /**
    * Accept a location and its distance to the list of possible options.
@@ -78,7 +71,6 @@ public abstract class Mode {
                               double distance,
                               @NotNull List<Option> options) {
     options.add(new Option(destination, distance));
-    delay();
     Journey.get().dispatcher().dispatch(new ModeSuccessEvent(session, destination, type()));
   }
 
@@ -91,23 +83,8 @@ public abstract class Mode {
    * @param destination the rejected destination
    */
   protected final void reject(@NotNull Cell destination) {
-    delay();
     Journey.get().dispatcher().dispatch(new ModeFailureEvent(session, destination, type()));
   }
-
-  private void delay() {
-    // Delay the algorithm, if requested by implementation of search session
-    // (Primarily used in animating the search process)
-    if (session.getAlgorithmStepDelay() != 0) {
-      try {
-        Thread.sleep(session.getAlgorithmStepDelay());
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-  }
-
-  protected abstract void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options);
 
   /**
    * Get the mode type.
@@ -125,6 +102,17 @@ public abstract class Mode {
     final Cell location;
     final double cost;
 
+    /**
+     * General constructor.
+     *
+     * @param location the location
+     * @param cost     the destination
+     */
+    public Option(@NotNull Cell location, double cost) {
+      this.location = location;
+      this.cost = cost;
+    }
+
     public static Option between(Cell origin, int destinationX, int destinationY, int destinationZ) {
       Cell destination = new Cell(destinationX, destinationY, destinationZ, origin.domain());
       return new Option(destination, origin.distanceTo(destination));
@@ -132,17 +120,6 @@ public abstract class Mode {
 
     public static Option between(Cell origin, Cell destination, double costMultiplier) {
       return new Option(destination, origin.distanceTo(destination));
-    }
-
-    /**
-     * General constructor.
-     *
-     * @param location the location
-     * @param cost the destination
-     */
-    public Option(@NotNull Cell location, double cost) {
-      this.location = location;
-      this.cost = cost;
     }
 
     /**
