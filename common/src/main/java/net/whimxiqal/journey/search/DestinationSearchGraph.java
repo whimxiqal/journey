@@ -79,11 +79,11 @@ public class DestinationSearchGraph extends SearchGraph {
   @Nullable
   @Override
   public ItineraryTrial calculate(boolean mustUseCache) {
-    AlternatingList<Tunnel, PathTrial, Object> graphPath = findMinimumPath(originNode, destinationNode, trial -> !mustUseCache || trial.isFromCache());
+    AlternatingList<Tunnel, DestinationPathTrial, Object> graphPath = findMinimumPath(originNode, destinationNode, trial -> !mustUseCache || trial.isFromCache());
     if (graphPath == null) {
       return null;
     } else {
-      return new ItineraryTrial(session, origin, graphPath);
+      return new ItineraryTrial(origin, graphPath, session.flags);
     }
   }
 }

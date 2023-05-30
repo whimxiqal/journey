@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 class ChunkCacheTest extends JourneyTestHarness {
 
   void correctness(BlockProvider provider, Cell cell) throws ExecutionException, InterruptedException {
-    Assertions.assertEquals(cell, provider.getBlock(cell).cell());
+    Assertions.assertEquals(cell, provider.toBlock(cell).cell());
   }
 
   @Test

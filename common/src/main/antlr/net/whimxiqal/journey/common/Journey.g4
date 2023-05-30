@@ -23,7 +23,7 @@ serverUnsetWaypoint: UNSET;
 serverRenameWaypoint: RENAME newname=identifier;
 
 admin: ADMIN (debug | cache | reload=RELOAD | listNetherPortals);
-debug: DEBUG target=identifier?;
+debug: DEBUG;
 cache: CACHE (cachePortals | cachePaths);
 cachePortals: PORTALS (clear=CLEAR);
 cachePaths: PATHS (clear=CLEAR | build=BUILD);

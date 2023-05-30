@@ -39,6 +39,11 @@ public record BukkitSessionJourneyBlock(Cell cell,
                                         FlagSet flagSet) implements JourneyBlock {
 
   @Override
+  public boolean isAir() {
+    return data.getMaterial() == Material.AIR;
+  }
+
+  @Override
   public boolean isNetherPortal() {
     return data.getMaterial() == Material.NETHER_PORTAL;
   }

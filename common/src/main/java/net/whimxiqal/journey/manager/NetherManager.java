@@ -35,11 +35,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.TunnelType;
-import net.whimxiqal.journey.message.Formatter;
-import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.NetherTunnel;
 
 /**
@@ -130,9 +128,7 @@ public final class NetherManager {
       // Remove any connections with this origin (the portal link changed)
       linkedOrigins.forEach(old -> {
         if (portalConnections.containsKey(old)) {
-          Journey.get().debugManager().broadcast(Formatter.debug("Removed nether tunnel:"));
-          Journey.get().debugManager().broadcast(Formatter.debug(old + " -> "));
-          Journey.get().debugManager().broadcast(Formatter.debug(portalConnections.get(old).toString()));
+          Journey.logger().debug("Removed nether portal tunnel: " + old + " -> " + portalConnections.get(old).toString());
 
           portalConnections.remove(old);
           Journey.get().dataManager()
@@ -151,9 +147,7 @@ public final class NetherManager {
           NetherTunnel.COST,
           TunnelType.NETHER);
       if (previous == null) {
-        Journey.get().debugManager().broadcast(Formatter.debug("Added nether tunnel:"
-            + originGroup.tunnelLocation() + " -> "
-            + destinationGroup.get().tunnelLocation().toString()));
+        Journey.logger().debug("Added nether tunnel: " + originGroup.tunnelLocation() + " -> " + destinationGroup.get().tunnelLocation().toString());
       }
     }, false, 20);
   }

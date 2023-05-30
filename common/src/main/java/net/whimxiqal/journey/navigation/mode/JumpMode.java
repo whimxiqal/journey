@@ -31,7 +31,6 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,30 +39,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JumpMode extends Mode {
 
-  public JumpMode(@NotNull SearchSession session) {
-    super(session);
-  }
-
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     List<Option> options = new LinkedList<>();
     Cell cell;
 
     cell = origin.atOffset(0, -1, 0);
-    if (blockProvider.getBlock(cell).isVerticallyPassable()) {
+    if (blockProvider.toBlock(cell).isVerticallyPassable()) {
       // Nothing to jump off of
-      reject(cell);
       return options;
     }
 
     cell = origin.atOffset(0, 2, 0);
-    if (!blockProvider.getBlock(cell).isVerticallyPassable()) {
+    if (!blockProvider.toBlock(cell).isVerticallyPassable()) {
       // No room to jump
-      reject(cell);
       return options;
     }
     // 1 block up
-    accept(origin.atOffset(0, 1, 0), 1.0d, options);
+    options.add(new Option(origin.atOffset(0, 1, 0), 1.0d));
 
     // 1 block away and up
     for (int offX = -1; offX <= 1; offX++) {
@@ -79,32 +72,28 @@ public class JumpMode extends Mode {
                 insideOffX * offX /* get sign back */,
                 1,
                 insideOffZ * offZ /* get sign back */);
-            if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
-              reject(cell);
+            if (!blockProvider.toBlock(cell).isLaterallyPassable()) {
               continue outerZ;
             }
             cell = origin.atOffset(
                 insideOffX * offX /* get sign back */,
                 2,
                 insideOffZ * offZ /* get sign back */);
-            if (!blockProvider.getBlock(cell).isPassable()) {
-              reject(cell);
+            if (!blockProvider.toBlock(cell).isPassable()) {
               continue outerZ;
             }
           }
         }
-        double jumpDistance = blockProvider.getBlock(origin.atOffset(offX, 1, offZ)).height()
+        double jumpDistance = blockProvider.toBlock(origin.atOffset(offX, 1, offZ)).height()
             + 1.0
-            - (blockProvider.getBlock(origin.atOffset(0, 0, 0)).isPassable()
-            ? blockProvider.getBlock(origin.atOffset(0, -1, 0)).height() - 1
-            : blockProvider.getBlock(origin.atOffset(0, 0, 0)).height());
+            - (blockProvider.toBlock(origin.atOffset(0, 0, 0)).isPassable()
+            ? blockProvider.toBlock(origin.atOffset(0, -1, 0)).height() - 1
+            : blockProvider.toBlock(origin.atOffset(0, 0, 0)).height());
         Cell other = origin.atOffset(offX, 1, offZ);
-        if (!blockProvider.getBlock(origin.atOffset(offX, 0, offZ)).isVerticallyPassable()
+        if (!blockProvider.toBlock(origin.atOffset(offX, 0, offZ)).isVerticallyPassable()
             && jumpDistance <= 1.2) {
           // Can stand here
-          accept(other, origin.distanceTo(other), options);
-        } else {
-          reject(other);
+          options.add(new Option(other, origin.distanceTo(other)));
         }
       }
     }

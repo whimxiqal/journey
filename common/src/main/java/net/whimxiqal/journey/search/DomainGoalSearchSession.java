@@ -26,7 +26,7 @@ package net.whimxiqal.journey.search;
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 
-public abstract class DomainGoalSearchSession extends GraphGoalSearchSession<DomainSearchGraph> {
+public class DomainGoalSearchSession extends GraphGoalSearchSession<DomainSearchGraph> {
   protected final int domain;
 
   public DomainGoalSearchSession(UUID callerId, Caller callerType, Cell origin, int destinationDomain, boolean persistentOrigin) {
@@ -35,13 +35,21 @@ public abstract class DomainGoalSearchSession extends GraphGoalSearchSession<Dom
   }
 
   @Override
+  public void initialize() {
+    super.initialize();
+
+    if (callerType == Caller.PLAYER) {
+      setPlayerModes();
+      setPlayerTunnels();
+    }
+  }
+
+  @Override
   public void asyncSearch() {
     // Do an initial check to make sure we're not in the given domain, then run the normal execution
     if (domain == origin.domain()) {
-      synchronized (this) {
-        state = ResultState.STOPPED_ERROR;
-        complete();
-      }
+      state.set(ResultState.STOPPED_ERROR);
+      complete(null);
       return;
     }
     super.asyncSearch();

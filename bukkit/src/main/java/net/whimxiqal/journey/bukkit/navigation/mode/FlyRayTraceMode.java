@@ -37,8 +37,8 @@ public class FlyRayTraceMode extends RayTraceMode {
 
   private static final int VOLUMETRIC_FREQUENCY = 16;
 
-  public FlyRayTraceMode(SearchSession session, Cell destination) {
-    super(session, destination, 0.6, 1.8, 0.6, FluidCollisionMode.NEVER);
+  public FlyRayTraceMode(Cell destination) {
+    super(destination, 0.6, 1.8, 0.6, FluidCollisionMode.NEVER);
   }
 
   @Override

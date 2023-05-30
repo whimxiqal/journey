@@ -30,10 +30,8 @@ public enum ResultState {
 
   IDLE("idle"),
   RUNNING("running"),
-  RUNNING_SUCCESSFUL("running (successful)"),
   STOPPING_CANCELED("stopping (canceled)"), // manually canceled
   STOPPING_FAILED("stopping (failed)"),
-  STOPPING_SUCCESSFUL("stopping (successful)"),
   STOPPING_ERROR("stopping (error)"),
   STOPPED_FAILED("stopped (failed)"),
   STOPPED_SUCCESSFUL("stopped (successful)"),
@@ -54,10 +52,8 @@ public enum ResultState {
   public boolean isRunning() {
     switch (this) {
       case RUNNING:
-      case RUNNING_SUCCESSFUL:
       case STOPPING_FAILED:
       case STOPPING_CANCELED:
-      case STOPPING_SUCCESSFUL:
         return true;
       default:
         return false;
@@ -84,7 +80,7 @@ public enum ResultState {
 
   public boolean isStopping() {
     return switch (this) {
-      case STOPPING_FAILED, STOPPING_SUCCESSFUL, STOPPING_CANCELED, STOPPING_ERROR -> true;
+      case STOPPING_FAILED, STOPPING_CANCELED, STOPPING_ERROR -> true;
       default -> false;
     };
   }
@@ -97,7 +93,6 @@ public enum ResultState {
   public boolean isSuccessful() {
     switch (this) {
       case STOPPED_SUCCESSFUL:
-      case RUNNING_SUCCESSFUL:
         return true;
       default:
         return false;
@@ -112,7 +107,6 @@ public enum ResultState {
   public boolean shouldStop() {
     switch (this) {
       case STOPPING_FAILED:
-      case STOPPING_SUCCESSFUL:
       case STOPPING_CANCELED:
       case STOPPING_ERROR:
       case STOPPED_CANCELED:
@@ -135,8 +129,6 @@ public enum ResultState {
       case IDLE:
       case RUNNING:
         return cancel ? ResultState.STOPPING_CANCELED : ResultState.STOPPING_FAILED;
-      case RUNNING_SUCCESSFUL:
-        return ResultState.STOPPING_SUCCESSFUL;
       default:
         return this;
     }
@@ -153,9 +145,6 @@ public enum ResultState {
       case RUNNING:
       case STOPPING_FAILED:
         return STOPPED_FAILED;
-      case RUNNING_SUCCESSFUL:
-      case STOPPING_SUCCESSFUL:
-        return STOPPED_SUCCESSFUL;
       case STOPPING_CANCELED:
         return STOPPED_CANCELED;
       case STOPPING_ERROR:

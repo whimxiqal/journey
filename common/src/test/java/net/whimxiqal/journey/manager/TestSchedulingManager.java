@@ -27,6 +27,8 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -34,18 +36,19 @@ public class TestSchedulingManager implements SchedulingManager {
 
   public static final int TICK_PERIOD_MS = 10;
   private final PriorityBlockingQueue<Task> queue;
+  private final ExecutorService asyncService;
   private final Set<UUID> canceledTasks;
 
   public TestSchedulingManager() {
     queue = new PriorityBlockingQueue<>(10, Comparator.comparing(task -> task.executionTime));
+    asyncService = Executors.newFixedThreadPool(2);
     canceledTasks = ConcurrentHashMap.newKeySet();
   }
 
   @Override
   public void schedule(Runnable runnable, boolean async) {
     if (async) {
-      Thread thread = new Thread(runnable);
-      thread.start();
+      asyncService.execute(runnable);
     } else {
       runnable.run();
     }
@@ -55,7 +58,7 @@ public class TestSchedulingManager implements SchedulingManager {
   public void schedule(Runnable runnable, boolean async, int tickDelay) {
     long delayMs = tickDelay / 20 * 1000L;
     if (async) {
-      Thread thread = new Thread(() -> {
+      asyncService.execute(() -> {
         try {
           Thread.sleep(delayMs);
           runnable.run();
@@ -63,7 +66,6 @@ public class TestSchedulingManager implements SchedulingManager {
           e.printStackTrace();
         }
       });
-      thread.start();
     } else {
       Task task = new Task();
       task.runnable = runnable;
@@ -86,7 +88,7 @@ public class TestSchedulingManager implements SchedulingManager {
           try {
             Thread.sleep(periodMs);
             runnable.run();
-          } catch (InterruptedException e) {
+          } catch (Exception e) {
             e.printStackTrace();
           }
         }

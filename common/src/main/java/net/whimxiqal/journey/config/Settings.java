@@ -52,9 +52,6 @@ public final class Settings {
   public static final Setting<Integer> MAX_SEARCHES
       = new IntegerSetting("search.max-searches", 16, 0, 1000000);
 
-  public static final Setting<Integer> DEDICATED_THREADS
-      = new IntegerSetting("search.dedicated-threads", 1, 1, 1000);
-
   public static final Setting<Long> MAX_CACHED_CELLS
       = new LongSetting("storage.cache.max_cells", 500000, 1, Long.MAX_VALUE) /* Default is somewhere around 10-20 MB */;
 

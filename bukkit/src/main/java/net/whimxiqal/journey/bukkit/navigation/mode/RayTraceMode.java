@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.chunk.BlockProvider;
-import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.navigation.Mode;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -39,7 +39,7 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class RayTraceMode extends BukkitMode {
+public abstract class RayTraceMode extends Mode {
 
   private final static long CALCULATION_COOLDOWN_MS = 1000;  // once per second;
   private final static double MAX_DISTANCE = 1024;
@@ -54,10 +54,9 @@ public abstract class RayTraceMode extends BukkitMode {
   private final FluidCollisionMode fluidCollisionMode;
   private long lastCalculationTime = System.currentTimeMillis();
 
-  public RayTraceMode(SearchSession session, Cell destination,
+  public RayTraceMode(Cell destination,
                       double crossSectionLengthX, double crossSectionLengthY, double crossSectionLengthZ,
                       FluidCollisionMode fluidCollisionMode) {
-    super(session);
     this.domain = destination.domain();
     this.destinationCell = destination;
     this.destination = BukkitUtil.toLocation(destination);
@@ -149,7 +148,7 @@ public abstract class RayTraceMode extends BukkitMode {
     if (result.get().equals(origin)) {
       return options;
     }
-    if (!blockProvider.getBlock(result.get()).isPassable() || !blockProvider.getBlock(result.get().atOffset(0, 1, 0)).isPassable()) {
+    if (!blockProvider.toBlock(result.get()).isPassable() || !blockProvider.toBlock(result.get().atOffset(0, 1, 0)).isPassable()) {
       return options;  // we can't stand here!
     }
 

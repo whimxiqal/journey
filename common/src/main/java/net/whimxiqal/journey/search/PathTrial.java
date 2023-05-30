@@ -23,161 +23,403 @@
 
 package net.whimxiqal.journey.search;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import lombok.Getter;
+import lombok.Setter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.config.Settings;
-import net.whimxiqal.journey.data.DataAccessException;
+import net.whimxiqal.journey.manager.WorkItem;
 import net.whimxiqal.journey.navigation.Mode;
+import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
+import net.whimxiqal.journey.navigation.Step;
+import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.search.function.CostFunction;
-import net.whimxiqal.journey.search.function.EuclideanDistanceCostFunction;
-import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * An extension of {@link AbstractPathTrial} where the goal of the trial is to find a path to
- * a specific predefined destination.
+ * An attempt to calculate a {@link Path} encapsulated into an object.
+ *
+ * @see Path
+ * @see SearchSession
+ * @see ItineraryTrial
  */
-public class PathTrial extends AbstractPathTrial {
+public class PathTrial implements WorkItem {
 
-  public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
-  private static final int MAX_PREPARED_CHUNKS = 10;
-  private static boolean loggedMaxCacheHit = false;  // only log this message once
+  /**
+   * How many cells to run per cycle.
+   * The fewer the cells, the more cycles this has to run to complete the search,
+   * but the more opportunities other searches get to override this to make room for other necessary work.
+   * Left un-final for testing.
+   */
+  public static double CELLS_PER_EXECUTION_CYCLE = 1000;
+
+  /**
+   * How many chunks we want to cache during
+   */
+  public static final int MAX_CACHED_CHUNKS_PER_SEARCH = 128;
   @Getter
-  private final Cell destination;
-
-  private PathTrial(SearchSession session,
-                    Cell origin,
-                    Cell destination,
-                    Collection<Mode> modes,
-                    double length,
-                    Path path,
-                    ResultState state,
-                    boolean fromCache,
-                    boolean saveOnComplete) {
-    super(session, origin, modes,
-        costFunction(destination),
-        new EuclideanDistanceCostFunction(destination),
-        node -> node.getData().location().distanceToSquared(destination)
-            <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
-        length,
-        path,
-        state,
-        fromCache,
-        saveOnComplete);
-    this.destination = destination;
-  }
-
-  private static CostFunction costFunction(Cell destination) {
-    return new PlanarOrientedCostFunction(destination);
-  }
-
-  /**
-   * Get a path trial that is already determined to be successful.
-   * Any attempts will result in success.
-   *
-   * @param session     the session
-   * @param origin      the origin of the path
-   * @param destination the destination of the path
-   * @param modes       the types of modes used
-   * @param path        the path
-   * @return the successful path trial
-   */
-  public static PathTrial successful(SearchSession session,
-                                     Cell origin, Cell destination,
-                                     Collection<Mode> modes,
-                                     Path path) {
-    return new PathTrial(session, origin, destination,
-        modes,
-        path.getCost(), path,
-        ResultState.STOPPED_SUCCESSFUL, false, false);
-  }
+  protected final Cell origin;
+  protected final ChunkCacheBlockProvider chunkCache;
+  protected final Queue<Node> upcoming;
+  private final SearchSession session;
+  @Getter
+  private final int domain;
+  @Getter
+  protected final CostFunction costFunction;
+  private final Completer completer;
+  @Getter
+  private final List<Mode> modes = new LinkedList<>();
+  private final boolean saveOnComplete;
+  private final CompletableFuture<TrialResult> future = new CompletableFuture<>();
+  private final Map<Cell, Node> visited = new HashMap<>();
+  protected long startExecutionTime = -1;
+  @Getter
+  private double length;
+  @Getter
+  private Path path;
+  @Getter
+  protected ResultState state;
+  @Getter
+  protected boolean fromCache;
+  private final int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
+  // Search State
+  private boolean firstCycle = true;
+  private long nextAllowedRunTime = 0;
 
   /**
-   * Get a path trial that is already determined to have failed.
-   * Any attempts will result in failure.
+   * General constructor.
    *
-   * @param session     the session
-   * @param origin      the origin of the path
-   * @param destination the destination of the path
-   * @return the path trial
+   * @param session               the session requesting this path trial run
+   * @param origin                the origin
+   * @param costFunction          the object to score various possibilities when stepping to new locations
+   *                              throughout the algorithm
+   * @param completer             the object to determine whether the path algorithm is complete and
+   *                              the goal has been reached
    */
-  public static PathTrial failed(SearchSession session,
-                                 Cell origin, Cell destination,
-                                 Collection<Mode> modes) {
-    return new PathTrial(session, origin, destination,
-        modes,
-        Double.MAX_VALUE, null,
-        ResultState.STOPPED_FAILED, false, false);
+  public PathTrial(SearchSession session,
+                   Cell origin,
+                   Collection<Mode> modes,
+                   CostFunction costFunction,
+                   Completer completer,
+                   boolean saveOnComplete) {
+    this(session, origin, modes, costFunction, completer, 0, null, ResultState.IDLE, false, saveOnComplete);
   }
 
-  /**
-   * Get a path trial that has not yet been calculated.
-   * We will approximate the result as the cartesian distance between the
-   * origin and destination,
-   * but a more precise answer will be calculated the first time it is attempted.
-   *
-   * @param session     the session
-   * @param origin      the origin
-   * @param destination the destination
-   * @return the path trial
-   */
-  public static PathTrial approximate(SearchSession session,
-                                      Cell origin, Cell destination,
-                                      Collection<Mode> modes,
-                                      boolean saveOnComplete) {
-    return new PathTrial(session, origin, destination,
-        modes,
-        costFunction(destination).apply(origin), null,
-        ResultState.IDLE, false, saveOnComplete);
+  protected PathTrial(SearchSession session,
+                      Cell origin,
+                      Collection<Mode> modes,
+                      CostFunction costFunction,
+                      Completer completer,
+                      double length,
+                      @Nullable Path path,
+                      ResultState state,
+                      boolean fromCache,
+                      boolean saveOnComplete) {
+    this.session = session;
+    this.origin = origin;
+    this.domain = origin.domain();
+    this.modes.addAll(modes);
+    this.costFunction = costFunction;
+    this.completer = completer;
+    this.length = length;
+    this.path = path;
+    this.state = state;
+    this.fromCache = fromCache;
+    this.saveOnComplete = saveOnComplete;
+    this.chunkCache = new ChunkCacheBlockProvider(MAX_CACHED_CHUNKS_PER_SEARCH, session.flags());
+    this.upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> node.score + costFunction.apply(node.data.location())));
   }
 
-  /**
-   * Get a path trial that has some result determined from the cache.
-   *
-   * @param session     the session
-   * @param origin      the origin
-   * @param destination the destination
-   * @param path        the path
-   * @return the path trial
-   */
-  public static PathTrial cached(SearchSession session,
-                                 Cell origin, Cell destination,
-                                 Collection<Mode> modes,
-                                 Path path) {
-    return new PathTrial(session, origin, destination,
-        modes,
-        path.getCost(), path,
-        ResultState.STOPPED_SUCCESSFUL,
-        true, false);
+  private void resultFail() {
+    this.state = ResultState.STOPPED_FAILED;
+    this.length = Double.MAX_VALUE;
+    this.fromCache = false;
+    Journey.logger().debug(this + ": path trial failed");
+    future.complete(new TrialResult(this.state, null, true));
+  }
+
+  private void resultSucceed(double length, List<Step> steps) {
+    this.state = ResultState.STOPPED_SUCCESSFUL;
+    this.length = length;
+    this.path = new Path(origin, new ArrayList<>(steps), length);
+    this.fromCache = false;
+    if (saveOnComplete) {
+      cacheSuccess();
+    }
+    Journey.logger().debug(this + ": path trial succeeded");
+    future.complete(new TrialResult(this.state, this.path, true));
+  }
+
+  private void resultCancel() {
+    this.state = ResultState.STOPPED_CANCELED;
+    this.length = Double.MAX_VALUE;
+    this.fromCache = false;
+    Journey.logger().debug(this + ": path trial canceled");
+    future.complete(new TrialResult(this.state, null, true));
+  }
+
+  private void resultError() {
+    this.state = ResultState.STOPPED_ERROR;
+    this.length = Double.MAX_VALUE;
+    this.fromCache = false;
+    Journey.logger().debug(this + ": path trial stopped due to error");
+    future.complete(new TrialResult(this.state, null, true));
   }
 
   @Override
+  public void reset() {
+    firstCycle = true;
+    upcoming.clear();
+    visited.clear();
+    state = ResultState.IDLE;
+  }
+
   protected void prepareIo() {
-    chunkCache.prepareChunks(upcoming.peek().getData().location(), destination, MAX_PREPARED_CHUNKS);
+    // nothing by default
+  }
+
+  /**
+   * Attempt to calculate a path given some modes of transportation.
+   */
+  @Override
+  public boolean run() {
+    try {
+      return runSafe();
+    } catch (Exception e) {
+      Journey.logger().error(String.format("%s: An %s occurred", this, e.getClass().getName()));
+      e.printStackTrace();
+      resultError();
+      return true;
+    }
+  }
+
+  private boolean runSafe() throws ExecutionException, InterruptedException {
+    if (state.isStopped()) {
+      return true;
+    }
+    // Dispatch a starting event
+    if (state == ResultState.IDLE) {
+      Journey.logger().debug(this + ": path trial beginning");
+      startExecutionTime = System.currentTimeMillis();
+      state = ResultState.RUNNING;
+    }
+
+    if (firstCycle) {
+      Node originNode = new Node(new Step(origin, 0, ModeType.NONE),
+          null, 0);
+      upcoming.add(originNode);
+      visited.put(origin, originNode);
+      firstCycle = false;
+    }
+
+    // Start actual execution
+    int startingCycleCount = visited.size();  // tracker to make sure we have short work cycles
+    int animationDelayMs = session.flags.getValueFor(Flags.ANIMATE);
+    boolean isAnimating = animationDelayMs > 0;
+
+    Node current;
+    while (!upcoming.isEmpty()) {
+      // Queue any IO we will likely needed
+      prepareIo();
+
+      if (shouldDelay(animationDelayMs)) {
+        return false;  // (not done)
+      }
+
+      if (session.state.get().shouldStop()) {
+        // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
+        resultCancel();
+        if (isAnimating) {
+          Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
+        }
+        return true;
+      }
+
+      if (visited.size() > maxCellCount) {
+        // We ran out of allocated memory. Let's just call it here and say we failed and cache the failure.
+        resultFail();
+        if (isAnimating) {
+          Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
+        }
+        return true;
+      }
+
+      if (visited.size() >= startingCycleCount + CELLS_PER_EXECUTION_CYCLE) {
+        // Quit after a certain number of blocks to allow other searches to run
+        return false;  // (not done)
+      }
+
+      current = upcoming.poll();
+      assert current != null;
+
+      if (completer.test(chunkCache, current)) {
+        // We found it!
+        double length = current.getScore();
+        LinkedList<Step> steps = new LinkedList<>();
+        do {
+          steps.addFirst(current.getData());
+          current = current.getPrevious();
+        } while (current != null);
+        resultSucceed(length, steps);
+        if (isAnimating) {
+          Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
+        }
+        return true;
+      }
+
+      // Need to keep going
+      for (Mode mode : modes) {
+        Collection<Mode.Option> options;
+        options = mode.getDestinations(current.getData().location(), chunkCache);
+        for (Mode.Option option : options) {
+          if (isAnimating) {
+            // we're animating, so send it to the animation manager
+            Journey.get().animationManager().addAnimationCell(session.callerId, session.uuid, option.location());
+          }
+          if (visited.containsKey(option.location())) {
+            // Already visited, but see if it is better to come from this new direction
+            Node that = visited.get(option.location());
+            if (current.getScore() + option.cost() < that.getScore()) {
+              that.setPrevious(current);
+              that.setScore(current.getScore() + option.cost());
+              that.setData(new Step(that.getData().location(),
+                  option.cost(),
+                  mode.type()));
+            }
+          } else {
+            // Not visited. Set up node, give it a score, and add it to the system
+            Node nextNode = new Node(
+                new Step(option.location(),
+                    option.cost(),
+                    mode.type()),
+                current,
+                current.getScore() + option.cost());
+            upcoming.add(nextNode);
+            visited.put(option.location(), nextNode);
+          }
+        }
+      }
+    }
+
+    // We've exhausted all possibilities. Fail.
+    resultFail();
+    if (isAnimating) {
+      Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
+    }
+    return true;
+  }
+
+  protected void cacheSuccess() {
+    // do nothing by default
+  }
+
+  /**
+   * Return true if we must delay, return false if we may continue execution as normal.
+   * @param delayMs delay time, in ms
+   * @return true if delay
+   */
+  private boolean shouldDelay(int delayMs) {
+    if (delayMs != 0) {
+      // We need to track our times that we can "delay" for the right amount of time
+      long now = System.currentTimeMillis();
+      if (nextAllowedRunTime > now) {
+        // we cannot run now, wait for next run
+        return true;
+      } else {
+        // We can run since we're past the allowed run time, but set the next one
+        nextAllowedRunTime = now + delayMs;
+      }
+    }
+    return false;
   }
 
   @Override
-  protected void cacheSuccess() {
-    Journey.get().proxy().schedulingManager().schedule(() -> {
-      if (Journey.get().dataManager().pathRecordManager().totalRecordCellCount() + getLength() > Settings.MAX_CACHED_CELLS.getValue()) {
-        if (!loggedMaxCacheHit) {
-          Journey.logger().warn("The Journey database has cached the max number of cells allowed in the config file. Raise this number to continue caching results.");
-          loggedMaxCacheHit = true;
-        }
-        return;
-      }
-      try {
-        Journey.get().dataManager().pathRecordManager().report(
-            this,
-            getModes().stream().map(Mode::type).collect(Collectors.toSet()),
-            System.currentTimeMillis() - startExecutionTime);
-      } catch (DataAccessException e) {
-        Journey.logger().error("SQL error trying to cache a path.");
-      }
-    }, true);
+  public UUID owner() {
+    // "Owner" is just the session id
+    return session.uuid();
   }
+
+  @Override
+  public String toString() {
+    return "[Path Search] {origin: " + origin
+        + ", state: " + state
+        + ", distance function: " + costFunction
+        + ", from cache: " + fromCache
+        + "}";
+  }
+
+  public CompletableFuture<TrialResult> future() {
+    return future;
+  }
+
+  /**
+   * An interface to represent when a node is considered successful and therefore
+   * the end of a successful path.
+   * At this point in the algorithm, the path up until and through this node is returned.
+   */
+  @FunctionalInterface
+  public interface Completer {
+
+    boolean test(BlockProvider blockProvider, Node node) throws ExecutionException, InterruptedException;
+
+  }
+
+  /**
+   * A result object to return the result of the overall search.
+   */
+  public record TrialResult(ResultState state, @Nullable Path path, boolean changedProblem) {
+  }
+
+  /**
+   * A single node representing a possible movement during traversal.
+   */
+  public static class Node {
+    @Getter
+    @Setter
+    private Step data;
+    @Getter
+    @Setter
+    private Node previous;
+    /**
+     * The value to store how far away this node is from the original node.
+     * So, how far it is to traverse the space from the origin until this node is reached.
+     */
+    @Getter
+    @Setter
+    private double score;
+
+    /**
+     * General constructor.
+     *
+     * @param data     the step
+     * @param previous the previous node that we came from to get here
+     * @param score    our score so far throughout the pathfinding algorithm
+     */
+    public Node(@NotNull Step data, Node previous, double score) {
+      this.data = data;
+      this.previous = previous;
+      this.score = score;
+    }
+
+  }
+
 
 }

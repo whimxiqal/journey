@@ -35,7 +35,7 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
-import net.whimxiqal.journey.search.PathTrial;
+import net.whimxiqal.journey.search.DestinationPathTrial;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public class TestPathRecordManager implements PathRecordManager {
   private long pathTrialRecordId = 0;
 
   @Override
-  public void report(PathTrial trial, Set<ModeType> modeTypes, long executionTime) throws DataAccessException {
+  public void report(DestinationPathTrial trial, Set<ModeType> modeTypes, long executionTime) throws DataAccessException {
     List<PathTrialCellRecord> cells = new LinkedList<>();
     List<PathTrialModeRecord> modes = new LinkedList<>();
     PathTrialRecord record = new PathTrialRecord(

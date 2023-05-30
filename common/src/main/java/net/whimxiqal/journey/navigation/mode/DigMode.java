@@ -31,23 +31,18 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 
 public class DigMode extends Mode {
 
   public final static double DIG_COST_MULTIPLIER = 16;
 
-  public DigMode(@NotNull SearchSession session) {
-    super(session);
-  }
-
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     List<Option> options = new LinkedList<>();
     // Can we even stand here?
-    if (!blockProvider.getBlock(origin.atOffset(0, -1, 0)).canStandOn()
-        && !blockProvider.getBlock(origin.atOffset(0, 0, 0)).canStandIn()) {
+    if (!blockProvider.toBlock(origin.atOffset(0, -1, 0)).canStandOn()
+        && !blockProvider.toBlock(origin.atOffset(0, 0, 0)).canStandIn()) {
       return options;
     }
     Cell cell;
@@ -77,13 +72,12 @@ public class DigMode extends Mode {
                     insideOffX * offX /* get sign back */,
                     insideOffY * offY /* get sign back */,
                     insideOffZ * offZ /* get sign back */);
-                if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
+                if (!blockProvider.toBlock(cell).isLaterallyPassable()) {
                   // we must break it
-                  if (blockProvider.getBlock(cell).hardness() < 0) {
-                    reject(cell);
+                  if (blockProvider.toBlock(cell).hardness() < 0) {
                     continue outerZ;
                   } else {
-                    digTime += blockProvider.getBlock(cell).hardness();
+                    digTime += blockProvider.toBlock(cell).hardness();
                   }
                 }
                 for (int h = 0; h <= insideOffY; h++) {
@@ -94,12 +88,11 @@ public class DigMode extends Mode {
                           + h
                           + (1 - insideOffY) /* for if offYIn is 0 */,
                       insideOffZ * offZ /* get sign back */);
-                  if (!blockProvider.getBlock(cell).isPassable()) {
-                    if (blockProvider.getBlock(cell).hardness() < 0) {
-                      reject(cell);
+                  if (!blockProvider.toBlock(cell).isPassable()) {
+                    if (blockProvider.toBlock(cell).hardness() < 0) {
                       continue outerZ;
                     } else {
-                      digTime += blockProvider.getBlock(cell).hardness();
+                      digTime += blockProvider.toBlock(cell).hardness();
                     }
                   }
                 }
@@ -107,7 +100,7 @@ public class DigMode extends Mode {
             }
           }
           Cell other = origin.atOffset(offX, offY, offZ);
-          accept(other, origin.distanceTo(other) + digTime * DIG_COST_MULTIPLIER, options);
+          options.add(new Option(other, origin.distanceTo(other) + digTime * DIG_COST_MULTIPLIER));
         }
       }
     }

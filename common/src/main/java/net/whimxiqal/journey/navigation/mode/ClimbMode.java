@@ -31,7 +31,6 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,10 +38,6 @@ import org.jetbrains.annotations.NotNull;
  * like ladders or vines.
  */
 public final class ClimbMode extends Mode {
-
-  public ClimbMode(@NotNull SearchSession session) {
-    super(session);
-  }
 
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
@@ -57,12 +52,10 @@ public final class ClimbMode extends Mode {
     tryToClimbAdjacent(origin.atOffset(0, -1, 0), blockProvider, options);
 
     // Going up is a different story
-    if (blockProvider.getBlock(origin).isClimbable()) {
-      if (blockProvider.getBlock(origin.atOffset(0, 1, 0)).isVerticallyPassable()
-          && blockProvider.getBlock(origin.atOffset(0, 2, 0)).isVerticallyPassable()) {
-        accept(origin.atOffset(0, 1, 0), 1.0d, options);
-      } else {
-        reject(origin.atOffset(0, 1, 0));
+    if (blockProvider.toBlock(origin).isClimbable()) {
+      if (blockProvider.toBlock(origin.atOffset(0, 1, 0)).isVerticallyPassable()
+          && blockProvider.toBlock(origin.atOffset(0, 2, 0)).isVerticallyPassable()) {
+        options.add(new Option(origin.atOffset(0, 1, 0), 1.0d));
       }
     }
 
@@ -70,10 +63,8 @@ public final class ClimbMode extends Mode {
   }
 
   private void tryToClimbAdjacent(Cell cell, BlockProvider blockProvider, List<Option> options) throws ExecutionException, InterruptedException {
-    if (blockProvider.getBlock(cell).isClimbable()) {
-      accept(cell, 1.0d, options);
-    } else {
-      reject(cell);
+    if (blockProvider.toBlock(cell).isClimbable()) {
+      options.add(new Option(cell, 1.0d));
     }
   }
 

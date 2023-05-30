@@ -26,31 +26,15 @@ package net.whimxiqal.journey.bukkit;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
 import net.whimxiqal.journey.command.JourneyConnectorProvider;
-import net.whimxiqal.journey.search.event.SearchDispatcher;
-import net.whimxiqal.journey.search.event.SearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitFoundSolutionEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitIgnoreCacheSearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitModeFailureEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitModeSuccessEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStartPathSearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStartSearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStepSearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStartItinerarySearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStopItinerarySearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStopPathSearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitStopSearchEvent;
-import net.whimxiqal.journey.bukkit.search.event.BukkitVisitationSearchEvent;
 import net.whimxiqal.journey.bukkit.config.BukkitConfigManager;
 import net.whimxiqal.journey.bukkit.listener.DeathListener;
 import net.whimxiqal.journey.bukkit.listener.NetherListener;
-import net.whimxiqal.journey.bukkit.search.listener.AnimationListener;
 import net.whimxiqal.journey.bukkit.search.listener.PlayerSearchListener;
 import net.whimxiqal.journey.bukkit.util.BukkitLogger;
 import net.whimxiqal.journey.bukkit.util.BukkitSchedulingManager;
 import net.whimxiqal.mantle.paper.PaperRegistrarProvider;
 import net.whimxiqal.mantle.common.CommandRegistrar;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class JourneyBukkit extends JavaPlugin {
@@ -87,27 +71,11 @@ public final class JourneyBukkit extends JavaPlugin {
     Journey.get().registerProxy(proxy);
     proxy.logger(new BukkitLogger());
     proxy.dataFolder(this.getDataFolder().toPath());
-    proxy.audienceProvider(new PaperAudiences(this));
+    proxy.audienceProvider(new PaperAudiences());
     proxy.configManager(BukkitConfigManager.initialize("config.yml"));
     proxy.schedulingManager(new BukkitSchedulingManager());
     proxy.platform(new BukkitPlatformProxy());
     proxy.version(getDescription().getVersion());
-
-    // Instantiate a SearchDispatcher. Keep registrations alphabetized
-    SearchDispatcher.Editor<Event> dispatcher = Journey.get().dispatcher().editor();
-    dispatcher.registerEvent(BukkitFoundSolutionEvent::new, SearchEvent.EventType.FOUND_SOLUTION);
-    dispatcher.registerEvent(BukkitIgnoreCacheSearchEvent::new, SearchEvent.EventType.IGNORE_CACHE);
-    dispatcher.registerEvent(BukkitModeFailureEvent::new, SearchEvent.EventType.MODE_FAILURE);
-    dispatcher.registerEvent(BukkitModeSuccessEvent::new, SearchEvent.EventType.MODE_SUCCESS);
-    dispatcher.registerEvent(BukkitStartItinerarySearchEvent::new, SearchEvent.EventType.START_ITINERARY);
-    dispatcher.registerEvent(BukkitStartPathSearchEvent::new, SearchEvent.EventType.START_PATH);
-    dispatcher.registerEvent(BukkitStartSearchEvent::new, SearchEvent.EventType.START);
-    dispatcher.registerEvent(BukkitStepSearchEvent::new, SearchEvent.EventType.STEP);
-    dispatcher.registerEvent(BukkitStopItinerarySearchEvent::new, SearchEvent.EventType.STOP_ITINERARY);
-    dispatcher.registerEvent(BukkitStopPathSearchEvent::new, SearchEvent.EventType.STOP_PATH);
-    dispatcher.registerEvent(BukkitStopSearchEvent::new, SearchEvent.EventType.STOP);
-    dispatcher.registerEvent(BukkitVisitationSearchEvent::new, SearchEvent.EventType.VISITATION);
-    dispatcher.setExternalDispatcher(event -> Bukkit.getPluginManager().callEvent(event));
 
     // Initialize common Journey (after proxy is set up)
     Journey.get().init();
@@ -117,7 +85,6 @@ public final class JourneyBukkit extends JavaPlugin {
     registrar.register(JourneyConnectorProvider.connector());
 
     Bukkit.getPluginManager().registerEvents(new NetherListener(), this);
-    Bukkit.getPluginManager().registerEvents(new AnimationListener(), this);
     Bukkit.getPluginManager().registerEvents(new PlayerSearchListener(), this);
     Bukkit.getPluginManager().registerEvents(new DeathListener(), this);
   }

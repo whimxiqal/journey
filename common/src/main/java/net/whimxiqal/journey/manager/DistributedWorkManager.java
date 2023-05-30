@@ -37,7 +37,6 @@ import net.whimxiqal.journey.Journey;
  */
 public class DistributedWorkManager {
 
-  private final ThreadPoolExecutor threadPool;
   private final int maxActiveWorkItems;
 
   private final Object lock = new Object();
@@ -46,15 +45,11 @@ public class DistributedWorkManager {
   private final Map<UUID, LinkedList<WorkItemExecutor>> workReplacementMap = new HashMap<>();
   private int activeWorkItems = 0;
 
-  public DistributedWorkManager(int threads, int maxActiveWorkItems) {
-    if (threads < 1 || maxActiveWorkItems < 1) {
+  public DistributedWorkManager(int maxActiveWorkItems) {
+    if (maxActiveWorkItems < 1) {
       throw new IllegalArgumentException();
     }
     this.maxActiveWorkItems = maxActiveWorkItems;
-    threadPool = new ThreadPoolExecutor(threads, threads,
-        10, TimeUnit.SECONDS,
-        new LinkedBlockingDeque<>(),
-        new WorkThreadFactory());
   }
 
   public void schedule(WorkItem work) {
@@ -62,7 +57,7 @@ public class DistributedWorkManager {
   }
 
   private void execute(WorkItemExecutor executor) {
-    threadPool.execute(executor);
+    Journey.get().proxy().schedulingManager().schedule(executor, true);
   }
 
   /**
@@ -103,7 +98,7 @@ public class DistributedWorkManager {
             this.work.reset();
 
             target = replacement;
-            manager.threadPool.getQueue().add(this);  // schedule this again, even though we're not active anymore
+            manager.execute(this);  // schedule this again, even though we're not active anymore
             // continue with execution, but with the replacement instead
           }
         } else {

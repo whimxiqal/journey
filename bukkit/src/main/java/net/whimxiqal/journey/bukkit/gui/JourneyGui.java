@@ -157,7 +157,7 @@ public class JourneyGui {
                 .name(entry.getValue().name() == Component.empty() ? Formatter.accent(entry.getKey()) : entry.getValue().name())
                 .lore(entry.getValue().description())
                 .asGuiItem(event -> {
-                  Journey.get().searchManager().launchSearch(entry.getValue());
+                  Journey.get().searchManager().launchIngameSearch(entry.getValue());
                   event.getWhoClicked().closeInventory();
                 });
             gui.addItem(guiItem);

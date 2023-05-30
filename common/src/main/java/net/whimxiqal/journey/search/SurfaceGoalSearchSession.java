@@ -23,81 +23,91 @@
 
 package net.whimxiqal.journey.search;
 
-import java.util.Optional;
 import java.util.UUID;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Path;
-import net.whimxiqal.journey.search.event.FoundSolutionEvent;
-import net.whimxiqal.journey.search.event.StartSearchEvent;
 import net.whimxiqal.journey.search.function.HeightCostFunction;
-import net.whimxiqal.journey.search.function.ZeroCostFunction;
 import net.whimxiqal.journey.tools.AlternatingList;
 
 /**
  * A search session that's purpose is to run a search, trying to find
  * a location that reaches some criteria by moving upwards as much as possible.
  */
-public abstract class LocalUpwardsGoalSearchSession extends SearchSession {
+public class SurfaceGoalSearchSession extends SearchSession {
 
   private final Cell origin;
 
-  protected LocalUpwardsGoalSearchSession(UUID callerId, Caller callerType, Cell origin) {
+  public SurfaceGoalSearchSession(UUID callerId, Caller callerType, Cell origin) {
     super(callerId, callerType);
     this.origin = origin;
+  }
+
+  @Override
+  public void initialize() {
+    super.initialize();
+
+    if (callerType == Caller.PLAYER) {
+      setPlayerModes();
+      // We don't need any tunnels for this!
+    }
   }
 
   @Override
   public void asyncSearch() {
     // This implementation just runs once
     super.timer.start();
-    Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
-    synchronized (this) {
-      state = ResultState.RUNNING;
-    }
+    state.set(ResultState.RUNNING);
 
-    AbstractPathTrial pathTrial = new AbstractPathTrial(
+    PathTrial pathTrial = new PathTrial(
         this,
         origin,
-        this.modes,
+        modes(),
         new HeightCostFunction(),
-        new ZeroCostFunction(),
-        node -> reachesGoal(node.getData().location()),
+        (blockProvider, node) -> BlockProvider.isAtSurface(blockProvider, node.getData().location()),
         false
     );
 
     Journey.get().workManager().schedule(pathTrial);
 
-    pathTrial.future().thenAccept(result -> {
-      synchronized (this) {
-        if (state.shouldStop()) {
-          // this was stopped while attempting the path trial
-          state = state.stoppedResult();
-          complete();
-          return;
-        } else {
-          state = pathTrial.getState();
-        }
-      }
-
-      if (result.path().isPresent()) {
-        AlternatingList.Builder<Path, Path, Path> stages
-            = AlternatingList.builder(Path.stationary(origin));
-        stages.addLast(result.path().get(), Path.stationary(result.path().get().getDestination()));
-
-        Journey.get().dispatcher().dispatch(new FoundSolutionEvent(
-            this,
-            new Itinerary(this.origin,
-                result.path().get().getSteps(),
-                stages.build(),
-                result.path().get().getCost())));
-      }
-
-      complete();
-    });
+    pathTrial.future().thenAccept(this::onPathTrialComplete);
   }
 
-  protected abstract boolean reachesGoal(Cell cell);
+  /**
+   * Callback when the path trial finishes.
+   *
+   * @param pathTrialResult the result of a path trial
+   */
+  private void onPathTrialComplete(PathTrial.TrialResult pathTrialResult) {
+    ResultState updated = state.updateAndGet(current -> {
+      if (current.shouldStop()) {
+        return current.stoppedResult();
+      }
+      return current;
+    });
+
+    // this was stopped while attempting the path trial
+    if (updated.isStopped()) {
+      complete(null);
+      return;
+    }
+
+    // Otherwise, we just assume the same result as the (single) path trial
+    state.set(pathTrialResult.state());
+
+    if (pathTrialResult.path() == null) {
+      complete(null);
+    } else {
+      AlternatingList.Builder<Path, Path, Path> stages
+          = AlternatingList.builder(Path.stationary(origin));
+      stages.addLast(pathTrialResult.path(), Path.stationary(pathTrialResult.path().getDestination()));
+      complete(new Itinerary(this.origin,
+          pathTrialResult.path().getSteps(),
+          stages.build(),
+          pathTrialResult.path().getCost()));
+    }
+  }
 
 }

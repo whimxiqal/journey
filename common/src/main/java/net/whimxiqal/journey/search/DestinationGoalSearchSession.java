@@ -25,9 +25,10 @@ package net.whimxiqal.journey.search;
 
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
 
-public abstract class DestinationGoalSearchSession extends GraphGoalSearchSession<DestinationSearchGraph> {
+public class DestinationGoalSearchSession extends GraphGoalSearchSession<DestinationSearchGraph> {
 
   protected final Cell destination;
   private final boolean persistentDestination;
@@ -46,16 +47,27 @@ public abstract class DestinationGoalSearchSession extends GraphGoalSearchSessio
   }
 
   @Override
+  public void initialize() {
+    super.initialize();
+
+    if (callerType == Caller.PLAYER) {
+      setPlayerModes();
+      setPlayerTunnels();
+      Journey.get().proxy().platform().prepareDestinationSearchSession(this, getCallerId(), flags, destination);
+    }
+  }
+
+  @Override
   protected void initSearchExtra() {
     if (origin.domain() == destination.domain()) {
-      stateInfo.searchGraph.addPathTrialOriginToDestination(this.modes, persistentOrigin && persistentDestination);
+      stateInfo.searchGraph.addPathTrialOriginToDestination(modes(), persistentOrigin && persistentDestination);
     }
 
     for (Integer domain : stateInfo.allDomains) {
       // Path trials from tunnel -> destination
       for (Tunnel pathTrialOriginTunnel : stateInfo.tunnelsByDestinationDomain.get(domain)) {
         if (domain.equals(destination.domain())) {
-          stateInfo.searchGraph.addPathTrialTunnelToDestination(pathTrialOriginTunnel, this.modes, persistentDestination);
+          stateInfo.searchGraph.addPathTrialTunnelToDestination(pathTrialOriginTunnel, modes(), persistentDestination);
         }
       }
     }

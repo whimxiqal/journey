@@ -31,7 +31,6 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,10 +38,6 @@ import org.jetbrains.annotations.NotNull;
  * for normal walking in Minecraft.
  */
 public class WalkMode extends Mode {
-
-  public WalkMode(@NotNull SearchSession session) {
-    super(session);
-  }
 
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
@@ -59,8 +54,8 @@ public class WalkMode extends Mode {
 //    }
 
     // Can we even stand here?
-    if (!blockProvider.getBlock(origin.atOffset(0, -1, 0)).canStandOn()
-        && !blockProvider.getBlock(origin).canStandIn()) {
+    if (!blockProvider.toBlock(origin.atOffset(0, -1, 0)).canStandOn()
+        && !blockProvider.toBlock(origin).canStandIn()) {
       return options;
     }
 
@@ -79,8 +74,7 @@ public class WalkMode extends Mode {
               cell = origin.atOffset(insideOffX * offX /* get sign back */,
                   offY,
                   insideOffZ * offZ /*get sign back */);
-              if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
-                reject(cell);
+              if (!blockProvider.toBlock(cell).isLaterallyPassable()) {
                 continue outerZ;  // Barrier - invalid move
               }
             }
@@ -92,36 +86,31 @@ public class WalkMode extends Mode {
         cell = origin.atOffset(offX, 0, offZ);
         if (offX != 0 || offZ != 0) {
           // we are inquiring about other than origin
-          if (blockProvider.getBlock(cell).canStandIn()) {
+          if (blockProvider.toBlock(cell).canStandIn()) {
             // We can just stand right here (carpets, etc.)
-            accept(cell, origin.distanceTo(cell), options);
+            options.add(new Option(cell, origin.distanceTo(cell)));
             continue;
-          } else {
-            reject(cell);
           }
         }
         for (int offY = -1; offY >= -4; offY--) {  // Check for floor anywhere up to a 3 block fall
           cell = origin.atOffset(offX, offY, offZ);  // floor
           cell1 = cell.atOffset(0, 1, 0);  // feet
           cell2 = cell.atOffset(0, 2, 0);  // head
-          if (!blockProvider.getBlock(cell2).isVerticallyPassable() || blockProvider.getBlock(cell2).isWater()) {
+          if (!blockProvider.toBlock(cell2).isVerticallyPassable() || blockProvider.toBlock(cell2).isWater()) {
             // we cannot "fall through" this cell, which means we can't land on the block below
             // or, we are drowning
-            reject(cell1);
             break;
           }
-          if (!blockProvider.getBlock(cell1).isVerticallyPassable()) {
+          if (!blockProvider.toBlock(cell1).isVerticallyPassable()) {
             // we cannot put our feet in here
-            reject(cell1);
             continue;
           }
-          if (!blockProvider.getBlock(cell).canStandOn()) {
+          if (!blockProvider.toBlock(cell).canStandOn()) {
             // we cannot stand on here
-            reject(cell1);
             continue;
           }
           // good
-          accept(cell1, origin.distanceTo(cell1), options);
+          options.add(new Option(cell1, origin.distanceTo(cell1)));
           break;
         }
       }

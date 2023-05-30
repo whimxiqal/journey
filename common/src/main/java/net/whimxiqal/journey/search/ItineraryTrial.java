@@ -26,9 +26,9 @@ package net.whimxiqal.journey.search;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
@@ -37,44 +37,39 @@ import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
-import net.whimxiqal.journey.search.event.StartItinerarySearchEvent;
-import net.whimxiqal.journey.search.event.StopItinerarySearchEvent;
+import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.tools.AlternatingList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An attempt to calculate an {@link Itinerary} encapsulated into an object.
  *
  * @see Itinerary
  * @see SearchSession
- * @see PathTrial
+ * @see DestinationPathTrial
  * @see #attempt(boolean)
  */
-public class ItineraryTrial implements Resulted {
+public class ItineraryTrial {
 
-  private final GraphGoalSearchSession<?> session;
   private final Cell origin;
-  private final AlternatingList<Tunnel, PathTrial, Object> alternatingList;
+  private final AlternatingList<Tunnel, DestinationPathTrial, Object> alternatingList;
   private final BlockProvider blockProvider;
-  private ResultState state;
-  private final Object lock = new Object(); // lock for shared objects across multiple path trials
+  private final AtomicReference<ResultState> state;
   private boolean changedProblem;
   private int executedPathTrials;
 
   /**
    * General constructor.
    *
-   * @param session         the session
    * @param origin          the origin of the entire itinerary
    * @param alternatingList the list of stages
    */
-  public ItineraryTrial(GraphGoalSearchSession<?> session, Cell origin,
-                        AlternatingList<Tunnel, PathTrial, Object> alternatingList) {
-    this.session = session;
+  public ItineraryTrial(Cell origin, AlternatingList<Tunnel, DestinationPathTrial, Object> alternatingList, FlagSet flags) {
     this.origin = origin;
     this.alternatingList = alternatingList;
-    this.blockProvider = new ChunkCacheBlockProvider(AbstractPathTrial.MAX_CACHED_CHUNKS_PER_SEARCH, session.flags());
-    this.state = ResultState.IDLE;
+    this.blockProvider = new ChunkCacheBlockProvider(PathTrial.MAX_CACHED_CHUNKS_PER_SEARCH, flags);
+    this.state = new AtomicReference<>(ResultState.IDLE);
   }
 
   /**
@@ -86,11 +81,11 @@ public class ItineraryTrial implements Resulted {
   @NotNull
   public CompletableFuture<TrialResult> attempt(boolean useCacheIfPossible) {
     CompletableFuture<TrialResult> future = new CompletableFuture<>();
-    Journey.get().dispatcher().dispatch(new StartItinerarySearchEvent(session, this));
-    state = ResultState.RUNNING;
+    Journey.logger().debug(this + ": itinerary trial started");
+    state.set(ResultState.RUNNING);
 
-    List<PathTrial> pathTrialsToExecute = new LinkedList<>();
-    for (PathTrial pathTrial : alternatingList.getMinors()) {
+    List<DestinationPathTrial> pathTrialsToExecute = new LinkedList<>();
+    for (DestinationPathTrial pathTrial : alternatingList.getMinors()) {
       boolean pathTrialDone = false;
       // Use cached value, if appropriate
       if (pathTrial.isFromCache() && useCacheIfPossible) {
@@ -108,7 +103,7 @@ public class ItineraryTrial implements Resulted {
             Journey.logger().error(String.format("%s: An %s exception occurred during execution", this, e.getClass().getName()));
             // leave pathTrialDone = false
           }
-        } else if (this.state == ResultState.STOPPED_FAILED) {
+        } else if (state.get() == ResultState.STOPPED_FAILED) {
           pathTrialDone = true;
         }
       }
@@ -117,48 +112,71 @@ public class ItineraryTrial implements Resulted {
       }
     }
 
-    if (state == ResultState.STOPPED_FAILED) {  // only happens here if we're also only using cached paths
-      Journey.get().dispatcher().dispatch(new StopItinerarySearchEvent(session, this));
-      future.complete(new TrialResult(Optional.empty(), false));  // doesn't change the problem is caching is used everywhere
+    if (state.get() == ResultState.STOPPED_FAILED) {  // only happens here if we're also only using cached paths
+      Journey.logger().info(this + ": itinerary failed before path trials ran");
+      future.complete(new TrialResult(ResultState.STOPPED_FAILED, null, false));  // doesn't change the problem is caching is used everywhere
       return future;
     }
 
+    Journey.logger().debug(String.format("%s: itinerary trial needs to calculate %d paths", this, pathTrialsToExecute.size()));
     if (pathTrialsToExecute.isEmpty()) {
       // everything is cached
-      onAllPathTrialsComplete(future);
-    }
-    for (PathTrial pathTrial : pathTrialsToExecute) {
-      Journey.get().workManager().schedule(pathTrial);
-      pathTrial.future().thenAccept(pathTrialResult -> {
-        synchronized (lock) {
-          if (pathTrial.getState() == ResultState.STOPPED_ERROR) {
-            state = ResultState.STOPPING_ERROR;
-          } else if (pathTrialResult.path().isEmpty()) {
-            state = ResultState.STOPPING_FAILED;
-          }
-
-          if (pathTrialResult.changedProblem()) {
-            changedProblem = true;
-          }
-
-          executedPathTrials++;
-          if (executedPathTrials < pathTrialsToExecute.size()) {
-            return;  // Not all path trials have returned, let's wait until they have
-          }
-        }
-        onAllPathTrialsComplete(future);
-      });
+      onPathTrialComplete(null, 0, future);
+    } else {
+      for (DestinationPathTrial pathTrial : pathTrialsToExecute) {
+        Journey.get().workManager().schedule(pathTrial);
+        pathTrial.future().thenAccept(pathTrialResult -> onPathTrialComplete(pathTrialResult, pathTrialsToExecute.size(), future));
+      }
     }
     return future;
   }
 
-  private void onAllPathTrialsComplete(CompletableFuture<TrialResult> future) {
-    if (state.shouldStop()) {
-      state = state.stoppedResult();
+  private synchronized void onPathTrialComplete(PathTrial.TrialResult result, int total, CompletableFuture<TrialResult> future) {
+    if (result != null) {  // only null if no path trial was run at all
+      state.updateAndGet(current -> {
+        // set in order of precedence: error, canceled, failed
+        if (result.state() == ResultState.STOPPED_ERROR) {
+          Journey.logger().debug(this + ": found path trial with error result, setting same");
+          return ResultState.STOPPING_ERROR;
+        } else if (result.state() == ResultState.STOPPED_CANCELED) {
+          if (current == ResultState.STOPPING_ERROR) {
+            return current;
+          } else {
+            Journey.logger().debug(this + ": found path trial with canceled result, setting same");
+            return ResultState.STOPPING_CANCELED;
+          }
+        } else if (result.state() == ResultState.STOPPED_FAILED) {
+          if (current == ResultState.STOPPING_ERROR || current == ResultState.STOPPING_CANCELED) {
+            return current;
+          } else {
+            Journey.logger().debug(this + ": found path trial with failed result, setting same");
+            return ResultState.STOPPING_FAILED;
+          }
+        }
+        return current;  // just keep it the same
+      });
+
+      if (result.changedProblem()) {
+        changedProblem = true;
+      }
     }
-    if (state == ResultState.STOPPED_FAILED || state == ResultState.STOPPED_ERROR) {
-      Journey.get().dispatcher().dispatch(new StopItinerarySearchEvent(session, this));
-      future.complete(new TrialResult(Optional.empty(), changedProblem));
+
+    executedPathTrials++;
+    if (executedPathTrials < total) {
+      return;  // Not all path trials have returned, let's wait until they have
+    }
+
+// check if we need to stop
+    ResultState newState = state.updateAndGet(current -> {
+      if (current.shouldStop()) {
+        return current.stoppedResult();
+      }
+      return current;
+    });
+
+    if (newState.isStopped()) {
+      Journey.logger().debug(this + ": itinerary trial stopped");
+      future.complete(new TrialResult(newState, null, changedProblem));
       return;
     }
 
@@ -169,7 +187,7 @@ public class ItineraryTrial implements Resulted {
         length += tunnel.cost();
       }
     }
-    for (PathTrial trial : alternatingList.getMinors()) {
+    for (DestinationPathTrial trial : alternatingList.getMinors()) {
       length += trial.getLength();
     }
 
@@ -186,17 +204,24 @@ public class ItineraryTrial implements Resulted {
         allSteps.addAll(list);
       }
     }
-    state = ResultState.STOPPED_SUCCESSFUL;
-    Journey.get().dispatcher().dispatch(new StopItinerarySearchEvent(session, this));
-    future.complete(new TrialResult(Optional.of(new Itinerary(origin,
-        allSteps,
-        alternatingList.convert(Path::fromTunnel, trial -> Objects.requireNonNull(trial.getPath())),
-        length)), changedProblem));
+    state.set(ResultState.STOPPED_SUCCESSFUL);
+    Journey.logger().debug(this + ": itinerary trial succeeded");
+    future.complete(new TrialResult(state.get(),
+        new Itinerary(origin,
+            allSteps,
+            alternatingList.convert(Path::fromTunnel, trial -> Objects.requireNonNull(trial.getPath())),
+            length),
+        changedProblem));
   }
 
   @Override
-  public ResultState getState() {
-    return this.state;
+  public String toString() {
+    return "[Itinerary Search] {origin: " + origin +
+        ", paths: " + alternatingList.getMinors().size() +
+        ", path searches: " + executedPathTrials +
+        ", state: " + state +
+        ", changed graph: " + changedProblem +
+        '}';
   }
 
   /**
@@ -204,18 +229,8 @@ public class ItineraryTrial implements Resulted {
    *
    * @see #attempt(boolean)
    */
-  public record TrialResult(@NotNull Optional<Itinerary> itinerary,
+  public record TrialResult(ResultState state,
+                            @Nullable Itinerary itinerary,
                             boolean changedProblem) {
-  }
-
-  @Override
-  public String toString() {
-    return "ItineraryTrial{" +
-        "origin=" + origin +
-        ", alternatingList size=" + alternatingList.size() +
-        ", state=" + state +
-        ", changedProblem=" + changedProblem +
-        ", executedPathTrials=" + executedPathTrials +
-        '}';
   }
 }

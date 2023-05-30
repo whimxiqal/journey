@@ -34,6 +34,22 @@ import net.whimxiqal.journey.proxy.JourneyBlock;
 public interface BlockProvider {
 
   /**
+   * The height of the space filled with air to be considered the surface of the world.
+   */
+  int AT_SURFACE_HEIGHT = 64;
+
+  static boolean isAtSurface(BlockProvider blockProvider, Cell cell) throws ExecutionException, InterruptedException {
+    int x = cell.blockX();
+    int z = cell.blockZ();
+    for (int y = cell.blockY() + 1; y <= Math.min(256, cell.blockY() + AT_SURFACE_HEIGHT); y++) {
+      if (!blockProvider.toBlock(cell).isAir()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Convert a {@link JourneyBlock} into a {@link Cell} asynchronously by querying the server engine
    * in a thread-safe manner.
    *
@@ -42,6 +58,6 @@ public interface BlockProvider {
    * @throws ExecutionException   if an error occurred during the async operation to get the block
    * @throws InterruptedException if the async operation to get the block was interrupted
    */
-  JourneyBlock getBlock(Cell cell) throws ExecutionException, InterruptedException;
+  JourneyBlock toBlock(Cell cell) throws ExecutionException, InterruptedException;
 
 }

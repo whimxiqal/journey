@@ -23,42 +23,47 @@
 
 package net.whimxiqal.journey.manager;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.journey.JourneySession;
 import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.Flags;
-import net.whimxiqal.journey.util.Initializable;
+import net.whimxiqal.journey.util.TimeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A manager to handle search sessions and their corresponding journeys.
+ * <p>
+ * This is single-threaded access only, so only make calls on main server thread
  */
-public final class SearchManager implements Initializable {
+public final class SearchManager {
 
   // A random UUID that represents the console, for identification purposes
   public static final UUID CONSOLE_UUID = UUID.randomUUID();
   // Currently-executing searches for each player
-  private final Map<UUID, SearchSession> playerSearches = new ConcurrentHashMap<>();
+  private final Map<UUID, SearchSession> playerSearches = new HashMap<>();
   // Queued searches for each player to run after the currently-executing search stops
-  private final ConcurrentHashMap<UUID, SearchSession> nextPlayerSearches = new ConcurrentHashMap<>();
+  private final HashMap<UUID, QueuedSearch> nextPlayerSearches = new HashMap<>();
 
   // Current journeying-sessions for players that have a completed search
-  private final Map<UUID, PlayerJourneySession> playerJourneys = new ConcurrentHashMap<>();
+  private final Map<UUID, PlayerJourneySession> playerJourneys = new HashMap<>();
   // Known player locations, updated lazily and used for updating the journey sessions
-  private final Map<UUID, Cell> cachedPlayerLocations = new ConcurrentHashMap<>();
+  private final Map<UUID, Cell> cachedPlayerLocations = new HashMap<>();
 
   // Task id for the task that updates players' locations
   private UUID locationUpdateTaskId;
@@ -89,36 +94,49 @@ public final class SearchManager implements Initializable {
     return playerJourneys.get(callerId);
   }
 
-  public void launchSearch(SearchSession session) {
+  /**
+   * Start searching with the given search session, and register it with this manager to enforce
+   * that no more than one session is executing per player and also to store the {@link JourneySession}
+   * if it completes successfully.
+   *
+   * @param session the session
+   * @return the future for the result
+   */
+  public Future<SearchSession.Result> launchIngameSearch(SearchSession session) {
+    CompletableFuture<SearchSession.Result> future = new CompletableFuture<>();
+    if (!Journey.get().proxy().platform().isMainThread()) {
+      throw new RuntimeException();  // programmer error: this must be called on main thread
+    }
     UUID caller = session.getCallerId();
     if (caller == null) {
-      return;
+      future.complete(null);  // never ran search
+      return future;
     }
 
-    Audience audience;
-    switch (session.getCallerType()) {
-      case PLAYER:
-        audience = Journey.get().proxy().audienceProvider().player(caller);
-        break;
-      case CONSOLE:
-        audience = Journey.get().proxy().audienceProvider().console();
-        break;
-      case OTHER:
-      default:
-        audience = Audience.empty();
-        break;
-    }
+    Audience audience = switch (session.getCallerType()) {
+      case PLAYER -> Journey.get().proxy().audienceProvider().player(caller);
+      case CONSOLE -> Journey.get().proxy().audienceProvider().console();
+      default -> Audience.empty();
+    };
 
     // update player maps
-    if (playerSearches.containsKey(caller)) {
-      // save session for after the current search stops
-      nextPlayerSearches.put(caller, session);
-      playerSearches.get(caller).stop(true);
-      return;
+    SearchSession existingSession = playerSearches.get(caller);
+    if (existingSession != null) {
+      // we need to cancel current session, and save session for after the current search stops
+      QueuedSearch existingQueuedSearch = nextPlayerSearches.get(caller);
+      if (existingQueuedSearch != null) {
+        // there was already a next session scheduled, lets get rid of it
+        existingQueuedSearch.future.complete(null);  // null because the search never actually ran
+      }
+      nextPlayerSearches.put(caller, new QueuedSearch(session, future));  // schedule
+      Journey.logger().debug(existingSession + ": another search was requested, so canceling this one");
+      existingSession.stop(true);  // cancel existing
+      return future;
     }
 
     // launch
-    doLaunchSearch(caller, audience, session);
+    doLaunchSearch(caller, audience, session, future);
+    return future;
   }
 
   /**
@@ -129,7 +147,7 @@ public final class SearchManager implements Initializable {
    * @param audience the audience of the caller
    * @param session  the session we wish to run
    */
-  private void doLaunchSearch(UUID caller, Audience audience, SearchSession session) {
+  private void doLaunchSearch(UUID caller, Audience audience, SearchSession session, CompletableFuture<SearchSession.Result> future) {
     Journey.get().statsManager().incrementSearches();
     playerSearches.put(caller, session);
     session.initialize();
@@ -144,24 +162,72 @@ public final class SearchManager implements Initializable {
         .append(Formatter.hover(Component.text("Searching...").color(Formatter.INFO), hoverText.get())));
 
     int timeout = session.flags().getValueFor(Flags.TIMEOUT);
-    session.search(timeout).thenRun(() -> Journey.get().proxy().schedulingManager().schedule(() -> {
-      if (nextPlayerSearches.containsKey(caller)) {
-        SearchSession newSession = nextPlayerSearches.remove(caller);
-        doLaunchSearch(caller, audience, newSession);
-      } else {
-        playerSearches.remove(caller);
+    session.search(timeout).thenAccept(result -> {
+      if (result == null) {
+        Journey.logger().debug(session + ": session never ran and was unscheduled");
+        future.complete(null);
+        return;
       }
-    }, false));
-  }
 
-  /**
-   * Get whether there is a search stored for a caller.
-   *
-   * @param callerId the caller id
-   * @return whether there is a search stored
-   */
-  public boolean isSearching(@NotNull UUID callerId) {
-    return playerSearches.containsKey(callerId);
+      Journey.logger().debug(session + ": search complete");
+      // schedule the completion logic back on the main thread
+      Journey.get().proxy().schedulingManager().schedule(() -> {
+        switch (result.state()) {
+          case STOPPED_SUCCESSFUL -> {
+            Itinerary itinerary = result.itinerary();
+            if (itinerary != null) {
+              audience.sendMessage(Formatter.prefix()
+                  .append(Component.text("Your search completed! ").color(Formatter.SUCCESS))
+                  .append(Component.text("[").color(Formatter.DARK)
+                      .append(Component.text("details").color(Formatter.DULL).decorate(TextDecoration.ITALIC))
+                      .append(Component.text("]").color(Formatter.DARK))
+                      .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT,
+                          Component.text("Search Statistics")
+                              .color(Formatter.THEME)
+                              .decorate(TextDecoration.BOLD)
+                              .append(Component.newline())
+                              .append(Component.text("Walk Time: ")
+                                  .color(Formatter.DULL)
+                                  .append(Component.text(TimeUtil.toSimpleTime(Math.round(itinerary.cost() / 5.621 /* Steve's running speed. */)))
+                                      .color(Formatter.ACCENT)))
+                              .append(Component.newline())
+                              .append(Component.text("Distance: ")
+                                  .color(Formatter.DULL)
+                                  .append(Component.text(Math.round(itinerary.cost()) + " blocks")
+                                      .color(Formatter.ACCENT)))
+                              .append(Component.newline())
+                              .append(Component.text("Search Time: ")
+                                  .color(Formatter.DULL)
+                                  .append(Component.text(TimeUtil.toSimpleTime(
+                                          Math.round((double) session.executionTime() / 1000)))
+                                      .color(Formatter.ACCENT)))))));
+
+              if (session.getCallerType() == SearchSession.Caller.PLAYER) {
+                PlayerJourneySession journey = new PlayerJourneySession(session.getCallerId(), session, itinerary);
+                journey.run();
+
+                // Save the journey
+                Journey.get().searchManager().putJourney(session.getCallerId(), journey);
+              }
+            } else {
+              audience.sendMessage(Formatter.success("Search complete!"));
+            }
+          }
+          case STOPPED_CANCELED -> audience.sendMessage(Formatter.error("Search canceled"));
+          case STOPPED_FAILED -> audience.sendMessage(Formatter.error("Search failed"));
+          case STOPPED_ERROR -> audience.sendMessage(Formatter.error("Search failed due to an internal error"));
+          default -> throw new RuntimeException();  // programmer error, should never finish the search with this state
+        }
+
+        // run next search, if there is another one queued
+        playerSearches.remove(caller);
+        if (nextPlayerSearches.containsKey(caller)) {
+          QueuedSearch newSession = nextPlayerSearches.remove(caller);
+          doLaunchSearch(caller, audience, newSession.session, newSession.future);
+        }
+        future.complete(result);
+      }, false);
+    });
   }
 
   /**
@@ -170,12 +236,8 @@ public final class SearchManager implements Initializable {
    * @param callerId the caller id
    * @return the stored search, or null if there is none
    */
-  public SearchSession getSearch(@NotNull UUID callerId) {
-    SearchSession session = playerSearches.get(callerId);
-    if (session == null) {
-      throw new NoSuchElementException("There is no search with callerId: " + callerId);
-    }
-    return session;
+  public @Nullable SearchSession getSearch(@NotNull UUID callerId) {
+    return playerSearches.get(callerId);
   }
 
   public void registerLocation(UUID playerUuid, Cell location) {
@@ -216,6 +278,9 @@ public final class SearchManager implements Initializable {
       Journey.get().proxy().schedulingManager().cancelTask(locationUpdateTaskId);
       locationUpdateTaskId = null;
     }
+  }
+
+  private record QueuedSearch(SearchSession session, CompletableFuture<SearchSession.Result> future) {
   }
 
 }
