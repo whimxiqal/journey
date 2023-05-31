@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ItineraryTrial {
 
+  private final SearchSession session;
   private final Cell origin;
   private final AlternatingList<Tunnel, DestinationPathTrial, Object> alternatingList;
   private final BlockProvider blockProvider;
@@ -65,7 +66,8 @@ public class ItineraryTrial {
    * @param origin          the origin of the entire itinerary
    * @param alternatingList the list of stages
    */
-  public ItineraryTrial(Cell origin, AlternatingList<Tunnel, DestinationPathTrial, Object> alternatingList, FlagSet flags) {
+  public ItineraryTrial(SearchSession session, Cell origin, AlternatingList<Tunnel, DestinationPathTrial, Object> alternatingList, FlagSet flags) {
+    this.session = session;
     this.origin = origin;
     this.alternatingList = alternatingList;
     this.blockProvider = new ChunkCacheBlockProvider(PathTrial.MAX_CACHED_CHUNKS_PER_SEARCH, flags);
@@ -96,7 +98,6 @@ public class ItineraryTrial {
             //  the path trial execution logic so it's on the designated Journey threads.
             //  And, there should be preliminary caching of chunks since we know what the blocks are we'll be checking.
             if (pathTrial.getPath().test(pathTrial.getModes(), blockProvider)) {
-              Journey.logger().info("test succeeded, we don't need to do any path trials");
               pathTrialDone = true;
             }
           } catch (ExecutionException | InterruptedException e) {
@@ -216,12 +217,13 @@ public class ItineraryTrial {
 
   @Override
   public String toString() {
-    return "[Itinerary Search] {origin: " + origin +
-        ", paths: " + alternatingList.getMinors().size() +
-        ", path searches: " + executedPathTrials +
-        ", state: " + state +
-        ", changed graph: " + changedProblem +
-        '}';
+    return "[Itinerary Search] {session: " + session.uuid
+        + ", origin: " + origin
+        + ", paths: " + alternatingList.getMinors().size()
+        + ", path searches: " + executedPathTrials
+        + ", state: " + state
+        + ", changed graph: " + changedProblem
+        + '}';
   }
 
   /**

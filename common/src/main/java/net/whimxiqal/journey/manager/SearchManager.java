@@ -179,12 +179,11 @@ public final class SearchManager {
               audience.sendMessage(Formatter.prefix()
                   .append(Component.text("Your search completed! ").color(Formatter.SUCCESS))
                   .append(Component.text("[").color(Formatter.DARK)
-                      .append(Component.text("details").color(Formatter.DULL).decorate(TextDecoration.ITALIC))
+                      .append(Component.text("stats").color(Formatter.DULL).decorate(TextDecoration.ITALIC))
                       .append(Component.text("]").color(Formatter.DARK))
                       .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT,
-                          Component.text("Search Statistics")
-                              .color(Formatter.THEME)
-                              .decorate(TextDecoration.BOLD)
+                          Component.text()
+                              .append(Component.text("Search Statistics").color(Formatter.THEME).decorate(TextDecoration.BOLD))
                               .append(Component.newline())
                               .append(Component.text("Walk Time: ")
                                   .color(Formatter.DULL)
@@ -200,7 +199,8 @@ public final class SearchManager {
                                   .color(Formatter.DULL)
                                   .append(Component.text(TimeUtil.toSimpleTime(
                                           Math.round((double) session.executionTime() / 1000)))
-                                      .color(Formatter.ACCENT)))))));
+                                      .color(Formatter.ACCENT)))
+                              .build()))));
 
               if (session.getCallerType() == SearchSession.Caller.PLAYER) {
                 PlayerJourneySession journey = new PlayerJourneySession(session.getCallerId(), session, itinerary);

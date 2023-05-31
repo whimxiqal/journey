@@ -184,11 +184,11 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
 
   @Override
   public String toString() {
-    return "[Graph Goal Search] {uuid: " + uuid +
-        ", origin: " + origin +
-        ", caller: (" + callerType + ") " + callerId +
-        ", state: " + state.get() +
-        '}';
+    return "[Graph Goal Search] {session: " + uuid
+        + ", origin: " + origin
+        + ", caller: (" + callerType + ") " + callerId
+        + ", state: " + state.get()
+        + '}';
   }
 
   enum CachingStatus {

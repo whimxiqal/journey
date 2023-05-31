@@ -35,8 +35,6 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.Setter;
 import net.whimxiqal.journey.Cell;
@@ -64,42 +62,41 @@ import org.jetbrains.annotations.Nullable;
 public class PathTrial implements WorkItem {
 
   /**
+   * How many chunks we want to cache during
+   */
+  public static final int MAX_CACHED_CHUNKS_PER_SEARCH = 128;
+  /**
    * How many cells to run per cycle.
    * The fewer the cells, the more cycles this has to run to complete the search,
    * but the more opportunities other searches get to override this to make room for other necessary work.
    * Left un-final for testing.
    */
   public static double CELLS_PER_EXECUTION_CYCLE = 1000;
-
-  /**
-   * How many chunks we want to cache during
-   */
-  public static final int MAX_CACHED_CHUNKS_PER_SEARCH = 128;
   @Getter
   protected final Cell origin;
   protected final ChunkCacheBlockProvider chunkCache;
   protected final Queue<Node> upcoming;
-  private final SearchSession session;
-  @Getter
-  private final int domain;
   @Getter
   protected final CostFunction costFunction;
+  protected final SearchSession session;
+  @Getter
+  private final int domain;
   private final Completer completer;
   @Getter
   private final List<Mode> modes = new LinkedList<>();
   private final boolean saveOnComplete;
   private final CompletableFuture<TrialResult> future = new CompletableFuture<>();
   private final Map<Cell, Node> visited = new HashMap<>();
+  private final int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
   protected long startExecutionTime = -1;
-  @Getter
-  private double length;
-  @Getter
-  private Path path;
   @Getter
   protected ResultState state;
   @Getter
   protected boolean fromCache;
-  private final int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
+  @Getter
+  private double length;
+  @Getter
+  private Path path;
   // Search State
   private boolean firstCycle = true;
   private long nextAllowedRunTime = 0;
@@ -107,12 +104,12 @@ public class PathTrial implements WorkItem {
   /**
    * General constructor.
    *
-   * @param session               the session requesting this path trial run
-   * @param origin                the origin
-   * @param costFunction          the object to score various possibilities when stepping to new locations
-   *                              throughout the algorithm
-   * @param completer             the object to determine whether the path algorithm is complete and
-   *                              the goal has been reached
+   * @param session      the session requesting this path trial run
+   * @param origin       the origin
+   * @param costFunction the object to score various possibilities when stepping to new locations
+   *                     throughout the algorithm
+   * @param completer    the object to determine whether the path algorithm is complete and
+   *                     the goal has been reached
    */
   public PathTrial(SearchSession session,
                    Cell origin,
@@ -162,7 +159,7 @@ public class PathTrial implements WorkItem {
     this.path = new Path(origin, new ArrayList<>(steps), length);
     this.fromCache = false;
     if (saveOnComplete) {
-      cacheSuccess();
+      Journey.get().proxy().schedulingManager().schedule(this::cacheSuccess, true);
     }
     Journey.logger().debug(this + ": path trial succeeded");
     future.complete(new TrialResult(this.state, this.path, true));
@@ -333,6 +330,7 @@ public class PathTrial implements WorkItem {
 
   /**
    * Return true if we must delay, return false if we may continue execution as normal.
+   *
    * @param delayMs delay time, in ms
    * @return true if delay
    */
@@ -359,7 +357,8 @@ public class PathTrial implements WorkItem {
 
   @Override
   public String toString() {
-    return "[Path Search] {origin: " + origin
+    return "[Path Search] {session: " + session.uuid
+        + ", origin: " + origin
         + ", state: " + state
         + ", distance function: " + costFunction
         + ", from cache: " + fromCache

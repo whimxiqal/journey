@@ -49,7 +49,7 @@ public class DomainSearchGraph extends SearchGraph {
     if (graphPath == null) {
       return null;
     } else {
-      return new ItineraryTrial(origin, graphPath, session.flags);
+      return new ItineraryTrial(session, origin, graphPath, session.flags);
     }
   }
 

@@ -37,7 +37,7 @@ public final class Flags {
       Settings.DEFAULT_SEARCH_TIMEOUT::getValue,
       Integer.class);
   public static final Flag<Integer> ANIMATE = Flag.of("animate",
-      (Function<Integer, String>) TimeUtil::toSimpleTimeMilliseconds,
+      value -> value == 0 ? "-" : TimeUtil.toSimpleTimeMilliseconds(value),
       () -> 0,
       Integer.class);
   public static final Flag<Boolean> DIG = Flag.of("dig", Object::toString, Settings.DEFAULT_DIG_FLAG::getValue, Boolean.class);

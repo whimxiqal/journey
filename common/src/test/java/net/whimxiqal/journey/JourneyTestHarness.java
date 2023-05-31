@@ -27,6 +27,9 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.TestDataManager;
 import net.whimxiqal.journey.navigation.Itinerary;
@@ -38,8 +41,8 @@ import org.junit.jupiter.api.BeforeAll;
 
 public class JourneyTestHarness {
 
-  protected static final boolean DEBUG = false;
   public static final UUID PLAYER_UUID = UUID.randomUUID();
+  protected static final boolean DEBUG = false;
   protected static final Map<UUID, Itinerary> SESSION_ITINERARIES = new HashMap<>();
   private static boolean initialized = false;
 
@@ -69,6 +72,12 @@ public class JourneyTestHarness {
 
     TestPlatformProxy.onlinePlayers.add(new TestJourneyPlayer(PLAYER_UUID));
     Journey.get().tunnelManager().register(player -> TestPlatformProxy.tunnels);
+  }
+
+  protected final <T> T runOnMainThread(Supplier<T> supplier) throws ExecutionException, InterruptedException {
+    CompletableFuture<T> future = new CompletableFuture<>();
+    Journey.get().proxy().schedulingManager().schedule(() -> future.complete(supplier.get()), false);
+    return future.get();
   }
 
 }

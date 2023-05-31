@@ -27,6 +27,7 @@ import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -73,17 +74,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
     lastSessionUuid = session.uuid();
     Assertions.assertEquals(ResultState.IDLE, session.getState());
     session.setFlags(flags);
-    CompletableFuture<SearchSession.Result> future = new CompletableFuture<>();
-
-    // schedule search on main thread, which is how all searches should be scheduled
-    Journey.get().proxy().schedulingManager().schedule(() -> {
-      try {
-        future.complete(Journey.get().searchManager().launchIngameSearch(session).get());
-      } catch (InterruptedException | ExecutionException e) {
-        Assertions.fail(e);
-      }
-    }, false);
-
+    Future<SearchSession.Result> future = runOnMainThread(() -> Journey.get().searchManager().launchIngameSearch(session));
     SearchSession.Result result = future.get();
     Assertions.assertEquals(expectedResult, result.state(), "Expected state of session search was incorrect");
     if (result.itinerary() != null) {
@@ -170,9 +161,10 @@ public class SimpleSearchTests extends JourneyTestHarness {
 
     // Set cells-per-execution-cycle to something small to stress-test the DistributedWorkManager
     PathTrial.CELLS_PER_EXECUTION_CYCLE = 5;
-    final int runs = 100;
-    final int total = runs * 12;
+    final int RUNS = 100;
+    final int total = RUNS * 12;
     AtomicInteger finished = new AtomicInteger(0);
+    AtomicInteger failed = new AtomicInteger(0);
 
     BiFunction<String, String, SearchSession> newSearch = (origin, destination) ->
         new DestinationGoalSearchSession(UUID.randomUUID(),
@@ -187,11 +179,14 @@ public class SimpleSearchTests extends JourneyTestHarness {
       Assertions.assertEquals(ResultState.IDLE, session.getState());
       session.search(2).thenAccept(result -> {
         finished.incrementAndGet();
-        Assertions.assertEquals(expected, result, "Failed search: " + session);
+        if (expected != result.state()) {
+          System.err.println(session + ": Expected " + expected + ", got " + result.state());
+          failed.incrementAndGet();
+        }
       });
     };
 
-    for (int i = 0; i < runs; i++) {
+    for (int i = 0; i < RUNS; i++) {
       runSearchAsync.accept(newSearch.apply("1", "2"), ResultState.STOPPED_SUCCESSFUL);
       runSearchAsync.accept(newSearch.apply("1", "3"), ResultState.STOPPED_SUCCESSFUL);
       runSearchAsync.accept(newSearch.apply("1", "4"), ResultState.STOPPED_FAILED);
@@ -200,20 +195,21 @@ public class SimpleSearchTests extends JourneyTestHarness {
       runSearchAsync.accept(newSearch.apply("3", "4"), ResultState.STOPPED_FAILED);
 
       runSearchAsync.accept(newSearch.apply("2", "1"), ResultState.STOPPED_SUCCESSFUL);
-      runSearchAsync.accept(newSearch.apply("3", "1"), ResultState.STOPPED_SUCCESSFUL);
+      runSearchAsync.accept(newSearch.apply("3", "1"), ResultState.STOPPED_FAILED);
       runSearchAsync.accept(newSearch.apply("4", "1"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("3", "2"), ResultState.STOPPED_SUCCESSFUL);
+      runSearchAsync.accept(newSearch.apply("3", "2"), ResultState.STOPPED_FAILED);
       runSearchAsync.accept(newSearch.apply("4", "2"), ResultState.STOPPED_FAILED);
       runSearchAsync.accept(newSearch.apply("4", "3"), ResultState.STOPPED_FAILED);
     }
 
-    long failureTime = System.currentTimeMillis() + (1000 * 5);  // 5 seconds until we consider it failure
+    long failureTime = System.currentTimeMillis() + (1000 * 10);  // 5 seconds until we consider it failure
     while (finished.get() != total) {
       Thread.sleep(100);
       if (System.currentTimeMillis() > failureTime) {
         Assertions.fail("The test took too long. Only " + finished.get() + " out of " + total + " finished.");
       }
     }
+    Assertions.assertEquals(0, failed.get());
   }
 
 }

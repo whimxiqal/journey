@@ -33,7 +33,6 @@ import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.search.function.CostFunction;
-import net.whimxiqal.journey.search.function.EuclideanDistanceCostFunction;
 import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
 
 /**
@@ -160,31 +159,30 @@ public class DestinationPathTrial extends PathTrial {
 
   @Override
   protected void cacheSuccess() {
-    Journey.get().proxy().schedulingManager().schedule(() -> {
-      if (Journey.get().dataManager().pathRecordManager().totalRecordCellCount() + getLength() > Settings.MAX_CACHED_CELLS.getValue()) {
-        if (!loggedMaxCacheHit) {
-          Journey.logger().warn("The Journey database has cached the max number of cells allowed in the config file. Raise this number to continue caching results.");
-          loggedMaxCacheHit = true;
-        }
-        return;
+    Journey.logger().debug(this + ": caching path in database");
+    if (Journey.get().dataManager().pathRecordManager().totalRecordCellCount() + getLength() > Settings.MAX_CACHED_CELLS.getValue()) {
+      if (!loggedMaxCacheHit) {
+        Journey.logger().warn("The Journey database has cached the max number of cells allowed in the config file. Raise this number to continue caching results.");
+        loggedMaxCacheHit = true;
       }
-      try {
-        Journey.get().dataManager().pathRecordManager().report(
-            this,
-            getModes().stream().map(Mode::type).collect(Collectors.toSet()),
-            System.currentTimeMillis() - startExecutionTime);
-      } catch (DataAccessException e) {
-        Journey.logger().error("SQL error trying to cache a path.");
-      }
-    }, true);
+      return;
+    }
+    try {
+      Journey.get().dataManager().pathRecordManager().report(
+          this,
+          getModes().stream().map(Mode::type).collect(Collectors.toSet()),
+          System.currentTimeMillis() - startExecutionTime);
+    } catch (DataAccessException e) {
+      Journey.logger().error("SQL error trying to cache a path.");
+    }
   }
 
   @Override
   public String toString() {
-    return "[Destination Path Search] {origin: " + origin
+    return "[Destination Path Search] {session: " + session.uuid
+        + ", origin: " + origin
         + ", destination: " + destination
         + ", state: " + state
-        + ", distance function: " + costFunction
         + ", from cache: " + fromCache
         + "}";
   }

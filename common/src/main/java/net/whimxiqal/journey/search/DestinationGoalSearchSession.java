@@ -72,4 +72,14 @@ public class DestinationGoalSearchSession extends GraphGoalSearchSession<Destina
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return "[Destination Graph Goal Search] {session: " + uuid
+        + ", origin: " + origin
+        + ", destination: " + destination
+        + ", caller: (" + callerType + ") " + callerId
+        + ", state: " + state.get()
+        + '}';
+  }
 }

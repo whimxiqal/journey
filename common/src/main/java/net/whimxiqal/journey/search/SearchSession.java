@@ -36,13 +36,11 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Describable;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
-import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
@@ -72,10 +70,10 @@ public abstract class SearchSession implements Describable {
   protected final UUID callerId;
   protected final UUID uuid = UUID.randomUUID();
   protected final Caller callerType;
+  protected final FlagSet flags = new FlagSet();
   private final AtomicReference<List<Tunnel>> tunnels = new AtomicReference<>(Collections.emptyList());
   private final AtomicReference<List<Mode>> modes = new AtomicReference<>(Collections.emptyList());
   private final List<String> permissions = new LinkedList<>();
-  protected final FlagSet flags = new FlagSet();
   protected AtomicReference<ResultState> state = new AtomicReference<>(ResultState.IDLE);
   protected CompletableFuture<Result> future = new CompletableFuture<>();
   private Component name = Component.empty();
@@ -116,8 +114,7 @@ public abstract class SearchSession implements Describable {
   }
 
   protected final void setPlayerTunnels() {
-    Journey.get().proxy().platform().onlinePlayer(getCallerId()).ifPresent(jPlayer ->
-        setTunnels(Journey.get().tunnelManager().tunnels(jPlayer)));
+    setTunnels(Journey.get().tunnelManager().tunnels(Journey.get().proxy().platform().onlinePlayer(getCallerId()).orElse(null)));
   }
 
   /**
@@ -127,7 +124,7 @@ public abstract class SearchSession implements Describable {
     Journey.logger().debug(this + ": scheduling search");
     // kick off the first portion
     Journey.get().proxy().schedulingManager().schedule(this::asyncSearch, true);
-    // Set up cancellation task
+    // Set up timeout task
     if (timeout > 0) {
       Journey.get().proxy().schedulingManager().schedule(() -> stop(false), false, timeout * 20 /* ticks per second */);
     }
@@ -153,9 +150,6 @@ public abstract class SearchSession implements Describable {
   protected final void complete(@Nullable Itinerary itinerary) {
     timer.stop();
     future.complete(new Result(state.get(), itinerary));
-  }
-
-  public record Result(ResultState state, @Nullable Itinerary itinerary) {
   }
 
   public final CompletableFuture<Result> future() {
@@ -205,7 +199,6 @@ public abstract class SearchSession implements Describable {
       return Collections.unmodifiableList(newModes);
     });
   }
-
 
   /**
    * Get an immutable list of all the registered tunnels on this session.
@@ -341,5 +334,8 @@ public abstract class SearchSession implements Describable {
     PLAYER,
     CONSOLE,
     OTHER
+  }
+
+  public record Result(ResultState state, @Nullable Itinerary itinerary) {
   }
 }
