@@ -35,7 +35,7 @@ class SimpleTimerTest {
     SimpleTimer timer = new SimpleTimer();
     timer.start();
     Thread.sleep(10);
-    Assertions.assertTrue(timer.elapsed() > 10);
+    Assertions.assertTrue(timer.elapsed() >= 10);
   }
 
   @Test

@@ -26,11 +26,12 @@ package net.whimxiqal.journey.manager;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.UUID;
+import net.whimxiqal.journey.JourneyTestHarness;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class DistributedWorkManagerTest {
+class DistributedWorkManagerTest extends JourneyTestHarness {
 
   static final LinkedList<Integer> ordering = new LinkedList<>();
   static final LinkedList<TestWorkItem> workItems = new LinkedList<>();
