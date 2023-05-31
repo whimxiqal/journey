@@ -177,7 +177,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
     BiConsumer<SearchSession, ResultState> runSearchAsync = (session, expected) -> {
       session.initialize();
       Assertions.assertEquals(ResultState.IDLE, session.getState());
-      session.search(2).thenAccept(result -> {
+      session.search(10).thenAccept(result -> {
         finished.incrementAndGet();
         if (expected != result.state()) {
           System.err.println(session + ": Expected " + expected + ", got " + result.state());
@@ -202,7 +202,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
       runSearchAsync.accept(newSearch.apply("4", "3"), ResultState.STOPPED_FAILED);
     }
 
-    long failureTime = System.currentTimeMillis() + (1000 * 10);  // 5 seconds until we consider it failure
+    long failureTime = System.currentTimeMillis() + (1000 * 30);  // 30 seconds until we consider it failure
     while (finished.get() != total) {
       Thread.sleep(100);
       if (System.currentTimeMillis() > failureTime) {

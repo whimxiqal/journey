@@ -41,7 +41,7 @@ public class TestSchedulingManager implements SchedulingManager {
 
   public TestSchedulingManager() {
     queue = new PriorityBlockingQueue<>(10, Comparator.comparing(task -> task.executionTime));
-    asyncService = Executors.newFixedThreadPool(2);
+    asyncService = Executors.newFixedThreadPool(4);
     canceledTasks = ConcurrentHashMap.newKeySet();
   }
 
