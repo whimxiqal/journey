@@ -25,6 +25,9 @@ package net.whimxiqal.journey.manager;
 
 import java.util.UUID;
 
+/**
+ * A unit of work, as seen by the {@link DistributedWorkManager}.
+ */
 public interface WorkItem {
 
   /**
@@ -33,7 +36,8 @@ public interface WorkItem {
   UUID owner();
 
   /**
-   * Execute work.
+   * Execute work. This, along with {@link #reset()}, will only be run by a single thread at a time, but
+   * any execution may be run by a different thread than the last.
    *
    * @return true if done, false if there is more work to do
    */
@@ -42,6 +46,8 @@ public interface WorkItem {
   /**
    * Reset all state on this object, and clear any cached data.
    * Run may be re-run on this object, and it would be as if it was called for the first time.
+   * This, along with {@link #run()}, will only be run by a single thread at a time, but
+   * any execution may be run by a different thread than the last.
    */
   void reset();
 

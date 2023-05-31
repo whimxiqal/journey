@@ -32,6 +32,11 @@ import net.whimxiqal.journey.platform.TestWorld;
 public record TestJourneyBlock(Cell cell) implements JourneyBlock {
 
   @Override
+  public boolean isAir() {
+    return false;
+  }
+
+  @Override
   public boolean isNetherPortal() {
     return false;
   }

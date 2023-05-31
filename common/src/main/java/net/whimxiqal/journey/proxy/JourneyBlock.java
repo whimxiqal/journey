@@ -36,6 +36,8 @@ public interface JourneyBlock {
 
   Cell cell();
 
+  boolean isAir();
+
   boolean isNetherPortal();
 
   boolean isWater();

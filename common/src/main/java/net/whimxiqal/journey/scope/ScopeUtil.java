@@ -31,15 +31,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Destination;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.search.InternalScope;
-import net.whimxiqal.journey.search.PlayerSurfaceGoalSearchSession;
 import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.SurfaceGoalSearchSession;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.journey.util.Validator;
 
@@ -61,11 +63,15 @@ public final class ScopeUtil {
         .build(),
         player -> {
           Map<String, SearchSession> sessions = new HashMap<>();
-          if (!Journey.get().proxy().platform().isAtSurface(player.location())) {
-            SearchSession surfaceSession = new PlayerSurfaceGoalSearchSession(player.uuid(), player.location());
-            surfaceSession.setName(Component.text("Go to surface"));
-            surfaceSession.addPermission(Permission.PATH_SURFACE.path());
-            sessions.put("surface", surfaceSession);
+          try {
+            if (!BlockProvider.isAtSurface(Journey.get().proxy().platform(), player.location())) {
+              SearchSession surfaceSession = new SurfaceGoalSearchSession(player.uuid(), SearchSession.Caller.PLAYER, player.location());
+              surfaceSession.setName(Component.text("Go to surface"));
+              surfaceSession.addPermission(Permission.PATH_SURFACE.path());
+              sessions.put("surface", surfaceSession);
+            }
+          } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
           }
           return VirtualMap.of(sessions);
         },

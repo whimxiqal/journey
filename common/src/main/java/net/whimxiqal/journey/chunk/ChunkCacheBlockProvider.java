@@ -31,7 +31,6 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
-import net.whimxiqal.journey.search.AbstractPathTrial;
 import net.whimxiqal.journey.search.flag.FlagSet;
 
 /**
@@ -88,11 +87,11 @@ public class ChunkCacheBlockProvider implements BlockProvider {
       curDist += 1.0;
     }
 
-    Journey.get().getCentralChunkCache().loadChunks(toQueue);
+    Journey.get().centralChunkCache().loadChunks(toQueue);
   }
 
   @Override
-  public JourneyBlock getBlock(Cell cell) throws ExecutionException, InterruptedException {
+  public JourneyBlock toBlock(Cell cell) throws ExecutionException, InterruptedException {
     // Clear any outdated items in the local cache
     chunkCache.prune();
 
@@ -103,7 +102,7 @@ public class ChunkCacheBlockProvider implements BlockProvider {
     JourneyChunk chunk = chunkCache.getChunk(chunkId);
     if (chunk == null) {
       // Not stored locally. We have to get the info from the central cache and cache the chunk locally for next time
-      Future<JourneyChunk> future = Journey.get().getCentralChunkCache().getChunk(chunkId);
+      Future<JourneyChunk> future = Journey.get().centralChunkCache().getChunk(chunkId);
       chunk = future.get();  // waits for future, will take at most 1 game tick
       chunkCache.save(chunk);
     }

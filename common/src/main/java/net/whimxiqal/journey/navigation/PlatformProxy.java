@@ -31,12 +31,12 @@ import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
-import net.whimxiqal.journey.search.AnimationManager;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bstats.charts.CustomChart;
@@ -45,7 +45,7 @@ import org.bstats.charts.CustomChart;
  * An interface to the specific platform/engine that is running Minecraft.
  * All calls to this proxy must be made synchronously on the main server thread.
  */
-public interface PlatformProxy {
+public interface PlatformProxy extends BlockProvider {
 
   /**
    * Convert chunk id to a {@link JourneyChunk}.
@@ -67,6 +67,7 @@ public interface PlatformProxy {
    * @param cell the cell with the location information for the block
    * @return the block
    */
+  @Override
   JourneyBlock toBlock(Cell cell);
 
   void playSuccess(UUID playerUuid);
@@ -87,17 +88,20 @@ public interface PlatformProxy {
 
   void prepareDestinationSearchSession(SearchSession searchSession, UUID player, FlagSet flags, Cell destination);
 
-  boolean isAtSurface(Cell cell);
+  void sendAnimationBlock(UUID player, Cell location);
 
-  boolean sendBlockData(UUID player, Cell location, AnimationManager.StageType stage, ModeType mode);
-
-  boolean resetBlockData(UUID player, Collection<Cell> locations);
+  void resetAnimationBlocks(UUID player, Collection<Cell> locations);
 
   String domainName(int domainId);
 
   boolean sendGui(JourneyPlayer source);
 
-  boolean synchronous();
+  /**
+   * Whether currently executing on the main server thread.
+   *
+   * @return true if synchronous on main thread
+   */
+  boolean isMainThread();
 
   Consumer<CustomChart> bStatsChartConsumer();
 

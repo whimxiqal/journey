@@ -32,21 +32,17 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import net.kyori.adventure.audience.Audience;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
-import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.event.StartSearchEvent;
-import net.whimxiqal.journey.search.event.StopSearchEvent;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.SimpleTimer;
 
 public class EverythingSearch extends SearchSession {
 
   private static final int LOG_PERIOD_MS = 1000;  // 5 seconds
-  private final LinkedList<PathTrial> pathTrials = new LinkedList<>();
+  private final LinkedList<DestinationPathTrial> pathTrials = new LinkedList<>();
   private final SimpleTimer logTimer = new SimpleTimer();
   private final AtomicReference<Double> totalLengthToCalculate = new AtomicReference<>(0.0);
   private final AtomicReference<Double> lengthCalculated = new AtomicReference<>(0.0);
@@ -63,13 +59,7 @@ public class EverythingSearch extends SearchSession {
 
   @Override
   public void asyncSearch() {
-    synchronized (this) {
-      if (state == ResultState.IDLE) {
-        state = ResultState.RUNNING;
-      } else {
-        throw new RuntimeException();  // programmer error
-      }
-    }
+    state.set(ResultState.RUNNING);
     initSearch();
     runSearches();
   }
@@ -78,18 +68,12 @@ public class EverythingSearch extends SearchSession {
     Journey.logger().info("Performing preliminary caching to speed up search times...");
     super.timer.start();
     logTimer.start();
-    Journey.get().dispatcher().dispatch(new StartSearchEvent(this));
-    Journey.get().debugManager().broadcast(Formatter.debug("Started a search for caller ___, modes:___, tunnels:___",
-            getCallerId(),
-            modes().size(),
-            tunnels().size()),
-        getCallerId());
 
     final Set<Integer> allDomains = new HashSet<>();
     final Map<Integer, List<Tunnel>> tunnelsByOriginDomain = new HashMap<>();
     final Map<Integer, List<Tunnel>> tunnelsByDestinationDomain = new HashMap<>();
 
-    for (Tunnel tunnel : this.tunnels) {
+    for (Tunnel tunnel : tunnels()) {
       allDomains.add(tunnel.origin().domain());
       allDomains.add(tunnel.destination().domain());
     }
@@ -101,21 +85,21 @@ public class EverythingSearch extends SearchSession {
     }
 
     // Fill tunnel maps
-    for (Tunnel tunnel : this.tunnels) {
+    for (Tunnel tunnel : tunnels()) {
       tunnelsByOriginDomain.get(tunnel.origin().domain()).add(tunnel);
       tunnelsByDestinationDomain.get(tunnel.destination().domain()).add(tunnel);
     }
 
     // Collect path trials
-    Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
+    Set<ModeType> modeTypes = modes().stream().map(Mode::type).collect(Collectors.toSet());
     for (Integer domain : allDomains) {
       for (Tunnel pathTrialOriginTunnel : tunnelsByDestinationDomain.get(domain)) {
         for (Tunnel pathTrialDestinationTunnel : tunnelsByOriginDomain.get(domain)) {
           if (!Journey.get().dataManager()
               .pathRecordManager()
               .containsRecord(pathTrialOriginTunnel.destination(), pathTrialDestinationTunnel.origin(), modeTypes)) {
-            PathTrial pathTrial = PathTrial.approximate(this, pathTrialOriginTunnel.destination(), pathTrialDestinationTunnel.origin(),
-                modes, true);
+            DestinationPathTrial pathTrial = DestinationPathTrial.approximate(this, pathTrialOriginTunnel.destination(), pathTrialDestinationTunnel.origin(),
+                modes(), true);
             pathTrials.add(pathTrial);
             totalLengthToCalculate.set(totalLengthToCalculate.get() + pathTrial.getLength());
           }
@@ -127,14 +111,13 @@ public class EverythingSearch extends SearchSession {
   private void runSearches() {
     if (pathTrials.isEmpty()) {
       Journey.logger().info("Caching paths: No paths to cache!");
-      state = ResultState.STOPPED_SUCCESSFUL;
-      future.complete(state);
-      Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+      state.set(ResultState.STOPPED_SUCCESSFUL);
+      complete(null);
       return;
     }
 
     Journey.logger().info("Caching paths: 0.00 % complete");
-    for (PathTrial pathTrial : pathTrials) {
+    for (DestinationPathTrial pathTrial : pathTrials) {
       double preCalculatedLength = pathTrial.getLength();
 
       if (pathTrial.isFromCache()) {
@@ -159,22 +142,17 @@ public class EverythingSearch extends SearchSession {
       pathTrialsCompleted++;
       if (pathTrialsCompleted == pathTrials.size()) {
         Journey.logger().info("Caching paths: complete!");
-        state = state.stoppedResult();
-        future.complete(state);
-        Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+        state.set(ResultState.STOPPED_SUCCESSFUL);
+        complete(null);
       }
     }
   }
 
   @Override
   public void initialize() {
-    SearchSession.registerPlayerModes(this, UUID.randomUUID(), flags);
-    Journey.get().tunnelManager().tunnels(null).forEach(this::registerTunnel);
-  }
-
-  @Override
-  public Audience audience() {
-    return Journey.get().proxy().audienceProvider().player(getCallerId());
+    super.initialize();
+    setPlayerModes();
+    setTunnels(Journey.get().tunnelManager().tunnels(null));
   }
 
 }

@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 public class PlayerJourneySession implements JourneySession {
 
   public static final double CACHED_JOURNEY_STEPS_LENGTH = 128;  // length of all journey steps to cache for showing their particles
-  public static final int TICKS_PER_PARTICLE_CYCLE = 2;
+  public static final int TICKS_PER_PARTICLE_CYCLE = 3;
   public static final double PARTICLE_UNIT_DISTANCE = 0.5;  // number of blocks between which particles will be shown
   public static final int PARTICLE_CYCLE_COUNT = 1;
   public static final float PARTICLE_SPAWN_DENSITY = 0.6f;
@@ -167,7 +167,6 @@ public class PlayerJourneySession implements JourneySession {
         ++i;
       }
       if (foundLocation) {
-        madeProgress = true;
         // go back and remove every one up to index i
         for (int j = 0; j <= i; j++) {
           journeySteps.pop();
@@ -191,7 +190,9 @@ public class PlayerJourneySession implements JourneySession {
 
   @Override
   public void stop() {
-    Journey.get().proxy().schedulingManager().cancelTask(illuminationTaskId);
+    if (illuminationTaskId != null) {
+      Journey.get().proxy().schedulingManager().cancelTask(illuminationTaskId);
+    }
     if (state == State.RUNNING) {
       state = State.STOPPED_INCOMPLETE;
     }

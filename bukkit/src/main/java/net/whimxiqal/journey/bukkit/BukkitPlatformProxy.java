@@ -45,7 +45,6 @@ import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
-import net.whimxiqal.journey.search.AnimationManager;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
@@ -63,10 +62,9 @@ import org.bukkit.entity.Player;
 
 public class BukkitPlatformProxy implements PlatformProxy {
 
-  /**
-   * The height of the space filled with air to be considered the surface of the world.
-   */
-  private static final int AT_SURFACE_HEIGHT = 64;
+  private final BlockData animationBlockData = Material.WHITE_STAINED_GLASS.createBlockData();
+
+
   private final Metrics metrics;
 
   public BukkitPlatformProxy() {
@@ -158,78 +156,39 @@ public class BukkitPlatformProxy implements PlatformProxy {
       return;
     }
     if (player.getAllowFlight() && flags.getValueFor(Flags.FLY)) {
-      search.registerMode(new FlyRayTraceMode(search, destination));
+      search.addMode(new FlyRayTraceMode(destination));
     }
   }
 
   @Override
-  public boolean isAtSurface(Cell cell) {
-    int x = cell.blockX();
-    int z = cell.blockZ();
-    for (int y = cell.blockY() + 1; y <= Math.min(256, cell.blockY() + AT_SURFACE_HEIGHT); y++) {
-      if (BukkitUtil.getBlock(new Cell(x, y, z, cell.domain())).getMaterial() != Material.AIR) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Override
-  public boolean sendBlockData(UUID playerUuid, Cell location, AnimationManager.StageType stage, ModeType mode) {
+  public void sendAnimationBlock(UUID playerUuid, Cell location) {
     Player player = Bukkit.getPlayer(playerUuid);
     if (player == null) {
-      return false;
+      return;
     }
     if (BukkitUtil.cell(player.getLocation()).equals(location)
         || BukkitUtil.cell(player.getLocation().add(0, 1, 0)).equals(location)) {
-      return false;
+      return;
     }
-
-    switch (stage) {
-      case SUCCESS: {
-        BlockData blockData;
-        switch (mode) {
-          case WALK:
-            blockData = Material.LIME_STAINED_GLASS.createBlockData();
-            break;
-          case JUMP:
-            blockData = Material.MAGENTA_STAINED_GLASS.createBlockData();
-            break;
-          case FLY:
-            blockData = Material.WHITE_STAINED_GLASS.createBlockData();
-            break;
-          default:
-            blockData = Material.COBWEB.createBlockData();
-            break;
-        }
-        return showBlock(player, location, blockData);
-      }
-      case FAILURE:
-        return showBlock(player, location, Material.GLOWSTONE.createBlockData());
-      case STEP:
-        return showBlock(player, location, Material.OBSIDIAN.createBlockData());
-    }
-    return true;
-  }
-
-  private boolean showBlock(Player player, Cell cell, BlockData blockData) {
-    if (BukkitUtil.getWorld(cell) != player.getWorld()
-        || cell.distanceToSquared(BukkitUtil.cell(player.getLocation())) > 10000) {
-      return false;
-    }
-    player.sendBlockChange(BukkitUtil.toLocation(cell), blockData);
-    return true;
+    showBlock(player, location, animationBlockData);
   }
 
   @Override
-  public boolean resetBlockData(UUID playerUuid, Collection<Cell> locations) {
+  public void resetAnimationBlocks(UUID playerUuid, Collection<Cell> locations) {
     Player player = Bukkit.getPlayer(playerUuid);
     if (player == null) {
-      return false;
+      return;
     }
+    for (Cell cell : locations) {
+      showBlock(player, cell, BukkitUtil.getBlock(cell));
+    }
+  }
 
-    locations.forEach(cell -> showBlock(player, cell, BukkitUtil.getBlock(cell)));
-    return true;
+  private void showBlock(Player player, Cell cell, BlockData blockData) {
+    if (BukkitUtil.getWorld(cell) == player.getWorld()
+        && cell.distanceToSquared(BukkitUtil.cell(player.getLocation())) < 10000 /* 100 blocks away, ignore */) {
+      player.sendBlockChange(BukkitUtil.toLocation(cell), blockData);
+    }
   }
 
   @Override
@@ -245,7 +204,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public boolean synchronous() {
+  public boolean isMainThread() {
     return Bukkit.isPrimaryThread();
   }
 

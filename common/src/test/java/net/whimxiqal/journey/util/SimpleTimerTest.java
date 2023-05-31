@@ -21,52 +21,48 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.search.event;
+package net.whimxiqal.journey.util;
 
-import net.whimxiqal.journey.search.AbstractPathTrial;
-import net.whimxiqal.journey.search.PathTrial;
-import net.whimxiqal.journey.search.SearchSession;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-/**
- * An event dispatched when a path is about to be searched for
- * in a {@link PathTrial}.
- *
- * @see SearchSession
- * @see SearchDispatcher
- */
-public class StartPathSearchEvent extends SearchEvent {
+import static org.junit.jupiter.api.Assertions.*;
 
-  private final AbstractPathTrial pathTrial;
+class SimpleTimerTest {
 
-  /**
-   * General constructor.
-   *
-   * @param session   the session
-   * @param pathTrial the path trial being executed to cause this event
-   */
-  public StartPathSearchEvent(SearchSession session, AbstractPathTrial pathTrial) {
-    super(session);
-    this.pathTrial = pathTrial;
+  @Test
+  public void testStartElapsed() throws InterruptedException {
+    SimpleTimer timer = new SimpleTimer();
+    timer.start();
+    Thread.sleep(10);
+    Assertions.assertTrue(timer.elapsed() >= 10);
   }
 
-  /**
-   * Get the path trial being executed to cause this event.
-   *
-   * @return the path trial
-   */
-  public AbstractPathTrial getPathTrial() {
-    return pathTrial;
+  @Test
+  public void testStartStopElapsed() throws InterruptedException {
+    SimpleTimer timer = new SimpleTimer();
+    timer.start();
+    Thread.sleep(10);
+    timer.stop();
+    Thread.sleep(100);
+    Assertions.assertTrue(timer.elapsed() >= 0);
+    Assertions.assertTrue(timer.elapsed() < 100);
   }
 
-  @Override
-  EventType type() {
-    return EventType.START_PATH;
+  @Test
+  public void testRestart() throws InterruptedException {
+    SimpleTimer timer = new SimpleTimer();
+    timer.start();
+    Thread.sleep(10);
+    timer.start();
+    Assertions.assertTrue(timer.elapsed() >= 0);
+    Assertions.assertTrue(timer.elapsed() < 10);
   }
 
-  @Override
-  public String toString() {
-    return "StartPathSearchEvent{" +
-        "pathTrial=" + pathTrial +
-        '}';
+  @Test
+  public void unStarted() {
+    SimpleTimer timer = new SimpleTimer();
+    Assertions.assertTrue(timer.elapsed() < 0);
   }
+
 }

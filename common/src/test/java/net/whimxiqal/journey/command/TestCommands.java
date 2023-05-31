@@ -27,17 +27,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Destination;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyApi;
 import net.whimxiqal.journey.JourneyApiProvider;
-import net.whimxiqal.journey.VirtualMap;
-import net.whimxiqal.journey.Scope;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyTestHarness;
+import net.whimxiqal.journey.Scope;
+import net.whimxiqal.journey.VirtualMap;
 import net.whimxiqal.journey.platform.TestJourneyPlayer;
-import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
 import net.whimxiqal.mantle.common.CommandResult;
 import net.whimxiqal.mantle.common.CommandSource;
@@ -66,19 +65,6 @@ public class TestCommands extends JourneyTestHarness {
     }
   }
 
-  static CommandResult execute(String command) {
-    String[] baseCommand = command.split(" ", 2);
-    assert baseCommand.length == 1 || baseCommand.length == 2;
-    MantleCommand mantleCommand = commands.get(baseCommand[0]);
-    if (mantleCommand == null) {
-      System.out.println("Mantle command could not be found for base command: " + baseCommand[0]);
-      return CommandResult.failure();
-    }
-    return mantleCommand.process(new CommandSource(CommandSource.Type.PLAYER,
-        PLAYER_UUID,
-        Journey.get().proxy().audienceProvider().console()), baseCommand.length > 1 ? baseCommand[1] : "");
-  }
-
   static List<String> completions(String command) {
     String[] baseCommand = command.split(" ", 2);
     assert baseCommand.length == 1 || baseCommand.length == 2;
@@ -95,21 +81,35 @@ public class TestCommands extends JourneyTestHarness {
     Journey.get().dataManager().personalWaypointManager().add(PLAYER_UUID, new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
   }
 
-  void commandSuccess(String command) {
+  private CommandResult execute(String command) throws ExecutionException, InterruptedException {
+    // we must execute these calls on the main server thread
+    String[] baseCommand = command.split(" ", 2);
+    assert baseCommand.length == 1 || baseCommand.length == 2;
+    MantleCommand mantleCommand = commands.get(baseCommand[0]);
+    if (mantleCommand == null) {
+      System.out.println("Mantle command could not be found for base command: " + baseCommand[0]);
+      return CommandResult.failure();
+    }
+    return runOnMainThread(() -> mantleCommand.process(new CommandSource(CommandSource.Type.PLAYER,
+        PLAYER_UUID,
+        Journey.get().proxy().audienceProvider().console()), baseCommand.length > 1 ? baseCommand[1] : ""));
+  }
+
+  void commandSuccess(String command) throws ExecutionException, InterruptedException {
     Assertions.assertEquals(CommandResult.Type.SUCCESS, execute(command).type(), "\"Test failed for command " + command + "\"");
   }
 
-  void commandFailure(String command) {
+  void commandFailure(String command) throws ExecutionException, InterruptedException {
     Assertions.assertEquals(CommandResult.Type.FAILURE, execute(command).type(), "\"Test failed for command " + command + "\"");
   }
 
   @Test
-  void sampleTest() {
+  void sampleTest() throws ExecutionException, InterruptedException {
     commandSuccess("journey");
   }
 
   @Test
-  void journeyToTest() {
+  void journeyToTest() throws ExecutionException, InterruptedException {
     addHome();
     commandSuccess("journeyto home");
     commandSuccess("journeyto personal:home");
@@ -142,7 +142,7 @@ public class TestCommands extends JourneyTestHarness {
   }
 
   @Test
-  void complicatedScope() {
+  void complicatedScope() throws ExecutionException, InterruptedException {
     JourneyApi api = JourneyApiProvider.get();
     Destination destination = Destination.of(new Cell(0, 0, 0, WorldLoader.domain(0)));
     testProxy.revokeAllPermissions(PLAYER_UUID);

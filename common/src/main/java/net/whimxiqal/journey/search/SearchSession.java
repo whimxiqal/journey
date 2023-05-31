@@ -34,14 +34,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Describable;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
-import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
@@ -53,10 +52,10 @@ import net.whimxiqal.journey.navigation.mode.FlyMode;
 import net.whimxiqal.journey.navigation.mode.JumpMode;
 import net.whimxiqal.journey.navigation.mode.SwimMode;
 import net.whimxiqal.journey.navigation.mode.WalkMode;
-import net.whimxiqal.journey.search.event.StopSearchEvent;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.SimpleTimer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A session to handle a pathfinding search.
@@ -65,62 +64,67 @@ import net.whimxiqal.journey.util.SimpleTimer;
  *
  * <p>This class must be thread-safe because it will be called asynchronously
  */
-public abstract class SearchSession implements Resulted, Describable {
+public abstract class SearchSession implements Describable {
 
-  protected final List<Tunnel> tunnels = new LinkedList<>();
-  protected final List<Mode> modes = new LinkedList<>();
   protected final SimpleTimer timer = new SimpleTimer();
   protected final UUID callerId;
   protected final UUID uuid = UUID.randomUUID();
   protected final Caller callerType;
+  protected final FlagSet flags = new FlagSet();
+  private final AtomicReference<List<Tunnel>> tunnels = new AtomicReference<>(Collections.emptyList());
+  private final AtomicReference<List<Mode>> modes = new AtomicReference<>(Collections.emptyList());
   private final List<String> permissions = new LinkedList<>();
-  protected FlagSet flags = new FlagSet();
-  protected ResultState state = ResultState.IDLE;  // multithreaded access, must be synchronized
-  protected CompletableFuture<ResultState> future = new CompletableFuture<>();
+  protected AtomicReference<ResultState> state = new AtomicReference<>(ResultState.IDLE);
+  protected CompletableFuture<Result> future = new CompletableFuture<>();
   private Component name = Component.empty();
   private List<Component> description = Collections.emptyList();
-  private int algorithmStepDelay = 0;
 
   protected SearchSession(UUID callerId, Caller callerType) {
     this.callerId = callerId;
     this.callerType = callerType;
   }
 
-  protected static void registerPlayerModes(SearchSession session, UUID playerUuid, FlagSet flags) {
-    boolean fly;
-    boolean boat;
-    Optional<InternalJourneyPlayer> player = Journey.get().proxy().platform().onlinePlayer(playerUuid);
+  protected final void setPlayerModes() {
+    boolean fly = false;
+    boolean boat = false;
+    List<Mode> modes = new LinkedList<>();
+
+    Optional<InternalJourneyPlayer> player = Journey.get().proxy().platform().onlinePlayer(callerId);
     if (player.isPresent()) {
       fly = flags.getValueFor(Flags.FLY) && player.get().canFly();
       boat = player.get().hasBoat();
-    } else {
-      fly = false;
-      boat = false;
     }
+
     if (fly) {
-      session.registerMode(new FlyMode(session));
+      modes.add(new FlyMode());
     } else {
-      session.registerMode(new WalkMode(session));
-      session.registerMode(new JumpMode(session));
-      session.registerMode(new SwimMode(session));
+      modes.add(new WalkMode());
+      modes.add(new JumpMode());
+      modes.add(new SwimMode());
       if (boat) {
-        session.registerMode(new BoatMode(session));
+        modes.add(new BoatMode());
       }
     }
-    session.registerMode(new DoorMode(session));
-    session.registerMode(new ClimbMode(session));
+    modes.add(new DoorMode());
+    modes.add(new ClimbMode());
     if (flags.getValueFor(Flags.DIG)) {
-      session.registerMode(new DigMode(session));
+      modes.add(new DigMode());
     }
+    setModes(modes);
+  }
+
+  protected final void setPlayerTunnels() {
+    setTunnels(Journey.get().tunnelManager().tunnels(Journey.get().proxy().platform().onlinePlayer(getCallerId()).orElse(null)));
   }
 
   /**
    * Perform the titular search operation.
    */
-  public final CompletableFuture<ResultState> search(int timeout) {
+  public final CompletableFuture<Result> search(int timeout) {
+    Journey.logger().debug(this + ": scheduling search");
     // kick off the first portion
     Journey.get().proxy().schedulingManager().schedule(this::asyncSearch, true);
-    // Set up cancellation task
+    // Set up timeout task
     if (timeout > 0) {
       Journey.get().proxy().schedulingManager().schedule(() -> stop(false), false, timeout * 20 /* ticks per second */);
     }
@@ -133,29 +137,22 @@ public abstract class SearchSession implements Resulted, Describable {
   protected abstract void asyncSearch();
 
   protected boolean evaluateState() {
-    synchronized (this) {
-      if (state.isStopping()) {
-        // this was stopped while attempting the path trial
-        if (this.getState() == ResultState.STOPPING_FAILED) {
-          audience().sendMessage(Formatter.error("Time limit surpassed. Cancelling search..."));
-        } else if (this.getState() == ResultState.STOPPING_ERROR) {
-          if (callerType == Caller.PLAYER) {
-            Journey.get().proxy().audienceProvider().player(callerId).sendMessage(Formatter.error("A problem occurred with your search. Please notify an administrator"));
-          }
-        }
-        state = state.stoppedResult();
-        complete();
+    ResultState updated = state.updateAndGet(current -> {
+      if (current.isStopping()) {
+        return current.stoppedResult();
+      } else {
+        return current;
       }
-      return state.isStopped();
-    }
+    });
+    return updated.isStopped();
   }
 
-  protected final void complete() {
-    future.complete(state);
-    Journey.get().dispatcher().dispatch(new StopSearchEvent(this));
+  protected final void complete(@Nullable Itinerary itinerary) {
+    timer.stop();
+    future.complete(new Result(state.get(), itinerary));
   }
 
-  public final CompletableFuture<ResultState> future() {
+  public final CompletableFuture<Result> future() {
     return future;
   }
 
@@ -167,56 +164,58 @@ public abstract class SearchSession implements Resulted, Describable {
    * @param cancel whether the search is stopped due to a cancellation request by a user, or not
    */
   public synchronized final void stop(boolean cancel) {
-    state = state.stoppingResult(cancel);
+    state.getAndUpdate(current -> current.stoppingResult(cancel));
   }
 
-  @Override
   public synchronized final ResultState getState() {
-    return state;
+    return state.get();
   }
 
   /**
-   * Register a {@link Tunnel} to use in the pathfinding system.
+   * Register {@link Tunnel}s to use in the pathfinding system.
    * The tunnels are what allow the algorithm to jump directly around the different worlds,
    * so all possible avenues to do so should be registered before running the search.
-   *
-   * @param tunnel the tunnel
    */
-  public final void registerTunnel(Tunnel tunnel) {
-    this.tunnels.add(tunnel);
+  public final void setTunnels(List<Tunnel> tunnels) {
+    this.tunnels.set(Collections.unmodifiableList(tunnels));
   }
 
   /**
-   * Register a {@link Mode} of transportation in the pathfinding system.
+   * Register {@link Mode}s of transportation in the pathfinding system.
    * Modes are how the algorithm determines whether the moving entity can
    * get from place to adjacent place.
    *
    * @param mode the mode
    */
-  public final void registerMode(Mode mode) {
-    this.modes.add(mode);
+  public final void setModes(List<Mode> mode) {
+    this.modes.set(Collections.unmodifiableList(mode));
+  }
+
+  public void addMode(Mode mode) {
+    this.modes.updateAndGet(curModes -> {
+      List<Mode> newModes = new ArrayList<>(curModes.size() + 1);
+      newModes.addAll(curModes);
+      newModes.add(mode);
+      return Collections.unmodifiableList(newModes);
+    });
   }
 
   /**
-   * Get a copy of all the registered tunnels on this session.
+   * Get an immutable list of all the registered tunnels on this session.
    *
    * @return the tunnels
    */
-  public final Collection<Tunnel> tunnels() {
-    List<Tunnel> copy = new ArrayList<>(tunnels.size());
-    copy.addAll(tunnels);
-    return copy;
+  public final List<Tunnel> tunnels() {
+    return tunnels.get();
   }
 
   /**
-   * Get a copy of all the registered modes on this session.
+   * Get an immutable list of all the registered modes on this session.
    *
    * @return the modes
    */
   public final Collection<Mode> modes() {
-    List<Mode> copy = new ArrayList<>(modes.size());
-    copy.addAll(modes);
-    return copy;
+    return modes.get();
   }
 
   /**
@@ -225,7 +224,7 @@ public abstract class SearchSession implements Resulted, Describable {
    * @return the mode types
    */
   public final Set<ModeType> modeTypes() {
-    return modes.stream().map(Mode::type).collect(Collectors.toSet());
+    return modes.get().stream().map(Mode::type).collect(Collectors.toSet());
   }
 
   /**
@@ -255,8 +254,8 @@ public abstract class SearchSession implements Resulted, Describable {
     return callerType;
   }
 
-  public void setFlags(FlagSet flags) {
-    this.flags = flags;
+  public void setFlags(FlagSet other) {
+    this.flags.addFlags(other);
   }
 
   public FlagSet flags() {
@@ -287,21 +286,12 @@ public abstract class SearchSession implements Resulted, Describable {
   /**
    * Get the time since the search operation execution, in milliseconds.
    * It will return a negative number if the method is called before the search operation.
+   * Thread-safe.
    *
    * @return the search execution time, in milliseconds
    */
   public final long executionTime() {
     return timer.elapsed();
-  }
-
-  public abstract Audience audience();
-
-  public int getAlgorithmStepDelay() {
-    return algorithmStepDelay;
-  }
-
-  public void setAlgorithmStepDelay(int algorithmStepDelay) {
-    this.algorithmStepDelay = algorithmStepDelay;
   }
 
   public void setName(Component name) {
@@ -344,5 +334,8 @@ public abstract class SearchSession implements Resulted, Describable {
     PLAYER,
     CONSOLE,
     OTHER
+  }
+
+  public record Result(ResultState state, @Nullable Itinerary itinerary) {
   }
 }

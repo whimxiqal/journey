@@ -36,6 +36,10 @@ public class FlagSet {
     this.flags.put(flag, value);
   }
 
+  public void addFlags(FlagSet other) {
+    flags.putAll(other.flags);
+  }
+
   @SuppressWarnings("unchecked")
   public <T> T getValueFor(Flag<T> flag) {
     Object value = flags.get(flag);

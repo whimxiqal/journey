@@ -31,7 +31,6 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,10 +38,6 @@ import org.jetbrains.annotations.NotNull;
  * when having the ability to fly.
  */
 public class FlyMode extends Mode {
-
-  public FlyMode(SearchSession session) {
-    super(session);
-  }
 
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
@@ -69,8 +64,7 @@ public class FlyMode extends Mode {
                     insideOffX * offX /* get sign back */,
                     insideOffY * offY /* get sign back */,
                     insideOffZ * offZ /* get sign back */);
-                if (!blockProvider.getBlock(cell).isLaterallyPassable()) {
-                  reject(cell);
+                if (!blockProvider.toBlock(cell).isLaterallyPassable()) {
                   continue outerZ;
                 }
                 for (int h = 0; h <= insideOffY; h++) {
@@ -81,8 +75,7 @@ public class FlyMode extends Mode {
                           + h
                           + (1 - insideOffY) /* for if offYIn is 0 */,
                       insideOffZ * offZ /* get sign back */);
-                  if (!blockProvider.getBlock(cell).isPassable()) {
-                    reject(cell);
+                  if (!blockProvider.toBlock(cell).isPassable()) {
                     continue outerZ;
                   }
                 }
@@ -90,7 +83,7 @@ public class FlyMode extends Mode {
             }
           }
           Cell other = origin.atOffset(offX, offY, offZ);
-          accept(other, origin.distanceTo(other), options);
+          options.add(new Option(other, origin.distanceTo(other)));
         }
       }
     }

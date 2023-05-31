@@ -43,13 +43,13 @@ public class DomainSearchGraph extends SearchGraph {
   @Nullable
   @Override
   public ItineraryTrial calculate(boolean mustUseCache) {
-    AlternatingList<Tunnel, PathTrial, Object> graphPath = findMinimumPath(originNode,
+    AlternatingList<Tunnel, DestinationPathTrial, Object> graphPath = findMinimumPath(originNode,
         node -> node.destination().domain() == destinationDomain,
         trial -> !(mustUseCache && trial.isFromCache()));
     if (graphPath == null) {
       return null;
     } else {
-      return new ItineraryTrial(session, origin, graphPath);
+      return new ItineraryTrial(session, origin, graphPath, session.flags);
     }
   }
 

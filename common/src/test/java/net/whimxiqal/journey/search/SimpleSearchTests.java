@@ -26,6 +26,8 @@ package net.whimxiqal.journey.search;
 import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -35,67 +37,76 @@ import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
+import net.whimxiqal.journey.search.flag.FlagSet;
+import net.whimxiqal.journey.search.flag.Flags;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SimpleSearchTests extends JourneyTestHarness {
 
   private UUID lastSessionUuid;
+  private FlagSet flags;
 
   private SearchSession destinationSession(String origin, String destination) {
-    return new PlayerDestinationGoalSearchSession(PLAYER_UUID,
+    return new DestinationGoalSearchSession(PLAYER_UUID,
+        SearchSession.Caller.PLAYER,
         TestPlatformProxy.pois.get(origin),
         TestPlatformProxy.pois.get(destination),
+        false,
         true);
   }
 
   private SearchSession domainSession(String origin, int domainDestination) {
-    return new PlayerDomainGoalSearchSession(PLAYER_UUID, TestPlatformProxy.pois.get(origin), domainDestination);
+    return new DomainGoalSearchSession(PLAYER_UUID, SearchSession.Caller.PLAYER, TestPlatformProxy.pois.get(origin), domainDestination, false);
   }
 
-  private void runDestinationSearch(String origin, String destination, ResultState expectedResult) throws InterruptedException {
+  private void runDestinationSearch(String origin, String destination, ResultState expectedResult) throws InterruptedException, ExecutionException {
     runSearch(destinationSession(origin, destination), expectedResult);
   }
 
-  private void runDomainSearch(String origin, String domainName, ResultState expectedResult) throws InterruptedException {
+  private void runDomainSearch(String origin, String domainName, ResultState expectedResult) throws InterruptedException, ExecutionException {
     runSearch(domainSession(origin, Journey.get().domainManager().domainIndex(WorldLoader.getWorld(domainName).uuid)), expectedResult);
   }
 
-  private void runSearch(SearchSession session, ResultState expectedResult) throws InterruptedException {
+  private void runSearch(SearchSession session, ResultState expectedResult) throws InterruptedException, ExecutionException {
     session.initialize();
     lastSessionUuid = session.uuid();
     Assertions.assertEquals(ResultState.IDLE, session.getState());
-    CompletableFuture<ResultState> future = session.search(20);
-    ResultState state = future.join();
-    while (!Journey.get().dispatcher().isEmpty()) {
-      Thread.sleep(100);
-      Journey.logger().debug("Waiting 100 ms for event dispatcher to dispatch all events");
-    }
-    Assertions.assertEquals(expectedResult, state, "Expected state of session search was incorrect");
-    if (expectedResult.isSuccessful()) {
-      Assertions.assertTrue(SESSION_ITINERARIES.containsKey(session.uuid()));
+    session.setFlags(flags);
+    Future<SearchSession.Result> future = runOnMainThread(() -> Journey.get().searchManager().launchIngameSearch(session));
+    SearchSession.Result result = future.get();
+    Assertions.assertEquals(expectedResult, result.state(), "Expected state of session search was incorrect");
+    if (result.itinerary() != null) {
+      SESSION_ITINERARIES.put(session.uuid, result.itinerary());
     }
   }
 
+  @BeforeEach
+  void beforeEach() {
+    flags = new FlagSet();
+    flags.addFlag(Flags.TIMEOUT, 5);
+  }
+
   @Test
-  void destinationSearchSameWorld() throws InterruptedException {
+  void destinationSearchSameWorld() throws InterruptedException, ExecutionException {
     runDestinationSearch("1", "2", ResultState.STOPPED_SUCCESSFUL);
   }
 
   @Test
-  void destinationSearchCaching() throws InterruptedException {
+  void destinationSearchCaching() throws InterruptedException, ExecutionException {
     runDestinationSearch("1", "2", ResultState.STOPPED_SUCCESSFUL);
     Thread.sleep(100);  // wait for caching to complete on async thread
     runDestinationSearch("1", "2", ResultState.STOPPED_SUCCESSFUL);  // should use cached values
   }
 
   @Test
-  void destinationSearchesMultipleWorlds() throws InterruptedException {
+  void destinationSearchesMultipleWorlds() throws InterruptedException, ExecutionException {
     runDestinationSearch("1", "3", ResultState.STOPPED_SUCCESSFUL);
   }
 
   @Test
-  void destinationSearchesPathLengths() throws InterruptedException {
+  void destinationSearchesPathLengths() throws InterruptedException, ExecutionException {
     runDestinationSearch("1", "3", ResultState.STOPPED_SUCCESSFUL);
     Itinerary oneToThree = SESSION_ITINERARIES.get(lastSessionUuid);
 
@@ -107,60 +118,75 @@ public class SimpleSearchTests extends JourneyTestHarness {
   }
 
   @Test
-  void destinationSearchesFailed() throws InterruptedException {
+  void destinationSearchesFailed() throws InterruptedException, ExecutionException {
     runDestinationSearch("3", "1", ResultState.STOPPED_FAILED);
     runDestinationSearch("1", "4", ResultState.STOPPED_FAILED);
   }
 
   @Test
-  void domainSearchSuccess() throws InterruptedException {
+  void domainSearchSuccess() throws InterruptedException, ExecutionException {
     runDomainSearch("1", "world2", ResultState.STOPPED_SUCCESSFUL);
     runDomainSearch("2", "world2", ResultState.STOPPED_SUCCESSFUL);
   }
 
   @Test
-  void domainSearchFail() throws InterruptedException {
+  void domainSearchFail() throws InterruptedException, ExecutionException {
     // 3 is completed walled off
     runDomainSearch("3", "world2", ResultState.STOPPED_FAILED);
   }
 
   @Test
-  void domainSearchSameWorldError() throws InterruptedException {
+  void domainSearchSameWorldError() throws InterruptedException, ExecutionException {
     // cannot go to the same world
+    System.out.println("Starting test domainSearchSameWorldError()");
     runDomainSearch("1", "world1", ResultState.STOPPED_ERROR);
     runDomainSearch("2", "world1", ResultState.STOPPED_ERROR);
     runDomainSearch("3", "world1", ResultState.STOPPED_ERROR);
   }
 
   @Test
+  void animation() throws InterruptedException, ExecutionException {
+    flags.addFlag(Flags.ANIMATE, 5);
+    TestPlatformProxy.animatedBlocks = 0;
+    runDestinationSearch("1", "2", ResultState.STOPPED_SUCCESSFUL);
+    Assertions.assertTrue(TestPlatformProxy.animatedBlocks > 0);
+  }
+
+  @Test
   void stressTest() throws InterruptedException, NoSuchFieldException, IllegalAccessException {
-    // Set the work manager manually in main Journey class so we can test with multiple threads and active path searches
+    // Set the work manager manually in main Journey class, so we can test with multiple threads and active path searches
     Field workManagerField = Journey.class.getDeclaredField("workManager");
     workManagerField.setAccessible(true);
-    workManagerField.set(Journey.get(), new DistributedWorkManager(5, 10));
+    workManagerField.set(Journey.get(), new DistributedWorkManager(10));
 
     // Set cells-per-execution-cycle to something small to stress-test the DistributedWorkManager
-    AbstractPathTrial.CELLS_PER_EXECUTION_CYCLE = 5;
-    final int runs = 100;
-    final int total = runs * 12;
+    PathTrial.CELLS_PER_EXECUTION_CYCLE = 5;
+    final int RUNS = 100;
+    final int total = RUNS * 12;
     AtomicInteger finished = new AtomicInteger(0);
+    AtomicInteger failed = new AtomicInteger(0);
 
     BiFunction<String, String, SearchSession> newSearch = (origin, destination) ->
-        new PlayerDestinationGoalSearchSession(UUID.randomUUID(),
-        TestPlatformProxy.pois.get(origin),
-        TestPlatformProxy.pois.get(destination),
-        false);
+        new DestinationGoalSearchSession(UUID.randomUUID(),
+            SearchSession.Caller.PLAYER,
+            TestPlatformProxy.pois.get(origin),
+            TestPlatformProxy.pois.get(destination),
+            false,
+            false);
 
     BiConsumer<SearchSession, ResultState> runSearchAsync = (session, expected) -> {
       session.initialize();
       Assertions.assertEquals(ResultState.IDLE, session.getState());
-      session.search(2).thenAccept(result -> {
+      session.search(10).thenAccept(result -> {
         finished.incrementAndGet();
-        Assertions.assertEquals(expected, result, "Failed search: " + session);
+        if (expected != result.state()) {
+          System.err.println(session + ": Expected " + expected + ", got " + result.state());
+          failed.incrementAndGet();
+        }
       });
     };
 
-    for (int i = 0; i < runs; i++) {
+    for (int i = 0; i < RUNS; i++) {
       runSearchAsync.accept(newSearch.apply("1", "2"), ResultState.STOPPED_SUCCESSFUL);
       runSearchAsync.accept(newSearch.apply("1", "3"), ResultState.STOPPED_SUCCESSFUL);
       runSearchAsync.accept(newSearch.apply("1", "4"), ResultState.STOPPED_FAILED);
@@ -169,20 +195,21 @@ public class SimpleSearchTests extends JourneyTestHarness {
       runSearchAsync.accept(newSearch.apply("3", "4"), ResultState.STOPPED_FAILED);
 
       runSearchAsync.accept(newSearch.apply("2", "1"), ResultState.STOPPED_SUCCESSFUL);
-      runSearchAsync.accept(newSearch.apply("3", "1"), ResultState.STOPPED_SUCCESSFUL);
+      runSearchAsync.accept(newSearch.apply("3", "1"), ResultState.STOPPED_FAILED);
       runSearchAsync.accept(newSearch.apply("4", "1"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("3", "2"), ResultState.STOPPED_SUCCESSFUL);
+      runSearchAsync.accept(newSearch.apply("3", "2"), ResultState.STOPPED_FAILED);
       runSearchAsync.accept(newSearch.apply("4", "2"), ResultState.STOPPED_FAILED);
       runSearchAsync.accept(newSearch.apply("4", "3"), ResultState.STOPPED_FAILED);
     }
 
-    long failureTime = System.currentTimeMillis() + (1000 * 5);  // 5 seconds until we consider it failure
+    long failureTime = System.currentTimeMillis() + (1000 * 30);  // 30 seconds until we consider it failure
     while (finished.get() != total) {
       Thread.sleep(100);
       if (System.currentTimeMillis() > failureTime) {
         Assertions.fail("The test took too long. Only " + finished.get() + " out of " + total + " finished.");
       }
     }
+    Assertions.assertEquals(0, failed.get());
   }
 
 }

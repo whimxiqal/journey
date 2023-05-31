@@ -31,7 +31,6 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,13 +40,6 @@ import org.jetbrains.annotations.NotNull;
 public final class BoatMode extends Mode {
 
   public final double DISTANCE_MULTIPLIER = 5.6 / 8;
-
-  /**
-   * General constructor.
-   */
-  public BoatMode(SearchSession session) {
-    super(session);
-  }
 
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
@@ -67,8 +59,7 @@ public final class BoatMode extends Mode {
               cell = origin.atOffset(insideOffX * offX /* get sign back */,
                   offY - 1,
                   insideOffZ * offZ /*get sign back */);
-              if (blockProvider.getBlock(cell).isLaterallyPassable()) {
-                reject(cell);
+              if (blockProvider.toBlock(cell).isLaterallyPassable()) {
                 continue outerZ;  // Barrier - invalid move
               }
             }
@@ -77,11 +68,9 @@ public final class BoatMode extends Mode {
 
         // We can move to offX and offY laterally
         cell = origin.atOffset(offX, 0, offZ);
-        if (blockProvider.getBlock(cell.atOffset(0, -1, 0)).isWater()) {
+        if (blockProvider.toBlock(cell.atOffset(0, -1, 0)).isWater()) {
           // We can boat on it
-          accept(cell, origin.distanceTo(cell) * DISTANCE_MULTIPLIER, options);
-        } else {
-          reject(cell);
+          options.add(new Option(cell, origin.distanceTo(cell) * DISTANCE_MULTIPLIER));
         }
       }
     }

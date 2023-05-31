@@ -33,9 +33,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
-import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.proxy.JourneyChunk;
-import net.whimxiqal.journey.search.AbstractPathTrial;
+import net.whimxiqal.journey.search.PathTrial;
 
 /**
  * Wrapper of a {@link ChunkCache} that may be accessed through thread-safe methods.
@@ -52,16 +51,15 @@ public class CentralChunkCache {
   private UUID loggingTaskId = null;
 
   // Counters
-  private int retrieved = 0;
-  private int replaced = 0;
-  private int pruned = 0;
+  private int addedCounter = 0;
+  private int removedCounter = 0;
 
   /**
    * Start the repeated task that manages all cache requests.
    * Call on the main thread.
    */
   public void initialize() {
-    chunkCache = new ChunkCache(AbstractPathTrial.MAX_CACHED_CHUNKS_PER_SEARCH * Settings.MAX_SEARCHES.getValue());
+    chunkCache = new ChunkCache(PathTrial.MAX_CACHED_CHUNKS_PER_SEARCH * Settings.MAX_SEARCHES.getValue());
     requestTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::executeRequests,
         false, 1);  // Once per tick
     loggingTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::broadcastLogs,
@@ -86,19 +84,21 @@ public class CentralChunkCache {
    * Runs on main server thread
    */
   private void executeRequests() {
-    // Prune any outdated chunks
-    pruned += chunkCache.prune();
+    synchronized (lock) {
+      // Prune any outdated chunks
+      removedCounter += chunkCache.prune();
 
-    // Execute requests
-    retrieved += requestQueue.size();
-    while (!requestQueue.isEmpty()) {
-      ChunkRequest req = requestQueue.remove();
-      requestMap.remove(req.chunkId());
+      // Execute requests
+      addedCounter += requestQueue.size();
+      while (!requestQueue.isEmpty()) {
+        ChunkRequest req = requestQueue.remove();
+        requestMap.remove(req.chunkId());
 
-      // This is all on the server thread, so we can convert to a real chunk safely here
-      JourneyChunk snapshot = Journey.get().proxy().platform().toChunk(req.chunkId());
-      replaced += chunkCache.save(snapshot);
-      req.future().complete(snapshot);
+        // This is all on the server thread, so we can convert to a real chunk safely here
+        JourneyChunk snapshot = Journey.get().proxy().platform().toChunk(req.chunkId());
+        removedCounter += chunkCache.save(snapshot);
+        req.future().complete(snapshot);
+      }
     }
   }
 
@@ -107,13 +107,11 @@ public class CentralChunkCache {
    */
   private void broadcastLogs() {
     synchronized (lock) {
-      if (retrieved != 0 || replaced != 0 || pruned != 0) {
-        Journey.get().debugManager().broadcast(Formatter.debug("[Chunk Cache] Queued: ___, Retrieved: ___, Replaced: ___, Pruned: ___",
-            requestQueue.size(),
-            retrieved, replaced, pruned));
-        retrieved = 0;
-        replaced = 0;
-        pruned = 0;
+      if (addedCounter != 0 || removedCounter != 0) {
+        Journey.logger().debug(String.format("[Chunk Cache] {%d}: added: %d, removed: %d",
+            chunkCache.size(), addedCounter, removedCounter));
+        addedCounter = 0;
+        removedCounter = 0;
       }
     }
   }

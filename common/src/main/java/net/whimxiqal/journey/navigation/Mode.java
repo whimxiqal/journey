@@ -24,14 +24,9 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.chunk.BlockProvider;
-import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.search.event.ModeFailureEvent;
-import net.whimxiqal.journey.search.event.ModeSuccessEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,12 +34,6 @@ import org.jetbrains.annotations.NotNull;
  * a regular humanoid entity.
  */
 public abstract class Mode {
-
-  private final SearchSession session;
-
-  public Mode(@NotNull SearchSession session) {
-    this.session = session;
-  }
 
   /**
    * Collect and return all the destinations that are reachable from an original location
@@ -59,34 +48,6 @@ public abstract class Mode {
   public abstract Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException;
 
   /**
-   * Accept a location and its distance to the list of possible options.
-   * This adds it to the list and performs other somewhat unnecessary management operations.
-   * All implementations of {@link Mode} should use accept instead of adding directly to the option list.
-   *
-   * @param destination the accepted destination
-   * @param distance    the distance to the destination
-   * @param options     the options list, passed from the previous caller
-   */
-  protected final void accept(@NotNull Cell destination,
-                              double distance,
-                              @NotNull List<Option> options) {
-    options.add(new Option(destination, distance));
-    Journey.get().dispatcher().dispatch(new ModeSuccessEvent(session, destination, type()));
-  }
-
-  /**
-   * Reject a location and its distance.
-   * This performs somewhat unnecessary management operations.
-   * All implementations of {@link Mode} should use this method if the mode operation
-   * determined that a block is unreachable given the current circumstances.
-   *
-   * @param destination the rejected destination
-   */
-  protected final void reject(@NotNull Cell destination) {
-    Journey.get().dispatcher().dispatch(new ModeFailureEvent(session, destination, type()));
-  }
-
-  /**
    * Get the mode type.
    *
    * @return the mode type
@@ -97,10 +58,7 @@ public abstract class Mode {
   /**
    * A record to store a movement option. It just contains a location and a distance to that location.
    */
-  public static class Option {
-
-    final Cell location;
-    final double cost;
+  public record Option(Cell location, double cost) {
 
     /**
      * General constructor.
@@ -127,6 +85,7 @@ public abstract class Mode {
      *
      * @return the location
      */
+    @Override
     @NotNull
     public Cell location() {
       return location;
@@ -137,6 +96,7 @@ public abstract class Mode {
      *
      * @return the distance
      */
+    @Override
     public double cost() {
       return cost;
     }

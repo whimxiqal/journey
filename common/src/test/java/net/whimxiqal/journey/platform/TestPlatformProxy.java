@@ -46,7 +46,6 @@ import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.proxy.TestJourneyBlock;
 import net.whimxiqal.journey.proxy.TestJourneyChunk;
-import net.whimxiqal.journey.search.AnimationManager;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bstats.charts.CustomChart;
@@ -57,6 +56,7 @@ public class TestPlatformProxy implements PlatformProxy {
   public static Map<String, Cell> pois = new HashMap<>();
   public static List<Tunnel> tunnels = new LinkedList<>();
   public static List<InternalJourneyPlayer> onlinePlayers = new LinkedList<>();
+  public static int animatedBlocks = 0;
 
   @Override
   public JourneyChunk toChunk(ChunkId chunkId) {
@@ -114,18 +114,14 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public boolean isAtSurface(Cell cell) {
-    return false;
+  public void sendAnimationBlock(UUID player, Cell location) {
+    animatedBlocks += 1;
   }
 
   @Override
-  public boolean sendBlockData(UUID player, Cell location, AnimationManager.StageType stage, ModeType mode) {
-    return false;
-  }
-
-  @Override
-  public boolean resetBlockData(UUID player, Collection<Cell> locations) {
-    return false;
+  public void resetAnimationBlocks(UUID player, Collection<Cell> locations) {
+    animatedBlocks -= locations.size();
+    Journey.logger().info("Reset: " + locations.size());
   }
 
   @Override
@@ -139,7 +135,7 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public boolean synchronous() {
+  public boolean isMainThread() {
     return true;
   }
 

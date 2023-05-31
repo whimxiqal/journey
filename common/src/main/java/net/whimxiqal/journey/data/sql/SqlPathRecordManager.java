@@ -44,7 +44,7 @@ import net.whimxiqal.journey.data.PathRecordManager;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
-import net.whimxiqal.journey.search.PathTrial;
+import net.whimxiqal.journey.search.DestinationPathTrial;
 import net.whimxiqal.journey.util.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ public class SqlPathRecordManager
   }
 
   @Override
-  public void report(PathTrial trial,
+  public void report(DestinationPathTrial trial,
                      Set<ModeType> modeTypes,
                      long executionTime)
       throws DataAccessException {
@@ -87,7 +87,7 @@ public class SqlPathRecordManager
         if (oldRecord.pathCost() <= path.getCost()) {
           continue;
         }
-        if (modeTypes.containsAll(oldRecord.modes().stream().map(PathTrialModeRecord::modeType).collect(Collectors.toList()))) {
+        if (modeTypes.containsAll(oldRecord.modes().stream().map(PathTrialModeRecord::modeType).toList())) {
           // this path cost is better and can do it in the same or fewer modes, so delete the current one
           connection.prepareStatement("DELETE FROM " + SqlManager.CACHED_PATHS_TABLE
                   + " WHERE "

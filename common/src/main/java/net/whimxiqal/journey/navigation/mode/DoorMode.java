@@ -44,155 +44,127 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class DoorMode extends Mode {
 
-  public DoorMode(@NotNull SearchSession session) {
-    super(session);
-  }
-
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     // TODO check if there are buttons or levers nearby that may open the door
     List<Option> options = new LinkedList<>();
     Cell cell;
-    boolean standingOnPressurePlate = blockProvider.getBlock(origin).isPressurePlate();
+    boolean standingOnPressurePlate = blockProvider.toBlock(origin).isPressurePlate();
 
     // Pos X - East
     cell = origin.atOffset(1, 0, 0);
-    Optional<JourneyDoor> door = blockProvider.getBlock(cell).asDoor();
+    Optional<JourneyDoor> door = blockProvider.toBlock(cell).asDoor();
     // Check if we found a door
     if (door.isPresent()) {
       // Check it's a solid floor
-      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+      if (!blockProvider.toBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
         if (door.get().isIron()) {
           // Need to check if the door is blocking
           if (door.get().direction() == Direction.POSITIVE_Z
               || door.get().direction() == Direction.NEGATIVE_Z
               || door.get().isOpen()) {
             // Nothing blocking
-            accept(origin.atOffset(1, 0, 0), 1.0d, options);
+            options.add(new Option(origin.atOffset(1, 0, 0), 1.0d));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              accept(origin.atOffset(1, 0, 0), 1.0d, options);
-            } else {
-              reject(origin.atOffset(1, 0, 0));
+              options.add(new Option(origin.atOffset(1, 0, 0), 1.0d));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.atOffset(1, 0, 0), 1.0d, options);
+          options.add(new Option(origin.atOffset(1, 0, 0), 1.0d));
         }
-      } else {
-        reject(origin.atOffset(1, -1, 0));
       }
-    } else {
-      reject(cell);
     }
 
     // Pos Z - North
     cell = origin.atOffset(0, 0, 1);
-    door = blockProvider.getBlock(cell).asDoor();
+    door = blockProvider.toBlock(cell).asDoor();
     // Check if we found a door
     if (door.isPresent()) {
       // Check it's a solid floor
-      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+      if (!blockProvider.toBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
         if (door.get().isIron()) {
           // Need to check if the door is blocking
           if (door.get().direction() == Direction.POSITIVE_X
               || door.get().direction() == Direction.NEGATIVE_X
               || door.get().isOpen()) {
             // Nothing blocking
-            accept(origin.atOffset(0, 0, 1), 1.0d, options);
+            options.add(new Option(origin.atOffset(0, 0, 1), 1.0d));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              accept(origin.atOffset(0, 0, 1), 1.0d, options);
-            } else {
-              reject(origin.atOffset(0, 0, 1));
+              options.add(new Option(origin.atOffset(0, 0, 1), 1.0d));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.atOffset(0, 0, 1), 1.0d, options);
+          options.add(new Option(origin.atOffset(0, 0, 1), 1.0d));
         }
-      } else {
-        reject(origin.atOffset(0, -1, 1));
       }
-    } else {
-      reject(cell);
     }
 
     // Neg X - West
     cell = origin.atOffset(-1, 0, 0);
-    door = blockProvider.getBlock(cell).asDoor();
+    door = blockProvider.toBlock(cell).asDoor();
     // Check if we found a door
     if (door.isPresent()) {
       // Check it's a solid floor
-      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+      if (!blockProvider.toBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
         if (door.get().isIron()) {
           // Need to check if the door is blocking
           if (door.get().direction() == Direction.POSITIVE_Z
               || door.get().direction() == Direction.NEGATIVE_Z
               || door.get().isOpen()) {
             // Nothing blocking
-            accept(origin.atOffset(-1, 0, 0), 1.0d, options);
+            options.add(new Option(origin.atOffset(-1, 0, 0), 1.0d));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              accept(origin.atOffset(-1, 0, 0), 1.0d, options);
-            } else {
-              reject(origin.atOffset(-1, 0, 0));
+              options.add(new Option(origin.atOffset(-1, 0, 0), 1.0d));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.atOffset(-1, 0, 0), 1.0d, options);
+          options.add(new Option(origin.atOffset(-1, 0, 0), 1.0d));
         }
-      } else {
-        reject(origin.atOffset(-1, -1, 0));
       }
-    } else {
-      reject(cell);
     }
 
     // Neg Z - South
     cell = origin.atOffset(0, 0, -1);
-    door = blockProvider.getBlock(cell).asDoor();
+    door = blockProvider.toBlock(cell).asDoor();
     // Check if we found a door
     if (door.isPresent()) {
       // Check it's a solid floor
-      if (!blockProvider.getBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
+      if (!blockProvider.toBlock(origin.atOffset(1, -1, 0)).isVerticallyPassable()) {
         if (door.get().isIron()) {
           // Need to check if the door is blocking
           if (door.get().direction() == Direction.POSITIVE_X
               || door.get().direction() == Direction.NEGATIVE_X
               || door.get().isOpen()) {
             // Nothing blocking
-            accept(origin.atOffset(0, 0, -1), 1.0d, options);
+            options.add(new Option(origin.atOffset(0, 0, -1), 1.0d));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              accept(origin.atOffset(0, 0, -1), 1.0d, options);
-            } else {
-              reject(origin.atOffset(0, 0, -1));
+              options.add(new Option(origin.atOffset(0, 0, -1), 1.0d));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          accept(origin.atOffset(0, 0, -1), 1.0d, options);
+          options.add(new Option(origin.atOffset(0, 0, -1), 1.0d));
         }
-      } else {
-        reject(origin.atOffset(0, -1, -1));
       }
-    } else {
-      reject(cell);
     }
 
     return options;

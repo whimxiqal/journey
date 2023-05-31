@@ -33,8 +33,8 @@ import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.search.DomainGoalSearchSession;
 import net.whimxiqal.journey.search.InternalScope;
-import net.whimxiqal.journey.search.PlayerDomainGoalSearchSession;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.journey.util.Validator;
@@ -105,7 +105,7 @@ public class ScopeManager {
                     p2 -> VirtualMap.of(entry.getValue().entrySet().stream()
                         .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
                         .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
-                          SearchSession session = new PlayerDomainGoalSearchSession(p2, entry2.getValue());
+                          SearchSession session = new DomainGoalSearchSession(p2.uuid(), SearchSession.Caller.PLAYER, p2.location(), entry2.getValue(), false);
                           session.addPermission(Permission.PATH_WORLD.path());
                           return session;
                         }))),

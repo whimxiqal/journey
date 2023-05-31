@@ -59,7 +59,7 @@ public class InternalScope {
     this.sessions = player -> VirtualMap.of(() -> {
       Map<String, SearchSession> sessionMap = new HashMap<>(sessions.apply(player).getAll());
       scope.destinations(player).getAll().forEach((name, destination) -> {
-        SearchSession session = new PlayerDestinationGoalSearchSession(player.uuid(), player.location(), destination.location(), true);
+        SearchSession session = new DestinationGoalSearchSession(player.uuid(), SearchSession.Caller.PLAYER, player.location(), destination.location(), false, true);
         session.setName(destination.name());
         session.setDescription(destination.description());
         destination.permission().ifPresent(perm -> Permission.journeyPathExtend(perm).forEach(session::addPermission));

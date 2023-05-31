@@ -38,18 +38,18 @@ import net.whimxiqal.journey.common.JourneyParser;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
 import net.whimxiqal.journey.data.PublicWaypointManager;
 import net.whimxiqal.journey.data.TunnelType;
-import net.whimxiqal.journey.manager.DebugManager;
 import net.whimxiqal.journey.manager.SearchManager;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.message.Pager;
 import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.scope.ScopedSessionResult;
+import net.whimxiqal.journey.search.DestinationGoalSearchSession;
 import net.whimxiqal.journey.search.EverythingSearch;
-import net.whimxiqal.journey.search.PlayerDestinationGoalSearchSession;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
+import net.whimxiqal.journey.util.CommonLogger;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.journey.util.Request;
 import net.whimxiqal.journey.util.Validator;
@@ -114,7 +114,7 @@ public class JourneyExecutor implements CommandExecutor {
           case EXISTS:
             SearchSession session = result.session().get();
             session.setFlags(flags);
-            Journey.get().searchManager().launchSearch(session);
+            Journey.get().searchManager().launchIngameSearch(session);
             return CommandResult.success();
           case AMBIGUOUS:
             src.audience().sendMessage(Formatter.error("That name is ambiguous between scopes ___ and ___",
@@ -136,39 +136,14 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitDebug(JourneyParser.DebugContext ctx) {
-        DebugManager mgr = Journey.get().debugManager();
-        switch (src.type()) {
-          case CONSOLE:
-            if (mgr.isConsoleDebugging()) {
-              mgr.setConsoleDebugging(false);
-              src.audience().sendMessage(Formatter.success("Debug mode ___.", "disabled"));
-            } else {
-              mgr.setConsoleDebugging(true);
-              src.audience().sendMessage(Formatter.success("Debug mode ___.", "enabled"));
-            }
-            return CommandResult.success();
-          case PLAYER:
-            if (ctx.target == null) {
-              if (mgr.isDebugging(src.uuid())) {
-                mgr.stopDebugging(src.uuid());
-                src.audience().sendMessage(Formatter.success("Debug mode ___.", "disabled"));
-              } else {
-                mgr.startDebuggingAll(src.uuid());
-                src.audience().sendMessage(Formatter.success("Debug mode ___ on all users.", "enabled"));
-              }
-            } else {
-              Optional<InternalJourneyPlayer> target = Journey.get().proxy().platform().onlinePlayer(ctx.target.getText());
-              if (!target.isPresent()) {
-                src.audience().sendMessage(Formatter.error("Could not find that player"));
-                return CommandResult.failure();
-              }
-              mgr.startDebuggingPlayer(src.uuid(), target.get().uuid());
-              src.audience().sendMessage(Formatter.success("Debug mode ___ on ___.", "enabled", ctx.target.getText()));
-            }
-            return CommandResult.success();
-          default:
-            return CommandResult.failure();
+        if (Journey.logger().level() == CommonLogger.LogLevel.DEBUG) {
+          src.audience().sendMessage(Formatter.success("Debug mode ___.", "disabled"));
+          Journey.logger().setLevel(CommonLogger.LogLevel.INFO);
+        } else {
+          src.audience().sendMessage(Formatter.success("Debug mode ___.", "enabled"));
+          Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
         }
+        return CommandResult.success();
       }
 
       @Override
@@ -198,7 +173,7 @@ public class JourneyExecutor implements CommandExecutor {
             }
             default -> callerType = SearchSession.Caller.OTHER;
           }
-          Journey.get().searchManager().launchSearch(new EverythingSearch(searcherUuid, callerType));
+          Journey.get().searchManager().launchIngameSearch(new EverythingSearch(searcherUuid, callerType));
           return CommandResult.success();
         } else if (ctx.clear != null) {
           Journey.get().dataManager().pathRecordManager().truncate();
@@ -377,10 +352,10 @@ public class JourneyExecutor implements CommandExecutor {
         }
         for (int i = 0; i < 200; i++) {
           Journey.logger().info("Instantiating search");
-          PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(UUID.randomUUID(), location.get(), endLocation, true);
+          DestinationGoalSearchSession session = new DestinationGoalSearchSession(UUID.randomUUID(), SearchSession.Caller.PLAYER, location.get(), endLocation, false, true);
           session.setFlags(flags);
 
-          Journey.get().searchManager().launchSearch(session);
+          Journey.get().searchManager().launchIngameSearch(session);
         }
       }
 
@@ -462,9 +437,9 @@ public class JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.error("The other player's location could not be found"));
           return CommandResult.failure();
         }
-        PlayerDestinationGoalSearchSession session = new PlayerDestinationGoalSearchSession(src.uuid(), location.get(), otherLocation.get(), false);
+        DestinationGoalSearchSession session = new DestinationGoalSearchSession(src.uuid(), SearchSession.Caller.PLAYER, location.get(), otherLocation.get(), false, false);
 
-        Journey.get().searchManager().launchSearch(session);
+        Journey.get().searchManager().launchIngameSearch(session);
         return CommandResult.success();
       }
 
@@ -627,27 +602,24 @@ public class JourneyExecutor implements CommandExecutor {
       public CommandResult visitCancel(JourneyParser.CancelContext ctx) {
         UUID searcherUuid;
         switch (src.type()) {
-          case PLAYER -> {
-            searcherUuid = src.uuid();
-          }
-          case CONSOLE -> {
-            searcherUuid = SearchManager.CONSOLE_UUID;
-          }
+          case PLAYER -> searcherUuid = src.uuid();
+          case CONSOLE -> searcherUuid = SearchManager.CONSOLE_UUID;
           default -> {
             src.audience().sendMessage(Formatter.error("You may not execute this command"));
             return CommandResult.failure();
           }
         }
         boolean canceled = false;
-        if (Journey.get().searchManager().isSearching(searcherUuid)) {
-          Journey.get().searchManager().getSearch(searcherUuid).stop(true);
-          src.audience().sendMessage(Formatter.info("Cancelling search..."));
+        SearchSession session = Journey.get().searchManager().getSearch(searcherUuid);
+        if (session != null) {
+          session.stop(true);
+          src.audience().sendMessage(Formatter.info("Your search is being canceled"));
           canceled = true;
         }
         PlayerJourneySession journey = Journey.get().searchManager().getJourney(searcherUuid);
         if (journey != null && journey.running()) {
           journey.stop();
-          src.audience().sendMessage(Formatter.info("Cancelling path."));
+          src.audience().sendMessage(Formatter.info("Your path has been hidden"));
           canceled = true;
         }
         if (!canceled) {

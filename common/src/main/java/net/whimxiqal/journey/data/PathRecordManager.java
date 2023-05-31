@@ -27,13 +27,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import lombok.Value;
-import lombok.experimental.Accessors;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.Path;
-import net.whimxiqal.journey.search.PathTrial;
+import net.whimxiqal.journey.search.DestinationPathTrial;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +48,7 @@ public interface PathRecordManager {
    * @param executionTime    the time it took to execute
    * @throws DataAccessException when data is accessed incorrectly
    */
-  void report(PathTrial trial,
+  void report(DestinationPathTrial trial,
               Set<ModeType> modeTypes,
               long executionTime) throws DataAccessException;
 
@@ -103,7 +101,7 @@ public interface PathRecordManager {
   boolean containsRecord(Cell origin, Cell destination, Set<ModeType> modeTypes);
 
   /**
-   * A record that represents a saved {@link PathTrial}.
+   * A record that represents a saved {@link DestinationPathTrial}.
    */
   record PathTrialRecord(long id, Date date, long duration, double pathCost, int originX, int originY,
                          int originZ, int destinationX, int destinationY, int destinationZ, int domain,
@@ -112,7 +110,7 @@ public interface PathRecordManager {
   }
 
   /**
-   * A record that represents a saved {@link Cell} within a {@link PathTrial}.
+   * A record that represents a saved {@link Cell} within a {@link DestinationPathTrial}.
    */
   record PathTrialCellRecord(PathTrialRecord record, int x, int y, int z,
                              Integer index, ModeType modeType) {
