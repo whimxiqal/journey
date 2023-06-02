@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import net.kyori.adventure.audience.Audience;
@@ -104,7 +105,7 @@ public final class SearchManager {
    */
   public Future<SearchSession.Result> launchIngameSearch(SearchSession session) {
     CompletableFuture<SearchSession.Result> future = new CompletableFuture<>();
-    if (!Journey.get().proxy().platform().isMainThread()) {
+    if (!Journey.get().proxy().schedulingManager().isMainThread()) {
       throw new RuntimeException();  // programmer error: this must be called on main thread
     }
     UUID caller = session.getCallerId();
@@ -277,6 +278,15 @@ public final class SearchManager {
     if (locationUpdateTaskId != null) {
       Journey.get().proxy().schedulingManager().cancelTask(locationUpdateTaskId);
       locationUpdateTaskId = null;
+    }
+
+    // now wait for all sessions to stop
+    for (SearchSession canceledSession : playerSearches.values()) {
+      try {
+        canceledSession.future().get();
+      } catch (InterruptedException | ExecutionException e) {
+        // just ignore and continue
+      }
     }
   }
 

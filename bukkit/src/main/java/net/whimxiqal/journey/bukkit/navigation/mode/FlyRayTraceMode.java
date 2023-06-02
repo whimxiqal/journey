@@ -23,14 +23,9 @@
 
 package net.whimxiqal.journey.bukkit.navigation.mode;
 
-import java.util.List;
-import java.util.Set;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.search.SearchSession;
 import org.bukkit.FluidCollisionMode;
-import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 public class FlyRayTraceMode extends RayTraceMode {
@@ -53,7 +48,4 @@ public class FlyRayTraceMode extends RayTraceMode {
         && Math.floorMod(origin.blockZ(), VOLUMETRIC_FREQUENCY) == 0;
   }
 
-  protected void completeWith(Cell origin, Cell destination, List<Option> options) {
-    options.add(Option.between(origin, destination, 1));
-  }
 }

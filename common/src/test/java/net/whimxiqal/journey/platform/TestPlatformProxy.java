@@ -135,11 +135,6 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public boolean isMainThread() {
-    return true;
-  }
-
-  @Override
   public Consumer<CustomChart> bStatsChartConsumer() {
     return chart -> {/* nothing */};
   }

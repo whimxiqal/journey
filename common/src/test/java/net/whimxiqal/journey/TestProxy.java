@@ -24,24 +24,29 @@
 package net.whimxiqal.journey;
 
 import java.nio.file.Path;
-import net.whimxiqal.journey.Proxy;
+import net.kyori.adventure.platform.AudienceProvider;
 import net.whimxiqal.journey.config.ConfigManager;
 import net.whimxiqal.journey.config.TestConfigManager;
+import net.whimxiqal.journey.data.DataManager;
+import net.whimxiqal.journey.data.TestDataManager;
 import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.util.CommonLogger;
 import net.whimxiqal.journey.util.TestAudienceProvider;
 import net.whimxiqal.journey.util.TestLogger;
-import net.whimxiqal.journey.platform.TestPlatformProxy;
-import net.kyori.adventure.platform.AudienceProvider;
 
 public class TestProxy implements Proxy {
   TestLogger logger = new TestLogger();
   AudienceProvider audienceProvider = new TestAudienceProvider();
   ConfigManager configManager = new TestConfigManager();
-  public TestSchedulingManager schedulingManager = new TestSchedulingManager();
-  PlatformProxy platformProxy = new TestPlatformProxy();
+  TestSchedulingManager schedulingManager = new TestSchedulingManager();
+  DataManager dataManager = new TestDataManager();
+  PlatformProxy platformProxy;
+
+  public TestProxy(PlatformProxy platformProxy) {
+    this.platformProxy = platformProxy;
+  }
 
   @Override
   public CommonLogger logger() {
@@ -69,6 +74,11 @@ public class TestProxy implements Proxy {
   }
 
   @Override
+  public DataManager dataManager() {
+    return dataManager;
+  }
+
+  @Override
   public PlatformProxy platform() {
     return platformProxy;
   }
@@ -77,4 +87,5 @@ public class TestProxy implements Proxy {
   public String version() {
     return "0";
   }
+
 }

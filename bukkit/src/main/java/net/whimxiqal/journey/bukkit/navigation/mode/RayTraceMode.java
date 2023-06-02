@@ -152,7 +152,7 @@ public abstract class RayTraceMode extends Mode {
       return options;  // we can't stand here!
     }
 
-    completeWith(origin, result.get(), options);
+    options.add(new Option(result.get()));
 
     return options;
   }
@@ -162,8 +162,6 @@ public abstract class RayTraceMode extends Mode {
   }
 
   protected abstract boolean shouldAttemptCalculation(Cell origin);
-
-  protected abstract void completeWith(Cell origin, Cell destination, List<Option> options);
 
   private RayTraceResult rayTraceSingle(Location location, Vector direction, double totalDistance) {
     return Objects.requireNonNull(location.getWorld()).rayTraceBlocks(location,

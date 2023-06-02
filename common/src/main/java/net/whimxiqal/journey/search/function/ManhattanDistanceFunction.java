@@ -25,18 +25,17 @@ package net.whimxiqal.journey.search.function;
 
 import net.whimxiqal.journey.Cell;
 
-/**
- * A simple cost function that just returns 0 as the cost of every cell.
- * Should be used a placeholder for an actual cost function.
- */
-public class ZeroCostFunction implements CostFunction {
+public class ManhattanDistanceFunction extends DistanceFunction {
+
   @Override
-  public CostFunctionType getType() {
-    return CostFunctionType.OTHER;
+  public double distance(Cell origin, Cell destination) {
+    return (double) Math.abs(origin.blockX() - destination.blockX())
+        + Math.abs(origin.blockY() - destination.blockY())
+        + Math.abs(origin.blockZ() - destination.blockZ());
   }
 
   @Override
-  public Double apply(Cell cell) {
-    return 0.0;
+  public Type type() {
+    return Type.MANHATTAN;
   }
 }

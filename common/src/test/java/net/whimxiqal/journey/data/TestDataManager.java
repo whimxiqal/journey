@@ -31,7 +31,7 @@ public class TestDataManager implements DataManager {
 
   @Override
   public DataVersion version() {
-    return DataVersion.V001;
+    return DataVersion.latest();
   }
 
   @Override

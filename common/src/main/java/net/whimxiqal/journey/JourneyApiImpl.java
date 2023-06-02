@@ -27,7 +27,7 @@ public class JourneyApiImpl implements JourneyApi {
 
   @Override
   public void registerScope(String plugin, String id, Scope scope) {
-    if (!Journey.get().proxy().platform().isMainThread()) {
+    if (!Journey.get().proxy().schedulingManager().isMainThread()) {
       Journey.logger().warn("Plugin " + plugin + " tried to register a scope asynchronously. Please contact the plugin owner.");
       return;
     }
@@ -36,7 +36,7 @@ public class JourneyApiImpl implements JourneyApi {
 
   @Override
   public void registerTunnels(String plugin, TunnelSupplier tunnelSupplier) {
-    if (!Journey.get().proxy().platform().isMainThread()) {
+    if (!Journey.get().proxy().schedulingManager().isMainThread()) {
       Journey.logger().warn("Plugin " + plugin + " tried to register a tunnels asynchronously. Please contact the plugin owner.");
       return;
     }

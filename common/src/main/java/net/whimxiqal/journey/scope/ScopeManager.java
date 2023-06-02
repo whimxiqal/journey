@@ -48,22 +48,22 @@ public class ScopeManager {
     register(Journey.NAME, "personal", Scope.builder()
         .name(Component.text("My Waypoints"))
         .destinations(player -> VirtualMap.of(
-            () -> Journey.get().dataManager().personalWaypointManager()
+            () -> Journey.get().proxy().dataManager().personalWaypointManager()
                 .getAll(player.uuid(), false)
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> Destination.of(entry.getValue()))),
-            Journey.get().dataManager().personalWaypointManager().getCount(player.uuid(), false)))
+            Journey.get().proxy().dataManager().personalWaypointManager().getCount(player.uuid(), false)))
         .permission(Permission.PATH_PERSONAL.path())
         .build());
     register(Journey.NAME, "server", Scope.builder()
         .name(Component.text("Server Waypoints"))
         .destinations(player -> VirtualMap.of(
-            () -> Journey.get().dataManager().publicWaypointManager().getAll()
+            () -> Journey.get().proxy().dataManager().publicWaypointManager().getAll()
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> Destination.of(entry.getValue()))),
-            Journey.get().dataManager().publicWaypointManager().getCount()))
+            Journey.get().proxy().dataManager().publicWaypointManager().getCount()))
         .permission(Permission.PATH_SERVER.path())
         .build());
     register(Journey.NAME, "player", Scope.builder()
@@ -82,11 +82,11 @@ public class ScopeManager {
                     .description(Formatter.dull("Go to this player"))
                     .permission(Permission.PATH_PLAYER_WAYPOINTS.path())
                     .destinations(VirtualMap.of(
-                        () -> Journey.get().dataManager().personalWaypointManager().getAll(p.uuid(), true)
+                        () -> Journey.get().proxy().dataManager().personalWaypointManager().getAll(p.uuid(), true)
                             .entrySet()
                             .stream()
                             .collect(Collectors.toMap(Map.Entry::getKey, entry -> Destination.of(entry.getValue()))),
-                        Journey.get().dataManager().personalWaypointManager().getCount(p.uuid(), true)))
+                        Journey.get().proxy().dataManager().personalWaypointManager().getCount(p.uuid(), true)))
                     .build()))
                 .strict()  // to access any player destinations, you must at least scope to the player
                 .build()))))

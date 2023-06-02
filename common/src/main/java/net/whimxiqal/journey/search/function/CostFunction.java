@@ -23,21 +23,20 @@
 
 package net.whimxiqal.journey.search.function;
 
-import java.util.function.Function;
 import net.whimxiqal.journey.Cell;
 
-/**
- * An interface to represent the score of a given node.
- * Of all the nodes that are currently in the running for the
- * "next best node to try" throughout this algorithm,
- * the one with the highest score is chosen next.
- */
-public interface CostFunction extends Function<Cell, Double> {
-  /**
-   * Get the type.
-   *
-   * @return the type
-   */
-  CostFunctionType getType();
+public abstract class CostFunction {
 
+  abstract public double apply(Cell cell, double existingCost);
+
+  abstract public Type type();
+
+  enum Type {
+    WEIGHTED_DISTANCE, DISTANCE, HEIGHT
+  }
+
+  @Override
+  public String toString() {
+    return type().toString();
+  }
 }

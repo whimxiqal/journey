@@ -99,8 +99,6 @@ public class BukkitPlatformProxy implements PlatformProxy {
   @Override
   public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     Particle particle;
-    int particleCount;
-    int multiplier;
     if (type == ModeType.FLY) {
       particle = Particle.WAX_OFF;
     } else if (type == ModeType.DIG) {
@@ -201,11 +199,6 @@ public class BukkitPlatformProxy implements PlatformProxy {
     JourneyGui journeyGui = new JourneyGui(player);
     journeyGui.open();
     return true;
-  }
-
-  @Override
-  public boolean isMainThread() {
-    return Bukkit.isPrimaryThread();
   }
 
   @Override

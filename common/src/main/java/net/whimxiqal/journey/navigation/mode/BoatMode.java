@@ -39,8 +39,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class BoatMode extends Mode {
 
-  public final double DISTANCE_MULTIPLIER = 5.6 / 8;
-
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     List<Option> options = new LinkedList<>();
@@ -70,7 +68,7 @@ public final class BoatMode extends Mode {
         cell = origin.atOffset(offX, 0, offZ);
         if (blockProvider.toBlock(cell.atOffset(0, -1, 0)).isWater()) {
           // We can boat on it
-          options.add(new Option(cell, origin.distanceTo(cell) * DISTANCE_MULTIPLIER));
+          options.add(new Option(cell));
         }
       }
     }

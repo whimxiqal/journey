@@ -66,6 +66,7 @@ public final class JourneyBukkit extends JavaPlugin {
     // API
     JourneyBukkitApiSupplier.set(new JourneyBukkitApiImpl());
 
+    Journey.create();
     // Set up Journey Proxy
     ProxyImpl proxy = new ProxyImpl();
     Journey.get().registerProxy(proxy);
@@ -78,7 +79,9 @@ public final class JourneyBukkit extends JavaPlugin {
     proxy.version(getDescription().getVersion());
 
     // Initialize common Journey (after proxy is set up)
-    Journey.get().init();
+    if (!Journey.get().init()) {
+      setEnabled(false);
+    }
 
     // Register command
     CommandRegistrar registrar = PaperRegistrarProvider.get(this);
@@ -93,5 +96,6 @@ public final class JourneyBukkit extends JavaPlugin {
   public void onDisable() {
     // Common Journey shutdown
     Journey.get().shutdown();
+    Journey.remove();
   }
 }

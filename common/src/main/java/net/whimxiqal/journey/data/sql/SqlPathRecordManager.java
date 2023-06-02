@@ -36,7 +36,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
@@ -88,7 +87,7 @@ public class SqlPathRecordManager
           continue;
         }
         if (modeTypes.containsAll(oldRecord.modes().stream().map(PathTrialModeRecord::modeType).toList())) {
-          // this path cost is better and can do it in the same or fewer modes, so delete the current one
+          // this path distance is better and can do it in the same or fewer modes, so delete the current one
           connection.prepareStatement("DELETE FROM " + SqlManager.CACHED_PATHS_TABLE
                   + " WHERE "
                   + "id = " + oldRecord.id())

@@ -30,22 +30,22 @@ import net.whimxiqal.journey.Cell;
  * a player should "walk" in the x-z dimensions and must move in the Y dimension using stairs or some path
  * 45 degrees offset from the x-z plane.
  */
-public record PlanarOrientedCostFunction(Cell destination) implements CostFunction {
+public class PlanarOrientedDistanceFunction extends DistanceFunction {
 
   private final static double SQRT_TWO = Math.sqrt(2);
   private final static double SQRT_THREE = Math.sqrt(3);
 
   @Override
-  public CostFunctionType getType() {
-    return CostFunctionType.PLANAR_ORIENTED;
+  public Type type() {
+    return Type.PLANAR;
   }
 
   @Override
-  public Double apply(Cell cell) {
+  public double distance(Cell origin, Cell destination) {
     // Sort coordinates in order of size
-    int xDiff = Math.abs(destination.blockX() - cell.blockX());
-    int yDiff = Math.abs(destination.blockY() - cell.blockY());
-    int zDiff = Math.abs(destination.blockZ() - cell.blockZ());
+    int xDiff = Math.abs(destination.blockX() - origin.blockX());
+    int yDiff = Math.abs(destination.blockY() - origin.blockY());
+    int zDiff = Math.abs(destination.blockZ() - origin.blockZ());
     int first, second, third;
     boolean isYFirst = false;
     if (yDiff > xDiff && yDiff > zDiff) {
@@ -94,8 +94,4 @@ public record PlanarOrientedCostFunction(Cell destination) implements CostFuncti
     return total;
   }
 
-  @Override
-  public String toString() {
-    return "PlanarOrientedCostFunction{destination:" + destination + "}";
-  }
 }

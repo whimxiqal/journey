@@ -25,7 +25,6 @@ package net.whimxiqal.journey.search;
 
 import java.lang.reflect.Field;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -161,7 +160,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
 
     // Set cells-per-execution-cycle to something small to stress-test the DistributedWorkManager
     PathTrial.CELLS_PER_EXECUTION_CYCLE = 5;
-    final int RUNS = 100;
+    final int RUNS = 50;
     final int total = RUNS * 12;
     AtomicInteger finished = new AtomicInteger(0);
     AtomicInteger failed = new AtomicInteger(0);

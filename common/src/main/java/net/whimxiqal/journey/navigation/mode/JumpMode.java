@@ -56,7 +56,7 @@ public class JumpMode extends Mode {
       return options;
     }
     // 1 block up
-    options.add(new Option(origin.atOffset(0, 1, 0), 1.0d));
+    options.add(new Option(origin.atOffset(0, 1, 0)));
 
     // 1 block away and up
     for (int offX = -1; offX <= 1; offX++) {
@@ -93,7 +93,7 @@ public class JumpMode extends Mode {
         if (!blockProvider.toBlock(origin.atOffset(offX, 0, offZ)).isVerticallyPassable()
             && jumpDistance <= 1.2) {
           // Can stand here
-          options.add(new Option(other, origin.distanceTo(other)));
+          options.add(new Option(other));
         }
       }
     }

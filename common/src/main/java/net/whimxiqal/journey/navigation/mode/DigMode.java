@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class DigMode extends Mode {
 
-  public final static double DIG_COST_MULTIPLIER = 16;
-
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     List<Option> options = new LinkedList<>();
@@ -59,7 +57,6 @@ public class DigMode extends Mode {
           // Checks for the block -- checks between the offset block and the original block,
           //  which would be 1 for just 1 offset variable, 4 for 2 offset variables,
           //  and 8 for 3 offset variables.
-          float digTime = 0;
           for (int insideOffX = offX * offX /* normalize sign */; insideOffX >= 0; insideOffX--) {
             for (int insideOffY = offY * offY /* normalize sign */; insideOffY >= 0; insideOffY--) {
               for (int insideOffZ = offZ * offZ /* normalize sign */; insideOffZ >= 0; insideOffZ--) {
@@ -76,8 +73,6 @@ public class DigMode extends Mode {
                   // we must break it
                   if (blockProvider.toBlock(cell).hardness() < 0) {
                     continue outerZ;
-                  } else {
-                    digTime += blockProvider.toBlock(cell).hardness();
                   }
                 }
                 for (int h = 0; h <= insideOffY; h++) {
@@ -91,8 +86,6 @@ public class DigMode extends Mode {
                   if (!blockProvider.toBlock(cell).isPassable()) {
                     if (blockProvider.toBlock(cell).hardness() < 0) {
                       continue outerZ;
-                    } else {
-                      digTime += blockProvider.toBlock(cell).hardness();
                     }
                   }
                 }
@@ -100,7 +93,7 @@ public class DigMode extends Mode {
             }
           }
           Cell other = origin.atOffset(offX, offY, offZ);
-          options.add(new Option(other, origin.distanceTo(other) + digTime * DIG_COST_MULTIPLIER));
+          options.add(new Option(other));
         }
       }
     }
