@@ -42,12 +42,10 @@ public class ChunkCacheBlockProvider implements BlockProvider {
 
 
   private final ChunkCache chunkCache;
-  private final int maxCachedChunks;
   private final FlagSet flagSet;
 
   public ChunkCacheBlockProvider(int maxCachedChunks, FlagSet flagSet) {
     this.chunkCache = new ChunkCache(maxCachedChunks);
-    this.maxCachedChunks = maxCachedChunks;
     this.flagSet = flagSet;
   }
 
@@ -63,7 +61,7 @@ public class ChunkCacheBlockProvider implements BlockProvider {
     }
 
     // adjust the actual max because we don't want to do more than our cache can actually handle
-    int adjustedMaxChunks = Math.min(maxChunks, maxCachedChunks / 2);
+    int adjustedMaxChunks = Math.min(maxChunks, chunkCache.remainingSlots() / 2);
 
     double xDiff = destination.blockX() - origin.blockX();
     double zDiff = destination.blockZ() - origin.blockZ();

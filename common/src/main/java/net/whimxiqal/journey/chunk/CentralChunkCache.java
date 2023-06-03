@@ -43,6 +43,7 @@ import net.whimxiqal.journey.search.PathTrial;
  */
 public class CentralChunkCache {
 
+  private static final int TICKS_PER_DEBUG_LOG = 20;  // once per second
   private final Map<ChunkId, ChunkRequest> requestMap = new HashMap<>();  // this tracks requests keyed by chunk id
   private final Queue<ChunkRequest> requestQueue = new LinkedList<>();  // this tracks requests in order of appearance
   private final Object lock = new Object();
@@ -63,7 +64,7 @@ public class CentralChunkCache {
     requestTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::executeRequests,
         false, 1);  // Once per tick
     loggingTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::broadcastLogs,
-        false, 20); // Once per second
+        false, TICKS_PER_DEBUG_LOG);
   }
 
   /**

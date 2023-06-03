@@ -30,6 +30,8 @@ import java.util.regex.Pattern;
  */
 public final class Validator {
 
+  private static final String VALID_DATA_REGEX = "^[a-zA-Z0-9 -_]{1,30}$";
+
   private Validator() {
   }
 
@@ -45,7 +47,7 @@ public final class Validator {
     if (name.equalsIgnoreCase("help")) {
       return true;
     }
-    return !Pattern.matches("^[a-zA-Z][a-zA-Z0-9 -_]{1,30}[a-zA-Z0-9]$", name);
+    return !Pattern.matches(VALID_DATA_REGEX, name);
   }
 
 }
