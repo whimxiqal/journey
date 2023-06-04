@@ -25,14 +25,14 @@ package net.whimxiqal.journey.search.function;
 
 import net.whimxiqal.journey.Cell;
 
-public class HeightCostFunction implements CostFunction {
+public class HeightCostFunction extends CostFunction {
   @Override
-  public CostFunctionType getType() {
-    return CostFunctionType.HEIGHT;
+  public double apply(Cell cell, double existingCost) {
+    return existingCost - cell.blockY();  // discourage length to origin and going down
   }
 
   @Override
-  public Double apply(Cell cell) {
-    return (double) -cell.blockY(); // maximize height == minimize cost
+  public Type type() {
+    return Type.HEIGHT;
   }
 }

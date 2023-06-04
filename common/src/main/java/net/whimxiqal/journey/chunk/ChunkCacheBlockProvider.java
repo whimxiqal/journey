@@ -33,12 +33,13 @@ import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.search.flag.FlagSet;
 
+import static net.whimxiqal.journey.proxy.JourneyChunk.CHUNK_SIDE_LENGTH;
+
 /**
  * Chunk cache that must be accessed single-threaded.
  */
 public class ChunkCacheBlockProvider implements BlockProvider {
 
-  public static final int CHUNK_SIDE_LENGTH = 16;
 
   private final ChunkCache chunkCache;
   private final int maxCachedChunks;

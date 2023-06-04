@@ -58,13 +58,13 @@ public class JourneyConnectorProvider {
             .addParameter(Parameter.builder("waypoint")
                 .options(ctx -> {
                   if (ctx.source().type() == CommandSource.Type.PLAYER) {
-                    return Journey.get().dataManager().personalWaypointManager().getAll(ctx.source().uuid(), false).keySet();
+                    return Journey.get().proxy().dataManager().personalWaypointManager().getAll(ctx.source().uuid(), false).keySet();
                   }
                   return Collections.emptyList();
                 })
                 .build())
             .addParameter(Parameter.builder("server-waypoint")
-                .options(ctx -> Journey.get().dataManager().publicWaypointManager().getAll().keySet())
+                .options(ctx -> Journey.get().proxy().dataManager().publicWaypointManager().getAll().keySet())
                 .build())
             .addParameter(Parameter.builder("scope")
                 .options(ctx -> ScopeUtil.options(InternalJourneyPlayer.from(ctx.source())))

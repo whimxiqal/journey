@@ -95,7 +95,7 @@ public class EverythingSearch extends SearchSession {
     for (Integer domain : allDomains) {
       for (Tunnel pathTrialOriginTunnel : tunnelsByDestinationDomain.get(domain)) {
         for (Tunnel pathTrialDestinationTunnel : tunnelsByOriginDomain.get(domain)) {
-          if (!Journey.get().dataManager()
+          if (!Journey.get().proxy().dataManager()
               .pathRecordManager()
               .containsRecord(pathTrialOriginTunnel.destination(), pathTrialDestinationTunnel.origin(), modeTypes)) {
             DestinationPathTrial pathTrial = DestinationPathTrial.approximate(this, pathTrialOriginTunnel.destination(), pathTrialDestinationTunnel.origin(),

@@ -8,6 +8,10 @@ repositories {
         name = 'sonatype-snapshots'
         url = 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
+    maven {
+        name = 'enginehub'
+        url = 'https://maven.enginehub.org/repo/'
+    }
 }
 
 dependencies {
@@ -39,6 +43,11 @@ dependencies {
 
     // Bstats. There is no "core" library, so we will only use the "common" components from here
     implementation 'org.bstats:bstats-bukkit:3.0.1'
+
+    testImplementation 'com.sk89q.worldedit:worldedit-core:7.2.14'
+    testImplementation 'org.mockito:mockito-core:5.3.1'
+    testImplementation 'org.openjdk.jmh:jmh-core:1.36'
+    testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:1.36"
 
     implementation 'org.json:json:20230227'
 }

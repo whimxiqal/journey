@@ -26,8 +26,6 @@ package net.whimxiqal.journey;
 import java.util.UUID;
 import net.whimxiqal.journey.chunk.CentralChunkCache;
 import net.whimxiqal.journey.config.Settings;
-import net.whimxiqal.journey.data.DataManager;
-import net.whimxiqal.journey.data.DataManagerImpl;
 import net.whimxiqal.journey.data.DataVersion;
 import net.whimxiqal.journey.manager.AnimationManager;
 import net.whimxiqal.journey.manager.DistributedWorkManager;
@@ -45,7 +43,7 @@ public final class Journey {
 
   public static final String NAME = "Journey";
   public static final UUID JOURNEY_CALLER = UUID.randomUUID();
-  private static final Journey instance = new Journey();
+  private static Journey instance;
   private final PlayerManager playerManager = new PlayerManager();
   private final NetherManager netherManager = new NetherManager();
   private final SearchManager searchManager = new SearchManager();
@@ -56,15 +54,28 @@ public final class Journey {
   private final CentralChunkCache centralChunkCache = new CentralChunkCache();
   private final AnimationManager animationManager = new AnimationManager();
   private DistributedWorkManager workManager;
-  private DataManager dataManager = new DataManagerImpl();  // not final for testing
   private Proxy proxy;
 
   public static CommonLogger logger() {
     return instance.proxy.logger();
   }
 
+  public static void create() {
+    if (instance != null) {
+      throw new IllegalStateException("Journey was already created");
+    }
+    instance = new Journey();
+  }
+
   public static Journey get() {
     return instance;
+  }
+
+  public static void remove() {
+    if (instance == null) {
+      throw new IllegalStateException("Journey may only be removed after it was created");
+    }
+    instance = null;
   }
 
   public Proxy proxy() {
@@ -78,12 +89,11 @@ public final class Journey {
     this.proxy = proxy;
   }
 
-  public void init() {
+  public boolean init() {
     JourneyApiSupplier.set(new JourneyApiImpl());
 
     Settings.validate();  // Settings should already have been loaded from config by now
-    proxy.logger().initialize();
-    dataManager.initialize();
+    proxy.initialize();
     netherManager.initialize();
     searchManager.initialize();
     scopeManager.initialize();
@@ -92,24 +102,21 @@ public final class Journey {
     centralChunkCache.initialize();
     animationManager.initialize();
 
-    if (dataManager.version() != DataVersion.latest()) {
+    if (proxy.dataManager().version() != DataVersion.latest()) {
       logger().error("The Journey database is using an invalid version.");
+      return false;
     }
 
     workManager = new DistributedWorkManager(Settings.MAX_SEARCHES.getValue());
+    return true;
   }
 
   public void shutdown() {
     searchManager.shutdown();
-    proxy.audienceProvider().close();
     statsManager.shutdown();
     centralChunkCache.shutdown();
-    proxy.logger().shutdown();
     animationManager.shutdown();
-  }
-
-  public DataManager dataManager() {
-    return dataManager;
+    proxy.shutdown();
   }
 
   public PlayerManager deathManager() {

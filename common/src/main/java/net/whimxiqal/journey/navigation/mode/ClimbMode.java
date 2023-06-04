@@ -55,7 +55,7 @@ public final class ClimbMode extends Mode {
     if (blockProvider.toBlock(origin).isClimbable()) {
       if (blockProvider.toBlock(origin.atOffset(0, 1, 0)).isVerticallyPassable()
           && blockProvider.toBlock(origin.atOffset(0, 2, 0)).isVerticallyPassable()) {
-        options.add(new Option(origin.atOffset(0, 1, 0), 1.0d));
+        options.add(new Option(origin.atOffset(0, 1, 0)));
       }
     }
 
@@ -64,7 +64,7 @@ public final class ClimbMode extends Mode {
 
   private void tryToClimbAdjacent(Cell cell, BlockProvider blockProvider, List<Option> options) throws ExecutionException, InterruptedException {
     if (blockProvider.toBlock(cell).isClimbable()) {
-      options.add(new Option(cell, 1.0d));
+      options.add(new Option(cell));
     }
   }
 

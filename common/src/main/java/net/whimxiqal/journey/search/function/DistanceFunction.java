@@ -21,43 +21,24 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey;
+package net.whimxiqal.journey.search.function;
 
-import java.nio.file.Path;
-import net.whimxiqal.journey.config.ConfigManager;
-import net.whimxiqal.journey.data.DataManager;
-import net.whimxiqal.journey.manager.SchedulingManager;
-import net.whimxiqal.journey.navigation.PlatformProxy;
-import net.whimxiqal.journey.util.CommonLogger;
-import net.kyori.adventure.platform.AudienceProvider;
+import net.whimxiqal.journey.Cell;
 
-public interface Proxy {
+public abstract class DistanceFunction {
 
-  CommonLogger logger();
+  abstract public double distance(Cell origin, Cell destination);
 
-  Path dataFolder();
+  abstract public Type type();
 
-  AudienceProvider audienceProvider();
-
-  ConfigManager configManager();
-
-  SchedulingManager schedulingManager();
-
-  DataManager dataManager();
-
-  PlatformProxy platform();
-
-  String version();
-
-  default void initialize() {
-    logger().initialize();
-    dataManager().initialize();
-    schedulingManager().initialize();
+  enum Type {
+    EUCLIDEAN,
+    PLANAR,
+    MANHATTAN,
   }
 
-  default void shutdown() {
-    logger().shutdown();
-    audienceProvider().close();
-    schedulingManager().shutdown();
+  @Override
+  public String toString() {
+    return type().name();
   }
 }

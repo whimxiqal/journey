@@ -21,86 +21,85 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.platform;
+package net.whimxiqal.journey.schematic;
 
+import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.math.BlockVector3;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
-import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
-import net.whimxiqal.journey.proxy.TestJourneyBlock;
-import net.whimxiqal.journey.proxy.TestJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bstats.charts.CustomChart;
 
-public class TestPlatformProxy implements PlatformProxy {
+public class SchematicPlatformProxy implements PlatformProxy {
 
-  public static Map<Integer, TestWorld> worlds = new HashMap<>();  // domain -> world
-  public static Map<String, Cell> pois = new HashMap<>();
-  public static List<Tunnel> tunnels = new LinkedList<>();
-  public static List<InternalJourneyPlayer> onlinePlayers = new LinkedList<>();
-  public static int animatedBlocks = 0;
+  private final Supplier<Clipboard> clipboard;
+
+  SchematicPlatformProxy(Supplier<Clipboard> clipboardSupplier) {
+    this.clipboard = clipboardSupplier;
+  }
 
   @Override
   public JourneyChunk toChunk(ChunkId chunkId) {
-    return new TestJourneyChunk(chunkId);
+    return new SchematicChunk(chunkId, clipboard.get());
   }
 
   @Override
   public JourneyBlock toBlock(Cell cell) {
-    return new TestJourneyBlock(cell);
+    return new SchematicBlock(cell, clipboard.get().getBlock(BlockVector3.at(cell.blockX(), cell.blockY(), cell.blockZ())).getBlockType());
   }
 
   @Override
   public void playSuccess(UUID playerUuid) {
-    // ignore
+    // do nothing
   }
 
   @Override
   public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-    // ignore
+    // do nothing
   }
 
   @Override
   public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-    // ignore
+    // do nothing
   }
 
   @Override
   public Collection<InternalJourneyPlayer> onlinePlayers() {
-    return onlinePlayers;
+    return Collections.singletonList(SchematicSearchTests.PLAYER);
   }
 
   @Override
   public Optional<InternalJourneyPlayer> onlinePlayer(UUID uuid) {
-    return onlinePlayers.stream().filter(player -> player.uuid().equals(uuid)).findFirst();
+    if (uuid.equals(SchematicSearchTests.PLAYER.uuid())) {
+      return Optional.of(SchematicSearchTests.PLAYER);
+    } else {
+      return Optional.empty();
+    }
   }
 
   @Override
   public Optional<InternalJourneyPlayer> onlinePlayer(String name) {
-    return onlinePlayers.stream().filter(player -> player.name().equals(name)).findFirst();
+    return Optional.empty();
   }
 
   @Override
   public Optional<Cell> entityCellLocation(UUID entityUuid) {
-    return Optional.of(new Cell(0, 0, 0, WorldLoader.domain(0)));  // just say everything is at the origin
+    return Optional.empty();
   }
 
   @Override
@@ -110,37 +109,36 @@ public class TestPlatformProxy implements PlatformProxy {
 
   @Override
   public void prepareDestinationSearchSession(SearchSession searchSession, UUID player, FlagSet flags, Cell destination) {
-    // do nothing extra here
+
   }
 
   @Override
   public void sendAnimationBlock(UUID player, Cell location) {
-    animatedBlocks += 1;
+
   }
 
   @Override
   public void resetAnimationBlocks(UUID player, Collection<Cell> locations) {
-    animatedBlocks -= locations.size();
-    Journey.logger().info("Reset: " + locations.size());
+
   }
 
   @Override
-  public String domainName(int domain) {
-    return worlds.get(domain).name;
+  public String domainName(int domainId) {
+    return null;
   }
 
   @Override
-  public boolean sendGui(JourneyPlayer player) {
+  public boolean sendGui(JourneyPlayer source) {
     return false;
   }
 
   @Override
   public Consumer<CustomChart> bStatsChartConsumer() {
-    return chart -> {/* nothing */};
+    return (chart) -> {};
   }
 
   @Override
   public Map<String, Map<String, Integer>> domainResourceKeys() {
-    return Collections.singletonMap("whimxiqal", TestPlatformProxy.worlds.values().stream().collect(Collectors.toMap(k -> k.name, k -> Journey.get().domainManager().domainIndex(k.uuid))));
+    return Collections.emptyMap();
   }
 }

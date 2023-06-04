@@ -21,22 +21,17 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.search.function;
+package net.whimxiqal.journey.schematic;
 
-import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.search.SearchSession;
 
-/**
- * A simple cost function that just returns 0 as the cost of every cell.
- * Should be used a placeholder for an actual cost function.
- */
-public class ZeroCostFunction implements CostFunction {
-  @Override
-  public CostFunctionType getType() {
-    return CostFunctionType.OTHER;
+public class DummySearchSession extends SearchSession {
+  protected DummySearchSession() {
+    super(SchematicSearchTests.PLAYER.uuid(), Caller.PLAYER);
   }
 
   @Override
-  public Double apply(Cell cell) {
-    return 0.0;
+  protected void asyncSearch() {
+    // do nothing
   }
 }

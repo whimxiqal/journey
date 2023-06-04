@@ -98,7 +98,7 @@ public abstract class CommonLogger {
     flush();
   }
 
-  private void flush() {
+  public void flush() {
     while (!messageQueue.isEmpty()) {
       submit(messageQueue.remove());
     }

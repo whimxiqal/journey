@@ -23,10 +23,19 @@
 
 package net.whimxiqal.journey.search.function;
 
-public enum CostFunctionType {
-  EUCLIDEAN_DISTANCE,
-  PLANAR_ORIENTED,
-  MANHATTAN_DISTANCE,
-  HEIGHT,
-  OTHER
+import net.whimxiqal.journey.Cell;
+
+public class ManhattanDistanceFunction extends DistanceFunction {
+
+  @Override
+  public double distance(Cell origin, Cell destination) {
+    return (double) Math.abs(origin.blockX() - destination.blockX())
+        + Math.abs(origin.blockY() - destination.blockY())
+        + Math.abs(origin.blockZ() - destination.blockZ());
+  }
+
+  @Override
+  public Type type() {
+    return Type.MANHATTAN;
+  }
 }

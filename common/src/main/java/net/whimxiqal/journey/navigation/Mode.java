@@ -56,50 +56,10 @@ public abstract class Mode {
   public abstract ModeType type();
 
   /**
-   * A record to store a movement option. It just contains a location and a distance to that location.
+   * A record to store a movement option. It just contains a location for now, but it could later
+   * contain information about the speed at which the distance to the location can be traversed.
    */
-  public record Option(Cell location, double cost) {
-
-    /**
-     * General constructor.
-     *
-     * @param location the location
-     * @param cost     the destination
-     */
-    public Option(@NotNull Cell location, double cost) {
-      this.location = location;
-      this.cost = cost;
-    }
-
-    public static Option between(Cell origin, int destinationX, int destinationY, int destinationZ) {
-      Cell destination = new Cell(destinationX, destinationY, destinationZ, origin.domain());
-      return new Option(destination, origin.distanceTo(destination));
-    }
-
-    public static Option between(Cell origin, Cell destination, double costMultiplier) {
-      return new Option(destination, origin.distanceTo(destination));
-    }
-
-    /**
-     * Get location.
-     *
-     * @return the location
-     */
-    @Override
-    @NotNull
-    public Cell location() {
-      return location;
-    }
-
-    /**
-     * Get the distance it would take to reach the location.
-     *
-     * @return the distance
-     */
-    @Override
-    public double cost() {
-      return cost;
-    }
+  public record Option(Cell location) {
   }
 
 }

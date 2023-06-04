@@ -88,7 +88,7 @@ public class WalkMode extends Mode {
           // we are inquiring about other than origin
           if (blockProvider.toBlock(cell).canStandIn()) {
             // We can just stand right here (carpets, etc.)
-            options.add(new Option(cell, origin.distanceTo(cell)));
+            options.add(new Option(cell));
             continue;
           }
         }
@@ -110,7 +110,7 @@ public class WalkMode extends Mode {
             continue;
           }
           // good
-          options.add(new Option(cell1, origin.distanceTo(cell1)));
+          options.add(new Option(cell1));
           break;
         }
       }

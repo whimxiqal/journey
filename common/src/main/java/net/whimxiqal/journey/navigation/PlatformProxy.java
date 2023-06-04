@@ -49,7 +49,6 @@ public interface PlatformProxy extends BlockProvider {
 
   /**
    * Convert chunk id to a {@link JourneyChunk}.
-   *
    * <b>Must be called on the main server thread!</b>
    *
    * @param chunkId the chunk id
@@ -59,7 +58,6 @@ public interface PlatformProxy extends BlockProvider {
 
   /**
    * Convert a cell to a {@link JourneyBlock} with real-world data.
-   *
    * <b>Must be called on the main server thread!</b>
    * If you need a block asynchronously, use a {@link ChunkCacheBlockProvider}
    * or the {@link net.whimxiqal.journey.chunk.CentralChunkCache}.
@@ -95,13 +93,6 @@ public interface PlatformProxy extends BlockProvider {
   String domainName(int domainId);
 
   boolean sendGui(JourneyPlayer source);
-
-  /**
-   * Whether currently executing on the main server thread.
-   *
-   * @return true if synchronous on main thread
-   */
-  boolean isMainThread();
 
   Consumer<CustomChart> bStatsChartConsumer();
 

@@ -92,12 +92,12 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathT
     Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
     boolean added = false;
     try {
-      if (Journey.get().dataManager()
+      if (Journey.get().proxy().dataManager()
           .pathRecordManager()
           .containsRecord(origin, destination, modeTypes)) {
         addPathTrial(DestinationPathTrial.cached(session, origin, destination,
                 modes,
-                Journey.get().dataManager()
+                Journey.get().proxy().dataManager()
                     .pathRecordManager()
                     .getPath(origin, destination, modeTypes)),
             originNode, destinationNode);

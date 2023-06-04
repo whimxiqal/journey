@@ -21,43 +21,31 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey;
+package net.whimxiqal.journey.search.function;
 
-import java.nio.file.Path;
-import net.whimxiqal.journey.config.ConfigManager;
-import net.whimxiqal.journey.data.DataManager;
-import net.whimxiqal.journey.manager.SchedulingManager;
-import net.whimxiqal.journey.navigation.PlatformProxy;
-import net.whimxiqal.journey.util.CommonLogger;
-import net.kyori.adventure.platform.AudienceProvider;
+import net.whimxiqal.journey.Cell;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public interface Proxy {
+class PlanarOrientedDistanceFunctionTest {
 
-  CommonLogger logger();
+  private static final double DELTA = 0.001;
+  private final DistanceFunction func = new PlanarOrientedDistanceFunction();
+  private final static Cell ORIGIN = new Cell(0, 0, 0, 0);
 
-  Path dataFolder();
-
-  AudienceProvider audienceProvider();
-
-  ConfigManager configManager();
-
-  SchedulingManager schedulingManager();
-
-  DataManager dataManager();
-
-  PlatformProxy platform();
-
-  String version();
-
-  default void initialize() {
-    logger().initialize();
-    dataManager().initialize();
-    schedulingManager().initialize();
+  private void test(double expected, int x, int y, int z) {
+    Assertions.assertEquals(expected, func.distance(ORIGIN, new Cell(x, y, z, 0)), DELTA);
   }
 
-  default void shutdown() {
-    logger().shutdown();
-    audienceProvider().close();
-    schedulingManager().shutdown();
+  @Test
+  void apply() {
+    test(0, 0, 0, 0);
+    test(10, 10, 0, 0);
+    test(10, 0, 0, 10);
+    test(Math.sqrt(2) * 10, 0, 10, 0);  // must go diagonally up to go up (assuming we aren't using ladders or something like that)
+    test(Math.sqrt(2) * 10, 10, 0, 10);
+    test(Math.sqrt(3) * 10, 10, 10, 10);
+    test(Math.sqrt(3) * 10 + Math.sqrt(2) * 20 + 30, 10, 30, 60);
+    test(Math.sqrt(3) * 10 + Math.sqrt(2) * 20 + Math.sqrt(2) * 30, 30, 60, 10);
   }
 }

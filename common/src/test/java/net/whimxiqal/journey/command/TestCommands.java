@@ -78,7 +78,7 @@ public class TestCommands extends JourneyTestHarness {
   }
 
   static void addHome() {
-    Journey.get().dataManager().personalWaypointManager().add(PLAYER_UUID, new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
+    Journey.get().proxy().dataManager().personalWaypointManager().add(PLAYER_UUID, new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
   }
 
   private CommandResult execute(String command) throws ExecutionException, InterruptedException {
@@ -113,7 +113,7 @@ public class TestCommands extends JourneyTestHarness {
     addHome();
     commandSuccess("journeyto home");
     commandSuccess("journeyto personal:home");
-    Journey.get().dataManager().publicWaypointManager().add(new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
+    Journey.get().proxy().dataManager().publicWaypointManager().add(new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
     commandFailure("journeyto home");
     commandSuccess("journeyto personal:home");
     commandSuccess("journeyto server:home");
@@ -146,40 +146,43 @@ public class TestCommands extends JourneyTestHarness {
     JourneyApi api = JourneyApiProvider.get();
     Destination destination = Destination.of(new Cell(0, 0, 0, WorldLoader.domain(0)));
     testProxy.revokeAllPermissions(PLAYER_UUID);
-    api.registerScope("Journey", "complex", Scope.builder()
-        .subScopes(() -> {
-          Map<String, Scope> scopes = new HashMap<>();
-          scopes.put("path-a", Scope.builder()
-              .destinations(() -> {
-                Map<String, Destination> destinations = new HashMap<>();
-                destinations.put("path-a-1", destination);
-                destinations.put("path-shared", destination);
-                destinations.put("permission", Destination.builder(new Cell(0, 0, 0, WorldLoader.domain(0))).permission("you-dont-have-this").build());
-                return VirtualMap.of(destinations);
+    runOnMainThread(() -> {  // The API checks to verify that we are running on the main thread when registering scopes
+          api.registerScope("Journey", "complex", Scope.builder()
+              .subScopes(() -> {
+                Map<String, Scope> scopes = new HashMap<>();
+                scopes.put("path-a", Scope.builder()
+                    .destinations(() -> {
+                      Map<String, Destination> destinations = new HashMap<>();
+                      destinations.put("path-a-1", destination);
+                      destinations.put("path-shared", destination);
+                      destinations.put("permission", Destination.builder(new Cell(0, 0, 0, WorldLoader.domain(0))).permission("you-dont-have-this").build());
+                      return VirtualMap.of(destinations);
+                    }).build());
+                scopes.put("path-b", Scope.builder()
+                    .destinations(() -> {
+                      Map<String, Destination> destinations = new HashMap<>();
+                      destinations.put("path-b", destination);
+                      destinations.put("path-b-1", destination);
+                      destinations.put("path-b space", destination);
+                      destinations.put("path-shared", destination);
+                      return VirtualMap.of(destinations);
+                    }).build());
+                scopes.put("contextually-necessary", Scope.builder()
+                    .destinations(() -> {
+                      Map<String, Destination> destinations = new HashMap<>();
+                      destinations.put("path-a-1", destination);
+                      destinations.put("hidden", destination);
+                      return VirtualMap.of(destinations);
+                    }).strict()
+                    .build());
+                scopes.put("permission-scope", Scope.builder()
+                    .destinations(VirtualMap.ofSingleton("cant-reach", destination))
+                    .permission("you-also-dont-have-this")
+                    .build());
+                return VirtualMap.of(scopes);
               }).build());
-          scopes.put("path-b", Scope.builder()
-              .destinations(() -> {
-                Map<String, Destination> destinations = new HashMap<>();
-                destinations.put("path-b", destination);
-                destinations.put("path-b-1", destination);
-                destinations.put("path-b space", destination);
-                destinations.put("path-shared", destination);
-                return VirtualMap.of(destinations);
-              }).build());
-          scopes.put("contextually-necessary", Scope.builder()
-              .destinations(() -> {
-                Map<String, Destination> destinations = new HashMap<>();
-                destinations.put("path-a-1", destination);
-                destinations.put("hidden", destination);
-                return VirtualMap.of(destinations);
-              }).strict()
-              .build());
-          scopes.put("permission-scope", Scope.builder()
-              .destinations(VirtualMap.ofSingleton("cant-reach", destination))
-              .permission("you-also-dont-have-this")
-              .build());
-          return VirtualMap.of(scopes);
-        }).build());
+          return null;
+        });
     List<String> completions = completions("journeyto ");
 
     // Full scope

@@ -25,6 +25,8 @@ package net.whimxiqal.journey;
 
 import java.nio.file.Path;
 import net.whimxiqal.journey.config.ConfigManager;
+import net.whimxiqal.journey.data.DataManager;
+import net.whimxiqal.journey.data.DataManagerImpl;
 import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.util.CommonLogger;
@@ -37,6 +39,7 @@ public class ProxyImpl implements Proxy {
   private AudienceProvider audienceProvider;
   private ConfigManager configManager;
   private SchedulingManager schedulingManager;
+  private DataManager dataManager = new DataManagerImpl();  // default data manager
   private PlatformProxy platformProxy;
   private String version;
 
@@ -83,6 +86,15 @@ public class ProxyImpl implements Proxy {
   @Override
   public SchedulingManager schedulingManager() {
     return schedulingManager;
+  }
+
+  public void dataManager(DataManager dataManager) {
+    this.dataManager = dataManager;
+  }
+
+  @Override
+  public DataManager dataManager() {
+    return dataManager;
   }
 
   public void platform(PlatformProxy platformProxy) {

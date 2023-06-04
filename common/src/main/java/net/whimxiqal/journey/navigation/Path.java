@@ -51,7 +51,7 @@ public class Path implements Serializable {
    *
    * @param origin the origin of the whole path
    * @param steps  the steps required to get there
-   * @param cost   the cost of the path
+   * @param cost   the distance of the path
    */
   public Path(Cell origin, @NotNull List<Step> steps, double cost, Runnable prompt, Predicate<Cell> completedWith) {
     this.origin = origin;
@@ -184,7 +184,7 @@ public class Path implements Serializable {
     return "Path{"
         + "origin=" + origin
         + ", # of steps=" + steps.size()
-        + ", cost=" + cost
+        + ", distance=" + cost
         + '}';
   }
 }

@@ -64,18 +64,18 @@ public final class DoorMode extends Mode {
               || door.get().direction() == Direction.NEGATIVE_Z
               || door.get().isOpen()) {
             // Nothing blocking
-            options.add(new Option(origin.atOffset(1, 0, 0), 1.0d));
+            options.add(new Option(origin.atOffset(1, 0, 0)));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              options.add(new Option(origin.atOffset(1, 0, 0), 1.0d));
+              options.add(new Option(origin.atOffset(1, 0, 0)));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          options.add(new Option(origin.atOffset(1, 0, 0), 1.0d));
+          options.add(new Option(origin.atOffset(1, 0, 0)));
         }
       }
     }
@@ -93,18 +93,18 @@ public final class DoorMode extends Mode {
               || door.get().direction() == Direction.NEGATIVE_X
               || door.get().isOpen()) {
             // Nothing blocking
-            options.add(new Option(origin.atOffset(0, 0, 1), 1.0d));
+            options.add(new Option(origin.atOffset(0, 0, 1)));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              options.add(new Option(origin.atOffset(0, 0, 1), 1.0d));
+              options.add(new Option(origin.atOffset(0, 0, 1)));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          options.add(new Option(origin.atOffset(0, 0, 1), 1.0d));
+          options.add(new Option(origin.atOffset(0, 0, 1)));
         }
       }
     }
@@ -122,18 +122,18 @@ public final class DoorMode extends Mode {
               || door.get().direction() == Direction.NEGATIVE_Z
               || door.get().isOpen()) {
             // Nothing blocking
-            options.add(new Option(origin.atOffset(-1, 0, 0), 1.0d));
+            options.add(new Option(origin.atOffset(-1, 0, 0)));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              options.add(new Option(origin.atOffset(-1, 0, 0), 1.0d));
+              options.add(new Option(origin.atOffset(-1, 0, 0)));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          options.add(new Option(origin.atOffset(-1, 0, 0), 1.0d));
+          options.add(new Option(origin.atOffset(-1, 0, 0)));
         }
       }
     }
@@ -151,18 +151,18 @@ public final class DoorMode extends Mode {
               || door.get().direction() == Direction.NEGATIVE_X
               || door.get().isOpen()) {
             // Nothing blocking
-            options.add(new Option(origin.atOffset(0, 0, -1), 1.0d));
+            options.add(new Option(origin.atOffset(0, 0, -1)));
           } else {
             // We need to be able to open the door
             if (standingOnPressurePlate) {
               // We can step on a pressure plate to open it
-              options.add(new Option(origin.atOffset(0, 0, -1), 1.0d));
+              options.add(new Option(origin.atOffset(0, 0, -1)));
             }
           }
           //  If it is blocking, then see if you can open with a switch or something
         } else {
           // It's not iron, so its passable
-          options.add(new Option(origin.atOffset(0, 0, -1), 1.0d));
+          options.add(new Option(origin.atOffset(0, 0, -1)));
         }
       }
     }

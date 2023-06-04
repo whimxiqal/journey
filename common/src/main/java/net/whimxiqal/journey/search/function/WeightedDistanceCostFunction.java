@@ -21,43 +21,29 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey;
+package net.whimxiqal.journey.search.function;
 
-import java.nio.file.Path;
-import net.whimxiqal.journey.config.ConfigManager;
-import net.whimxiqal.journey.data.DataManager;
-import net.whimxiqal.journey.manager.SchedulingManager;
-import net.whimxiqal.journey.navigation.PlatformProxy;
-import net.whimxiqal.journey.util.CommonLogger;
-import net.kyori.adventure.platform.AudienceProvider;
+import net.whimxiqal.journey.Cell;
 
-public interface Proxy {
+public class WeightedDistanceCostFunction extends CostFunction {
 
-  CommonLogger logger();
+  private final DistanceFunction distanceFunction;
+  private final Cell destination;
+  private final double weight;
 
-  Path dataFolder();
-
-  AudienceProvider audienceProvider();
-
-  ConfigManager configManager();
-
-  SchedulingManager schedulingManager();
-
-  DataManager dataManager();
-
-  PlatformProxy platform();
-
-  String version();
-
-  default void initialize() {
-    logger().initialize();
-    dataManager().initialize();
-    schedulingManager().initialize();
+  public WeightedDistanceCostFunction(DistanceFunction distanceFunction, Cell destination, double weight) {
+    this.distanceFunction = distanceFunction;
+    this.destination = destination;
+    this.weight = weight;
   }
 
-  default void shutdown() {
-    logger().shutdown();
-    audienceProvider().close();
-    schedulingManager().shutdown();
+  @Override
+  public double apply(Cell cell, double existingCost) {
+    return existingCost + weight * distanceFunction.distance(cell, destination);
+  }
+
+  @Override
+  public Type type() {
+    return Type.WEIGHTED_DISTANCE;
   }
 }

@@ -83,7 +83,7 @@ public class FlyMode extends Mode {
             }
           }
           Cell other = origin.atOffset(offX, offY, offZ);
-          options.add(new Option(other, origin.distanceTo(other)));
+          options.add(new Option(other));
         }
       }
     }

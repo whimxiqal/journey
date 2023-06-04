@@ -48,7 +48,7 @@ public final class NetherManager {
   private final Map<Cell, Cell> portalConnections = new ConcurrentHashMap<>();
 
   public void initialize() {
-    Journey.get().dataManager()
+    Journey.get().proxy().dataManager()
         .netherPortalManager()
         .getAllTunnels(TunnelType.NETHER)
         .forEach(tunnel -> portalConnections.put(tunnel.origin(), tunnel.destination()));
@@ -69,7 +69,7 @@ public final class NetherManager {
         linksVerified.add(tunnel);
       } else {
         portalConnections.remove(tunnel.origin(), tunnel.destination());
-        Journey.get().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination(), TunnelType.NETHER);
+        Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination(), TunnelType.NETHER);
       }
     }
     return linksVerified;
@@ -131,10 +131,10 @@ public final class NetherManager {
           Journey.logger().debug("Removed nether portal tunnel: " + old + " -> " + portalConnections.get(old).toString());
 
           portalConnections.remove(old);
-          Journey.get().dataManager()
+          Journey.get().proxy().dataManager()
               .netherPortalManager()
               .getTunnelsWithOrigin(old, TunnelType.NETHER)
-              .forEach(tunnel -> Journey.get().dataManager()
+              .forEach(tunnel -> Journey.get().proxy().dataManager()
                   .netherPortalManager()
                   .removeTunnels(old, tunnel.destination(), TunnelType.NETHER));
         }
@@ -142,7 +142,7 @@ public final class NetherManager {
 
       // Add the portal
       Cell previous = portalConnections.put(originGroup.tunnelLocation(), destinationGroup.get().tunnelLocation());
-      Journey.get().dataManager().netherPortalManager().addTunnel(originGroup.tunnelLocation(),
+      Journey.get().proxy().dataManager().netherPortalManager().addTunnel(originGroup.tunnelLocation(),
           destinationGroup.get().tunnelLocation(),
           NetherTunnel.COST,
           TunnelType.NETHER);
@@ -154,7 +154,7 @@ public final class NetherManager {
 
   public void reset() {
     portalConnections.clear();
-    Journey.get().dataManager().netherPortalManager().removeTunnels(TunnelType.NETHER);
+    Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(TunnelType.NETHER);
   }
 
   /**

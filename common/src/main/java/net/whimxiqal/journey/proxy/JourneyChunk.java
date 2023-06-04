@@ -32,6 +32,8 @@ import net.whimxiqal.journey.search.flag.FlagSet;
  */
 public interface JourneyChunk {
 
+  int CHUNK_SIDE_LENGTH = 16;
+
   /**
    * Get the identifiable parameters for this chunk.
    *

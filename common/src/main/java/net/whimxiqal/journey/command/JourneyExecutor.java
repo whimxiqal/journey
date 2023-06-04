@@ -176,7 +176,7 @@ public class JourneyExecutor implements CommandExecutor {
           Journey.get().searchManager().launchIngameSearch(new EverythingSearch(searcherUuid, callerType));
           return CommandResult.success();
         } else if (ctx.clear != null) {
-          Journey.get().dataManager().pathRecordManager().truncate();
+          Journey.get().proxy().dataManager().pathRecordManager().truncate();
           src.audience().sendMessage(Formatter.success("Cleared cached paths."));
           return CommandResult.success();
         }
@@ -190,7 +190,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
         Pager.of(Formatter.info("Known Nether Portals"),
-                Journey.get().dataManager()
+                Journey.get().proxy().dataManager()
                     .netherPortalManager()
                     .getAllTunnels(TunnelType.NETHER),
                 tunnel -> Formatter.cell(tunnel.origin()),
@@ -217,7 +217,7 @@ public class JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.error("Your location could not be found"));
           return CommandResult.failure();
         }
-        PersonalWaypointManager personalWaypointManager = Journey.get().dataManager().personalWaypointManager();
+        PersonalWaypointManager personalWaypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
 
         Journey.get().proxy().schedulingManager().schedule(() -> {
           String existingName = personalWaypointManager.getName(src.uuid(), location.get());
@@ -245,7 +245,7 @@ public class JourneyExecutor implements CommandExecutor {
         }
 
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          Map<String, Cell> cells = Journey.get().dataManager()
+          Map<String, Cell> cells = Journey.get().proxy().dataManager()
               .personalWaypointManager()
               .getAll(src.uuid(), false);
 
@@ -279,7 +279,7 @@ public class JourneyExecutor implements CommandExecutor {
           if (playerUuid == null) {
             src.audience().sendMessage(Formatter.error("A problem occurred trying to access that player's information"));
           } else {
-            Map<String, Cell> cells = Journey.get().dataManager()
+            Map<String, Cell> cells = Journey.get().proxy().dataManager()
                 .personalWaypointManager()
                 .getAll(playerUuid, false);
 
@@ -322,7 +322,7 @@ public class JourneyExecutor implements CommandExecutor {
 
       private void personalWaypointSearch(String name) {
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          Cell endLocation = Journey.get().dataManager().personalWaypointManager().getWaypoint(src.uuid(), name);
+          Cell endLocation = Journey.get().proxy().dataManager().personalWaypointManager().getWaypoint(src.uuid(), name);
 
           if (endLocation == null) {
             src.audience().sendMessage(Formatter.error("Could not find a waypoint called ___", name));
@@ -334,7 +334,7 @@ public class JourneyExecutor implements CommandExecutor {
 
       private void publicWaypointSearch(String name) {
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          Cell endLocation = Journey.get().dataManager().publicWaypointManager().getWaypoint(name);
+          Cell endLocation = Journey.get().proxy().dataManager().publicWaypointManager().getWaypoint(name);
 
           if (endLocation == null) {
             src.audience().sendMessage(Formatter.error("Could not find a public waypoint called ___", name));
@@ -361,7 +361,7 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitUnsetWaypoint(JourneyParser.UnsetWaypointContext ctx) {
-        PersonalWaypointManager waypointManager = Journey.get().dataManager().personalWaypointManager();
+        PersonalWaypointManager waypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
         String name = cmd.identifiers().get(0);
         Journey.get().proxy().schedulingManager().schedule(() -> {
           if (waypointManager.hasWaypoint(src.uuid(), name)) {
@@ -393,7 +393,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
 
-        PersonalWaypointManager personalWaypointManager = Journey.get().dataManager().personalWaypointManager();
+        PersonalWaypointManager personalWaypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
 
         Journey.get().proxy().schedulingManager().schedule(() -> {
           if (personalWaypointManager.hasWaypoint(src.uuid(), newName)) {
@@ -468,7 +468,7 @@ public class JourneyExecutor implements CommandExecutor {
 
       private void visitPlayerWaypoint(JourneyParser.PlayerWaypointContext ctx, String playerName, UUID dstPlayer, String waypoint) {
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          PersonalWaypointManager manager = Journey.get().dataManager().personalWaypointManager();
+          PersonalWaypointManager manager = Journey.get().proxy().dataManager().personalWaypointManager();
           if (!manager.hasWaypoint(dstPlayer, waypoint)) {
             src.audience().sendMessage(Formatter.error("Player ___ has no waypoint ___", playerName, waypoint));
             return;
@@ -495,7 +495,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
 
-        PublicWaypointManager publicWaypointManager = Journey.get().dataManager().publicWaypointManager();
+        PublicWaypointManager publicWaypointManager = Journey.get().proxy().dataManager().publicWaypointManager();
 
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
         if (!location.isPresent()) {
@@ -525,7 +525,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
 
-        Map<String, Cell> cells = Journey.get().dataManager().publicWaypointManager().getAll();
+        Map<String, Cell> cells = Journey.get().proxy().dataManager().publicWaypointManager().getAll();
 
         if (cells.isEmpty()) {
           src.audience().sendMessage(Formatter.warn("There are no saved public waypoints yet!"));
@@ -559,7 +559,7 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitServerUnsetWaypoint(JourneyParser.ServerUnsetWaypointContext ctx) {
-        PublicWaypointManager waypointManager = Journey.get().dataManager().publicWaypointManager();
+        PublicWaypointManager waypointManager = Journey.get().proxy().dataManager().publicWaypointManager();
         String name = cmd.identifiers().get(0);
         if (waypointManager.hasWaypoint(name)) {
           waypointManager.remove(name);
@@ -586,7 +586,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
 
-        PublicWaypointManager publicWaypointManager = Journey.get().dataManager().publicWaypointManager();
+        PublicWaypointManager publicWaypointManager = Journey.get().proxy().dataManager().publicWaypointManager();
 
         if (publicWaypointManager.hasWaypoint(newName)) {
           src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", newName));
@@ -638,7 +638,7 @@ public class JourneyExecutor implements CommandExecutor {
 
         String name = cmd.identifiers().get(0);
 
-        PersonalWaypointManager personalWaypointManager = Journey.get().dataManager().personalWaypointManager();
+        PersonalWaypointManager personalWaypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
         Journey.get().proxy().schedulingManager().schedule(() -> {
           if (!personalWaypointManager.hasWaypoint(src.uuid(), name)) {
             src.audience().sendMessage(Formatter.error("No waypoint ___ exists", name));

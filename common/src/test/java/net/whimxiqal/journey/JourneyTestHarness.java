@@ -23,7 +23,6 @@
 
 package net.whimxiqal.journey;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -31,47 +30,45 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import net.whimxiqal.journey.config.Settings;
-import net.whimxiqal.journey.data.TestDataManager;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.platform.TestJourneyPlayer;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
 import net.whimxiqal.journey.util.CommonLogger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 
 public class JourneyTestHarness {
 
   public static final UUID PLAYER_UUID = UUID.randomUUID();
-  protected static final boolean DEBUG = false;
+  public static final boolean DEBUG = false;
   protected static final Map<UUID, Itinerary> SESSION_ITINERARIES = new HashMap<>();
-  private static boolean initialized = false;
 
   @BeforeAll
-  static void initializeHarness() throws NoSuchFieldException, IllegalAccessException {
-    if (initialized) {
-      return;
-    }
-    initialized = true;
-
+  static void initializeHarness() {
     Settings.MAX_SEARCHES.setValue(10);
 
-    TestProxy proxy = new TestProxy();
+    Journey.create();
+    TestProxy proxy = new TestProxy(new TestPlatformProxy());
     Journey.get().registerProxy(proxy);
-    proxy.schedulingManager.startMainThread();
-
-    // set test data manager
-    Field workManagerField = Journey.class.getDeclaredField("dataManager");
-    workManagerField.setAccessible(true);
-    workManagerField.set(Journey.get(), new TestDataManager());
 
     if (DEBUG) {
       Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
     }
-    Journey.get().init();
+    if (!Journey.get().init()) {
+      Assertions.fail("Journey initialization failed");
+    }
     WorldLoader.initWorlds();
 
     TestPlatformProxy.onlinePlayers.add(new TestJourneyPlayer(PLAYER_UUID));
     Journey.get().tunnelManager().register(player -> TestPlatformProxy.tunnels);
+  }
+
+  @AfterAll
+  static void shutdown() {
+    Journey.get().shutdown();
+    Journey.remove();
   }
 
   protected final <T> T runOnMainThread(Supplier<T> supplier) throws ExecutionException, InterruptedException {

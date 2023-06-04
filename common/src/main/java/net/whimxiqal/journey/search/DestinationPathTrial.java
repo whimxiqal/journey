@@ -32,8 +32,9 @@ import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.Path;
-import net.whimxiqal.journey.search.function.CostFunction;
-import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
+import net.whimxiqal.journey.search.function.EuclideanDistanceFunction;
+import net.whimxiqal.journey.search.function.PlanarOrientedDistanceFunction;
+import net.whimxiqal.journey.search.function.WeightedDistanceCostFunction;
 
 /**
  * An extension of {@link PathTrial} where the goal of the trial is to find a path to
@@ -42,22 +43,23 @@ import net.whimxiqal.journey.search.function.PlanarOrientedCostFunction;
 public class DestinationPathTrial extends PathTrial {
 
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
+  public static final double COST_FUNCTION_WEIGHT = 1.4;
   private static final int MAX_PREPARED_CHUNKS = 10;
   private static boolean loggedMaxCacheHit = false;  // only log this message once
   @Getter
   private final Cell destination;
 
-  private DestinationPathTrial(SearchSession session,
-                               Cell origin,
-                               Cell destination,
-                               Collection<Mode> modes,
-                               double length,
-                               Path path,
-                               ResultState state,
-                               boolean fromCache,
-                               boolean saveOnComplete) {
+  public DestinationPathTrial(SearchSession session,
+                              Cell origin,
+                              Cell destination,
+                              Collection<Mode> modes,
+                              double length,
+                              Path path,
+                              ResultState state,
+                              boolean fromCache,
+                              boolean saveOnComplete) {
     super(session, origin, modes,
-        costFunction(destination),
+        new WeightedDistanceCostFunction(new EuclideanDistanceFunction(), destination, COST_FUNCTION_WEIGHT),
         (blockProvider, node) -> node.getData().location().distanceToSquared(destination)
             <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
         length,
@@ -66,10 +68,6 @@ public class DestinationPathTrial extends PathTrial {
         fromCache,
         saveOnComplete);
     this.destination = destination;
-  }
-
-  private static CostFunction costFunction(Cell destination) {
-    return new PlanarOrientedCostFunction(destination);
   }
 
   /**
@@ -128,7 +126,7 @@ public class DestinationPathTrial extends PathTrial {
                                                  boolean saveOnComplete) {
     return new DestinationPathTrial(session, origin, destination,
         modes,
-        costFunction(destination).apply(origin), null,
+        new PlanarOrientedDistanceFunction().distance(origin, destination), null,
         ResultState.IDLE, false, saveOnComplete);
   }
 
@@ -160,7 +158,7 @@ public class DestinationPathTrial extends PathTrial {
   @Override
   protected void cacheSuccess() {
     Journey.logger().debug(this + ": caching path in database");
-    if (Journey.get().dataManager().pathRecordManager().totalRecordCellCount() + getLength() > Settings.MAX_CACHED_CELLS.getValue()) {
+    if (Journey.get().proxy().dataManager().pathRecordManager().totalRecordCellCount() + getLength() > Settings.MAX_CACHED_CELLS.getValue()) {
       if (!loggedMaxCacheHit) {
         Journey.logger().warn("The Journey database has cached the max number of cells allowed in the config file. Raise this number to continue caching results.");
         loggedMaxCacheHit = true;
@@ -168,7 +166,7 @@ public class DestinationPathTrial extends PathTrial {
       return;
     }
     try {
-      Journey.get().dataManager().pathRecordManager().report(
+      Journey.get().proxy().dataManager().pathRecordManager().report(
           this,
           getModes().stream().map(Mode::type).collect(Collectors.toSet()),
           System.currentTimeMillis() - startExecutionTime);
@@ -182,7 +180,9 @@ public class DestinationPathTrial extends PathTrial {
     return "[Destination Path Search] {session: " + session.uuid
         + ", origin: " + origin
         + ", destination: " + destination
+        + ", cycles: " + cycles
         + ", state: " + state
+        + ", visited: " + visited.size()
         + ", from cache: " + fromCache
         + "}";
   }

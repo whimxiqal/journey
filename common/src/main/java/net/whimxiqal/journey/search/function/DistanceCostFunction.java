@@ -25,28 +25,22 @@ package net.whimxiqal.journey.search.function;
 
 import net.whimxiqal.journey.Cell;
 
-public class EuclideanDistanceCostFunction implements CostFunction {
-
+public class DistanceCostFunction extends CostFunction {
+  private final DistanceFunction distanceFunction;
   private final Cell destination;
 
-  public EuclideanDistanceCostFunction(Cell destination) {
+  public DistanceCostFunction(DistanceFunction distanceFunction, Cell destination) {
+    this.distanceFunction = distanceFunction;
     this.destination = destination;
   }
 
   @Override
-  public CostFunctionType getType() {
-    return CostFunctionType.EUCLIDEAN_DISTANCE;
+  public double apply(Cell cell, double existingCost) {
+    return existingCost + distanceFunction.distance(cell, destination);
   }
 
   @Override
-  public Double apply(Cell cell) {
-    return cell.distanceToSquared(destination);
-  }
-
-  @Override
-  public String toString() {
-    return "EuclideanDistanceCostFunction{" +
-        "destination=" + destination +
-        '}';
+  public Type type() {
+    return Type.DISTANCE;
   }
 }

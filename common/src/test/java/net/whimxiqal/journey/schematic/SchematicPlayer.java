@@ -21,26 +21,53 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.search.function;
+package net.whimxiqal.journey.schematic;
 
+import java.util.UUID;
+import net.kyori.adventure.audience.Audience;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.util.ConsoleAudience;
 
-public class ManhattanDistanceCostFunction implements CostFunction {
-  @Override
-  public CostFunctionType getType() {
-    return CostFunctionType.MANHATTAN_DISTANCE;
+public class SchematicPlayer extends InternalJourneyPlayer {
+
+  private Cell location;
+  private boolean canFly;
+  private boolean hasBoat;
+
+  public SchematicPlayer() {
+    super(UUID.randomUUID(), "player");
   }
 
-  private final Cell destination;
+  @Override
+  public Cell location() {
+    return location;
+  }
 
-  public ManhattanDistanceCostFunction(Cell destination) {
-    this.destination = destination;
+  public void setLocation(Cell location) {
+    this.location = location;
   }
 
   @Override
-  public Double apply(Cell cell) {
-    return (double) Math.abs(cell.blockX() - destination.blockX())
-        + Math.abs(cell.blockY() - destination.blockY())
-        + Math.abs(cell.blockZ() - destination.blockZ());
+  public Audience audience() {
+    return new ConsoleAudience();
+  }
+
+  @Override
+  public boolean canFly() {
+    return canFly;
+  }
+
+  public void setCanFly(boolean canFly) {
+    this.canFly = canFly;
+  }
+
+  @Override
+  public boolean hasBoat() {
+    return hasBoat;
+  }
+
+  public void setHasBoat(boolean hasBoat) {
+    this.hasBoat = hasBoat;
   }
 }

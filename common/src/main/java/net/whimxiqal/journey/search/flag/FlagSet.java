@@ -58,4 +58,8 @@ public class FlagSet {
     flags.forEach((key, value) -> consumer.accept(key, Optional.of(((Flag<Object>) key).printValue(value))));
   }
 
+  @Override
+  public String toString() {
+    return "FlagSet{" + flags + "}";
+  }
 }

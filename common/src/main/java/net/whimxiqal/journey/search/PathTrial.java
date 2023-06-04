@@ -86,7 +86,7 @@ public class PathTrial implements WorkItem {
   private final List<Mode> modes = new LinkedList<>();
   private final boolean saveOnComplete;
   private final CompletableFuture<TrialResult> future = new CompletableFuture<>();
-  private final Map<Cell, Node> visited = new HashMap<>();
+  protected final Map<Cell, Node> visited = new HashMap<>();
   private final int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
   protected long startExecutionTime = -1;
   @Getter
@@ -100,6 +100,7 @@ public class PathTrial implements WorkItem {
   // Search State
   private boolean firstCycle = true;
   private long nextAllowedRunTime = 0;
+  protected int cycles = 0;
 
   /**
    * General constructor.
@@ -142,14 +143,13 @@ public class PathTrial implements WorkItem {
     this.fromCache = fromCache;
     this.saveOnComplete = saveOnComplete;
     this.chunkCache = new ChunkCacheBlockProvider(MAX_CACHED_CHUNKS_PER_SEARCH, session.flags());
-    this.upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> node.score + costFunction.apply(node.data.location())));
+    this.upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> costFunction.apply(node.data.location(),  node.score)));
   }
 
   private void resultFail() {
     this.state = ResultState.STOPPED_FAILED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    Journey.logger().debug(this + ": path trial failed");
     future.complete(new TrialResult(this.state, null, true));
   }
 
@@ -161,7 +161,6 @@ public class PathTrial implements WorkItem {
     if (saveOnComplete) {
       Journey.get().proxy().schedulingManager().schedule(this::cacheSuccess, true);
     }
-    Journey.logger().debug(this + ": path trial succeeded");
     future.complete(new TrialResult(this.state, this.path, true));
   }
 
@@ -169,7 +168,6 @@ public class PathTrial implements WorkItem {
     this.state = ResultState.STOPPED_CANCELED;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    Journey.logger().debug(this + ": path trial canceled");
     future.complete(new TrialResult(this.state, null, true));
   }
 
@@ -177,7 +175,6 @@ public class PathTrial implements WorkItem {
     this.state = ResultState.STOPPED_ERROR;
     this.length = Double.MAX_VALUE;
     this.fromCache = false;
-    Journey.logger().debug(this + ": path trial stopped due to error");
     future.complete(new TrialResult(this.state, null, true));
   }
 
@@ -199,9 +196,10 @@ public class PathTrial implements WorkItem {
   @Override
   public boolean run() {
     try {
+      ++cycles;
       return runSafe();
     } catch (Exception e) {
-      Journey.logger().error(String.format("%s: An %s occurred", this, e.getClass().getName()));
+      Journey.logger().error(String.format("%s: A %s occurred, failing", this, e.getClass().getName()));
       e.printStackTrace();
       resultError();
       return true;
@@ -243,6 +241,7 @@ public class PathTrial implements WorkItem {
 
       if (session.state.get().shouldStop()) {
         // Canceled! Fail here, but don't cache it because it's not the true solution for this path.
+        Journey.logger().debug(this + ": session canceled, canceling");
         resultCancel();
         if (isAnimating) {
           Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
@@ -252,6 +251,7 @@ public class PathTrial implements WorkItem {
 
       if (visited.size() > maxCellCount) {
         // We ran out of allocated memory. Let's just call it here and say we failed and cache the failure.
+        Journey.logger().debug(this + ": reached max cell count, failing");
         resultFail();
         if (isAnimating) {
           Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
@@ -275,6 +275,7 @@ public class PathTrial implements WorkItem {
           steps.addFirst(current.getData());
           current = current.getPrevious();
         } while (current != null);
+        Journey.logger().debug(this + ": succeeded");
         resultSucceed(length, steps);
         if (isAnimating) {
           Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
@@ -287,6 +288,7 @@ public class PathTrial implements WorkItem {
         Collection<Mode.Option> options;
         options = mode.getDestinations(current.getData().location(), chunkCache);
         for (Mode.Option option : options) {
+          double distance = current.getData().location().distanceTo(option.location());
           if (isAnimating) {
             // we're animating, so send it to the animation manager
             Journey.get().animationManager().addAnimationCell(session.callerId, session.uuid, option.location());
@@ -294,21 +296,21 @@ public class PathTrial implements WorkItem {
           if (visited.containsKey(option.location())) {
             // Already visited, but see if it is better to come from this new direction
             Node that = visited.get(option.location());
-            if (current.getScore() + option.cost() < that.getScore()) {
+            if (current.getScore() + distance < that.getScore()) {
               that.setPrevious(current);
-              that.setScore(current.getScore() + option.cost());
+              that.setScore(current.getScore() + distance);
               that.setData(new Step(that.getData().location(),
-                  option.cost(),
+                  distance,
                   mode.type()));
             }
           } else {
             // Not visited. Set up node, give it a score, and add it to the system
             Node nextNode = new Node(
                 new Step(option.location(),
-                    option.cost(),
+                    distance,
                     mode.type()),
                 current,
-                current.getScore() + option.cost());
+                current.getScore() + distance);
             upcoming.add(nextNode);
             visited.put(option.location(), nextNode);
           }
@@ -317,6 +319,7 @@ public class PathTrial implements WorkItem {
     }
 
     // We've exhausted all possibilities. Fail.
+    Journey.logger().debug(this + ": exhausted all options, failing");
     resultFail();
     if (isAnimating) {
       Journey.get().animationManager().resetAnimation(session.callerId, session.uuid);
@@ -360,9 +363,18 @@ public class PathTrial implements WorkItem {
     return "[Path Search] {session: " + session.uuid
         + ", origin: " + origin
         + ", state: " + state
+        + ", cycles: " + cycles
         + ", distance function: " + costFunction
         + ", from cache: " + fromCache
         + "}";
+  }
+
+  public int getTotalVisitedCells() {
+    return visited.size();
+  }
+
+  public int getCycles() {
+    return cycles;
   }
 
   public CompletableFuture<TrialResult> future() {

@@ -35,4 +35,14 @@ public interface SchedulingManager {
 
   void cancelTask(UUID taskId);
 
+  boolean isMainThread();
+
+  default void initialize() {
+    // do nothing
+  }
+
+  default void shutdown() {
+    // do nothing
+  }
+
 }
