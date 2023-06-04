@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.schematic;
 
 import com.sk89q.worldedit.WorldEdit;
@@ -5,13 +28,15 @@ import com.sk89q.worldedit.event.platform.PlatformsRegisteredEvent;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.TestProxy;
-import net.whimxiqal.journey.config.Settings;
+import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.mode.JumpMode;
 import net.whimxiqal.journey.navigation.mode.WalkMode;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
@@ -19,8 +44,9 @@ import net.whimxiqal.journey.search.DestinationPathTrial;
 import net.whimxiqal.journey.search.ResultState;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.util.CommonLogger;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.mockito.MockSettings;
@@ -28,7 +54,6 @@ import org.mockito.Mockito;
 import org.openjdk.jmh.annotations.AuxCounters;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
@@ -41,14 +66,16 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 public class SchematicSearchTests {
 
-  public static final boolean DEBUG = false;
-  ////// BENCHMARK PARAMS
-  private static final String SCHEMATIC_FILE = "overworld1.schem";
-  private static final Cell PATH_START = new Cell(-15, 64, -56, 0);
-  private static final Cell PATH_END = new Cell(-117, 93, -203, 0);
-  public static InternalJourneyPlayer PLAYER = new SchematicPlayer();
+  public static final InternalJourneyPlayer PLAYER = new SchematicPlayer();
+  /**
+   * The id of the SearchParams to benchmark with, or null if nothing should benchmark.
+   * Example: "basic_uphill"
+   */
+  private static final String BENCHMARKING_SEARCH_PARAM_ID = null;
+  private static final boolean DEBUG = true;
+  private static final SchematicLoader TEST_LOADER = new SchematicLoader();
+  private static final Map<String, SearchParams> searchParams = new HashMap<>();
   private static boolean mockedBlockRegistry = false;
-  ///// END BENCHMARK PARAMS
 
   static void tryMockAllBlockTypes() {
     if (mockedBlockRegistry) {
@@ -76,15 +103,87 @@ public class SchematicSearchTests {
     mockedBlockRegistry = true;
   }
 
+  @BeforeAll
+  static void setUp() {
+    // Set up for tests
+    setUp(SchematicSearchTests.TEST_LOADER);
+  }
+
+  static void setUp(SchematicLoader loader) {
+    // ADD DIFFERENT SEARCH PATHS HERE
+    searchParams.put("basic_uphill", new SearchParams("overworld1.schem",
+        new Cell(-15, 64, -56, 0),
+        new Cell(-117, 93, -203, 0),
+        List.of(new WalkMode(), new JumpMode())));
+    /// END ADD SEARCH PATHS
+
+    tryMockAllBlockTypes();
+    WorldEdit.getInstance().getPlatformManager().register(new JourneyPlatform());
+    WorldEdit.getInstance().getEventBus().post(new PlatformsRegisteredEvent());
+
+    Journey.create();
+    TestProxy proxy = new TestProxy(new SchematicPlatformProxy(loader));
+    Journey.get().registerProxy(proxy);
+
+    if (DEBUG) {
+      Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
+    }
+
+    if (!Journey.get().init()) {
+      Assertions.fail("Journey initialization failed");
+    }
+
+    Journey.get().tunnelManager().register(player -> TestPlatformProxy.tunnels);
+  }
+
+  @AfterAll
+  static void tearDown() {
+    Journey.get().shutdown();
+    Journey.remove();
+  }
+
+  /**
+   * Runs each search for correctness.
+   */
   @Test
-  @Disabled()
-  void benchmark() throws RunnerException {
+  void runSearches() {
+    for (SearchParams params : searchParams.values()) {
+      Assertions.assertTrue(TEST_LOADER.load(params.schematicFile()), "Schematic load failed");
+
+      SearchSession session = new DummySearchSession();
+      DestinationPathTrial pathTrial = new DestinationPathTrial(session,
+          params.start(),
+          params.end(),
+          params.modes(),
+          0, null, ResultState.IDLE, false, false);
+
+      while (!pathTrial.run()) {
+        // do nothing, just wait utnil path trial is complete
+      }
+
+      Journey.logger().flush();
+      Assertions.assertEquals(ResultState.STOPPED_SUCCESSFUL, pathTrial.getState());
+    }
+  }
+
+  /**
+   * Run the benchmark, but only if an ID for some params are specified in
+   * {@link SchematicSearchTests#BENCHMARKING_SEARCH_PARAM_ID}. If it's null,
+   * then this test will be skipped, thus skipping any benchmarking.
+   *
+   * @throws RunnerException from {@link Runner#run()}
+   */
+  @Test
+  void runBenchmark() throws RunnerException {
+    if (BENCHMARKING_SEARCH_PARAM_ID == null) {
+      return;
+    }
     Options opt = new OptionsBuilder()
         // Specify which benchmarks to run.
         // You can be more specific if you'd like to run only one benchmark per test.
         .include(this.getClass().getName() + ".*")
         // Set the following options as needed
-        .mode(Mode.AverageTime)
+        .mode(org.openjdk.jmh.annotations.Mode.AverageTime)
         .timeUnit(TimeUnit.MILLISECONDS)
         .warmupTime(TimeValue.seconds(1))
         .warmupIterations(1)
@@ -101,19 +200,20 @@ public class SchematicSearchTests {
   }
 
   @Benchmark
-  public void benchmark(BenchmarkState state) {
-    /// USE PARAMETERS
-
-    /// USE PARAMETERS END
+  public void runBenchmark(BenchmarkState state) {
+    SearchParams params = searchParams.get(BENCHMARKING_SEARCH_PARAM_ID);
+    if (params == null) {
+      Assertions.fail("No search params have the given id: " + BENCHMARKING_SEARCH_PARAM_ID);
+    }
     SearchSession session = new DummySearchSession();
     DestinationPathTrial pathTrial = new DestinationPathTrial(session,
-        PATH_START,
-        PATH_END,
+        params.start(),
+        params.end(),
         List.of(new WalkMode(), new JumpMode()),
         0, null, ResultState.IDLE, false, false);
 
     while (!pathTrial.run()) {
-      // do nothing, just wait utnil path trial is complete
+      // do nothing, just wait until path trial is complete
     }
 
     Journey.logger().flush();
@@ -124,10 +224,13 @@ public class SchematicSearchTests {
     state.cycles = pathTrial.getCycles();
   }
 
+  private record SearchParams(String schematicFile, Cell start, Cell end, List<Mode> modes) {
+  }
+
   @AuxCounters(AuxCounters.Type.EVENTS)
   @State(Scope.Thread)
   public static class BenchmarkState {
-    private final SchematicLoader loader = new SchematicLoader();
+    private final SchematicLoader benchmarkLoader = new SchematicLoader();
 
     /// Aux Counters Start (must be public and primitives)
     public double pathLength;
@@ -142,32 +245,17 @@ public class SchematicSearchTests {
 
     @Setup(Level.Iteration)
     public void setUp() {
-      tryMockAllBlockTypes();
-      WorldEdit.getInstance().getPlatformManager().register(new JourneyPlatform());
-      WorldEdit.getInstance().getEventBus().post(new PlatformsRegisteredEvent());
-
-      Journey.create();
-      TestProxy proxy = new TestProxy(new SchematicPlatformProxy(loader));
-      Journey.get().registerProxy(proxy);
-
-      if (DEBUG) {
-        Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
+      SchematicSearchTests.setUp(benchmarkLoader);
+      SearchParams params = searchParams.get(BENCHMARKING_SEARCH_PARAM_ID);
+      if (params == null) {
+        Assertions.fail("No search params have the given id: " + BENCHMARKING_SEARCH_PARAM_ID);
       }
-      if (!Journey.get().init()) {
-        Assertions.fail("Journey initialization failed");
-      }
-
-      Journey.get().tunnelManager().register(player -> TestPlatformProxy.tunnels);
-      Assertions.assertTrue(loader.load(SCHEMATIC_FILE), "Schematic load failed");
-
-      Settings.MAX_PATH_BLOCK_COUNT.setValue(100000);
-
+      Assertions.assertTrue(benchmarkLoader.load(params.schematicFile()), "Schematic load failed");
     }
 
     @TearDown(Level.Iteration)
     public void tearDown() {
-      Journey.get().shutdown();
-      Journey.remove();
+      SchematicSearchTests.tearDown();
     }
 
   }
