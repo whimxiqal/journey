@@ -137,12 +137,18 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitDebug(JourneyParser.DebugContext ctx) {
+        Component message;
         if (Journey.logger().level() == CommonLogger.LogLevel.DEBUG) {
-          src.audience().sendMessage(Formatter.success("Debug mode ___.", "disabled"));
+          message = Formatter.success("Debug mode ___.", "disabled");
           Journey.logger().setLevel(CommonLogger.LogLevel.INFO);
         } else {
-          src.audience().sendMessage(Formatter.success("Debug mode ___.", "enabled"));
+          message = Formatter.success("Debug mode ___.", "enabled");
           Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
+        }
+        src.audience().sendMessage(message);
+        if (src.type() != CommandSource.Type.CONSOLE) {
+          // Also send the message to the console, if the source wasn't already the console
+          Journey.get().proxy().audienceProvider().console().sendMessage(message);
         }
         return CommandResult.success();
       }
