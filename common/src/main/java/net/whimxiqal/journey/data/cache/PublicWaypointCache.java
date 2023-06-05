@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
@@ -43,7 +44,7 @@ public class PublicWaypointCache implements PublicWaypointProvider {
    */
   private static final long DATA_SOFT_LIFETIME_MS = 1000 * 60;  // 1 minute
 
-  private PublicWaypointInformation information = new PublicWaypointInformation(Collections.emptyList());
+  private final AtomicReference<PublicWaypointInformation> information = new AtomicReference<>(new PublicWaypointInformation(Collections.emptyList()));
 
   public void initialize() {
     sendInfoRequest();
@@ -57,11 +58,12 @@ public class PublicWaypointCache implements PublicWaypointProvider {
    * @return a future, to be completed once the update is complete
    */
   public Future<Void> update(boolean force) {
-    if (information.refreshing.get()) {
+    PublicWaypointInformation info = information.get();
+    if (info.refreshing.get()) {
       return CompletableFuture.completedFuture(null);  // already in progress, do nothing
     }
-    if (information.timestamp + DATA_SOFT_LIFETIME_MS < System.currentTimeMillis() || force) {
-      boolean setRefreshing = information.refreshing.compareAndSet(false, true);
+    if (info.timestamp + DATA_SOFT_LIFETIME_MS < System.currentTimeMillis() || force) {
+      boolean setRefreshing = info.refreshing.compareAndSet(false, true);
       // only send request if we actually are the ones to set the refreshing flag
       if (setRefreshing) {
         return sendInfoRequest();
@@ -77,7 +79,7 @@ public class PublicWaypointCache implements PublicWaypointProvider {
       List<Waypoint> waypoints = Journey.get().proxy().dataManager().publicWaypointManager().getAll();
       Journey.get().proxy().schedulingManager().schedule(() -> {
         // store on main thread
-        information = new PublicWaypointInformation(waypoints);
+        information.set(new PublicWaypointInformation(waypoints));
         future.complete(null);
       }, false);
     }, true);
@@ -97,13 +99,13 @@ public class PublicWaypointCache implements PublicWaypointProvider {
   @Override
   public List<Waypoint> getAll() throws DataAccessException {
     update(false);
-    return information.waypoints;
+    return information.get().waypoints;
   }
 
   @Override
   public int getCount() {
     update(false);
-    return information.waypoints.size();
+    return information.get().waypoints.size();
   }
 
   private static class PublicWaypointInformation {

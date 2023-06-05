@@ -114,7 +114,4 @@ public final class ChunkCache {
         '}';
   }
 
-  public int remainingSlots() {
-    return maxCachedChunks - chunkMap.size();
-  }
 }

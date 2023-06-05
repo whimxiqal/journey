@@ -209,7 +209,7 @@ public class TestSchedulingManager implements SchedulingManager {
     schedulingManager.cancelTask(taskUuid1.get());
     schedulingManager.cancelTask(taskUuid2.get());
 
-    // test exceptions don't stop new scheduled tasks
+    // make sure exceptions don't stop new scheduled tasks
     schedulingManager.schedule(() -> {
       throw new RuntimeException();
     }, true);

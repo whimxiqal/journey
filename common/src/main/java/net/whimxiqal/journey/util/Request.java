@@ -25,11 +25,11 @@ package net.whimxiqal.journey.util;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import javax.net.ssl.HttpsURLConnection;
 import net.whimxiqal.journey.Journey;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -51,13 +51,13 @@ public final class Request {
       try {
         URL apiUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + player);
         URLConnection connection = apiUrl.openConnection();
-        if (!(connection instanceof HttpsURLConnection httpsConnection)) {
+        if (!(connection instanceof HttpURLConnection httpsConnection)) {
           future.complete(null);
           return;
         }
         httpsConnection.setRequestMethod("GET");
         switch (httpsConnection.getResponseCode()) {
-          case HttpsURLConnection.HTTP_OK:
+          case HttpURLConnection.HTTP_OK:
             break;
           default:
             Journey.logger().warn("Mojang API request for player " + player + " resulted in response code: " + httpsConnection.getResponseCode());
