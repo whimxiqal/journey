@@ -112,11 +112,8 @@ public class PersonalWaypointCache implements PersonalWaypointProvider {
     Journey.get().proxy().schedulingManager().schedule(() -> {
       // Request on async thread
       Collection<Waypoint> waypoints = Journey.get().proxy().dataManager().personalWaypointManager().getAll(playerUuid, false);
-      Journey.get().proxy().schedulingManager().schedule(() -> {
-        // store on main thread
-        information.put(playerUuid, new PersonalWaypointInformation(waypoints));
-        future.complete(null);
-      }, false);
+      information.put(playerUuid, new PersonalWaypointInformation(waypoints));
+      future.complete(null);
     }, true);
     return future;
   }

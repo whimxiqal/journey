@@ -76,12 +76,8 @@ public class PublicWaypointCache implements PublicWaypointProvider {
     CompletableFuture<Void> future = new CompletableFuture<>();
     Journey.get().proxy().schedulingManager().schedule(() -> {
       // Request on async thread
-      List<Waypoint> waypoints = Journey.get().proxy().dataManager().publicWaypointManager().getAll();
-      Journey.get().proxy().schedulingManager().schedule(() -> {
-        // store on main thread
-        information.set(new PublicWaypointInformation(waypoints));
-        future.complete(null);
-      }, false);
+      information.set(new PublicWaypointInformation(Journey.get().proxy().dataManager().publicWaypointManager().getAll()));
+      future.complete(null);
     }, true);
     return future;
   }

@@ -53,7 +53,7 @@ public class ScopeManager {
                 .getAll(player.uuid(), false)
                 .stream()
                 .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
-            Journey.get().proxy().dataManager().personalWaypointManager().getCount(player.uuid(), false)))
+            Journey.get().cachedDataProvider().personalWaypointCache().getCount(player.uuid(), false)))
         .permission(Permission.PATH_PERSONAL.path())
         .build());
     register(Journey.NAME, "server", Scope.builder()
@@ -62,7 +62,7 @@ public class ScopeManager {
             () -> Journey.get().cachedDataProvider().publicWaypointCache().getAll()
                 .stream()
                 .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
-            Journey.get().proxy().dataManager().publicWaypointManager().getCount()))
+            Journey.get().cachedDataProvider().publicWaypointCache().getCount()))
         .permission(Permission.PATH_SERVER.path())
         .build());
     register(Journey.NAME, "player", Scope.builder()
@@ -85,7 +85,7 @@ public class ScopeManager {
                             .getAll(p.uuid(), true)
                             .stream()
                             .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
-                        Journey.get().proxy().dataManager().personalWaypointManager().getCount(p.uuid(), true)))
+                        Journey.get().cachedDataProvider().personalWaypointCache().getCount(p.uuid(), true)))
                     .build()))
                 .strict()  // to access any player destinations, you must at least scope to the player
                 .build()))))

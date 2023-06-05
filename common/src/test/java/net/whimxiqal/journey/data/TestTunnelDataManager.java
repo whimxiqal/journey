@@ -51,6 +51,11 @@ public class TestTunnelDataManager implements TunnelDataManager {
   }
 
   @Override
+  public void removeTunnelsWithOrigin(Cell origin, TunnelType type) {
+    // ignore
+  }
+
+  @Override
   public void removeTunnels(Cell origin, Cell destination, TunnelType type) {
     // ignore
   }

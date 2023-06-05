@@ -150,8 +150,7 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitCachePortals(JourneyParser.CachePortalsContext ctx) {
         if (ctx.clear != null) {
-          Journey.get().netherManager().reset();
-          src.audience().sendMessage(Formatter.success("Cleared cached portals."));
+          Journey.get().netherManager().reset().thenRun(() -> src.audience().sendMessage(Formatter.success("Cleared cached portals.")));
           return CommandResult.success();
         }
         return CommandResult.failure();
@@ -177,8 +176,10 @@ public class JourneyExecutor implements CommandExecutor {
           Journey.get().searchManager().launchIngameSearch(new EverythingSearch(searcherUuid, callerType));
           return CommandResult.success();
         } else if (ctx.clear != null) {
-          Journey.get().proxy().dataManager().pathRecordManager().truncate();
-          src.audience().sendMessage(Formatter.success("Cleared cached paths."));
+          Journey.get().proxy().schedulingManager().schedule(() -> {
+            Journey.get().proxy().dataManager().pathRecordManager().truncate();
+            src.audience().sendMessage(Formatter.success("Cleared cached paths."));
+          }, true);
           return CommandResult.success();
         }
         return CommandResult.failure();
@@ -190,13 +191,13 @@ public class JourneyExecutor implements CommandExecutor {
         if (page.isEmpty()) {
           return CommandResult.failure();
         }
-        Pager.of(Formatter.info("Known Nether Portals"),
+        Journey.get().proxy().schedulingManager().schedule(() -> Pager.of(Formatter.info("Known Nether Portals"),
                 Journey.get().proxy().dataManager()
                     .netherPortalManager()
                     .getAllTunnels(TunnelType.NETHER),
                 tunnel -> Formatter.cell(tunnel.origin()),
                 tunnel -> Formatter.cell(tunnel.destination()))
-            .sendPage(src.audience(), page.get());
+            .sendPage(src.audience(), page.get()), true);
         return CommandResult.success();
       }
 

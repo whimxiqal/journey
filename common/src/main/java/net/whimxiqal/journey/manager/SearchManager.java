@@ -25,6 +25,7 @@ package net.whimxiqal.journey.manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +36,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
@@ -63,8 +64,6 @@ public final class SearchManager {
 
   // Current journeying-sessions for players that have a completed search
   private final Map<UUID, PlayerJourneySession> playerJourneys = new HashMap<>();
-  // Known player locations, updated lazily and used for updating the journey sessions
-  private final Map<UUID, Cell> cachedPlayerLocations = new HashMap<>();
 
   // Task id for the task that updates players' locations
   private UUID locationUpdateTaskId;
@@ -241,31 +240,22 @@ public final class SearchManager {
     return playerSearches.get(callerId);
   }
 
-  public void registerLocation(UUID playerUuid, Cell location) {
-    PlayerJourneySession playerJourney = getJourney(playerUuid);
-
-    if (playerJourney == null) {
-      // We don't care about a player moving unless there's a journey happening
-      return;
-    }
-
-    Cell currentCachedLocation = cachedPlayerLocations.get(playerUuid);
-    if (currentCachedLocation != null && currentCachedLocation.equals(location)) {
-      return;
-    }
-
-    cachedPlayerLocations.put(playerUuid, location);
-    playerJourney.visit(location);
-  }
-
   public void initialize() {
     // task for updating player locations lazily
     locationUpdateTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
       for (UUID journeyingPlayer : playerJourneys.keySet()) {
-        Journey.get().proxy()
+        Optional<InternalJourneyPlayer> player = Journey.get().proxy()
             .platform()
-            .onlinePlayer(journeyingPlayer)
-            .ifPresent(player -> registerLocation(journeyingPlayer, player.location()));
+            .onlinePlayer(journeyingPlayer);
+        if (player.isPresent()) {
+          try {
+            Journey.get().locationManager().tryUpdateLocation(journeyingPlayer, player.get().location());
+          } catch (ExecutionException | InterruptedException e) {
+            Journey.logger().error("Internal error trying to update the cached location of player " + player.get().uuid());
+            e.printStackTrace();
+            // just log and continue
+          }
+        }
       }
     }, false, 5);
   }

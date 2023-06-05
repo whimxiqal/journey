@@ -31,6 +31,7 @@ import net.whimxiqal.journey.data.cache.CachedDataProvider;
 import net.whimxiqal.journey.manager.AnimationManager;
 import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.manager.DomainManager;
+import net.whimxiqal.journey.manager.LocationManager;
 import net.whimxiqal.journey.manager.NetherManager;
 import net.whimxiqal.journey.manager.PlayerManager;
 import net.whimxiqal.journey.manager.SearchManager;
@@ -48,6 +49,7 @@ public final class Journey {
   private final PlayerManager playerManager = new PlayerManager();
   private final NetherManager netherManager = new NetherManager();
   private final SearchManager searchManager = new SearchManager();
+  private final LocationManager locationManager = new LocationManager();
   private final ScopeManager scopeManager = new ScopeManager();
   private final TunnelManager tunnelManager = new TunnelManager();
   private final StatsManager statsManager = new StatsManager();
@@ -139,6 +141,11 @@ public final class Journey {
   public SearchManager searchManager() {
     assertSynchronous();
     return searchManager;
+  }
+
+  public LocationManager locationManager() {
+    assertSynchronous();
+    return locationManager;
   }
 
   public ScopeManager scopeManager() {

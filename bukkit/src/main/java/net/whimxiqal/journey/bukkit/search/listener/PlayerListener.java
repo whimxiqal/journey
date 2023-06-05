@@ -23,9 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.search.listener;
 
-import java.util.UUID;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -33,9 +31,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 public class PlayerListener implements Listener {
-
-  public static final long VISITATION_TIMEOUT_MS = 10;  // Any visits with 10 ms
-  private long lastVisitTime = 0;
 
   /**
    * Handler for when players move throughout the world.
@@ -46,15 +41,7 @@ public class PlayerListener implements Listener {
    */
   @EventHandler
   public void onPlayerMove(PlayerMoveEvent event) {
-    long now = System.currentTimeMillis();
-    if (now < lastVisitTime + VISITATION_TIMEOUT_MS) {
-      // ignore movements if they're too frequent
-      return;
-    }
-    lastVisitTime = now;
-    Cell cell = BukkitUtil.cell(event.getTo());
-    UUID playerUuid = event.getPlayer().getUniqueId();
-    Journey.get().searchManager().registerLocation(playerUuid, cell);
+    Journey.get().locationManager().handlePlayerMoveEvent(event.getPlayer().getUniqueId(), BukkitUtil.cell(event.getTo()));
   }
 
   @EventHandler
