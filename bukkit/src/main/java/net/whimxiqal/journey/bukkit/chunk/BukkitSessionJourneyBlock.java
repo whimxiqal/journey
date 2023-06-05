@@ -34,8 +34,17 @@ import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Door;
 
+/**
+ * Journey's representation of a Minecraft block
+ *
+ * @param cell      the location of this cell
+ * @param data      the Bukkit data for the block
+ * @param dataBelow the Bukkit data for the block directly below this one
+ * @param flagSet   the set of flags used for the session for which this block is used
+ */
 public record BukkitSessionJourneyBlock(Cell cell,
                                         BlockData data,
+                                        BlockData dataBelow,
                                         FlagSet flagSet) implements JourneyBlock {
 
   @Override
@@ -65,12 +74,12 @@ public record BukkitSessionJourneyBlock(Cell cell,
 
   @Override
   public boolean isPassable() {
-    return BukkitUtil.isPassable(data);
+    return !MaterialGroups.isTwoBlocksTall(dataBelow.getMaterial()) && BukkitUtil.isPassable(data);
   }
 
   @Override
   public boolean isLaterallyPassable() {
-    return BukkitUtil.isLaterallyPassable(data, flagSet);
+    return !MaterialGroups.isTwoBlocksTall(dataBelow.getMaterial()) &&BukkitUtil.isLaterallyPassable(data, flagSet);
   }
 
   @Override
