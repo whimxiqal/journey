@@ -28,13 +28,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
-import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.util.UUIDUtil;
 import net.whimxiqal.journey.util.Validator;
 import org.jetbrains.annotations.NotNull;
@@ -194,7 +196,6 @@ public abstract class SqlWaypointManager extends SqlManager {
   }
 
 
-
   @Nullable
   protected String getWaypointName(@Nullable UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
@@ -226,7 +227,7 @@ public abstract class SqlWaypointManager extends SqlManager {
     }
   }
 
-  protected Map<String, Cell> getWaypoints(@Nullable UUID playerUuid, boolean justPublic) throws DataAccessException {
+  protected List<Waypoint> getWaypoints(@Nullable UUID playerUuid, boolean justPublic) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
       return getWaypoints(playerUuid, connection, justPublic);
     } catch (SQLException e) {
@@ -243,9 +244,9 @@ public abstract class SqlWaypointManager extends SqlManager {
    * @return the map of endpoints
    * @throws SQLException if sql error occurs
    */
-  private Map<String, Cell> getWaypoints(@Nullable UUID playerUuid,
-                                         @NotNull Connection connection,
-                                         boolean justPublic) throws SQLException {
+  private List<Waypoint> getWaypoints(@Nullable UUID playerUuid,
+                                      @NotNull Connection connection,
+                                      boolean justPublic) throws SQLException {
     PreparedStatement statement = connection.prepareStatement(String.format(
         "SELECT * FROM %s WHERE %s %s ? %s;",
         SqlManager.WAYPOINTS_TABLE,
@@ -259,15 +260,16 @@ public abstract class SqlWaypointManager extends SqlManager {
     }
 
     ResultSet resultSet = statement.executeQuery();
-    Map<String, Cell> endpoints = new HashMap<>();
+    List<Waypoint> waypoints = new LinkedList<>();
     while (resultSet.next()) {
-      endpoints.put(resultSet.getString("name"),
+      waypoints.add(new Waypoint(resultSet.getString("name"),
           new Cell(resultSet.getInt("x"),
               resultSet.getInt("y"),
               resultSet.getInt("z"),
-              Journey.get().domainManager().domainIndex(UUIDUtil.bytesToUuid(resultSet.getBytes("domain_id")))));
+              Journey.get().domainManager().domainIndex(UUIDUtil.bytesToUuid(resultSet.getBytes("domain_id")))),
+          resultSet.getBoolean("publicity")));
     }
-    return endpoints;
+    return Collections.unmodifiableList(waypoints);
   }
 
   protected int getWaypointCount(@Nullable UUID playerUuid, boolean justPublic) throws DataAccessException {

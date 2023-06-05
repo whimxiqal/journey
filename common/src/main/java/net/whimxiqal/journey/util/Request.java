@@ -23,7 +23,9 @@
 
 package net.whimxiqal.journey.util;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.UUID;
@@ -48,8 +50,21 @@ public final class Request {
     Journey.get().proxy().schedulingManager().schedule(() -> {
       try {
         URL apiUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + player);
-        URLConnection yc = apiUrl.openConnection();
-        JSONObject obj = new JSONObject(new JSONTokener(new InputStreamReader(yc.getInputStream())));
+        URLConnection connection = apiUrl.openConnection();
+        if (!(connection instanceof HttpURLConnection httpsConnection)) {
+          future.complete(null);
+          return;
+        }
+        httpsConnection.setRequestMethod("GET");
+        switch (httpsConnection.getResponseCode()) {
+          case HttpURLConnection.HTTP_OK:
+            break;
+          default:
+            Journey.logger().warn("Mojang API request for player " + player + " resulted in response code: " + httpsConnection.getResponseCode());
+            future.complete(null);
+            return;
+        }
+        JSONObject obj = new JSONObject(new JSONTokener(new InputStreamReader(httpsConnection.getInputStream())));
 
         String hexString = obj.getString("id");
         byte[] uuidBytes = new byte[hexString.length() / 2];
@@ -59,7 +74,7 @@ public final class Request {
           uuidBytes[i] = (byte) Integer.parseInt(hexString.substring(stringIndex, stringIndex + 2), 16);
         }
         future.complete(UUIDUtil.bytesToUuid(uuidBytes));
-      } catch (Exception e) {
+      } catch (IOException e) {
         e.printStackTrace();
         future.complete(null);
       }

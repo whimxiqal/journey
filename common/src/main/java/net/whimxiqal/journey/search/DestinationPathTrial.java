@@ -44,7 +44,6 @@ public class DestinationPathTrial extends PathTrial {
 
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
   public static final double COST_FUNCTION_WEIGHT = 1.4;
-  private static final int MAX_PREPARED_CHUNKS = 10;
   private static boolean loggedMaxCacheHit = false;  // only log this message once
   @Getter
   private final Cell destination;
@@ -148,11 +147,6 @@ public class DestinationPathTrial extends PathTrial {
         path.getCost(), path,
         ResultState.STOPPED_SUCCESSFUL,
         true, false);
-  }
-
-  @Override
-  protected void prepareIo() {
-    chunkCache.prepareChunks(upcoming.peek().getData().location(), destination, MAX_PREPARED_CHUNKS);
   }
 
   @Override

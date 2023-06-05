@@ -27,11 +27,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
-import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.util.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +136,7 @@ public class SqlPersonalWaypointManager
   }
 
   @Override
-  public Map<String, Cell> getAll(@NotNull UUID playerUuid, boolean justPublic)
+  public List<Waypoint> getAll(@NotNull UUID playerUuid, boolean justPublic)
       throws DataAccessException {
     return this.getWaypoints(playerUuid, justPublic);
   }

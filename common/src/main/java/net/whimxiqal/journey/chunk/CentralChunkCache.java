@@ -23,7 +23,6 @@
 
 package net.whimxiqal.journey.chunk;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -43,6 +42,8 @@ import net.whimxiqal.journey.search.PathTrial;
  */
 public class CentralChunkCache {
 
+  private static final int TICKS_PER_DEBUG_LOG = 20;  // once per second
+  private static final int MAX_CHUNK_REQUESTS_PER_TICK = 1024;
   private final Map<ChunkId, ChunkRequest> requestMap = new HashMap<>();  // this tracks requests keyed by chunk id
   private final Queue<ChunkRequest> requestQueue = new LinkedList<>();  // this tracks requests in order of appearance
   private final Object lock = new Object();
@@ -63,7 +64,7 @@ public class CentralChunkCache {
     requestTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::executeRequests,
         false, 1);  // Once per tick
     loggingTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::broadcastLogs,
-        false, 20); // Once per second
+        false, TICKS_PER_DEBUG_LOG);
   }
 
   /**
@@ -89,8 +90,12 @@ public class CentralChunkCache {
       removedCounter += chunkCache.prune();
 
       // Execute requests
-      addedCounter += requestQueue.size();
+      int completed = 0;
       while (!requestQueue.isEmpty()) {
+        if (completed >= MAX_CHUNK_REQUESTS_PER_TICK) {
+          Journey.logger().debug(String.format("[Chunk Cache] Hit maximum allowed number of chunk requests (%d), %d requests remaining", MAX_CHUNK_REQUESTS_PER_TICK, requestQueue.size()));
+          break;
+        }
         ChunkRequest req = requestQueue.remove();
         requestMap.remove(req.chunkId());
 
@@ -98,7 +103,9 @@ public class CentralChunkCache {
         JourneyChunk snapshot = Journey.get().proxy().platform().toChunk(req.chunkId());
         removedCounter += chunkCache.save(snapshot);
         req.future().complete(snapshot);
+        completed++;
       }
+      addedCounter += completed;
     }
   }
 
@@ -117,34 +124,6 @@ public class CentralChunkCache {
   }
 
   /**
-   * Submits requests to load the chunks with given chunk ids.
-   *
-   * @param chunkIds the ids of the chunks to load
-   */
-  public void loadChunks(Collection<ChunkId> chunkIds) {
-    synchronized (lock) {
-      for (ChunkId chunkId : chunkIds) {
-        // Is this chunk already stored in cache?
-        JourneyChunk maybeChunk = chunkCache.getChunk(chunkId);
-        if (maybeChunk != null) {
-          continue;
-        }
-
-        // Chunk is not stored in cache. Is it already queued?
-        ChunkRequest maybeRequest = requestMap.get(chunkId);
-        if (maybeRequest != null) {
-          continue;
-        }
-
-        // Not stored and not queued. Queue it.
-        maybeRequest = new ChunkRequest(chunkId);
-        requestQueue.add(maybeRequest);
-        requestMap.put(chunkId, maybeRequest);
-      }
-    }
-  }
-
-  /**
    * Get a {@link Future} for a chunk given its id.
    * The future may complete automatically if it is already available in the cache.
    * Otherwise, a request will be submitted and upon the next server tick, a chunk will be provided.
@@ -158,8 +137,8 @@ public class CentralChunkCache {
       // Request chunks for chunks surrounding the requested one, since they may be wanted later
       int chunkX = chunkId.x();
       int chunkZ = chunkId.z();
-      for (int x = chunkX - 1; x <= chunkX + 1; x++) {
-        for (int z = chunkZ - 1; z <= chunkZ + 1; z++) {
+      for (int x = chunkX - 2; x <= chunkX + 2; x++) {
+        for (int z = chunkZ - 2; z <= chunkZ + 2; z++) {
           boolean isRequestedChunk = x == chunkX && z == chunkZ;
           ChunkId innerChunkId = new ChunkId(chunkId.domain(), x, z);
 

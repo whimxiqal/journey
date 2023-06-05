@@ -29,7 +29,7 @@ import net.whimxiqal.journey.command.JourneyConnectorProvider;
 import net.whimxiqal.journey.bukkit.config.BukkitConfigManager;
 import net.whimxiqal.journey.bukkit.listener.DeathListener;
 import net.whimxiqal.journey.bukkit.listener.NetherListener;
-import net.whimxiqal.journey.bukkit.search.listener.PlayerSearchListener;
+import net.whimxiqal.journey.bukkit.search.listener.PlayerListener;
 import net.whimxiqal.journey.bukkit.util.BukkitLogger;
 import net.whimxiqal.journey.bukkit.util.BukkitSchedulingManager;
 import net.whimxiqal.mantle.paper.PaperRegistrarProvider;
@@ -88,7 +88,7 @@ public final class JourneyBukkit extends JavaPlugin {
     registrar.register(JourneyConnectorProvider.connector());
 
     Bukkit.getPluginManager().registerEvents(new NetherListener(), this);
-    Bukkit.getPluginManager().registerEvents(new PlayerSearchListener(), this);
+    Bukkit.getPluginManager().registerEvents(new PlayerListener(), this);
     Bukkit.getPluginManager().registerEvents(new DeathListener(), this);
   }
 

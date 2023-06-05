@@ -23,10 +23,11 @@
 
 package net.whimxiqal.journey.data.sql;
 
-import java.util.Map;
+import java.util.List;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.data.PublicWaypointManager;
-import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.data.Waypoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ public class SqlPublicWaypointManager
   }
 
   @Override
-  public Map<String, Cell> getAll() throws DataAccessException {
+  public List<Waypoint> getAll() throws DataAccessException {
     return getWaypoints(null, false);
   }
 

@@ -186,10 +186,6 @@ public class PathTrial implements WorkItem {
     state = ResultState.IDLE;
   }
 
-  protected void prepareIo() {
-    // nothing by default
-  }
-
   /**
    * Attempt to calculate a path given some modes of transportation.
    */
@@ -210,7 +206,6 @@ public class PathTrial implements WorkItem {
     if (state.isStopped()) {
       return true;
     }
-    // Dispatch a starting event
     if (state == ResultState.IDLE) {
       Journey.logger().debug(this + ": path trial beginning");
       startExecutionTime = System.currentTimeMillis();
@@ -232,8 +227,6 @@ public class PathTrial implements WorkItem {
 
     Node current;
     while (!upcoming.isEmpty()) {
-      // Queue any IO we will likely needed
-      prepareIo();
 
       if (shouldDelay(animationDelayMs)) {
         return false;  // (not done)

@@ -23,8 +23,6 @@
 
 package net.whimxiqal.journey.chunk;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import net.whimxiqal.journey.Cell;
@@ -42,53 +40,11 @@ public class ChunkCacheBlockProvider implements BlockProvider {
 
 
   private final ChunkCache chunkCache;
-  private final int maxCachedChunks;
   private final FlagSet flagSet;
 
   public ChunkCacheBlockProvider(int maxCachedChunks, FlagSet flagSet) {
     this.chunkCache = new ChunkCache(maxCachedChunks);
-    this.maxCachedChunks = maxCachedChunks;
     this.flagSet = flagSet;
-  }
-
-  /**
-   * Prepare some chunks between origin and destination.
-   *
-   * @param origin      the starting point of where to start preparing chunks
-   * @param destination the end point
-   */
-  public void prepareChunks(Cell origin, Cell destination, int maxChunks) {
-    if (origin.domain() != destination.domain()) {
-      throw new IllegalArgumentException("Origin and destination did not have the same domain");
-    }
-
-    // adjust the actual max because we don't want to do more than our cache can actually handle
-    int adjustedMaxChunks = Math.min(maxChunks, maxCachedChunks / 2);
-
-    double xDiff = destination.blockX() - origin.blockX();
-    double zDiff = destination.blockZ() - origin.blockZ();
-
-    final double distance = Math.sqrt(xDiff * xDiff + zDiff * zDiff);
-    final double xUnitComp = xDiff / distance;
-    final double zUnitComp = zDiff / distance;
-
-    // Walk one block at a time directly towards the destination and queue any necessary chunks
-    int lastChunkX = Integer.MIN_VALUE;
-    int lastChunkZ = Integer.MIN_VALUE;
-    double curDist = 0;
-    List<ChunkId> toQueue = new LinkedList<>();
-    while (curDist < distance && toQueue.size() < adjustedMaxChunks) {
-      int chunkX = Math.floorDiv((int) Math.floor(xUnitComp * curDist), CHUNK_SIDE_LENGTH);
-      int chunkZ = Math.floorDiv((int) Math.floor(zUnitComp * curDist), CHUNK_SIDE_LENGTH);
-      if (lastChunkX != chunkX || lastChunkZ != chunkZ) {
-        toQueue.add(new ChunkId(origin.domain(), chunkX, chunkZ));
-        lastChunkX = chunkX;
-        lastChunkZ = chunkZ;
-      }
-      curDist += 1.0;
-    }
-
-    Journey.get().centralChunkCache().loadChunks(toQueue);
   }
 
   @Override
