@@ -89,14 +89,14 @@ public class ProxyImpl implements Proxy {
   }
 
   public void dataManager(DataManager dataManager) {
-    if (schedulingManager.isMainThread()) {
-      Journey.logger().warn("Data manager accessed on main thread, this is likely a mistake.");
-    }
     this.dataManager = dataManager;
   }
 
   @Override
   public DataManager dataManager() {
+    if (schedulingManager.isMainThread()) {
+      Journey.logger().warn("Data manager accessed on the main thread. This is likely a mistake mistake, please notify the developer.");
+    }
     return dataManager;
   }
 
