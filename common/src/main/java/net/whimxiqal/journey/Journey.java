@@ -27,6 +27,7 @@ import java.util.UUID;
 import net.whimxiqal.journey.chunk.CentralChunkCache;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataVersion;
+import net.whimxiqal.journey.data.cache.CachedDataProvider;
 import net.whimxiqal.journey.manager.AnimationManager;
 import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.manager.DomainManager;
@@ -53,6 +54,7 @@ public final class Journey {
   private final DomainManager domainManager = new DomainManager();
   private final CentralChunkCache centralChunkCache = new CentralChunkCache();
   private final AnimationManager animationManager = new AnimationManager();
+  private final CachedDataProvider cachedDataProvider = new CachedDataProvider();
   private DistributedWorkManager workManager;
   private Proxy proxy;
 
@@ -68,6 +70,9 @@ public final class Journey {
   }
 
   public static Journey get() {
+    if (instance == null) {
+      throw new IllegalStateException("Journey is either uninitialized or has been shutdown");
+    }
     return instance;
   }
 
@@ -101,6 +106,7 @@ public final class Journey {
     BStatsUtil.register(proxy.platform().bStatsChartConsumer());
     centralChunkCache.initialize();
     animationManager.initialize();
+    cachedDataProvider.initialize();
 
     if (proxy.dataManager().version() != DataVersion.latest()) {
       logger().error("The Journey database is using an invalid version.");
@@ -116,26 +122,32 @@ public final class Journey {
     statsManager.shutdown();
     centralChunkCache.shutdown();
     animationManager.shutdown();
+    cachedDataProvider.shutdown();
     proxy.shutdown();
   }
 
   public PlayerManager deathManager() {
+    assertSynchronous();
     return playerManager;
   }
 
   public NetherManager netherManager() {
+    assertSynchronous();
     return netherManager;
   }
 
   public SearchManager searchManager() {
+    assertSynchronous();
     return searchManager;
   }
 
   public ScopeManager scopeManager() {
+    assertSynchronous();
     return scopeManager;
   }
 
   public TunnelManager tunnelManager() {
+    assertSynchronous();
     return tunnelManager;
   }
 
@@ -154,9 +166,18 @@ public final class Journey {
   public AnimationManager animationManager() {
     return animationManager;
   }
+  public CachedDataProvider cachedDataProvider() {
+    return cachedDataProvider;
+  }
 
   public DistributedWorkManager workManager() {
     return workManager;
+  }
+
+  private void assertSynchronous() {
+    if (!proxy.schedulingManager().isMainThread()) {
+      Journey.logger().warn("This may only be called on the main server thread, but was called on thread: " + Thread.currentThread().getName());
+    }
   }
 
 }

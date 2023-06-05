@@ -21,39 +21,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.search.listener;
+package net.whimxiqal.journey.data;
 
-import java.util.UUID;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerMoveEvent;
+import org.jetbrains.annotations.NotNull;
 
-public class PlayerSearchListener implements Listener {
-
-  public static final long VISITATION_TIMEOUT_MS = 10;  // Any visits with 10 ms
-  private long lastVisitTime = 0;
-
-  /**
-   * Handler for when players move throughout the world.
-   * This allows us to update the last known location so player journeys
-   * know which particles to show.
-   *
-   * @param event the event
-   */
-  @EventHandler
-  public void onPlayerMove(PlayerMoveEvent event) {
-    long now = System.currentTimeMillis();
-    if (now < lastVisitTime + VISITATION_TIMEOUT_MS) {
-      // ignore movements if they're too frequent
-      return;
-    }
-    lastVisitTime = now;
-    Cell cell = BukkitUtil.cell(event.getTo());
-    UUID playerUuid = event.getPlayer().getUniqueId();
-    Journey.get().searchManager().registerLocation(playerUuid, cell);
+public record Waypoint(String name, Cell location, boolean publicity) implements Comparable<Waypoint> {
+  @Override
+  public int compareTo(@NotNull Waypoint o) {
+    return String.CASE_INSENSITIVE_ORDER.compare(name, o.name);
   }
-
 }

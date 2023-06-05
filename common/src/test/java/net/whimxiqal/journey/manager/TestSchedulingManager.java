@@ -32,9 +32,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import net.whimxiqal.journey.Journey;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -47,17 +50,66 @@ public class TestSchedulingManager implements SchedulingManager {
   private final AtomicLong mainThreadId = new AtomicLong(-1);
 
   public TestSchedulingManager() {
-    mainThread = Executors.newSingleThreadScheduledExecutor();
-    asyncThreads = Executors.newScheduledThreadPool(4);
+    mainThread = Executors.newSingleThreadScheduledExecutor(r -> {
+      Thread thread = new Thread(r);
+      thread.setName("Main Server Thread");
+      return thread;
+    });
+    asyncThreads = Executors.newScheduledThreadPool(4, r -> {
+      Thread thread = new Thread(r);
+      thread.setName("Async Server Thread " + thread.getId());
+      return thread;
+    });
     futureMap = new ConcurrentHashMap<>();
+  }
+
+  private static Runnable runWithCatch(Runnable runnable) {
+    return () -> {
+      try {
+        runnable.run();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    };
+  }
+
+  public static <T> T runOnMainThread(Supplier<T> supplier) {
+    CompletableFuture<T> future = new CompletableFuture<>();
+    AtomicBoolean error = new AtomicBoolean(false);
+    Journey.get().proxy().schedulingManager().schedule(() -> {
+      T result = null;
+      try {
+        result = supplier.get();
+      } catch (Throwable e) {
+        e.printStackTrace();
+        error.set(true);
+      } finally {
+        future.complete(result);
+      }
+    }, false);
+    T result = null;
+    try {
+      result = future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      Assertions.fail(e);
+    }
+    Assertions.assertFalse(error.get(), "There was an error on the main thread");
+    return result;
+  }
+
+  public static void runOnMainThread(Runnable runnable) {
+    runOnMainThread(() -> {
+      runnable.run();
+      return null;
+    });
   }
 
   @Override
   public void schedule(Runnable runnable, boolean async) {
     if (async) {
-      asyncThreads.execute(runnable);
+      asyncThreads.execute(runWithCatch(runnable));
     } else {
-      mainThread.execute(runnable);
+      mainThread.execute(runWithCatch(runnable));
     }
   }
 
@@ -72,7 +124,7 @@ public class TestSchedulingManager implements SchedulingManager {
     UUID taskUuid = UUID.randomUUID();
     ScheduledExecutorService service = async ? asyncThreads : mainThread;
     long periodMs = tickPeriod * MS_PER_TICK;
-    ScheduledFuture<?> future = service.scheduleAtFixedRate(runnable, periodMs, periodMs, TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> future = service.scheduleAtFixedRate(runWithCatch(runnable), periodMs, periodMs, TimeUnit.MILLISECONDS);
     futureMap.put(taskUuid, future);
     return taskUuid;
   }
@@ -89,6 +141,10 @@ public class TestSchedulingManager implements SchedulingManager {
 
   @Override
   public void initialize() {
+    if (mainThreadId.get() != -1) {
+      // already initialized
+      return;
+    }
     CompletableFuture<Void> future = new CompletableFuture<>();
     mainThread.execute(() -> {
       mainThreadId.set(Thread.currentThread().getId());
@@ -112,18 +168,16 @@ public class TestSchedulingManager implements SchedulingManager {
     TestSchedulingManager schedulingManager = new TestSchedulingManager();
     schedulingManager.initialize();
 
+    // test isMainThread
     CompletableFuture<Boolean> future1 = new CompletableFuture<>();
-    schedulingManager.schedule(() -> {
-      future1.complete(schedulingManager.isMainThread());
-    }, false);
+    schedulingManager.schedule(() -> future1.complete(schedulingManager.isMainThread()), false);
     Assertions.assertTrue(future1.get());
 
     CompletableFuture<Boolean> future2 = new CompletableFuture<>();
-    schedulingManager.schedule(() -> {
-      future2.complete(schedulingManager.isMainThread());
-    }, true);
+    schedulingManager.schedule(() -> future2.complete(schedulingManager.isMainThread()), true);
     Assertions.assertFalse(future2.get());
 
+    // test repeatable
     AtomicInteger counter1 = new AtomicInteger(0);
     AtomicInteger counter2 = new AtomicInteger(0);
     AtomicReference<UUID> taskUuid1 = new AtomicReference<>();
@@ -154,6 +208,19 @@ public class TestSchedulingManager implements SchedulingManager {
     Assertions.assertEquals(10, counter2.get());
     schedulingManager.cancelTask(taskUuid1.get());
     schedulingManager.cancelTask(taskUuid2.get());
+
+    // test exceptions don't stop new scheduled tasks
+    schedulingManager.schedule(() -> {
+      throw new RuntimeException();
+    }, true);
+    CompletableFuture<Void> future5 = new CompletableFuture<>();
+    AtomicBoolean toggle = new AtomicBoolean(false);
+    schedulingManager.schedule(() -> {
+      toggle.set(true);
+      future5.complete(null);
+    }, true);
+    future5.get();
+    Assertions.assertTrue(toggle.get());
 
     schedulingManager.shutdown();
   }

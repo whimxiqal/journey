@@ -23,61 +23,48 @@
 
 package net.whimxiqal.journey.data;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 import net.whimxiqal.journey.Cell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestPublicWaypointManager implements PublicWaypointManager {
 
-  private final Map<String, Cell> waypoints = new HashMap<>();
+  private final List<Waypoint> waypoints = new LinkedList<>();
 
   @Override
   public void add(@NotNull Cell cell, @NotNull String name) throws IllegalArgumentException, DataAccessException {
-    waypoints.put(name, cell);
+    waypoints.add(new Waypoint(name, cell, true));
   }
 
   @Override
   public void remove(@NotNull Cell cell) throws DataAccessException {
-    String toRemove = null;
-    for (Map.Entry<String, Cell> entry : waypoints.entrySet()) {
-      if (entry.getValue().equals(cell)) {
-        toRemove = entry.getKey();
-      }
-    }
-    if (toRemove != null) {
-      waypoints.remove(toRemove);
-    }
+    waypoints.removeIf(waypoint -> waypoint.location().equals(cell));
   }
 
   @Override
   public void remove(@NotNull String name) throws DataAccessException {
-    waypoints.remove(name);
+    waypoints.removeIf(waypoint -> waypoint.name().equals(name));
   }
 
   @Override
   public void renameWaypoint(String name, String newName) throws DataAccessException {
-    // ignore
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public @Nullable String getName(@NotNull Cell cell) throws DataAccessException {
-    for (Map.Entry<String, Cell> entry : waypoints.entrySet()) {
-      if (entry.getValue().equals(cell)) {
-        return entry.getKey();
-      }
-    }
-    return null;
+    return waypoints.stream().filter(waypoint -> waypoint.location().equals(cell)).map(Waypoint::name).findFirst().orElse(null);
   }
 
   @Override
   public @Nullable Cell getWaypoint(@NotNull String name) throws DataAccessException {
-    return waypoints.get(name);
+    return waypoints.stream().filter(waypoint -> waypoint.name().equals(name)).map(Waypoint::location).findFirst().orElse(null);
   }
 
   @Override
-  public Map<String, Cell> getAll() throws DataAccessException {
+  public List<Waypoint> getAll() throws DataAccessException {
     return waypoints;
   }
 

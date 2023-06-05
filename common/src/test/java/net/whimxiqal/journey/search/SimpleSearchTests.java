@@ -33,6 +33,7 @@ import java.util.function.BiFunction;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyTestHarness;
 import net.whimxiqal.journey.manager.DistributedWorkManager;
+import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
@@ -73,7 +74,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
     lastSessionUuid = session.uuid();
     Assertions.assertEquals(ResultState.IDLE, session.getState());
     session.setFlags(flags);
-    Future<SearchSession.Result> future = runOnMainThread(() -> Journey.get().searchManager().launchIngameSearch(session));
+    Future<SearchSession.Result> future = TestSchedulingManager.runOnMainThread(() -> Journey.get().searchManager().launchIngameSearch(session));
     SearchSession.Result result = future.get();
     Assertions.assertEquals(expectedResult, result.state(), "Expected state of session search was incorrect");
     if (result.itinerary() != null) {
@@ -186,19 +187,21 @@ public class SimpleSearchTests extends JourneyTestHarness {
     };
 
     for (int i = 0; i < RUNS; i++) {
-      runSearchAsync.accept(newSearch.apply("1", "2"), ResultState.STOPPED_SUCCESSFUL);
-      runSearchAsync.accept(newSearch.apply("1", "3"), ResultState.STOPPED_SUCCESSFUL);
-      runSearchAsync.accept(newSearch.apply("1", "4"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("2", "3"), ResultState.STOPPED_SUCCESSFUL);
-      runSearchAsync.accept(newSearch.apply("2", "4"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("3", "4"), ResultState.STOPPED_FAILED);
+      TestSchedulingManager.runOnMainThread(() -> {
+        runSearchAsync.accept(newSearch.apply("1", "2"), ResultState.STOPPED_SUCCESSFUL);
+        runSearchAsync.accept(newSearch.apply("1", "3"), ResultState.STOPPED_SUCCESSFUL);
+        runSearchAsync.accept(newSearch.apply("1", "4"), ResultState.STOPPED_FAILED);
+        runSearchAsync.accept(newSearch.apply("2", "3"), ResultState.STOPPED_SUCCESSFUL);
+        runSearchAsync.accept(newSearch.apply("2", "4"), ResultState.STOPPED_FAILED);
+        runSearchAsync.accept(newSearch.apply("3", "4"), ResultState.STOPPED_FAILED);
 
-      runSearchAsync.accept(newSearch.apply("2", "1"), ResultState.STOPPED_SUCCESSFUL);
-      runSearchAsync.accept(newSearch.apply("3", "1"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("4", "1"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("3", "2"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("4", "2"), ResultState.STOPPED_FAILED);
-      runSearchAsync.accept(newSearch.apply("4", "3"), ResultState.STOPPED_FAILED);
+        runSearchAsync.accept(newSearch.apply("2", "1"), ResultState.STOPPED_SUCCESSFUL);
+        runSearchAsync.accept(newSearch.apply("3", "1"), ResultState.STOPPED_FAILED);
+        runSearchAsync.accept(newSearch.apply("4", "1"), ResultState.STOPPED_FAILED);
+        runSearchAsync.accept(newSearch.apply("3", "2"), ResultState.STOPPED_FAILED);
+        runSearchAsync.accept(newSearch.apply("4", "2"), ResultState.STOPPED_FAILED);
+        runSearchAsync.accept(newSearch.apply("4", "3"), ResultState.STOPPED_FAILED);
+      });
     }
 
     long failureTime = System.currentTimeMillis() + (1000 * 30);  // 30 seconds until we consider it failure
@@ -208,7 +211,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
         Assertions.fail("The test took too long. Only " + finished.get() + " out of " + total + " finished.");
       }
     }
-    Assertions.assertEquals(0, failed.get());
+    Assertions.assertEquals(0, failed.get(), "There were unexpected search results");
   }
 
 }

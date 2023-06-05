@@ -23,19 +23,17 @@
 
 package net.whimxiqal.journey.data;
 
-import java.util.Map;
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A general description of how to handle storage for personal search endpoints.
  *
  * @see SearchSession
  */
-public interface PersonalWaypointManager {
+public interface PersonalWaypointManager extends PersonalWaypointProvider {
 
   /**
    * Add a player to a specific cell to the database with a unique name.
@@ -75,30 +73,6 @@ public interface PersonalWaypointManager {
               @NotNull String name) throws DataAccessException;
 
   /**
-   * Check if a player has a personal endpoint at the certain cell location.
-   *
-   * @param playerUuid the player's uuid
-   * @param cell       the cell location
-   * @return true if the cell exists for the given player
-   */
-  default boolean hasWaypoint(@NotNull UUID playerUuid,
-                              @NotNull Cell cell) throws DataAccessException {
-    return getName(playerUuid, cell) != null;
-  }
-
-  /**
-   * Check if a player has a certain named personal endpoint.
-   *
-   * @param playerUuid the player's uuid
-   * @param name       the cell name
-   * @return true if the cell exists for the given player
-   */
-  default boolean hasWaypoint(@NotNull UUID playerUuid,
-                              @NotNull String name) throws DataAccessException {
-    return getWaypoint(playerUuid, name) != null;
-  }
-
-  /**
    * Rename the waypoint.
    *
    * @param uuid    the player's uuid
@@ -107,46 +81,4 @@ public interface PersonalWaypointManager {
    */
   void renameWaypoint(UUID uuid, String name, String newName) throws DataAccessException;
 
-  /**
-   * Get the name of a personal location with a given unique player and cell.
-   *
-   * @param playerUuid the player's uuid
-   * @param cell       the personal location
-   * @return the cell's name, or null if it doesn't exist
-   */
-  @Nullable
-  String getName(@NotNull UUID playerUuid,
-                 @NotNull Cell cell) throws DataAccessException;
-
-  /**
-   * Get a specific cell with a given unique player and name combination.
-   *
-   * @param playerUuid the player's uuid
-   * @param name       the cell name
-   * @return the cell, or null if it doesn't
-   */
-  @Nullable
-  Cell getWaypoint(@NotNull UUID playerUuid,
-                   @NotNull String name) throws DataAccessException;
-
-  boolean isPublic(@NotNull UUID playerUuid,
-                   @NotNull String name) throws DataAccessException;
-
-  /**
-   * Get a list of all personal endpoints for a player.
-   *
-   * @param playerUuid the player's uuid
-   * @param justPublic whether to show only public waypoints
-   * @return all names of cells mapped to their corresponding cells
-   */
-  Map<String, Cell> getAll(@NotNull UUID playerUuid, boolean justPublic) throws DataAccessException;
-
-  /**
-   * Get the number of entries found with this player uuid and the public value
-   *
-   * @param playerUuid the player's uuid
-   * @param justPublic whether to show only public waypoints
-   * @return the number of entries
-   */
-  int getCount(UUID playerUuid, boolean justPublic);
 }

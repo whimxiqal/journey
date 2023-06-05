@@ -36,6 +36,7 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.TestProxy;
+import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.mode.JumpMode;
 import net.whimxiqal.journey.navigation.mode.WalkMode;
@@ -129,11 +130,14 @@ public class SchematicSearchTests {
       Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
     }
 
-    if (!Journey.get().init()) {
-      Assertions.fail("Journey initialization failed");
-    }
+    proxy.schedulingManager().initialize();  // initialize early so that we can schedule on main thread
+    TestSchedulingManager.runOnMainThread(() -> {
+      if (!Journey.get().init()) {
+        Assertions.fail("Journey initialization failed");
+      }
 
-    Journey.get().tunnelManager().register(player -> TestPlatformProxy.tunnels);
+      Journey.get().tunnelManager().register(player -> TestPlatformProxy.tunnels);
+    });
   }
 
   @AfterAll

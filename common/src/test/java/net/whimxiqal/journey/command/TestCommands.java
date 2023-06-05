@@ -25,6 +25,7 @@ package net.whimxiqal.journey.command;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -36,6 +37,7 @@ import net.whimxiqal.journey.JourneyApiProvider;
 import net.whimxiqal.journey.JourneyTestHarness;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
+import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.platform.TestJourneyPlayer;
 import net.whimxiqal.journey.platform.WorldLoader;
 import net.whimxiqal.mantle.common.CommandResult;
@@ -77,11 +79,16 @@ public class TestCommands extends JourneyTestHarness {
         Journey.get().proxy().audienceProvider().console()), baseCommand.length > 1 ? baseCommand[1] : "");
   }
 
-  static void addHome() {
+  static void addHome() throws ExecutionException, InterruptedException {
+    if (Journey.get().proxy().dataManager().personalWaypointManager().hasWaypoint(PLAYER_UUID, "home")) {
+      // already has it
+      return;
+    }
     Journey.get().proxy().dataManager().personalWaypointManager().add(PLAYER_UUID, new Cell(0, 0, 0, WorldLoader.domain(0)), "home");
+    Journey.get().cachedDataProvider().personalWaypointCache().update(PLAYER_UUID, true).get();
   }
 
-  private CommandResult execute(String command) throws ExecutionException, InterruptedException {
+  private CommandResult execute(String command) {
     // we must execute these calls on the main server thread
     String[] baseCommand = command.split(" ", 2);
     assert baseCommand.length == 1 || baseCommand.length == 2;
@@ -90,7 +97,7 @@ public class TestCommands extends JourneyTestHarness {
       System.out.println("Mantle command could not be found for base command: " + baseCommand[0]);
       return CommandResult.failure();
     }
-    return runOnMainThread(() -> mantleCommand.process(new CommandSource(CommandSource.Type.PLAYER,
+    return TestSchedulingManager.runOnMainThread(() -> mantleCommand.process(new CommandSource(CommandSource.Type.PLAYER,
         PLAYER_UUID,
         Journey.get().proxy().audienceProvider().console()), baseCommand.length > 1 ? baseCommand[1] : ""));
   }
@@ -134,11 +141,13 @@ public class TestCommands extends JourneyTestHarness {
   }
 
   @Test
-  void journeyToCompletionsTest() {
+  void journeyToCompletionsTest() throws ExecutionException, InterruptedException {
     addHome();
-    List<String> completions = completions("journeyto personal:");
-    Assertions.assertEquals(1, completions.size());
-    Assertions.assertEquals("personal:home", completions.get(0));
+    TestSchedulingManager.runOnMainThread(() -> {
+      List<String> completions = completions("journeyto personal:");
+      Assertions.assertEquals(1, completions.size());
+      Assertions.assertEquals("personal:home", completions.get(0));
+    });
   }
 
   @Test
@@ -146,44 +155,44 @@ public class TestCommands extends JourneyTestHarness {
     JourneyApi api = JourneyApiProvider.get();
     Destination destination = Destination.of(new Cell(0, 0, 0, WorldLoader.domain(0)));
     testProxy.revokeAllPermissions(PLAYER_UUID);
-    runOnMainThread(() -> {  // The API checks to verify that we are running on the main thread when registering scopes
-          api.registerScope("Journey", "complex", Scope.builder()
-              .subScopes(() -> {
-                Map<String, Scope> scopes = new HashMap<>();
-                scopes.put("path-a", Scope.builder()
-                    .destinations(() -> {
-                      Map<String, Destination> destinations = new HashMap<>();
-                      destinations.put("path-a-1", destination);
-                      destinations.put("path-shared", destination);
-                      destinations.put("permission", Destination.builder(new Cell(0, 0, 0, WorldLoader.domain(0))).permission("you-dont-have-this").build());
-                      return VirtualMap.of(destinations);
-                    }).build());
-                scopes.put("path-b", Scope.builder()
-                    .destinations(() -> {
-                      Map<String, Destination> destinations = new HashMap<>();
-                      destinations.put("path-b", destination);
-                      destinations.put("path-b-1", destination);
-                      destinations.put("path-b space", destination);
-                      destinations.put("path-shared", destination);
-                      return VirtualMap.of(destinations);
-                    }).build());
-                scopes.put("contextually-necessary", Scope.builder()
-                    .destinations(() -> {
-                      Map<String, Destination> destinations = new HashMap<>();
-                      destinations.put("path-a-1", destination);
-                      destinations.put("hidden", destination);
-                      return VirtualMap.of(destinations);
-                    }).strict()
-                    .build());
-                scopes.put("permission-scope", Scope.builder()
-                    .destinations(VirtualMap.ofSingleton("cant-reach", destination))
-                    .permission("you-also-dont-have-this")
-                    .build());
-                return VirtualMap.of(scopes);
-              }).build());
-          return null;
-        });
-    List<String> completions = completions("journeyto ");
+    final List<String> completions = new LinkedList<>();
+    TestSchedulingManager.runOnMainThread(() -> {  // The API checks to verify that we are running on the main thread when registering scopes
+      api.registerScope("Journey", "complex", Scope.builder()
+          .subScopes(() -> {
+            Map<String, Scope> scopes = new HashMap<>();
+            scopes.put("path-a", Scope.builder()
+                .destinations(() -> {
+                  Map<String, Destination> destinations = new HashMap<>();
+                  destinations.put("path-a-1", destination);
+                  destinations.put("path-shared", destination);
+                  destinations.put("permission", Destination.builder(new Cell(0, 0, 0, WorldLoader.domain(0))).permission("you-dont-have-this").build());
+                  return VirtualMap.of(destinations);
+                }).build());
+            scopes.put("path-b", Scope.builder()
+                .destinations(() -> {
+                  Map<String, Destination> destinations = new HashMap<>();
+                  destinations.put("path-b", destination);
+                  destinations.put("path-b-1", destination);
+                  destinations.put("path-b space", destination);
+                  destinations.put("path-shared", destination);
+                  return VirtualMap.of(destinations);
+                }).build());
+            scopes.put("contextually-necessary", Scope.builder()
+                .destinations(() -> {
+                  Map<String, Destination> destinations = new HashMap<>();
+                  destinations.put("path-a-1", destination);
+                  destinations.put("hidden", destination);
+                  return VirtualMap.of(destinations);
+                }).strict()
+                .build());
+            scopes.put("permission-scope", Scope.builder()
+                .destinations(VirtualMap.ofSingleton("cant-reach", destination))
+                .permission("you-also-dont-have-this")
+                .build());
+            return VirtualMap.of(scopes);
+          }).build());
+      completions.addAll(completions("journeyto "));
+    });
 
     // Full scope
     Assertions.assertTrue(completions.contains("complex:path-a:path-a-1"));
@@ -221,7 +230,10 @@ public class TestCommands extends JourneyTestHarness {
       Assertions.assertFalse(completions.contains(string), "The scope target " + string + " should be disallowed by permission restriction, but isn't disallowed");
     }
     testProxy.grantAllPermissions(PLAYER_UUID);
-    completions = completions("journeyto ");
+    TestSchedulingManager.runOnMainThread(() -> {
+      completions.clear();
+      completions.addAll(completions("journeyto "));
+    });
     for (String string : permissionRequired) {
       Assertions.assertTrue(completions.contains(string));
     }

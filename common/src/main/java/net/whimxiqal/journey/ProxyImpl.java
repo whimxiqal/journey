@@ -89,6 +89,9 @@ public class ProxyImpl implements Proxy {
   }
 
   public void dataManager(DataManager dataManager) {
+    if (schedulingManager.isMainThread()) {
+      Journey.logger().warn("Data manager accessed on main thread, this is likely a mistake.");
+    }
     this.dataManager = dataManager;
   }
 
@@ -103,6 +106,9 @@ public class ProxyImpl implements Proxy {
 
   @Override
   public PlatformProxy platform() {
+    if (!schedulingManager.isMainThread()) {
+      Journey.logger().warn("Platform proxy accessed on async thread. This is likely a mistake bug, please notify the developer.");
+    }
     return platformProxy;
   }
 

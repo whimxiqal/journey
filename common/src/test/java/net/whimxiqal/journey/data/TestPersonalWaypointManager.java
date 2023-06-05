@@ -25,6 +25,8 @@ package net.whimxiqal.journey.data;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
@@ -33,28 +35,20 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestPersonalWaypointManager implements PersonalWaypointManager {
 
-  private final Map<UUID, Map<String, Cell>> waypoints = new HashMap<>();
+  private final Map<UUID, List<Waypoint>> waypoints = new HashMap<>();
 
   @Override
   public void add(@NotNull UUID playerUuid, @NotNull Cell cell, @NotNull String name) throws IllegalArgumentException, DataAccessException {
-    waypoints.computeIfAbsent(playerUuid, k -> new HashMap<>()).put(name, cell);
+    waypoints.computeIfAbsent(playerUuid, k -> new LinkedList<>()).add(new Waypoint(name, cell, true));
   }
 
   @Override
   public void remove(@NotNull UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
-    Map<String, Cell> waypoints = this.waypoints.get(playerUuid);
+    List<Waypoint> waypoints = this.waypoints.get(playerUuid);
     if (waypoints == null) {
       return;
     }
-    String toRemove = null;
-    for (Map.Entry<String, Cell> entry : waypoints.entrySet()) {
-      if (entry.getValue().equals(cell)) {
-        toRemove = entry.getKey();
-      }
-    }
-    if (toRemove != null) {
-      waypoints.remove(toRemove);
-    }
+    waypoints.removeIf(waypoint -> waypoint.location().equals(cell));
   }
 
   @Override
@@ -64,11 +58,11 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
 
   @Override
   public void remove(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
-    Map<String, Cell> waypoints = this.waypoints.get(playerUuid);
+    List<Waypoint> waypoints = this.waypoints.get(playerUuid);
     if (waypoints == null) {
       return;
     }
-    waypoints.remove(name);
+    waypoints.removeIf(waypoint -> waypoint.name().equals(name));
   }
 
   @Override
@@ -78,25 +72,20 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
 
   @Override
   public @Nullable String getName(@NotNull UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
-    Map<String, Cell> waypoints = this.waypoints.get(playerUuid);
+    List<Waypoint> waypoints = this.waypoints.get(playerUuid);
     if (waypoints == null) {
       return null;
     }
-    for (Map.Entry<String, Cell> entry : waypoints.entrySet()) {
-      if (entry.getValue().equals(cell)) {
-        return entry.getKey();
-      }
-    }
-    return null;
+    return waypoints.stream().filter(waypoint -> waypoint.location().equals(cell)).findFirst().map(Waypoint::name).orElse(null);
   }
 
   @Override
   public @Nullable Cell getWaypoint(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
-    Map<String, Cell> waypoints = this.waypoints.get(playerUuid);
+    List<Waypoint> waypoints = this.waypoints.get(playerUuid);
     if (waypoints == null) {
       return null;
     }
-    return waypoints.get(name);
+    return waypoints.stream().filter(waypoint -> waypoint.name().equals(name)).findFirst().map(Waypoint::location).orElse(null);
   }
 
   @Override
@@ -105,12 +94,12 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
   }
 
   @Override
-  public Map<String, Cell> getAll(@NotNull UUID playerUuid, boolean justPublic) throws DataAccessException {
-    Map<String, Cell> ret = waypoints.get(playerUuid);
+  public List<Waypoint> getAll(@NotNull UUID playerUuid, boolean justPublic) throws DataAccessException {
+    List<Waypoint> ret = waypoints.get(playerUuid);
     if (ret == null) {
-      return Collections.emptyMap();
+      return Collections.emptyList();
     }
-    return ret;
+    return Collections.unmodifiableList(ret);
   }
 
   @Override
