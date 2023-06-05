@@ -38,7 +38,6 @@ import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
-import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.search.InternalScope;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.SurfaceGoalSearchSession;
@@ -64,7 +63,7 @@ public final class ScopeUtil {
         player -> {
           Map<String, SearchSession> sessions = new HashMap<>();
           try {
-            if (!BlockProvider.isAtSurface(Journey.get().proxy().platform(), player.location())) {
+            if (!Journey.get().locationManager().getAndTryUpdateIsAtSurface(player.uuid(), player.location())) {
               SearchSession surfaceSession = new SurfaceGoalSearchSession(player.uuid(), SearchSession.Caller.PLAYER, player.location());
               surfaceSession.setName(Component.text("Go to surface"));
               surfaceSession.addPermission(Permission.PATH_SURFACE.path());

@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import net.whimxiqal.journey.Cell;
@@ -48,6 +50,7 @@ public final class NetherManager {
   private final Map<Cell, Cell> portalConnections = new ConcurrentHashMap<>();
 
   public void initialize() {
+    // Calls to the db directly
     Journey.get().proxy().dataManager()
         .netherPortalManager()
         .getAllTunnels(TunnelType.NETHER)
@@ -64,13 +67,22 @@ public final class NetherManager {
     List<NetherTunnel> linksUnverified = portalConnections.entrySet().stream()
         .map(entry -> new NetherTunnel(entry.getKey(), entry.getValue())).toList();
     List<NetherTunnel> linksVerified = new LinkedList<>();
+    List<NetherTunnel> tunnelsToRemove = new LinkedList<>();
     for (NetherTunnel tunnel : linksUnverified) {
       if (tunnel.verify()) {
         linksVerified.add(tunnel);
       } else {
-        portalConnections.remove(tunnel.origin(), tunnel.destination());
-        Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination(), TunnelType.NETHER);
+        // put new nether tunnel in list to send to async thread
+        tunnelsToRemove.add(new NetherTunnel(tunnel.origin(), tunnel.destination()));
       }
+    }
+    if (!tunnelsToRemove.isEmpty()) {
+      Journey.get().proxy().schedulingManager().schedule(() -> {
+        for (NetherTunnel tunnel : tunnelsToRemove) {
+          portalConnections.remove(tunnel.origin(), tunnel.destination());
+          Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination(), TunnelType.NETHER);
+        }
+      }, true);
     }
     return linksVerified;
   }
@@ -92,6 +104,9 @@ public final class NetherManager {
   private void lookForPortal(Supplier<Cell> resultantLocation, PortalGroup originGroup, int count) {
     if (count > 5) {
       // only try five times. 5 seconds is enough
+      Journey.logger().debug("[Nether Manager] Tried to look for nether portal starting at "
+          + originGroup.blocks().stream().findFirst().get()
+          + " but found none");
       return;
     }
     Journey.get().proxy().schedulingManager().schedule(() -> {
@@ -111,50 +126,64 @@ public final class NetherManager {
         return;
       }
 
-      List<Cell> linkedOrigins = new LinkedList<>();
-      for (Cell originCell : originGroup.blocks()) {
-        for (Cell destinationCell : destinationGroup.get().blocks()) {
-          if (!portalConnections.containsKey(originCell)) {
+      // Schedule update on async so db call happens off main thread
+      Journey.get().proxy().schedulingManager().schedule(() -> {
+        // Check if we have any portals with this origin and destination already. If so, and the one found here is
+        //  different, we have to remove the old one(s)
+        List<Cell> linkedOrigins = new LinkedList<>();
+        for (Cell originCell : originGroup.blocks()) {
+          Cell portalDestination = portalConnections.get(originCell);
+          if (portalDestination == null) {
+            // no saved portal with the given origin, skip
             continue;
           }
+          for (Cell destinationCell : destinationGroup.get().blocks()) {
+            if (portalDestination.equals(destinationCell)) {
+              return;  // We already have this portal link set up, no need to continue
+            }
+          }
+          // We have a new portal, mark this one for deletion
           linkedOrigins.add(originCell);
-          if (portalConnections.get(originCell).equals(destinationCell)) {
-            return;  // We already have this portal link set up
+        }
+        /* We don't have this portal link set up yet */
+
+        // Remove any connections with this origin (the portal link changed)
+        for (Cell oldLinkedOrigin : linkedOrigins) {
+          Cell removed = portalConnections.remove(oldLinkedOrigin);
+          if (removed != null) {
+            Journey.get().proxy().dataManager()
+                .netherPortalManager()
+                .removeTunnelsWithOrigin(oldLinkedOrigin, TunnelType.NETHER);
+            Journey.logger().debug("[Nether Manager] Removed nether portal tunnel: " + oldLinkedOrigin + " -> " + portalConnections.get(removed));
           }
         }
-      }
-      /* We don't have this portal link set up yet */
 
-      // Remove any connections with this origin (the portal link changed)
-      linkedOrigins.forEach(old -> {
-        if (portalConnections.containsKey(old)) {
-          Journey.logger().debug("Removed nether portal tunnel: " + old + " -> " + portalConnections.get(old).toString());
-
-          portalConnections.remove(old);
-          Journey.get().proxy().dataManager()
-              .netherPortalManager()
-              .getTunnelsWithOrigin(old, TunnelType.NETHER)
-              .forEach(tunnel -> Journey.get().proxy().dataManager()
-                  .netherPortalManager()
-                  .removeTunnels(old, tunnel.destination(), TunnelType.NETHER));
+        // Add the portal
+        Cell previous = portalConnections.put(originGroup.tunnelLocation(), destinationGroup.get().tunnelLocation());
+        Journey.get().proxy().dataManager().netherPortalManager().addTunnel(originGroup.tunnelLocation(),
+            destinationGroup.get().tunnelLocation(),
+            NetherTunnel.COST,
+            TunnelType.NETHER);
+        if (previous == null) {
+          Journey.logger().debug("[Nether Manager] Added nether tunnel: " + originGroup.tunnelLocation() + " -> " + destinationGroup.get().tunnelLocation().toString());
         }
-      });
-
-      // Add the portal
-      Cell previous = portalConnections.put(originGroup.tunnelLocation(), destinationGroup.get().tunnelLocation());
-      Journey.get().proxy().dataManager().netherPortalManager().addTunnel(originGroup.tunnelLocation(),
-          destinationGroup.get().tunnelLocation(),
-          NetherTunnel.COST,
-          TunnelType.NETHER);
-      if (previous == null) {
-        Journey.logger().debug("Added nether tunnel: " + originGroup.tunnelLocation() + " -> " + destinationGroup.get().tunnelLocation().toString());
-      }
+      }, true);
     }, false, 20);
   }
 
-  public void reset() {
-    portalConnections.clear();
-    Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(TunnelType.NETHER);
+  /**
+   * Clear all stored nether portals, from both db and cache.
+   *
+   * @return completion stage, to be used to run async logic after the reset is completed
+   */
+  public CompletionStage<Void> reset() {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    Journey.get().proxy().schedulingManager().schedule(() -> {
+      portalConnections.clear();
+      Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(TunnelType.NETHER);
+      future.complete(null);
+    }, true);
+    return future;
   }
 
   /**
@@ -176,10 +205,10 @@ public final class NetherManager {
    * @param maxHeight Maximum height of search
    * @return Returns cell in the bottom center of the nearest nether portal if found. Otherwise, returns null.
    */
-  public Collection<PortalGroup> locateAll(Cell origin,
-                                           int radius,
-                                           int minHeight,
-                                           int maxHeight) {
+  private Collection<PortalGroup> locateAll(Cell origin,
+                                            int radius,
+                                            int minHeight,
+                                            int maxHeight) {
     Set<PortalGroup> portals = new HashSet<>();  // All PortalGroups found
     Set<Cell> stored = new HashSet<>();  // All Portal blocks found in the PortalGroups
     int domain = origin.domain();
