@@ -25,7 +25,6 @@ package net.whimxiqal.journey.bukkit.util;
 
 import com.google.common.collect.Sets;
 import java.util.Set;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 
 /**
