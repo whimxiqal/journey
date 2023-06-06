@@ -79,7 +79,7 @@ public record BukkitSessionJourneyBlock(Cell cell,
 
   @Override
   public boolean isLaterallyPassable() {
-    return !MaterialGroups.isTwoBlocksTall(dataBelow.getMaterial()) &&BukkitUtil.isLaterallyPassable(data, flagSet);
+    return !MaterialGroups.isTwoBlocksTall(dataBelow.getMaterial()) && BukkitUtil.isLaterallyPassable(data, flagSet);
   }
 
   @Override
