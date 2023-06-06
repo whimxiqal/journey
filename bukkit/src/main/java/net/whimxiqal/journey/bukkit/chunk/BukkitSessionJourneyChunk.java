@@ -49,6 +49,6 @@ public class BukkitSessionJourneyChunk implements JourneyChunk {
 
   @Override
   public JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
-    return new BukkitSessionJourneyBlock(new Cell(id.x() * 16 + x, y, id.z() * 16 + z, id.domain()), chunk.getBlockData(x, y, z), flagSet);
+    return new BukkitSessionJourneyBlock(new Cell(id.x() * 16 + x, y, id.z() * 16 + z, id.domain()), chunk.getBlockData(x, y, z), chunk.getBlockData(x, y - 1, z), flagSet);
   }
 }

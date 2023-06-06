@@ -49,6 +49,7 @@ public final class MaterialGroups {
       Material.STONE_PRESSURE_PLATE,
       Material.WARPED_PRESSURE_PLATE
   );
+
   public static boolean isPassable(Material material) {
     switch (material) {
     //<editor-fold defaultstate="collapsed" desc="isPassable">
@@ -277,6 +278,45 @@ public final class MaterialGroups {
       default:
         return 1;
     }
+  }
+
+  public static boolean isTwoBlocksTall(Material material) {
+    return switch (material) {
+      //<editor-fold defaultstate="collapsed" desc="materials two blocks tall">
+      case ACACIA_FENCE,
+          BIRCH_FENCE,
+          CRIMSON_FENCE,
+          DARK_OAK_FENCE,
+          JUNGLE_FENCE,
+          OAK_FENCE,
+          NETHER_BRICK_FENCE,
+          SPRUCE_FENCE,
+          WARPED_FENCE,
+          ANDESITE_WALL,
+          BLACKSTONE_WALL,
+          BRICK_WALL,
+          COBBLESTONE_WALL,
+          COBBLED_DEEPSLATE_WALL,
+          DEEPSLATE_BRICK_WALL,
+          DIORITE_WALL,
+          DEEPSLATE_TILE_WALL,
+          GRANITE_WALL,
+          END_STONE_BRICK_WALL,
+          MOSSY_COBBLESTONE_WALL,
+          MOSSY_STONE_BRICK_WALL,
+          NETHER_BRICK_WALL,
+          POLISHED_BLACKSTONE_BRICK_WALL,
+          POLISHED_BLACKSTONE_WALL,
+          PRISMARINE_WALL,
+          POLISHED_DEEPSLATE_WALL,
+          RED_NETHER_BRICK_WALL,
+          RED_SANDSTONE_WALL,
+          SANDSTONE_WALL,
+          STONE_BRICK_WALL
+        //</editor-fold>
+          -> true;
+      default -> false;
+    };
   }
 
 }

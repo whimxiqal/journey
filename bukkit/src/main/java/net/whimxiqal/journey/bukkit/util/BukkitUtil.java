@@ -83,7 +83,10 @@ public final class BukkitUtil {
    * @return true if passable
    */
   public static boolean isLaterallyPassable(BlockData block) {
-    return isVerticallyPassable(block, Collections.emptySet());
+    if (isPassable(block)) {
+      return true;
+    }
+    return MaterialGroups.isLaterallySpecialPassable(block.getMaterial());
   }
 
   /**

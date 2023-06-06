@@ -79,7 +79,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
 
   @Override
   public JourneyBlock toBlock(Cell cell) {
-    return new BukkitSessionJourneyBlock(cell, BukkitUtil.getBlock(cell), new FlagSet());
+    return new BukkitSessionJourneyBlock(cell, BukkitUtil.getBlock(cell), BukkitUtil.getBlock(cell.atOffset(0, -1, 0)), new FlagSet());
   }
 
   @Override
