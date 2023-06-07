@@ -79,8 +79,20 @@ public final class JourneyBukkit extends JavaPlugin {
     proxy.version(getDescription().getVersion());
 
     // Initialize common Journey (after proxy is set up)
-    if (!Journey.get().init()) {
+    boolean failed = false;
+    try {
+      if (!Journey.get().init()) {
+        failed = true;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      failed = true;
+    }
+
+    if (failed) {
+      Journey.logger().flush();
       setEnabled(false);
+      return;
     }
 
     // Register command

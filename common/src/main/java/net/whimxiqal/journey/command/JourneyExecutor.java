@@ -28,7 +28,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
@@ -281,11 +280,11 @@ public class JourneyExecutor implements CommandExecutor {
         }
 
         String playerName = cmd.identifiers().get(0);
-        Optional<InternalJourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(playerName);
-
-        Consumer<UUID> runWithUuid = playerUuid -> {
+        Optional<UUID> maybePlayer = Journey.get().proxy().platform().onlinePlayer(playerName).map(InternalJourneyPlayer::uuid);
+        Journey.get().proxy().schedulingManager().schedule(() -> {
+          UUID playerUuid = maybePlayer.orElse(Request.requestPlayerUuid(playerName));
           if (playerUuid == null) {
-            src.audience().sendMessage(Formatter.error("A problem occurred trying to access that player's information"));
+            src.audience().sendMessage(Formatter.error("A problem occurred trying to access information for " + playerName));
           } else {
             List<Waypoint> waypoints = new ArrayList<>(Journey.get().proxy().dataManager()
                 .personalWaypointManager()
@@ -302,14 +301,7 @@ public class JourneyExecutor implements CommandExecutor {
                     waypoint -> Formatter.cell(waypoint.location()))
                 .sendPage(src.audience(), page.get());
           }
-        };
-
-        if (maybePlayer.isPresent()) {
-          Journey.get().proxy().schedulingManager().schedule(() -> runWithUuid.accept(maybePlayer.get().uuid()), true);
-        } else {
-          // Async call for the player uuid
-          Request.getPlayerUuidAsync(cmd.identifiers().get(0)).thenAccept(runWithUuid);
-        }
+        }, true);
         return CommandResult.success();
       }
 
@@ -470,13 +462,14 @@ public class JourneyExecutor implements CommandExecutor {
         }
 
         // Async call for the player uuid
-        Request.getPlayerUuidAsync(cmd.identifiers().get(0)).thenAccept(p -> {
-          if (p == null) {
+        Journey.get().proxy().schedulingManager().schedule(() -> {
+          UUID uuid = Request.requestPlayerUuid(cmd.identifiers().get(0));
+          if (uuid == null) {
             src.audience().sendMessage(Formatter.error("A problem occurred trying to access that player's information"));
           } else {
-            visitPlayerWaypoint(ctx, playerName, p, waypoint);
+            visitPlayerWaypoint(ctx, playerName, uuid, waypoint);
           }
-        });
+        }, true);
         return CommandResult.success();
       }
 

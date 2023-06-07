@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Test;
 class RequestTest extends JourneyTestHarness {
 
   @Test
-  public void testGetPlayerUuid() throws ExecutionException, InterruptedException {
-    UUID notchUuid = Request.getPlayerUuidAsync("Notch").get();
+  public void testGetPlayerUuid() {
+    UUID notchUuid = Request.requestPlayerUuid("Notch");
     Assertions.assertNotNull(notchUuid, "Request to get UUID failed");
     Assertions.assertEquals("069a79f4-44e9-4726-a5be-fca90e38aaf5", notchUuid.toString(), "Request got the wrong UUID");
   }

@@ -220,7 +220,11 @@ public class SqlPathRecordManager
           "SELECT COUNT(*) FROM %s;",
           SqlManager.CACHED_PATH_CELLS_TABLE));
       ResultSet result = statement.executeQuery();
-      return result.getInt(1);
+      if (result.next()) {
+        return result.getInt(1);
+      } else {
+        return 0;
+      }
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
@@ -349,12 +353,7 @@ public class SqlPathRecordManager
 
   @Override
   public boolean containsRecord(Cell origin, Cell destination, Set<ModeType> modeTypeGroup) {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      return findRecordWithModes(getRecordsWithoutCells(origin, destination), modeTypeGroup) != null;
-    } catch (SQLException e) {
-      e.printStackTrace();
-      return false;
-    }
+    return findRecordWithModes(getRecordsWithoutCells(origin, destination), modeTypeGroup) != null;
   }
 
   private PathTrialRecord extractRecord(final ResultSet resultSet) throws SQLException {
