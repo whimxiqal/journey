@@ -23,18 +23,9 @@
 
 package net.whimxiqal.journey.data;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.config.Settings;
-import net.whimxiqal.journey.data.sql.mysql.MySqlConnectionController;
-import net.whimxiqal.journey.data.sql.sqlite.SqliteConnectionController;
 
 public enum DataVersion implements Comparable<DataVersion> {
   ERROR(-1),
@@ -104,7 +95,7 @@ public enum DataVersion implements Comparable<DataVersion> {
 
   @Override
   public String toString() {
-    return "DataVersion{" + (hasError() ? "ERROR" : printVersion()) + '}';
+    return hasError() ? "ERROR" : ("v" + printVersion());
   }
 
 }

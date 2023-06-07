@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.data;
 
+import com.zaxxer.hikari.pool.HikariPool;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.sql.SqlPathRecordManager;
@@ -31,6 +32,7 @@ import net.whimxiqal.journey.data.sql.SqlTunnelDataManager;
 import net.whimxiqal.journey.data.sql.SqlPublicWaypointManager;
 import net.whimxiqal.journey.data.sql.mysql.MySqlConnectionController;
 import net.whimxiqal.journey.data.sql.sqlite.SqliteConnectionController;
+import net.whimxiqal.journey.data.version.DataVersionHandler;
 import net.whimxiqal.journey.data.version.MysqlDataVersionHandler;
 import net.whimxiqal.journey.data.version.SqliteDataVersionHandler;
 
@@ -53,46 +55,62 @@ public class DataManagerImpl implements DataManager {
 
   @Override
   public void initialize() {
-    DataVersion currentVersion;
-    int currentVersionNumber;
+    DataVersionHandler versionHandler;
+    try {
+      switch (Settings.STORAGE_TYPE.getValue()) {
+        case SQLITE -> {
+          SqliteConnectionController sqliteController = new SqliteConnectionController(Journey.get().proxy().dataFolder() + "/" + DATABASE_FILE_NAME);
+          personalWaypointManager = new SqlPersonalWaypointManager(sqliteController);
+          publicWaypointManager = new SqlPublicWaypointManager(sqliteController);
+          pathRecordManager = new SqlPathRecordManager(sqliteController);
+          tunnelDataManager = new SqlTunnelDataManager(sqliteController);
+          versionHandler = new SqliteDataVersionHandler(sqliteController);
+        }
+        case MYSQL -> {
+          MySqlConnectionController mysqlController = new MySqlConnectionController();
+          personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
+          publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
+          pathRecordManager = new SqlPathRecordManager(mysqlController);
+          tunnelDataManager = new SqlTunnelDataManager(mysqlController);
+          versionHandler = new MysqlDataVersionHandler(mysqlController);
+        }
+        default -> throw new RuntimeException();
+      }
+    } catch (HikariPool.PoolInitializationException e) {
+      Journey.logger().error("[Data Manager] Database connection pool initialization failed: " + e.getMessage());
+      databaseVersion = DataVersion.ERROR;
+      return;
+    }
 
-    switch (Settings.STORAGE_TYPE.getValue()) {
-      case SQLITE:
-        String sqliteAddress = "jdbc:sqlite:" + Journey.get().proxy().dataFolder() + "/" + DATABASE_FILE_NAME;
-        SqliteConnectionController sqliteController = new SqliteConnectionController(sqliteAddress);
+    this.databaseVersion = versionHandler.getVersion();
+    if (this.databaseVersion == DataVersion.ERROR) {
+      return;
+    }
 
-        SqliteDataVersionHandler sqliteDataVersionHandler = new SqliteDataVersionHandler(sqliteController);
-
-        currentVersion = sqliteDataVersionHandler.version();
-        currentVersionNumber = currentVersion.internalVersion;
-
-        personalWaypointManager = new SqlPersonalWaypointManager(sqliteController);
-        publicWaypointManager = new SqlPublicWaypointManager(sqliteController);
-        pathRecordManager = new SqlPathRecordManager(sqliteController);
-        tunnelDataManager = new SqlTunnelDataManager(sqliteController);
-
-        if (currentVersionNumber < DataVersion.latest().internalVersion) {
-          databaseVersion = sqliteDataVersionHandler.runMigrations(currentVersion);
-        } else databaseVersion = DataVersion.latest();
+    DataVersion previousVersion = this.databaseVersion;
+    boolean updated = false;
+    // run migrations until we are fully up-to-date
+    while (previousVersion != DataVersion.latest()) {
+      this.databaseVersion = versionHandler.runMigration(previousVersion);
+      if (this.databaseVersion == DataVersion.ERROR) {
+        return;
+      }
+      if (previousVersion == this.databaseVersion) {
+        // no progress was made, quit now
         break;
-      case MYSQL:
-        MySqlConnectionController mysqlController = new MySqlConnectionController();
+      }
+      updated = true;
+      previousVersion = this.databaseVersion;
+    }
 
-        MysqlDataVersionHandler mysqlDataVersionHandler = new MysqlDataVersionHandler(mysqlController);
-        currentVersion = mysqlDataVersionHandler.version();
-        currentVersionNumber = currentVersion.internalVersion;
+    if (this.databaseVersion != DataVersion.latest()) {
+      Journey.logger().error(String.format("Failed to migrate database beyond %s", this.databaseVersion));
+    } else if (updated) {
+      Journey.logger().info(String.format("[Data Manager] Updated database to latest version (%s)", this.databaseVersion));
+    }
 
-        personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
-        publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
-        pathRecordManager = new SqlPathRecordManager(mysqlController);
-        tunnelDataManager = new SqlTunnelDataManager(mysqlController);
-
-        if (currentVersionNumber < DataVersion.latest().internalVersion) {
-          databaseVersion = mysqlDataVersionHandler.runMigrations(currentVersion);
-        } else databaseVersion = DataVersion.latest();
-        break;
-      default:
-        throw new RuntimeException();
+    if (updated) {
+      versionHandler.saveVersion(this.databaseVersion);
     }
   }
 

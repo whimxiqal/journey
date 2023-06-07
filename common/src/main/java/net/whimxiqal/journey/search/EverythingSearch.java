@@ -155,4 +155,11 @@ public class EverythingSearch extends SearchSession {
     setTunnels(Journey.get().tunnelManager().tunnels(null));
   }
 
+  @Override
+  public String toString() {
+    return "[Everything Search] {session: " + uuid
+        + ", caller: (" + callerType + ") " + callerId
+        + ", state: " + state.get()
+        + '}';
+  }
 }

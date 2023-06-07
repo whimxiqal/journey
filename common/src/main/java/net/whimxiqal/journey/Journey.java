@@ -111,7 +111,7 @@ public final class Journey {
     cachedDataProvider.initialize();
 
     if (proxy.dataManager().version() != DataVersion.latest()) {
-      logger().error("The Journey database is using an invalid version.");
+      logger().error("There is an error in your database configuration. Please delete all Journey database files and tables and restart");
       return false;
     }
 

@@ -26,19 +26,28 @@ package net.whimxiqal.journey.data.version;
 import net.whimxiqal.journey.data.DataVersion;
 
 public interface DataVersionHandler {
-    DataVersion version();
 
-    /**
-     * @param currentDataVersion
-     * @return {@link DataVersion} the final data version after migration.
-     */
-    DataVersion runMigrations(DataVersion currentDataVersion);
+  /**
+   * Request the current version from the db or the current file system setup.
+   *
+   * @return the data version
+   */
+  DataVersion getVersion();
 
-    /**
-     * @param filePath The path of the batch to run.
-     * @return boolean - Whether the batch was run successfully.
-     */
-    boolean runBatch(String filePath);
+  /**
+   * Store the given version to the database
+   *
+   * @param version the version
+   */
+  void saveVersion(DataVersion version);
 
-    void saveDataVersion(DataVersion version);
+
+  /**
+   * Migrate from the given current version. Assume the given current version is correct.
+   * Does not save the version to database.
+   *
+   * @return the new version after the migration was run
+   */
+  DataVersion runMigration(DataVersion currentVersion);
+
 }
