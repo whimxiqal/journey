@@ -29,10 +29,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.data.DataManagerImpl;
 import net.whimxiqal.journey.data.DataVersion;
 import net.whimxiqal.journey.data.sql.sqlite.SqliteConnectionController;
-
-import static net.whimxiqal.journey.data.DataManagerImpl.*;
 
 public class SqliteDataVersionHandler extends SqlDataVersionHandler {
   public SqliteDataVersionHandler(SqliteConnectionController controller) {
@@ -45,7 +44,7 @@ public class SqliteDataVersionHandler extends SqlDataVersionHandler {
     try (Connection connection = controller.establishConnection()) {
       PreparedStatement statement = connection.prepareStatement(String.format(
           "SELECT name FROM sqlite_master WHERE type='table' AND name='%s'",
-          VERSION_TABLE_NAME
+          DataManagerImpl.VERSION_TABLE_NAME
       ));
 
       ResultSet tableList = statement.executeQuery();
@@ -61,15 +60,15 @@ public class SqliteDataVersionHandler extends SqlDataVersionHandler {
 
       PreparedStatement readStatement = connection.prepareStatement(String.format(
           "SELECT Max(%s) as DBVersion FROM %s;",
-          VERSION_COLUMN_NAME,
-          VERSION_TABLE_NAME
+          DataManagerImpl.VERSION_COLUMN_NAME,
+          DataManagerImpl.VERSION_TABLE_NAME
       ));
       ResultSet savedVersions = readStatement.executeQuery();
 
       if (savedVersions.next()) return DataVersion.fromInt(savedVersions.getInt("DBVersion"));
       else {
         // The table exists, but it does not have a data version, that's bad.
-        Journey.logger().error("The " + VERSION_TABLE_NAME + " table exists, but does not contain any data.");
+        Journey.logger().error("The " + DataManagerImpl.VERSION_TABLE_NAME + " table exists, but does not contain any data.");
         return DataVersion.ERROR;
       }
     } catch (SQLException e) {
@@ -81,7 +80,7 @@ public class SqliteDataVersionHandler extends SqlDataVersionHandler {
   }
 
   private File legacyVersionFile() {
-    return Journey.get().proxy().dataFolder().resolve(VERSION_FILE_NAME).toFile();
+    return Journey.get().proxy().dataFolder().resolve(DataManagerImpl.VERSION_FILE_NAME).toFile();
   }
 
   @Override
@@ -105,7 +104,8 @@ public class SqliteDataVersionHandler extends SqlDataVersionHandler {
           return DataVersion.V002;
         }
       }
-      default -> {}
+      default -> {
+      }
     }
 
     return currentDataVersion;

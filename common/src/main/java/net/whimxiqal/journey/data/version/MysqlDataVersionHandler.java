@@ -28,11 +28,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.data.DataManagerImpl;
 import net.whimxiqal.journey.data.DataVersion;
 import net.whimxiqal.journey.data.sql.mysql.MySqlConnectionController;
-
-import static net.whimxiqal.journey.data.DataManagerImpl.VERSION_COLUMN_NAME;
-import static net.whimxiqal.journey.data.DataManagerImpl.VERSION_TABLE_NAME;
 
 public class MysqlDataVersionHandler extends SqlDataVersionHandler {
   public MysqlDataVersionHandler(MySqlConnectionController controller) {
@@ -42,22 +40,23 @@ public class MysqlDataVersionHandler extends SqlDataVersionHandler {
   @Override
   public DataVersion getVersion() {
     try (Connection connection = controller.establishConnection()) {
-      PreparedStatement statement = connection.prepareStatement(String.format("SHOW TABLES LIKE '%s'", VERSION_TABLE_NAME));
+      PreparedStatement statement = connection.prepareStatement(String.format("SHOW TABLES LIKE '%s'", DataManagerImpl.VERSION_TABLE_NAME));
 
       ResultSet tableList = statement.executeQuery();
       if (!tableList.next()) {
-        // The table does not exist, so probably version 0
+        // The table does not exist, so must be version 0
         // (We don't have to check for a version file here since it was never used while MySQL existed)
         return DataVersion.V000;
       }
 
-      PreparedStatement readStatement = connection.prepareStatement(String.format("SELECT Max(%s) as DBVersion FROM %s;", VERSION_COLUMN_NAME, VERSION_TABLE_NAME));
+      PreparedStatement readStatement = connection.prepareStatement(String.format("SELECT Max(%s) as DBVersion FROM %s;",
+          DataManagerImpl.VERSION_COLUMN_NAME, DataManagerImpl.VERSION_TABLE_NAME));
       ResultSet savedVersions = readStatement.executeQuery();
 
       if (savedVersions.next()) return DataVersion.fromInt(savedVersions.getInt("DBVersion"));
       else {
         // The table exists, but it does not have a data version, that's bad.
-        Journey.logger().error("The " + VERSION_TABLE_NAME + " table exists, but does not contain any data.");
+        Journey.logger().error("The " + DataManagerImpl.VERSION_TABLE_NAME + " table exists, but does not contain any data.");
         return DataVersion.ERROR;
       }
     } catch (SQLException e) {
