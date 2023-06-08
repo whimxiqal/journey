@@ -29,10 +29,12 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Destination;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
@@ -61,18 +63,18 @@ public final class ScopeUtil {
         })
         .build(),
         player -> {
-          Map<String, SearchSession> sessions = new HashMap<>();
           try {
-            if (!Journey.get().locationManager().getAndTryUpdateIsAtSurface(player.uuid(), player.location())) {
-              SearchSession surfaceSession = new SurfaceGoalSearchSession(player.uuid(), SearchSession.Caller.PLAYER, player.location());
+            Optional<Cell> playerLocation = player.location();
+            if (playerLocation.isPresent() && !Journey.get().locationManager().getAndTryUpdateIsAtSurface(player.uuid(), playerLocation.get())) {
+              SearchSession surfaceSession = new SurfaceGoalSearchSession(player.uuid(), SearchSession.Caller.PLAYER, player, playerLocation.get());
               surfaceSession.setName(Component.text("Go to surface"));
               surfaceSession.addPermission(Permission.PATH_SURFACE.path());
-              sessions.put("surface", surfaceSession);
+              return VirtualMap.ofSingleton("surface", surfaceSession);
             }
           } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
           }
-          return VirtualMap.of(sessions);
+          return VirtualMap.empty();
         },
         player -> VirtualMap.of(Journey.get().scopeManager().scopes()));
   }

@@ -27,10 +27,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import net.whimxiqal.journey.search.SearchFlag;
 
 public class FlagSet {
 
   private final Map<Flag<?>, Object> flags = new ConcurrentHashMap<>();
+
+  public static FlagSet from(SearchFlag<?>[] flags) {
+    FlagSet set = new FlagSet();
+    for (SearchFlag<?> flag : flags) {
+      switch (flag.type()) {
+        case TIMEOUT -> set.addFlag(Flags.TIMEOUT, (int) flag.value());
+        case FLY -> set.addFlag(Flags.FLY, (boolean) flag.value());
+      }
+    }
+    return set;
+  }
 
   public <T> void addFlag(Flag<T> flag, T value) {
     this.flags.put(flag, value);

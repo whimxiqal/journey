@@ -26,7 +26,6 @@ package net.whimxiqal.journey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Itinerary;
@@ -65,7 +64,7 @@ public class JourneyTestHarness {
       WorldLoader.initWorlds();
 
       TestPlatformProxy.onlinePlayers.add(new TestJourneyPlayer(PLAYER_UUID));
-      Journey.get().tunnelManager().register(player -> TestPlatformProxy.tunnels);
+      JourneyApiProvider.get().registerTunnels("Journey", player -> TestPlatformProxy.tunnels);
     });
   }
 

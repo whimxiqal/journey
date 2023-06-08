@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
@@ -37,6 +38,7 @@ import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bstats.charts.CustomChart;
@@ -84,7 +86,7 @@ public interface PlatformProxy extends BlockProvider {
 
   Optional<Vector> entityVector(UUID entityUuid);
 
-  void prepareDestinationSearchSession(SearchSession searchSession, UUID player, FlagSet flags, Cell destination);
+  void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination);
 
   void sendAnimationBlock(UUID player, Cell location);
 

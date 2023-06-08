@@ -99,7 +99,7 @@ public final class BukkitUtil {
     if (isPassable(block)) {
       return true;
     }
-    if (!flagSet.getValueFor(Flags.DOOR) && block.getMaterial() == Material.IRON_DOOR) {
+    if (block.getMaterial() == Material.IRON_DOOR && flagSet.getValueFor(Flags.DOOR)) {
       return true;
     }
     return MaterialGroups.isLaterallySpecialPassable(block.getMaterial());

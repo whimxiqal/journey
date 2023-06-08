@@ -23,8 +23,12 @@
 
 package net.whimxiqal.journey;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import net.kyori.adventure.audience.Audience;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.mantle.common.CommandSource;
 import net.whimxiqal.mantle.common.Mantle;
 
@@ -32,7 +36,7 @@ import net.whimxiqal.mantle.common.Mantle;
  * A {@link JourneyPlayer} with extra information for internal Journey purposes,
  * not to be exposed to the API.
  *
- * This is not a thread-safe object, so all calls must be on the main thread.
+ * <p>Note that, like in {@link JourneyAgent}, some methods may only be accessed on the main thread.
  */
 public abstract class InternalJourneyPlayer implements JourneyPlayer {
 
@@ -89,4 +93,29 @@ public abstract class InternalJourneyPlayer implements JourneyPlayer {
    * @return yes if the player has a boat
    */
   public abstract boolean hasBoat();
+
+  @Override
+  public Audience audience() {
+    return Journey.get().proxy().audienceProvider().player(uuid);
+  }
+
+  @Override
+  public Set<ModeType> modeCapabilities() {
+    Set<ModeType> modes = new HashSet<>();
+    modes.add(ModeType.WALK);
+    modes.add(ModeType.JUMP);
+    modes.add(ModeType.SWIM);
+    if (canFly()) {
+      modes.add(ModeType.FLY);
+    }
+    if (hasBoat()) {
+      modes.add(ModeType.BOAT);
+    }
+    modes.add(ModeType.DOOR);
+    modes.add(ModeType.CLIMB);
+    modes.add(ModeType.DIG);
+    modes.add(ModeType.TUNNEL);
+    return modes;
+  }
+
 }

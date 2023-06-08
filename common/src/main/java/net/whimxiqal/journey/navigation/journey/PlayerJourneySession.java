@@ -26,6 +26,8 @@ package net.whimxiqal.journey.navigation.journey;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
@@ -66,7 +68,7 @@ public class PlayerJourneySession implements JourneySession {
                               @NotNull final Itinerary itinerary) {
     this.session = search;
     this.itinerary = itinerary;
-    this.traversal = itinerary.getStages().traverse();
+    this.traversal = itinerary.stages().traverse();
     this.playerUuid = playerUuid;
   }
 
@@ -105,7 +107,7 @@ public class PlayerJourneySession implements JourneySession {
   }
 
   protected final void resetTraversal() {
-    this.traversal = getItinerary().getStages().traverse();
+    this.traversal = getItinerary().stages().traverse();
   }
 
   @Override
@@ -124,7 +126,7 @@ public class PlayerJourneySession implements JourneySession {
         state = State.STOPPED_COMPLETE;
 
         // There is no other path after this one, we are done
-        Journey.get().proxy().audienceProvider().player(playerUuid).sendMessage(Formatter.success("You've arrived!"));
+        Journey.get().proxy().audienceProvider().player(playerUuid).showTitle(Title.title(Component.empty(), Component.text("You have arrived", Formatter.THEME)));
 
         // Play a fun chord
         Journey.get().proxy().platform().playSuccess(playerUuid);
@@ -181,7 +183,7 @@ public class PlayerJourneySession implements JourneySession {
     while (journeyStepsLength < CACHED_JOURNEY_STEPS_LENGTH && lastAddedJourneyStepIndex + 1 < traversal().get().getSteps().size()) {
       Cell origin = steps.get(lastAddedJourneyStepIndex).location();
       Step nextStep = steps.get(lastAddedJourneyStepIndex + 1);
-      JourneyStep jStep = new JourneyStep(playerUuid, origin, nextStep.location(), nextStep.modeType());
+      JourneyStep jStep = new JourneyStep(playerUuid, origin, nextStep.location(), nextStep.mode());
       journeySteps.add(jStep);
       journeyStepsLength += jStep.length();
       lastAddedJourneyStepIndex++;

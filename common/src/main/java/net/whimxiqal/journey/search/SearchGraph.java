@@ -31,7 +31,6 @@ import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.navigation.Mode;
-import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.graph.WeightedGraph;
 import org.jetbrains.annotations.Nullable;
 

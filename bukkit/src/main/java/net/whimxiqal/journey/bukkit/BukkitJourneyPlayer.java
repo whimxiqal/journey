@@ -23,10 +23,9 @@
 
 package net.whimxiqal.journey.bukkit;
 
-import net.kyori.adventure.audience.Audience;
+import java.util.Optional;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.bukkit.util.MaterialGroups;
 import org.bukkit.Bukkit;
@@ -38,23 +37,14 @@ public class BukkitJourneyPlayer extends InternalJourneyPlayer {
     super(player.getUniqueId(), player.getName());
   }
 
-  private Player player() {
-    return Bukkit.getPlayer(uuid);
-  }
-
   @Override
-  public Cell location() {
-    return BukkitUtil.cell(player().getLocation());
-  }
-
-  @Override
-  public Audience audience() {
-    return Journey.get().proxy().audienceProvider().player(uuid);
+  public Optional<Cell> location() {
+    return Optional.ofNullable(Bukkit.getPlayer(uuid)).map(player -> BukkitUtil.cell(player.getLocation()));
   }
 
   @Override
   public boolean canFly() {
-    Player player = player();
+    Player player = Bukkit.getPlayer(uuid);
     if (player == null) {
       // player is outdated
       return false;
@@ -64,7 +54,7 @@ public class BukkitJourneyPlayer extends InternalJourneyPlayer {
 
   @Override
   public boolean hasBoat() {
-    Player player = player();
+    Player player = Bukkit.getPlayer(uuid);
     if (player == null) {
       // player is outdated
       return false;

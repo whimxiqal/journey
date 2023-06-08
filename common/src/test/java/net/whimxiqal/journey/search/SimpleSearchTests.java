@@ -35,6 +35,7 @@ import net.whimxiqal.journey.JourneyTestHarness;
 import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Itinerary;
+import net.whimxiqal.journey.platform.TestJourneyPlayer;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
 import net.whimxiqal.journey.search.flag.FlagSet;
@@ -49,8 +50,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
   private FlagSet flags;
 
   private SearchSession destinationSession(String origin, String destination) {
-    return new DestinationGoalSearchSession(PLAYER_UUID,
-        SearchSession.Caller.PLAYER,
+    return new DestinationGoalSearchSession(new TestJourneyPlayer(PLAYER_UUID),
         TestPlatformProxy.pois.get(origin),
         TestPlatformProxy.pois.get(destination),
         false,
@@ -58,7 +58,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
   }
 
   private SearchSession domainSession(String origin, int domainDestination) {
-    return new DomainGoalSearchSession(PLAYER_UUID, SearchSession.Caller.PLAYER, TestPlatformProxy.pois.get(origin), domainDestination, false);
+    return new DomainGoalSearchSession(new TestJourneyPlayer(PLAYER_UUID), TestPlatformProxy.pois.get(origin), domainDestination, false);
   }
 
   private void runDestinationSearch(String origin, String destination, ResultState expectedResult) throws InterruptedException, ExecutionException {
@@ -167,8 +167,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
     AtomicInteger failed = new AtomicInteger(0);
 
     BiFunction<String, String, SearchSession> newSearch = (origin, destination) ->
-        new DestinationGoalSearchSession(UUID.randomUUID(),
-            SearchSession.Caller.PLAYER,
+        new DestinationGoalSearchSession(new TestJourneyPlayer(UUID.randomUUID()),
             TestPlatformProxy.pois.get(origin),
             TestPlatformProxy.pois.get(destination),
             false,
@@ -177,7 +176,8 @@ public class SimpleSearchTests extends JourneyTestHarness {
     BiConsumer<SearchSession, ResultState> runSearchAsync = (session, expected) -> {
       session.initialize();
       Assertions.assertEquals(ResultState.IDLE, session.getState());
-      session.search(10).thenAccept(result -> {
+      session.flags().addFlag(Flags.TIMEOUT, 10);
+      session.search().thenAccept(result -> {
         finished.incrementAndGet();
         if (expected != result.state()) {
           System.err.println(session + ": Expected " + expected + ", got " + result.state());

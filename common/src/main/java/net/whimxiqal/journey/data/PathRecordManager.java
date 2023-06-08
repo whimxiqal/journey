@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.Mode;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.search.DestinationPathTrial;
 import org.jetbrains.annotations.NotNull;

@@ -26,6 +26,7 @@ package net.whimxiqal.journey.search;
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Path;
@@ -40,19 +41,9 @@ public class SurfaceGoalSearchSession extends SearchSession {
 
   private final Cell origin;
 
-  public SurfaceGoalSearchSession(UUID callerId, Caller callerType, Cell origin) {
-    super(callerId, callerType);
+  public SurfaceGoalSearchSession(UUID callerId, Caller callerType, JourneyAgent agent, Cell origin) {
+    super(callerId, callerType, agent);
     this.origin = origin;
-  }
-
-  @Override
-  public void initialize() {
-    super.initialize();
-
-    if (callerType == Caller.PLAYER) {
-      setPlayerModes();
-      // We don't need any tunnels for this!
-    }
   }
 
   @Override

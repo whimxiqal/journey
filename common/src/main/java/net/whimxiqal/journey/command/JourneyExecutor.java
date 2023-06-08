@@ -332,7 +332,9 @@ public class JourneyExecutor implements CommandExecutor {
             src.audience().sendMessage(Formatter.error("Could not find a waypoint called ___", name));
             return;
           }
-          destinationSearch(location.get(), endLocation);
+
+          // schedule back on main thread
+          Journey.get().proxy().schedulingManager().schedule(() -> destinationSearch(location.get(), endLocation), false);
         }, true);
       }
 
@@ -349,18 +351,18 @@ public class JourneyExecutor implements CommandExecutor {
             src.audience().sendMessage(Formatter.error("Could not find a public waypoint called ___", name));
             return;
           }
-          destinationSearch(location.get(), endLocation);
+
+          // schedule back on main thread
+          Journey.get().proxy().schedulingManager().schedule(() -> destinationSearch(location.get(), endLocation), false);
         }, true);
       }
 
       private void destinationSearch(Cell startLocation, Cell endLocation) {
-        for (int i = 0; i < 200; i++) {
-          Journey.logger().info("Instantiating search");
-          DestinationGoalSearchSession session = new DestinationGoalSearchSession(UUID.randomUUID(), SearchSession.Caller.PLAYER, startLocation, endLocation, false, true);
-          session.setFlags(flags);
+        InternalJourneyPlayer player = InternalJourneyPlayer.from(src);
+        DestinationGoalSearchSession session = new DestinationGoalSearchSession(player, startLocation, endLocation, false, true);
+        session.setFlags(flags);
 
-          Journey.get().searchManager().launchIngameSearch(session);
-        }
+        Journey.get().searchManager().launchIngameSearch(session);
       }
 
       @Override
@@ -425,7 +427,7 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
         Optional<InternalJourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(cmd.identifiers().get(0));
-        if (!maybePlayer.isPresent()) {
+        if (maybePlayer.isEmpty()) {
           src.audience().sendMessage(Formatter.noPlayer(ctx.user.getText()));
           return CommandResult.failure();
         }
@@ -434,16 +436,16 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
-        if (!location.isPresent()) {
+        if (location.isEmpty()) {
           src.audience().sendMessage(Formatter.error("Your location could not be found"));
           return CommandResult.failure();
         }
         Optional<Cell> otherLocation = Journey.get().proxy().platform().entityCellLocation(maybePlayer.get().uuid());
-        if (!otherLocation.isPresent()) {
+        if (otherLocation.isEmpty()) {
           src.audience().sendMessage(Formatter.error("The other player's location could not be found"));
           return CommandResult.failure();
         }
-        DestinationGoalSearchSession session = new DestinationGoalSearchSession(src.uuid(), SearchSession.Caller.PLAYER, location.get(), otherLocation.get(), false, false);
+        DestinationGoalSearchSession session = new DestinationGoalSearchSession(maybePlayer.get(), location.get(), otherLocation.get(), false, false);
 
         Journey.get().searchManager().launchIngameSearch(session);
         return CommandResult.success();
@@ -457,7 +459,7 @@ public class JourneyExecutor implements CommandExecutor {
         String waypoint = cmd.identifiers().get(1);
         Optional<InternalJourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(cmd.identifiers().get(0));
         if (maybePlayer.isPresent()) {
-          visitPlayerWaypoint(ctx, playerName, maybePlayer.get().uuid(), waypoint);
+          visitPlayerWaypoint(playerName, maybePlayer.get().uuid(), waypoint);
           return CommandResult.success();
         }
 
@@ -467,13 +469,13 @@ public class JourneyExecutor implements CommandExecutor {
           if (uuid == null) {
             src.audience().sendMessage(Formatter.error("A problem occurred trying to access that player's information"));
           } else {
-            visitPlayerWaypoint(ctx, playerName, uuid, waypoint);
+            visitPlayerWaypoint(playerName, uuid, waypoint);
           }
         }, true);
         return CommandResult.success();
       }
 
-      private void visitPlayerWaypoint(JourneyParser.PlayerWaypointContext ctx, String playerName, UUID dstPlayer, String waypoint) {
+      private void visitPlayerWaypoint(String playerName, UUID dstPlayer, String waypoint) {
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
 
         if (location.isEmpty()) {
@@ -491,7 +493,9 @@ public class JourneyExecutor implements CommandExecutor {
             return;
           }
 
-          destinationSearch(location.get(), manager.getWaypoint(dstPlayer, waypoint));
+          Cell destination = manager.getWaypoint(dstPlayer, waypoint);
+          // schedule back on main thread
+          Journey.get().proxy().schedulingManager().schedule(() -> destinationSearch(location.get(), destination), false);
         }, true);
       }
 

@@ -25,7 +25,7 @@ package net.whimxiqal.journey.manager;
 
 import java.util.LinkedList;
 import java.util.List;
-import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.TunnelSupplier;
 
@@ -37,11 +37,11 @@ public class TunnelManager {
     tunnelSuppliers.add(tunnelSupplier);
   }
 
-  public List<Tunnel> tunnels(JourneyPlayer player) {
+  public List<Tunnel> tunnels(JourneyAgent agent) {
     List<Tunnel> tunnels = new LinkedList<>();
     for (TunnelSupplier supplier : tunnelSuppliers) {
-      for (Tunnel tunnel : supplier.tunnels(player)) {
-        if (player == null || tunnel.permission().stream().allMatch(player::hasPermission)) {
+      for (Tunnel tunnel : supplier.tunnels(agent)) {
+        if (agent == null || tunnel.permission().stream().allMatch(agent::hasPermission)) {
           tunnels.add(tunnel);
         }
       }

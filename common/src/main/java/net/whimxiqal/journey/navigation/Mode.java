@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.search.ModeType;
 import org.jetbrains.annotations.NotNull;
 
 /**
