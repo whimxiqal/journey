@@ -35,12 +35,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.data.PathRecordManager;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
 import net.whimxiqal.journey.search.DestinationPathTrial;
@@ -162,7 +163,7 @@ public class SqlPathRecordManager
         statement.setInt(3, step.location().blockY());
         statement.setInt(4, step.location().blockZ());
         statement.setInt(5, i);
-        statement.setInt(6, step.modeType().ordinal());
+        statement.setInt(6, step.mode().id());
         statement.execute();
       } catch (SQLException e) {
         e.printStackTrace();
@@ -179,7 +180,7 @@ public class SqlPathRecordManager
             "mode_type"));
 
         statement.setLong(1, pathReportId);
-        statement.setInt(2, modeType.ordinal());
+        statement.setInt(2, modeType.id());
 
         statement.execute();
       } catch (SQLException e) {
@@ -262,7 +263,7 @@ public class SqlPathRecordManager
             + "path_id = " + record.id()).executeQuery();
         while (modeResult.next()) {
           record.modes().add(new PathTrialModeRecord(record,
-              ModeType.values()[(modeResult.getInt("mode_type"))]));
+              Objects.requireNonNull(ModeType.get(modeResult.getInt("mode_type")))));
         }
         records.add(record);
       }
@@ -382,7 +383,7 @@ public class SqlPathRecordManager
         resultSet.getInt("y"),
         resultSet.getInt("z"),
         resultSet.getInt("path_index"),
-        ModeType.values()[resultSet.getInt("mode_type")]
+        Objects.requireNonNull(ModeType.get(resultSet.getInt("mode_type")))
     );
   }
 

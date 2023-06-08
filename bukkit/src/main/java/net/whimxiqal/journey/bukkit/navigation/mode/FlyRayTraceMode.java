@@ -24,7 +24,7 @@
 package net.whimxiqal.journey.bukkit.navigation.mode;
 
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import org.bukkit.FluidCollisionMode;
 import org.jetbrains.annotations.NotNull;
 

@@ -25,6 +25,7 @@ package net.whimxiqal.journey.manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +37,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
@@ -71,27 +73,25 @@ public final class SearchManager {
   /**
    * Store a journey. Stops the previously running journey if there was one.
    *
-   * @param callerId the caller id
+   * @param playerId the player id
    * @param journey  the journey
-   * @return the old journey
    */
-  public PlayerJourneySession putJourney(@NotNull UUID callerId, PlayerJourneySession journey) {
-    PlayerJourneySession oldJourney = this.playerJourneys.put(callerId, journey);
+  public void putJourney(@NotNull UUID playerId, PlayerJourneySession journey) {
+    PlayerJourneySession oldJourney = this.playerJourneys.put(playerId, journey);
     if (oldJourney != null) {
       oldJourney.stop();
     }
-    return oldJourney;
   }
 
   /**
    * Get the journey.
    *
-   * @param callerId the caller id
+   * @param playerId the player id
    * @return the journey, or null if it doesn't exist
    */
   @Nullable
-  public PlayerJourneySession getJourney(@NotNull UUID callerId) {
-    return playerJourneys.get(callerId);
+  public PlayerJourneySession getJourney(@NotNull UUID playerId) {
+    return playerJourneys.get(playerId);
   }
 
   /**
@@ -113,12 +113,6 @@ public final class SearchManager {
       return future;
     }
 
-    Audience audience = switch (session.getCallerType()) {
-      case PLAYER -> Journey.get().proxy().audienceProvider().player(caller);
-      case CONSOLE -> Journey.get().proxy().audienceProvider().console();
-      default -> Audience.empty();
-    };
-
     // update player maps
     SearchSession existingSession = playerSearches.get(caller);
     if (existingSession != null) {
@@ -135,7 +129,7 @@ public final class SearchManager {
     }
 
     // launch
-    doLaunchSearch(caller, audience, session, future);
+    doLaunchSearch(session, future);
     return future;
   }
 
@@ -143,12 +137,11 @@ public final class SearchManager {
    * A helper method that may be called again for the purposes of re-queueing the request
    * if another search is still executing, and we must wait for it to stop
    *
-   * @param caller   the caller
-   * @param audience the audience of the caller
    * @param session  the session we wish to run
    */
-  private void doLaunchSearch(UUID caller, Audience audience, SearchSession session, CompletableFuture<SearchSession.Result> future) {
+  private void doLaunchSearch(SearchSession session, CompletableFuture<SearchSession.Result> future) {
     Journey.get().statsManager().incrementSearches();
+    UUID caller = Objects.requireNonNull(session.getCallerId());  // launches here in the search manager must have caller ids
     playerSearches.put(caller, session);
     session.initialize();
 
@@ -157,12 +150,17 @@ public final class SearchManager {
         .append(Component.newline())
         .append(Component.text(flag.name() + ":").color(Formatter.DARK).decorate(TextDecoration.BOLD))
         .append(Component.text(session.flags().printValueFor(flag)).color(Formatter.GOLD))));
+
+    Audience audience = switch (session.getCallerType()) {
+      case PLAYER -> Journey.get().proxy().audienceProvider().player(caller);
+      case CONSOLE -> Journey.get().proxy().audienceProvider().console();
+      default -> Audience.empty();
+    };
     audience.sendMessage(Component.text()
         .append(Formatter.prefix())
         .append(Formatter.hover(Component.text("Searching...").color(Formatter.INFO), hoverText.get())));
 
-    int timeout = session.flags().getValueFor(Flags.TIMEOUT);
-    session.search(timeout).thenAccept(result -> {
+    session.search().thenAccept(result -> {
       if (result == null) {
         Journey.logger().debug(session + ": session never ran and was unscheduled");
         future.complete(null);
@@ -202,14 +200,12 @@ public final class SearchManager {
                                       .color(Formatter.ACCENT)))
                               .build()))));
 
-              if (session.getCallerType() == SearchSession.Caller.PLAYER) {
-                PlayerJourneySession journey = new PlayerJourneySession(session.getCallerId(), session, itinerary);
-                journey.run();
-
-                // Save the journey
-                Journey.get().searchManager().putJourney(session.getCallerId(), journey);
-              }
+              PlayerJourneySession journey = new PlayerJourneySession(session.getAgentUuid(), session, itinerary);
+              // Save the journey
+              putJourney(session.getAgentUuid(), journey);
+              journey.run();
             } else {
+              // itinerary is null, so we have no JourneySession to start
               audience.sendMessage(Formatter.success("Search complete!"));
             }
           }
@@ -223,7 +219,7 @@ public final class SearchManager {
         playerSearches.remove(caller);
         if (nextPlayerSearches.containsKey(caller)) {
           QueuedSearch newSession = nextPlayerSearches.remove(caller);
-          doLaunchSearch(caller, audience, newSession.session, newSession.future);
+          doLaunchSearch(newSession.session, newSession.future);
         }
         future.complete(result);
       }, false);
@@ -247,14 +243,19 @@ public final class SearchManager {
         Optional<InternalJourneyPlayer> player = Journey.get().proxy()
             .platform()
             .onlinePlayer(journeyingPlayer);
-        if (player.isPresent()) {
-          try {
-            Journey.get().locationManager().tryUpdateLocation(journeyingPlayer, player.get().location());
-          } catch (ExecutionException | InterruptedException e) {
-            Journey.logger().error("Internal error trying to update the cached location of player " + player.get().uuid());
-            e.printStackTrace();
-            // just log and continue
-          }
+        if (player.isEmpty()) {
+          continue;
+        }
+        Optional<Cell> location = player.get().location();
+        if (location.isEmpty()) {
+          continue;
+        }
+        try {
+          Journey.get().locationManager().tryUpdateLocation(journeyingPlayer, location.get());
+        } catch (ExecutionException | InterruptedException e) {
+          Journey.logger().error("Internal error trying to update the cached location of player " + player.get().uuid());
+          e.printStackTrace();
+          // just log and continue
         }
       }
     }, false, 5);

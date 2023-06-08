@@ -28,14 +28,17 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import net.kyori.adventure.audience.Audience;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.navigation.Mode;
-import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.SimpleTimer;
 
@@ -49,12 +52,12 @@ public class EverythingSearch extends SearchSession {
   private int pathTrialsCompleted = 0;
 
   public EverythingSearch(UUID caller, Caller callerType) {
-    super(caller, callerType);
-    flags.addFlag(Flags.TIMEOUT, -1);
-    flags.addFlag(Flags.FLY, false);
-    flags.addFlag(Flags.ANIMATE, 0);
-    flags.addFlag(Flags.DIG, false);
-    flags.addFlag(Flags.DOOR, true);
+    super(caller, callerType, new EverythingSearchAgent(caller));
+    flags.addFlag(Flags.TIMEOUT, -1); // no timeout
+    flags.addFlag(Flags.FLY, false);  // no flying for cached paths
+    flags.addFlag(Flags.ANIMATE, 0);  // don't animate
+    flags.addFlag(Flags.DIG, false);  // don't dig
+    flags.addFlag(Flags.DOOR, true);  // allow going through doors
   }
 
   @Override
@@ -149,17 +152,48 @@ public class EverythingSearch extends SearchSession {
   }
 
   @Override
-  public void initialize() {
-    super.initialize();
-    setPlayerModes();
-    setTunnels(Journey.get().tunnelManager().tunnels(null));
-  }
-
-  @Override
   public String toString() {
     return "[Everything Search] {session: " + uuid
         + ", caller: (" + callerType + ") " + callerId
         + ", state: " + state.get()
         + '}';
   }
+
+  private record EverythingSearchAgent(UUID caller) implements JourneyAgent {
+
+    @Override
+    public UUID uuid() {
+      return caller;
+    }
+
+    @Override
+      public Optional<Cell> location() {
+        return Optional.empty();
+      }
+
+      @Override
+      public boolean hasPermission(String permission) {
+        return true;  // This agent has every permission
+      }
+
+      @Override
+      public Audience audience() {
+        return Audience.empty();
+      }
+
+      @Override
+      public Set<ModeType> modeCapabilities() {
+        return Set.of(
+            ModeType.WALK,
+            ModeType.JUMP,
+            ModeType.SWIM,
+  //          ModeType.FLY,  Don't need the fly mode because we disallow it in flags anyway
+            ModeType.BOAT,
+            ModeType.DOOR,
+            ModeType.CLIMB,
+            ModeType.DIG,
+            ModeType.TUNNEL
+        );
+      }
+    }
 }

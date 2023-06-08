@@ -75,7 +75,9 @@ public class ScopeManager {
             .filter(p -> !p.uuid().equals(player.uuid()))
             .collect(Collectors.<JourneyPlayer, String, Scope>toMap(JourneyPlayer::name, p -> Scope.builder()
                 .name(Component.text(p.name()))
-                .destinations(() -> VirtualMap.ofSingleton(p.name(), Destination.builder(p.location()).permission(Permission.PATH_PLAYER_ENTITY.path()).build()))
+                .destinations(() -> p.location()
+                    .map(location -> VirtualMap.ofSingleton(p.name(), Destination.builder(location).permission(Permission.PATH_PLAYER_ENTITY.path()).build()))
+                    .orElse(VirtualMap.empty()))
                 .subScopes(() -> VirtualMap.ofSingleton("waypoints", Scope.builder()
                     .name(Component.text(p.name() + "'s Waypoints"))
                     .description(Formatter.dull("Go to this player"))
@@ -91,7 +93,7 @@ public class ScopeManager {
                 .build()))))
         .build());
     register(Journey.NAME, "world", new InternalScope(Scope.builder()
-            .name(Component.text("Worlds"))
+        .name(Component.text("Worlds"))
         .build(),
         p1 -> VirtualMap.empty(),
         p1 -> VirtualMap.of(Journey.get().proxy().platform().domainResourceKeys()
@@ -101,13 +103,13 @@ public class ScopeManager {
                 new InternalScope(Scope.builder()
                     .name(Component.text(entry.getKey()))
                     .build(),
-                    p2 -> VirtualMap.of(entry.getValue().entrySet().stream()
-                        .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
+                    p2 -> p2.location().map(cell -> VirtualMap.of(entry.getValue().entrySet().stream()
+                        .filter(entry2 -> entry2.getValue() != cell.domain())  // can't request to go to their current domain
                         .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
-                          SearchSession session = new DomainGoalSearchSession(p2.uuid(), SearchSession.Caller.PLAYER, p2.location(), entry2.getValue(), false);
+                          SearchSession session = new DomainGoalSearchSession(p2.uuid(), SearchSession.Caller.PLAYER, p2, cell, entry2.getValue(), false);
                           session.addPermission(Permission.PATH_WORLD.path());
                           return session;
-                        }))),
+                        })))).orElseGet(VirtualMap::empty),
                     p2 -> VirtualMap.empty()))))));
   }
 

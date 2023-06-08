@@ -32,7 +32,7 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.chunk.Direction;
 import net.whimxiqal.journey.navigation.Mode;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.proxy.JourneyDoor;
 import net.whimxiqal.journey.search.SearchSession;
 import org.jetbrains.annotations.NotNull;

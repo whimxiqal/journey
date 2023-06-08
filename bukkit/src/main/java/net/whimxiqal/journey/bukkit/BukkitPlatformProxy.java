@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyBlock;
 import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyChunk;
@@ -41,7 +42,7 @@ import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
@@ -148,13 +149,13 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void prepareDestinationSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, Cell destination) {
-    Player player = Bukkit.getPlayer(playerUuid);
+  public void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination) {
+    Player player = Bukkit.getPlayer(agent.uuid());
     if (player == null) {
       return;
     }
     if (player.getAllowFlight() && flags.getValueFor(Flags.FLY)) {
-      search.addMode(new FlyRayTraceMode(destination));
+      searchSession.addMode(new FlyRayTraceMode(destination));
     }
   }
 

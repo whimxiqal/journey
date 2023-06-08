@@ -4,5 +4,5 @@ main: net.whimxiqal.journey.bukkit.JourneyBukkit
 api-version: 1.17
 authors:
   - whimxiqal
-description: A path-optimization Minecraft solution
-website: https://github.com/whimxiqal/journey
+description: A GPS for Minecraft
+website: https://journey.whimxiqal.net

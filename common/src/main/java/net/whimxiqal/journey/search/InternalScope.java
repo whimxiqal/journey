@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Destination;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
@@ -36,7 +38,7 @@ import net.whimxiqal.journey.util.Permission;
 
 /**
  * Wrapper around public-facing {@link Scope}s which stores {@link SearchSession}s as the base component
- * (rather than {@link net.whimxiqal.journey.Destination}s.
+ * (rather than {@link net.whimxiqal.journey.Destination}s).
  */
 public class InternalScope {
 
@@ -57,14 +59,18 @@ public class InternalScope {
   public InternalScope(Scope scope, Function<JourneyPlayer, VirtualMap<SearchSession>> sessions, Function<JourneyPlayer, VirtualMap<InternalScope>> internalScopes) {
     this.scope = scope;
     this.sessions = player -> VirtualMap.of(() -> {
+      Optional<Cell> playerLocation = player.location();
+      if (playerLocation.isEmpty()) {
+        return Collections.emptyMap();
+      }
       Map<String, SearchSession> sessionMap = new HashMap<>(sessions.apply(player).getAll());
-      scope.destinations(player).getAll().forEach((name, destination) -> {
-        SearchSession session = new DestinationGoalSearchSession(player.uuid(), SearchSession.Caller.PLAYER, player.location(), destination.location(), false, true);
-        session.setName(destination.name());
-        session.setDescription(destination.description());
-        destination.permission().ifPresent(perm -> Permission.journeyPathExtend(perm).forEach(session::addPermission));
-        sessionMap.put(name, session);
-      });
+      for (Map.Entry<String, ? extends Destination> destination : scope.destinations(player).getAll().entrySet()) {
+        SearchSession session = new DestinationGoalSearchSession(player, playerLocation.get(), destination.getValue().location(), false, true);
+        session.setName(destination.getValue().name());
+        session.setDescription(destination.getValue().description());
+        destination.getValue().permission().ifPresent(perm -> Permission.journeyPathExtend(perm).forEach(session::addPermission));
+        sessionMap.put(destination.getKey(), session);
+      }
       return sessionMap;
     }, sessions.apply(player).size() + scope.destinations(player).size());
     this.internalSubScopes = player -> VirtualMap.of(() -> {

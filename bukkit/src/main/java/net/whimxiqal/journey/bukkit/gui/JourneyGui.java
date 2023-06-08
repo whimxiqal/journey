@@ -113,7 +113,7 @@ public class JourneyGui {
         .title(title.build())
         .rows(6)
         .create();
-    GuiItem fillerItem = ItemBuilder.from(Material.BLACK_STAINED_GLASS_PANE).asGuiItem();
+    GuiItem fillerItem = ItemBuilder.from(Material.BLACK_STAINED_GLASS_PANE).name(Component.empty()).asGuiItem();
     gui.getFiller().fillTop(fillerItem);
     gui.getFiller().fillBottom(fillerItem);
     gui.setItem(6, 2, ItemBuilder.from(Material.PAPER).name(Formatter.accent("Previous")).asGuiItem(event -> gui.previous()));

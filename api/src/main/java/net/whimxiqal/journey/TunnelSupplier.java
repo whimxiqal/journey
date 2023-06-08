@@ -39,6 +39,7 @@ public interface TunnelSupplier {
    * @param player the player
    * @return the tunnels
    */
-  Collection<? extends Tunnel> tunnels(@Nullable JourneyPlayer player);
+  @Synchronous
+  Collection<? extends Tunnel> tunnels(@Nullable JourneyAgent player);
 
 }

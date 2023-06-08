@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.schematic;
 
+import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
 import net.whimxiqal.journey.Cell;
@@ -40,8 +41,8 @@ public class SchematicPlayer extends InternalJourneyPlayer {
   }
 
   @Override
-  public Cell location() {
-    return location;
+  public Optional<Cell> location() {
+    return Optional.of(location);
   }
 
   public void setLocation(Cell location) {

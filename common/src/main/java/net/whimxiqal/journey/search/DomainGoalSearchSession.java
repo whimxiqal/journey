@@ -25,23 +25,19 @@ package net.whimxiqal.journey.search;
 
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.JourneyAgent;
+import net.whimxiqal.journey.JourneyPlayer;
 
 public class DomainGoalSearchSession extends GraphGoalSearchSession<DomainSearchGraph> {
   protected final int domain;
 
-  public DomainGoalSearchSession(UUID callerId, Caller callerType, Cell origin, int destinationDomain, boolean persistentOrigin) {
-    super(callerId, callerType, origin, persistentOrigin);
+  public DomainGoalSearchSession(UUID callerId, Caller callerType, JourneyAgent agent, Cell origin, int destinationDomain, boolean persistentOrigin) {
+    super(callerId, callerType, agent, origin, persistentOrigin);
     this.domain = destinationDomain;
   }
 
-  @Override
-  public void initialize() {
-    super.initialize();
-
-    if (callerType == Caller.PLAYER) {
-      setPlayerModes();
-      setPlayerTunnels();
-    }
+  public DomainGoalSearchSession(JourneyPlayer player, Cell origin, int destinationDomain, boolean persistentOrigin) {
+    this(player.uuid(), Caller.PLAYER, player, origin, destinationDomain, persistentOrigin);
   }
 
   @Override

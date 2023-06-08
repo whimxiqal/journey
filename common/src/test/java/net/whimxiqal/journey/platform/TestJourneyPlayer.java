@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.platform;
 
+import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
 import net.whimxiqal.journey.Cell;
@@ -35,8 +36,8 @@ public class TestJourneyPlayer extends InternalJourneyPlayer {
   }
 
   @Override
-  public Cell location() {
-    return LOCATION;
+  public Optional<Cell> location() {
+    return Optional.of(LOCATION);
   }
 
   @Override

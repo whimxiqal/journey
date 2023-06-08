@@ -26,12 +26,14 @@ package net.whimxiqal.journey.navigation;
 import java.io.Serializable;
 import java.util.Objects;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.search.ModeType;
+import net.whimxiqal.journey.search.SearchStep;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A representation of a movement step between {@link Cell}s on a {@link Path}.
  */
-public class Step implements Serializable, Moded {
+public class Step implements Serializable, SearchStep {
   private final Cell location;
   private final double length;
   private final ModeType modeType;
@@ -51,7 +53,7 @@ public class Step implements Serializable, Moded {
   }
 
   @Override
-  public @NotNull ModeType modeType() {
+  public ModeType mode() {
     return modeType;
   }
 

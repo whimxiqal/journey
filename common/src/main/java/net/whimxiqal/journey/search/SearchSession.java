@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -38,12 +37,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Describable;
-import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyAgent;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.Synchronous;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Mode;
-import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.navigation.mode.BoatMode;
 import net.whimxiqal.journey.navigation.mode.ClimbMode;
 import net.whimxiqal.journey.navigation.mode.DigMode;
@@ -67,9 +67,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class SearchSession implements Describable {
 
   protected final SimpleTimer timer = new SimpleTimer();
+  @Nullable
   protected final UUID callerId;
   protected final UUID uuid = UUID.randomUUID();
   protected final Caller callerType;
+  protected final JourneyAgent agent;
   protected final FlagSet flags = new FlagSet();
   private final AtomicReference<List<Tunnel>> tunnels = new AtomicReference<>(Collections.emptyList());
   private final AtomicReference<List<Mode>> modes = new AtomicReference<>(Collections.emptyList());
@@ -79,52 +81,47 @@ public abstract class SearchSession implements Describable {
   private Component name = Component.empty();
   private List<Component> description = Collections.emptyList();
 
-  protected SearchSession(UUID callerId, Caller callerType) {
+  protected SearchSession(@Nullable UUID callerId, Caller callerType, JourneyAgent agent) {
     this.callerId = callerId;
     this.callerType = callerType;
+    this.agent = agent;
   }
 
-  protected final void setPlayerModes() {
-    boolean fly = false;
-    boolean boat = false;
-    List<Mode> modes = new LinkedList<>();
-
-    Optional<InternalJourneyPlayer> player = Journey.get().proxy().platform().onlinePlayer(callerId);
-    if (player.isPresent()) {
-      fly = flags.getValueFor(Flags.FLY) && player.get().canFly();
-      boat = player.get().hasBoat();
-    }
-
-    if (fly) {
-      modes.add(new FlyMode());
-    } else {
-      modes.add(new WalkMode());
-      modes.add(new JumpMode());
-      modes.add(new SwimMode());
-      if (boat) {
-        modes.add(new BoatMode());
-      }
-    }
-    modes.add(new DoorMode());
-    modes.add(new ClimbMode());
-    if (flags.getValueFor(Flags.DIG)) {
-      modes.add(new DigMode());
-    }
-    setModes(modes);
+  protected SearchSession(JourneyPlayer player) {
+    this.callerId = player.uuid();
+    this.callerType = Caller.PLAYER;
+    this.agent = player;
   }
 
-  protected final void setPlayerTunnels() {
-    setTunnels(Journey.get().tunnelManager().tunnels(Journey.get().proxy().platform().onlinePlayer(getCallerId()).orElse(null)));
+  /**
+   * Build a standard {@link Mode} from a {@link ModeType}.
+   *
+   * @param modeType the type of mode
+   * @return the mode, or null if no mode is mapped to the mode type
+   */
+  public static Mode buildMode(ModeType modeType) {
+    return switch (modeType) {
+      case NONE, TUNNEL -> null;
+      case WALK -> new WalkMode();
+      case JUMP -> new JumpMode();
+      case SWIM -> new SwimMode();
+      case FLY -> new FlyMode();
+      case BOAT -> new BoatMode();
+      case DOOR -> new DoorMode();
+      case CLIMB -> new ClimbMode();
+      case DIG -> new DigMode();
+    };
   }
 
   /**
    * Perform the titular search operation.
    */
-  public final CompletableFuture<Result> search(int timeout) {
+  public final CompletableFuture<Result> search() {
     Journey.logger().debug(this + ": scheduling search");
     // kick off the first portion
     Journey.get().proxy().schedulingManager().schedule(this::asyncSearch, true);
     // Set up timeout task
+    int timeout = flags().getValueFor(Flags.TIMEOUT);
     if (timeout > 0) {
       Journey.get().proxy().schedulingManager().schedule(() -> stop(false), false, timeout * 20 /* ticks per second */);
     }
@@ -232,6 +229,7 @@ public abstract class SearchSession implements Describable {
    *
    * @return the id
    */
+  @Nullable
   public final UUID getCallerId() {
     return callerId;
   }
@@ -262,8 +260,35 @@ public abstract class SearchSession implements Describable {
     return flags;
   }
 
+  @Synchronous
   public void initialize() {
-    // do nothing by default
+    List<Mode> modeList = new LinkedList<>();
+    for (ModeType modeType : agent.modeCapabilities()) {
+      switch (modeType) {
+        case FLY -> {
+          if (!flags.getValueFor(Flags.FLY)) {
+            continue;
+          }
+        }
+        case DIG -> {
+          if (!flags.getValueFor(Flags.DIG)) {
+            continue;
+          }
+        }
+      }
+      if (modeType == ModeType.TUNNEL) {
+        setTunnels(Journey.get().tunnelManager().tunnels(agent));
+        continue;
+      } else if (modeType == ModeType.FLY && !flags.getValueFor(Flags.FLY)) {
+        continue;
+      }
+
+      Mode mode = buildMode(modeType);
+      if (mode != null) {
+        modeList.add(mode);
+      }
+    }
+    setModes(modeList);
   }
 
   @Override
@@ -324,6 +349,10 @@ public abstract class SearchSession implements Describable {
     return permissions;
   }
 
+  public UUID getAgentUuid() {
+    return agent.uuid();
+  }
+
   /**
    * The caller type. A search session may be created for multiple types of entities,
    * but generally they are players.
@@ -333,6 +362,7 @@ public abstract class SearchSession implements Describable {
   public enum Caller {
     PLAYER,
     CONSOLE,
+    PLUGIN,
     OTHER
   }
 

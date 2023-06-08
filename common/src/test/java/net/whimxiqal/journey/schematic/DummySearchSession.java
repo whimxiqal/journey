@@ -27,7 +27,7 @@ import net.whimxiqal.journey.search.SearchSession;
 
 public class DummySearchSession extends SearchSession {
   protected DummySearchSession() {
-    super(SchematicSearchTests.PLAYER.uuid(), Caller.PLAYER);
+    super(SchematicSearchTests.PLAYER);
   }
 
   @Override

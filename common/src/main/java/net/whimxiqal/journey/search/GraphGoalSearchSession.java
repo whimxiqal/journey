@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.Tunnel;
 
 /**
@@ -46,9 +47,9 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
   protected final boolean persistentOrigin;
   protected final State stateInfo = new State();
 
-  public GraphGoalSearchSession(UUID callerId, Caller callerType,
+  public GraphGoalSearchSession(UUID callerId, Caller callerType, JourneyAgent agent,
                                 Cell origin, boolean persistentOrigin) {
-    super(callerId, callerType);
+    super(callerId, callerType, agent);
     this.origin = origin;
     this.persistentOrigin = persistentOrigin;
   }

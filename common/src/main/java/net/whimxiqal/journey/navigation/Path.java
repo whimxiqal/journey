@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.search.ModeType;
 import org.jetbrains.annotations.NotNull;
 
 /**

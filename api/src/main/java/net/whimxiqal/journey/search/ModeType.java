@@ -21,66 +21,75 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.navigation;
+package net.whimxiqal.journey.search;
 
-import java.io.Serializable;
-import net.whimxiqal.journey.Tunnel;
-import org.jetbrains.annotations.NotNull;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * An enumeration of all possible mode types we allow.
+ * A type of transportation that allows {@link net.whimxiqal.journey.JourneyAgent}s, like players,
+ * to move about a Minecraft world.
  */
-public enum ModeType implements Serializable {
+public enum ModeType {
 
   /**
-   * We actually don't move to get here.
+   * No movement.
    */
-  NONE("none"),  // Origin, for example
-  WALK("walk"),
-  JUMP("jump"),
-  SWIM("swim"),
-  FLY("fly"),
+  NONE(0),
+  WALK(1),
+  JUMP(2),
+  SWIM(3),
+  FLY(4),
+  BOAT(5),
+  // RAIL(6),
+  // BUILD(7),
   /**
-   * Travel by boat.
+   * Moving through doors, either open or closed.
    */
-  BOAT("boat"),
+  DOOR(8),
+  CLIMB(9),
+  DIG(10),
   /**
-   * Travel by mine cart.
+   * Entering through {@link net.whimxiqal.journey.Tunnel}s, like teleporting or going through
+   * Nether portals.
    */
-  RAIL("rail"),
-  /**
-   * Travel by building somewhere (across or upward, by creating a platform).
-   */
-  BUILD("build"),
-  /**
-   * Travel by passing through a door.
-   */
-  DOOR("door"),
-  /**
-   * Travel by climbing something, like a ladder or a vine.
-   */
-  CLIMB("climb"),
-  /**
-   * Travel by walking and digging through blocks
-   */
-  DIG("dig"),
-  /**
-   * Travel via a {@link Tunnel}
-   */
-  TUNNEL("tunnel");
+  TUNNEL(11);
 
-  private final String id;
+  private static final Map<Integer, ModeType> MODE_TYPE_MAP = new HashMap<>();
 
-  ModeType(@NotNull String id) {
+  static {
+    for (ModeType type : values()) {
+      MODE_TYPE_MAP.put(type.id, type);
+    }
+  }
+
+  private final int id;
+
+  ModeType(int id) {
     this.id = id;
   }
 
-  public String id() {
+  /**
+   * Get a mode type by its id, or null if no mode exists with the given id.
+   *
+   * @param id the id
+   * @return the mode type
+   */
+  public static ModeType get(int id) {
+    return MODE_TYPE_MAP.get(id);
+  }
+
+  /**
+   * The permanent id of the mode type, which is used for serialization.
+   *
+   * @return the id
+   */
+  public int id() {
     return id;
   }
 
   @Override
   public String toString() {
-    return id;
+    return "ModeType{name=" + name() + ", id=" + id + '}';
   }
 }

@@ -4,7 +4,7 @@ plugins {
 
 defaultTasks 'updateLicensesMain', 'build'
 
-static def suffix() {
+static def suffix(String apiVersion) {
     def journeyEnv = System.getenv('JOURNEY_ENV')
     int commitsSinceMajorVersion
     def tagInfo = 'git describe --tags'.execute().text.trim()
@@ -18,21 +18,21 @@ static def suffix() {
         return '.' + commitsSinceMajorVersion
     } else {
         // Non-production
-        boolean prerelease = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim().startsWith('release')
         StringBuilder builder = new StringBuilder()
-        if (!prerelease) {
+        if (tagInfo.startsWith(apiVersion)) {
+            // We are working on the current major/minor version
             String numberOfDevCommits = 'git rev-list HEAD --not origin/main --count'.execute().text.trim()
             if (!numberOfDevCommits.isEmpty()) {
+                // subtract dev commit count so we get accurate version from main branch
                 commitsSinceMajorVersion -= Integer.parseInt(numberOfDevCommits)
             }
             builder.append('.').append(commitsSinceMajorVersion)
+        } else {
+            // We are working on a newer version, so there are no patch commits
+            builder.append('.0')
         }
         builder.append('-')
-        if (prerelease) {
-            builder.append('prerelease')
-        } else {
-            builder.append('dev')
-        }
+        builder.append('dev')
         builder.append('-').append((String) 'git rev-parse --short HEAD'.execute().text.trim())
         return builder.toString()
     }
@@ -47,12 +47,12 @@ subprojects {
     project.ext.snapshot = true
 
     project.ext.majorVersion = '1'
-    project.ext.minorVersion = '0'
+    project.ext.minorVersion = '1'
 
     project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
     project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
     project.ext.apiFullVersion = project.ext.apiVersion + project.ext.snapshotVersion
-    project.ext.fullVersion = project.ext.apiVersion + suffix()
+    project.ext.fullVersion = project.ext.apiVersion + suffix(project.ext.apiVersion)
     version = project.ext.fullVersion
     group = 'net.whimxiqal.journey'
 

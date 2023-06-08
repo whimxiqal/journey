@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
 import net.whimxiqal.journey.search.DestinationPathTrial;
@@ -74,7 +74,7 @@ public class TestPathRecordManager implements PathRecordManager {
           steps.get(i).location().blockY(),
           steps.get(i).location().blockZ(),
           i,
-          steps.get(i).modeType());
+          steps.get(i).mode());
       pathTrialCellRecords.add(cellRecord);
       cells.add(cellRecord);
     }

@@ -26,6 +26,8 @@ package net.whimxiqal.journey.search;
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyAgent;
+import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Tunnel;
 
 public class DestinationGoalSearchSession extends GraphGoalSearchSession<DestinationSearchGraph> {
@@ -33,12 +35,16 @@ public class DestinationGoalSearchSession extends GraphGoalSearchSession<Destina
   protected final Cell destination;
   private final boolean persistentDestination;
 
-  public DestinationGoalSearchSession(UUID callerId, Caller callerType,
+  public DestinationGoalSearchSession(UUID callerId, Caller callerType, JourneyAgent agent,
                                       Cell origin, Cell destination,
                                       boolean persistentOrigin, boolean persistentDestination) {
-    super(callerId, callerType, origin, persistentOrigin);
+    super(callerId, callerType, agent, origin, persistentOrigin);
     this.destination = destination;
     this.persistentDestination = persistentDestination;
+  }
+
+  public DestinationGoalSearchSession(JourneyPlayer player, Cell origin, Cell destination, boolean persistentOrigin, boolean persistentDestination) {
+    this(player.uuid(), Caller.PLAYER, player, origin, destination, persistentOrigin, persistentDestination);
   }
 
   @Override
@@ -49,12 +55,7 @@ public class DestinationGoalSearchSession extends GraphGoalSearchSession<Destina
   @Override
   public void initialize() {
     super.initialize();
-
-    if (callerType == Caller.PLAYER) {
-      setPlayerModes();
-      setPlayerTunnels();
-      Journey.get().proxy().platform().prepareDestinationSearchSession(this, getCallerId(), flags, destination);
-    }
+    Journey.get().proxy().platform().prepareDestinationSearchSession(this, agent, flags, destination);
   }
 
   @Override

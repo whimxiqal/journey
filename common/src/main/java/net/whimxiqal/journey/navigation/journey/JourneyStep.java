@@ -28,11 +28,9 @@ import java.util.UUID;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigation.ModeType;
-import net.whimxiqal.journey.navigation.Moded;
-import org.jetbrains.annotations.NotNull;
+import net.whimxiqal.journey.search.ModeType;
 
-public class JourneyStep implements Moded {
+public class JourneyStep {
 
   private final UUID entityUuid;
   private final int domain;
@@ -69,7 +67,7 @@ public class JourneyStep implements Moded {
     }
     double startingCompletedLength = completedLength;
     Optional<Vector> maybeLoc = Journey.get().proxy().platform().entityVector(entityUuid);
-    if (!maybeLoc.isPresent()) {
+    if (maybeLoc.isEmpty()) {
       Journey.logger().error("Could not find location of entity "
           + entityUuid.toString()
           + " while updating JourneyStep");
@@ -122,11 +120,6 @@ public class JourneyStep implements Moded {
       curZ += deltaZ;
       distance += PlayerJourneySession.PARTICLE_UNIT_DISTANCE;
     }
-  }
-
-  @Override
-  public @NotNull ModeType modeType() {
-    return modeType;
   }
 
   public int domain() {
