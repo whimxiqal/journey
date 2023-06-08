@@ -26,7 +26,8 @@ package net.whimxiqal.journey.navigation.journey;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.UUID;
-import net.kyori.adventure.title.TitlePart;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
@@ -125,7 +126,7 @@ public class PlayerJourneySession implements JourneySession {
         state = State.STOPPED_COMPLETE;
 
         // There is no other path after this one, we are done
-        Journey.get().proxy().audienceProvider().player(playerUuid).sendTitlePart(TitlePart.SUBTITLE, Formatter.success("You have arrived"));
+        Journey.get().proxy().audienceProvider().player(playerUuid).showTitle(Title.title(Component.empty(), Component.text("You have arrived", Formatter.THEME)));
 
         // Play a fun chord
         Journey.get().proxy().platform().playSuccess(playerUuid);

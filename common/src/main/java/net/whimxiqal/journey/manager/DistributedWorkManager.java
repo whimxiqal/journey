@@ -119,21 +119,21 @@ public class DistributedWorkManager {
 
       if (done) {
         synchronized (manager.lock) {
-          target.setInactive();
-
-          // check if there was a replacement scheduled for this, so we can schedule it now
-          LinkedList<WorkItemExecutor> replacements = manager.workReplacementMap.get(target.work.owner());
-          if (replacements != null) {
-            WorkItemExecutor replacement = replacements.poll();
-            assert (replacement != null);  // replacements must be non-empty
-            if (replacements.isEmpty()) {
-              // cleanup list from map
-              manager.workReplacementMap.remove(target.work.owner());
+          boolean targetOwnerDone = target.setInactive();
+          if (targetOwnerDone) {
+            // This owner is done, so there are no more opportunities for any scheduled replacements to run.
+            // Just requeue them, and set the first one to active
+            LinkedList<WorkItemExecutor> replacements = manager.workReplacementMap.remove(target.work.owner());
+            if (replacements != null) {
+              boolean usedSlot = false;
+              for (WorkItemExecutor replacement : replacements) {
+                if (!usedSlot) {
+                  replacement.setActive();
+                  usedSlot = true;
+                }
+                manager.execute(replacement);
+              }
             }
-
-            // schedule replacement and set to active
-            replacement.setActive();
-            manager.execute(replacement);
           }
         }
       } else {
@@ -148,14 +148,21 @@ public class DistributedWorkManager {
       manager.ownerActiveCountMap.merge(work.owner(), 1, Integer::sum);
     }
 
-    private void setInactive() {
+    /**
+     * Sets the work executor as inactive, and returns whether the
+     * owner is done with all its active work.
+     * @return true if the owner has no more active work, false if there is still some active work
+     */
+    private boolean setInactive() {
       active = false;
       manager.activeWorkItems--;
       int activeCount = manager.ownerActiveCountMap.get(work.owner());
       if (activeCount == 1) {
         manager.ownerActiveCountMap.remove(work.owner());
+        return true;
       } else {
         manager.ownerActiveCountMap.put(work.owner(), activeCount - 1);
+        return false;
       }
     }
 
