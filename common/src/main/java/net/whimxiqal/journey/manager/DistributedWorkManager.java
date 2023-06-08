@@ -27,9 +27,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import net.whimxiqal.journey.Journey;
 
 /**
@@ -86,11 +83,12 @@ public class DistributedWorkManager {
       synchronized (manager.lock) {
         if (active) {
           // We are active. Was a replacement scheduled?
-          if (manager.workReplacementMap.containsKey(work.owner())) {
-            LinkedList<WorkItemExecutor> replacements = manager.workReplacementMap.get(work.owner());
+          LinkedList<WorkItemExecutor> replacements = manager.workReplacementMap.get(work.owner());
+          if (replacements != null) {
             WorkItemExecutor replacement = replacements.poll();
             assert (replacement != null);  // replacements must be non-empty
             if (replacements.isEmpty()) {
+              // cleanup list from map
               manager.workReplacementMap.remove(work.owner());
             }
             replacement.setActive();
@@ -122,6 +120,21 @@ public class DistributedWorkManager {
       if (done) {
         synchronized (manager.lock) {
           target.setInactive();
+
+          // check if there was a replacement scheduled for this, so we can schedule it now
+          LinkedList<WorkItemExecutor> replacements = manager.workReplacementMap.get(target.work.owner());
+          if (replacements != null) {
+            WorkItemExecutor replacement = replacements.poll();
+            assert (replacement != null);  // replacements must be non-empty
+            if (replacements.isEmpty()) {
+              // cleanup list from map
+              manager.workReplacementMap.remove(target.work.owner());
+            }
+
+            // schedule replacement and set to active
+            replacement.setActive();
+            manager.execute(replacement);
+          }
         }
       } else {
         // Work is not done. Re-schedule.
