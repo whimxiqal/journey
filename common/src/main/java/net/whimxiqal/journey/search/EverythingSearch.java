@@ -167,33 +167,33 @@ public class EverythingSearch extends SearchSession {
     }
 
     @Override
-      public Optional<Cell> location() {
-        return Optional.empty();
-      }
-
-      @Override
-      public boolean hasPermission(String permission) {
-        return true;  // This agent has every permission
-      }
-
-      @Override
-      public Audience audience() {
-        return Audience.empty();
-      }
-
-      @Override
-      public Set<ModeType> modeCapabilities() {
-        return Set.of(
-            ModeType.WALK,
-            ModeType.JUMP,
-            ModeType.SWIM,
-  //          ModeType.FLY,  Don't need the fly mode because we disallow it in flags anyway
-            ModeType.BOAT,
-            ModeType.DOOR,
-            ModeType.CLIMB,
-            ModeType.DIG,
-            ModeType.TUNNEL
-        );
-      }
+    public Optional<Cell> location() {
+      return Optional.empty();
     }
+
+    @Override
+    public boolean hasPermission(String permission) {
+      return true;  // This agent has every permission
+    }
+
+    @Override
+    public Audience audience() {
+      return Audience.empty();
+    }
+
+    @Override
+    public Set<ModeType> modeCapabilities() {
+      return Set.of(
+          ModeType.WALK,
+          ModeType.JUMP,
+          ModeType.SWIM,
+          //          ModeType.FLY,  Don't need the fly mode because we disallow it in flags anyway
+          ModeType.BOAT,
+          ModeType.DOOR,
+          ModeType.CLIMB,
+          ModeType.DIG,
+          ModeType.TUNNEL
+      );
+    }
+  }
 }
