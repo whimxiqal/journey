@@ -24,7 +24,6 @@
 package net.whimxiqal.journey;
 
 import java.util.Collection;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A supplier that gives a collection of tunnels when given a player.
@@ -40,6 +39,6 @@ public interface TunnelSupplier {
    * @return the tunnels
    */
   @Synchronous
-  Collection<? extends Tunnel> tunnels(@Nullable JourneyAgent player);
+  Collection<? extends Tunnel> tunnels(JourneyAgent player);
 
 }

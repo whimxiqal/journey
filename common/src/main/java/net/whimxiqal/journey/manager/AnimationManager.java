@@ -111,6 +111,7 @@ public class AnimationManager {
   }
 
   public void shutdown() {
+    Journey.logger().debug("[Animation Manager] Shutting down...");
     if (taskId != null) {
       Journey.get().proxy().schedulingManager().cancelTask(taskId);
     }

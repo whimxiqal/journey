@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
 import net.whimxiqal.journey.search.PathTrial;
 
 /**
@@ -43,10 +44,15 @@ import net.whimxiqal.journey.search.PathTrial;
 public class CentralChunkCache {
 
   private static final int TICKS_PER_DEBUG_LOG = 20;  // once per second
-  private static final int MAX_CHUNK_REQUESTS_PER_TICK = 1024;
   private final Map<ChunkId, ChunkRequest> requestMap = new HashMap<>();  // this tracks requests keyed by chunk id
-  private final Queue<ChunkRequest> requestQueue = new LinkedList<>();  // this tracks requests in order of appearance
+  /**
+   * Tracks completed requests in order of appearance.
+   * This is only used on main thread, so no locking is needed for this
+   */
+  private final Queue<JourneyChunk> completedRequestQueue = new LinkedList<>();
   private final Object lock = new Object();
+  private boolean enabled = true;
+  private boolean chunkGeneration = false;
   private ChunkCache chunkCache = null;
   private UUID requestTaskId = null;
   private UUID loggingTaskId = null;
@@ -65,6 +71,8 @@ public class CentralChunkCache {
         false, 1);  // Once per tick
     loggingTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::broadcastLogs,
         false, TICKS_PER_DEBUG_LOG);
+    enabled = true;
+    chunkGeneration = Settings.ALLOW_CHUNK_GENERATION.getValue();
   }
 
   /**
@@ -72,6 +80,7 @@ public class CentralChunkCache {
    * Call on the main thread.
    */
   public void shutdown() {
+    Journey.logger().debug("[Chunk Cache] Shutting down...");
     if (requestTaskId != null) {
       Journey.get().proxy().schedulingManager().cancelTask(requestTaskId);
     }
@@ -79,6 +88,14 @@ public class CentralChunkCache {
       Journey.get().proxy().schedulingManager().cancelTask(loggingTaskId);
       broadcastLogs();  // broadcast one last time
     }
+    synchronized (lock) {
+      enabled = false;
+      for (Map.Entry<ChunkId, ChunkRequest> requestEntry : requestMap.entrySet()) {
+        requestEntry.getValue().future().complete(new UnavailableJourneyChunk(requestEntry.getKey()));
+      }
+      requestMap.clear();
+    }
+    completedRequestQueue.clear();
   }
 
   /**
@@ -91,18 +108,13 @@ public class CentralChunkCache {
 
       // Execute requests
       int completed = 0;
-      while (!requestQueue.isEmpty()) {
-        if (completed >= MAX_CHUNK_REQUESTS_PER_TICK) {
-          Journey.logger().debug(String.format("[Chunk Cache] Hit maximum allowed number of chunk requests (%d), %d requests remaining", MAX_CHUNK_REQUESTS_PER_TICK, requestQueue.size()));
-          break;
-        }
-        ChunkRequest req = requestQueue.remove();
-        requestMap.remove(req.chunkId());
+      while (!completedRequestQueue.isEmpty()) {
+        JourneyChunk chunk = completedRequestQueue.remove();
+        ChunkRequest req = requestMap.remove(chunk.id());
 
         // This is all on the server thread, so we can convert to a real chunk safely here
-        JourneyChunk snapshot = Journey.get().proxy().platform().toChunk(req.chunkId());
-        removedCounter += chunkCache.save(snapshot);
-        req.future().complete(snapshot);
+        removedCounter += chunkCache.save(chunk);
+        req.future().complete(chunk);
         completed++;
       }
       addedCounter += completed;
@@ -133,6 +145,10 @@ public class CentralChunkCache {
    */
   public Future<JourneyChunk> getChunk(ChunkId chunkId) {
     synchronized (lock) {
+      if (!enabled) {
+        // we are shutdown, so just return a blank chunk
+        return CompletableFuture.completedFuture(new UnavailableJourneyChunk(chunkId));
+      }
       Future<JourneyChunk> request = null;
       // Request chunks for chunks surrounding the requested one, since they may be wanted later
       int chunkX = chunkId.x();
@@ -162,7 +178,7 @@ public class CentralChunkCache {
 
           // Not stored and not queued. Queue it.
           maybeRequest = new ChunkRequest(innerChunkId);
-          requestQueue.add(maybeRequest);
+          Journey.get().proxy().platform().toChunk(innerChunkId, chunkGeneration).thenAccept(completedRequestQueue::add);
           requestMap.put(innerChunkId, maybeRequest);
           if (isRequestedChunk) {
             // This is the actually requested one

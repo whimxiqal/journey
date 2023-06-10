@@ -110,6 +110,7 @@ public class StatsManager {
   }
 
   public void shutdown() {
+    Journey.logger().debug("[Stats Manager] Shutting down...");
     if (task != null) {
       Journey.get().proxy().schedulingManager().cancelTask(task);
       task = null;

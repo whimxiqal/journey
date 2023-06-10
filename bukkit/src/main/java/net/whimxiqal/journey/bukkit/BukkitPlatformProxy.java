@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
@@ -42,6 +43,7 @@ import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
+import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
 import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
@@ -73,9 +75,15 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public JourneyChunk toChunk(ChunkId chunkId) {
+  public CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate) {
     World world = BukkitUtil.getWorld(chunkId.domain());
-    return new BukkitSessionJourneyChunk(world.getChunkAt(chunkId.x(), chunkId.z()).getChunkSnapshot(), world.getUID());
+    return world.getChunkAtAsync(chunkId.x(), chunkId.z(), generate).thenApply(chunk -> {
+      if (chunk == null) {
+        return new UnavailableJourneyChunk(chunkId);
+      } else {
+        return new BukkitSessionJourneyChunk(chunk.getChunkSnapshot(), world.getUID());
+      }
+    });
   }
 
   @Override

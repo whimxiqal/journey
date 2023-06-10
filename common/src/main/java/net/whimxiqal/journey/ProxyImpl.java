@@ -106,9 +106,6 @@ public class ProxyImpl implements Proxy {
 
   @Override
   public PlatformProxy platform() {
-    if (!schedulingManager.isMainThread()) {
-      Journey.logger().warn("Platform proxy accessed on async thread. This is likely a bug, please notify the developer.");
-    }
     return platformProxy;
   }
 

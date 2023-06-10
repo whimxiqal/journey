@@ -23,6 +23,8 @@
 
 package net.whimxiqal.journey.data.cache;
 
+import net.whimxiqal.journey.Journey;
+
 public class CachedDataProvider {
 
   private final PersonalWaypointCache personalWaypointCache = new PersonalWaypointCache();
@@ -34,6 +36,7 @@ public class CachedDataProvider {
   }
 
   public void shutdown() {
+    Journey.logger().debug("[Cached Data Provider] Shutting down...");
     personalWaypointCache().shutdown();
     // public waypoint cache does need to be shutdown
   }

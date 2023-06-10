@@ -60,7 +60,7 @@ public class ChunkCacheBlockProvider implements BlockProvider {
     if (chunk == null) {
       // Not stored locally. We have to get the info from the central cache and cache the chunk locally for next time
       Future<JourneyChunk> future = Journey.get().centralChunkCache().getChunk(chunkId);
-      chunk = future.get();  // waits for future, will take at most 1 game tick
+      chunk = future.get();  // waits for future. This is a source of latency and future versions should look into freeing up cycles while this is waiting
       chunkCache.save(chunk);
     }
     return chunk.block(localX, cell.blockY(), localZ, flagSet);

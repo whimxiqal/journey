@@ -50,14 +50,17 @@ public interface Proxy {
   String version();
 
   default void initialize() {
+    // initialize scheduling manager first because most init/shutdown scripts need it
+    schedulingManager().initialize();
     logger().initialize();
     dataManager().initialize();
-    schedulingManager().initialize();
   }
 
   default void shutdown() {
     logger().shutdown();
     audienceProvider().close();
+
+    // shutdown scheduling manager last because most init/shutdown scripts need it
     schedulingManager().shutdown();
   }
 }

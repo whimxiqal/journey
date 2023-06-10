@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.proxy;
 
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.search.flag.FlagSet;
 
@@ -33,6 +34,18 @@ import net.whimxiqal.journey.search.flag.FlagSet;
 public interface JourneyChunk {
 
   int CHUNK_SIDE_LENGTH = 16;
+
+  /**
+   * Get a cell from the given chunk id and coordinates within the chunk
+   * @param id the chunk id
+   * @param x the x coordinate within the chunk [0-16)
+   * @param y the y coordinate
+   * @param z the z coordinate within the chunk [0-16)
+   * @return the cell
+   */
+  static Cell toCell(ChunkId id, int x, int y, int z) {
+    return new Cell(id.x() * 16 + x, y, id.z() * 16 + z, id.domain());
+  }
 
   /**
    * Get the identifiable parameters for this chunk.

@@ -32,10 +32,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
 import net.whimxiqal.journey.search.DestinationPathTrial;
+import net.whimxiqal.journey.search.ModeType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,20 +65,22 @@ public class TestPathRecordManager implements PathRecordManager {
         modes
     );
     pathTrialRecordId++;
-    pathTrialRecords.add(record);
-    ArrayList<Step> steps = trial.getPath().getSteps();
-    for (int i = 0; i < steps.size(); i++) {
-      PathTrialCellRecord cellRecord = new PathTrialCellRecord(
-          record,
-          steps.get(i).location().blockX(),
-          steps.get(i).location().blockY(),
-          steps.get(i).location().blockZ(),
-          i,
-          steps.get(i).mode());
-      pathTrialCellRecords.add(cellRecord);
-      cells.add(cellRecord);
+    synchronized (this) {
+      pathTrialRecords.add(record);
+      ArrayList<Step> steps = trial.getPath().getSteps();
+      for (int i = 0; i < steps.size(); i++) {
+        PathTrialCellRecord cellRecord = new PathTrialCellRecord(
+            record,
+            steps.get(i).location().blockX(),
+            steps.get(i).location().blockY(),
+            steps.get(i).location().blockZ(),
+            i,
+            steps.get(i).mode());
+        pathTrialCellRecords.add(cellRecord);
+        cells.add(cellRecord);
+      }
+      modeTypes.forEach(type -> modes.add(new PathTrialModeRecord(record, type)));
     }
-    modeTypes.forEach(type -> modes.add(new PathTrialModeRecord(record, type)));
   }
 
   @Override
@@ -102,23 +104,25 @@ public class TestPathRecordManager implements PathRecordManager {
     if (origin.domain() != destination.domain()) {
       return null;
     }
-    for (PathTrialRecord record : pathTrialRecords) {
-      boolean sameLocations = record.originX() == origin.blockX()
-          && record.originY() == origin.blockY()
-          && record.originZ() == origin.blockZ()
-          && record.domain() == origin.domain()
-          && record.destinationX() == destination.blockX()
-          && record.destinationY() == destination.blockY()
-          && record.destinationZ() == destination.blockZ();
-      boolean modesSuperSet = true;
-      for (PathTrialModeRecord mode : record.modes()) {
-        if (!modeTypes.contains(mode.modeType())) {
-          modesSuperSet = false;
-          break;
+    synchronized (this) {  // synchronized so that the additions don't interfere in this loop
+      for (PathTrialRecord record : pathTrialRecords) {
+        boolean sameLocations = record.originX() == origin.blockX()
+            && record.originY() == origin.blockY()
+            && record.originZ() == origin.blockZ()
+            && record.domain() == origin.domain()
+            && record.destinationX() == destination.blockX()
+            && record.destinationY() == destination.blockY()
+            && record.destinationZ() == destination.blockZ();
+        boolean modesSuperSet = true;
+        for (PathTrialModeRecord mode : record.modes()) {
+          if (!modeTypes.contains(mode.modeType())) {
+            modesSuperSet = false;
+            break;
+          }
         }
-      }
-      if (sameLocations && modesSuperSet) {
-        return record;
+        if (sameLocations && modesSuperSet) {
+          return record;
+        }
       }
     }
     return null;

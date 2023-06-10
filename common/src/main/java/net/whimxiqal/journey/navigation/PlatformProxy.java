@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
@@ -51,12 +52,13 @@ public interface PlatformProxy extends BlockProvider {
 
   /**
    * Convert chunk id to a {@link JourneyChunk}.
-   * <b>Must be called on the main server thread!</b>
+   * <b>May be called async!</b>
    *
    * @param chunkId the chunk id
+   * @param generate true to generate the chunk if it doesn't exist, false to do nothing and complete the future null
    * @return the journey chunk
    */
-  JourneyChunk toChunk(ChunkId chunkId);
+  CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate);
 
   /**
    * Convert a cell to a {@link JourneyBlock} with real-world data.
