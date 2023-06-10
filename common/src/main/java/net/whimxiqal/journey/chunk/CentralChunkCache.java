@@ -178,7 +178,10 @@ public class CentralChunkCache {
 
           // Not stored and not queued. Queue it.
           maybeRequest = new ChunkRequest(innerChunkId);
+
+          // (callback to add to request queue is always called on the main server thread)
           Journey.get().proxy().platform().toChunk(innerChunkId, chunkGeneration).thenAccept(completedRequestQueue::add);
+
           requestMap.put(innerChunkId, maybeRequest);
           if (isRequestedChunk) {
             // This is the actually requested one

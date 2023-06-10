@@ -37,10 +37,11 @@ public interface JourneyChunk {
 
   /**
    * Get a cell from the given chunk id and coordinates within the chunk
+   *
    * @param id the chunk id
-   * @param x the x coordinate within the chunk [0-16)
-   * @param y the y coordinate
-   * @param z the z coordinate within the chunk [0-16)
+   * @param x  the x coordinate within the chunk [0-16)
+   * @param y  the y coordinate
+   * @param z  the z coordinate within the chunk [0-16)
    * @return the cell
    */
   static Cell toCell(ChunkId id, int x, int y, int z) {
@@ -57,9 +58,9 @@ public interface JourneyChunk {
   /**
    * Get the block at the given coordinates within the chunk.
    *
-   * @param x the x coordinate [0-16)
-   * @param y the y coordinate
-   * @param z the z coordinate [0-16)
+   * @param x       the x coordinate [0-16)
+   * @param y       the y coordinate
+   * @param z       the z coordinate [0-16)
    * @param flagSet the set of flags that may modify world/block behavior
    * @return the block
    */

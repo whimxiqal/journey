@@ -53,10 +53,16 @@ public interface PlatformProxy extends BlockProvider {
   /**
    * Convert chunk id to a {@link JourneyChunk}.
    * <b>May be called async!</b>
+   * The returned future is always completed on the main server thread,
+   * so any callbacks thereafter are also synchronous on the main thread.
+   * The generate argument may be false if the caller does not want the server to generate the chunk
+   * if it hasn't already. If this is the case, the returned {@link JourneyChunk} will reflect the inaccessibility
+   * of the underlying chunk, given it is un-generated and unloaded.
+   * The returned future cannot be completed with null.
    *
    * @param chunkId the chunk id
-   * @param generate true to generate the chunk if it doesn't exist, false to do nothing and complete the future null
-   * @return the journey chunk
+   * @param generate true to generate the chunk if it doesn't exist
+   * @return the journey chunk future, to be completed on the main server thread
    */
   CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate);
 

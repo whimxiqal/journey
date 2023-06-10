@@ -152,6 +152,7 @@ public class DistributedWorkManager {
     /**
      * Sets the work executor as inactive, and returns whether the
      * owner is done with all its active work.
+     *
      * @return true if the owner has no more active work, false if there is still some active work
      */
     private boolean setInactive() {
