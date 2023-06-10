@@ -24,7 +24,6 @@
 package net.whimxiqal.journey.bukkit.chunk;
 
 import java.util.UUID;
-import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.proxy.JourneyBlock;
@@ -49,6 +48,6 @@ public class BukkitSessionJourneyChunk implements JourneyChunk {
 
   @Override
   public JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
-    return new BukkitSessionJourneyBlock(new Cell(id.x() * 16 + x, y, id.z() * 16 + z, id.domain()), chunk.getBlockData(x, y, z), chunk.getBlockData(x, y - 1, z), flagSet);
+    return new BukkitSessionJourneyBlock(JourneyChunk.toCell(id, x, y, z), chunk.getBlockData(x, y, z), chunk.getBlockData(x, y - 1, z), flagSet);
   }
 }

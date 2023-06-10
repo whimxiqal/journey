@@ -34,9 +34,11 @@ import net.whimxiqal.journey.Journey;
  */
 public abstract class CommonLogger {
 
+  private static final int MAX_LOGS_PER_TICK = 100;
   private final Queue<Message> messageQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<LogLevel> logLevel = new AtomicReference<>(LogLevel.INFO);
   private UUID messageTaskId;
+  private boolean immediateSubmit = false;
 
   abstract protected void submit(Message message);
 
@@ -83,7 +85,12 @@ public abstract class CommonLogger {
   private void log(LogLevel type, String message) {
     if (type.level <= logLevel.get().level) {
       // only queue this log if the level is below our allowed log level
-      messageQueue.add(new Message(type, message));
+      Message msg = new Message(type, message);
+      if (immediateSubmit) {
+        submit(msg);
+      } else {
+        messageQueue.add(msg);
+      }
     }
   }
 
@@ -98,9 +105,20 @@ public abstract class CommonLogger {
     flush();
   }
 
+  public void setImmediateSubmit(boolean immediateSubmit) {
+    this.immediateSubmit = immediateSubmit;
+  }
+
   public void flush() {
+    int count = 0;
     while (!messageQueue.isEmpty()) {
       submit(messageQueue.remove());
+      count++;
+      if (count > MAX_LOGS_PER_TICK) {
+        submit(new Message(LogLevel.WARNING, String.format("[Logger] Truncated %d logs", messageQueue.size())));
+        messageQueue.clear();
+        break;
+      }
     }
   }
 

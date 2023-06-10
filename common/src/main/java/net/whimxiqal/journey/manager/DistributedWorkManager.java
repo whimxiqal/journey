@@ -121,7 +121,8 @@ public class DistributedWorkManager {
         synchronized (manager.lock) {
           boolean targetOwnerDone = target.setInactive();
           if (targetOwnerDone) {
-            // This owner is done, so there are no more opportunities for any scheduled replacements to run.
+            // Some replacements may have been queued while this target was running.
+            // But, this owner is done, so there are no more opportunities for any scheduled replacements to run.
             // Just requeue them, and set the first one to active
             LinkedList<WorkItemExecutor> replacements = manager.workReplacementMap.remove(target.work.owner());
             if (replacements != null) {
@@ -151,6 +152,7 @@ public class DistributedWorkManager {
     /**
      * Sets the work executor as inactive, and returns whether the
      * owner is done with all its active work.
+     *
      * @return true if the owner has no more active work, false if there is still some active work
      */
     private boolean setInactive() {

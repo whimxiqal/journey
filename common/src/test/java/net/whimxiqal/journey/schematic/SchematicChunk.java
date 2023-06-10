@@ -40,7 +40,7 @@ public record SchematicChunk(ChunkId chunkId, Clipboard clipboard) implements Jo
 
   @Override
   public JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
-    Cell cell = new Cell(chunkId.x() * CHUNK_SIDE_LENGTH + x, y, chunkId.z() * CHUNK_SIDE_LENGTH + z, 0);
+    Cell cell = JourneyChunk.toCell(chunkId, x, y, z);
     return new SchematicBlock(cell, clipboard.getBlock(BlockVector3.at(cell.blockX(), cell.blockY(), cell.blockZ())).getBlockType());
   }
 }

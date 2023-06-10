@@ -222,7 +222,9 @@ public class PathTrial implements WorkItem {
     // Start actual execution
     int startingCycleCount = visited.size();  // tracker to make sure we have short work cycles
     int animationDelayMs = session.flags.getValueFor(Flags.ANIMATE);
-    boolean isAnimating = animationDelayMs > 0;
+    boolean isAnimating = animationDelayMs > 0 && session.callerType == SearchSession.Caller.PLAYER;
+    // caller has to be a PLAYER if animation flag was set, but just check to be sure so we know the caller id
+    // is the id of a player
 
     Node current;
     while (!upcoming.isEmpty()) {

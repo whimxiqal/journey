@@ -49,6 +49,9 @@ public final class Settings {
   public static final Setting<Integer> MAX_PATH_BLOCK_COUNT
       = new IntegerSetting("search.max-path-block-count", 10000, 10, 10000000);
 
+  public static final Setting<Boolean> ALLOW_CHUNK_GENERATION
+      = new BooleanSetting("search.chunk-gen.allow", false);
+
   public static final Setting<Integer> MAX_SEARCHES
       = new IntegerSetting("search.max-searches", 16, 0, 1000000);
 

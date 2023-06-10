@@ -143,19 +143,30 @@ public final class SearchManager {
     Journey.get().statsManager().incrementSearches();
     UUID caller = Objects.requireNonNull(session.getCallerId());  // launches here in the search manager must have caller ids
     playerSearches.put(caller, session);
-    session.initialize();
-
-    AtomicReference<TextComponent> hoverText = new AtomicReference<>(Component.text("Search Parameters").color(Formatter.THEME));
-    Flags.allFlags.forEach(flag -> hoverText.set(hoverText.get()
-        .append(Component.newline())
-        .append(Component.text(flag.name() + ":").color(Formatter.DARK).decorate(TextDecoration.BOLD))
-        .append(Component.text(session.flags().printValueFor(flag)).color(Formatter.GOLD))));
 
     Audience audience = switch (session.getCallerType()) {
       case PLAYER -> Journey.get().proxy().audienceProvider().player(caller);
       case CONSOLE -> Journey.get().proxy().audienceProvider().console();
       default -> Audience.empty();
     };
+
+    try {
+      session.initialize();
+    } catch (Exception e) {
+      // the initialize function can cause unknown errors because it uses registered functions from the API,
+      //  so we want to handle other dev's bugs gracefully
+      audience.sendMessage(Formatter.error("An internal error occurred"));
+      e.printStackTrace();
+      playerSearches.remove(caller);
+      return;
+    }
+
+    AtomicReference<TextComponent> hoverText = new AtomicReference<>(Component.text("Search Parameters").color(Formatter.THEME));
+    Flags.allFlags.forEach(flag -> hoverText.set(hoverText.get()
+        .append(Component.newline())
+        .append(Component.text(flag.name() + ": ").color(Formatter.DARK))
+        .append(Component.text(session.flags().printValueFor(flag)).color(Formatter.GOLD))));
+
     audience.sendMessage(Component.text()
         .append(Formatter.prefix())
         .append(Formatter.hover(Component.text("Searching...").color(Formatter.INFO), hoverText.get())));
@@ -262,6 +273,7 @@ public final class SearchManager {
   }
 
   public void shutdown() {
+    Journey.logger().debug("[Search Manager] Shutting down...");
     // cancel all searches
     playerSearches.values().forEach(session -> session.stop(false));
     // stop all journeys

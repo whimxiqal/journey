@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
@@ -51,12 +52,19 @@ public interface PlatformProxy extends BlockProvider {
 
   /**
    * Convert chunk id to a {@link JourneyChunk}.
-   * <b>Must be called on the main server thread!</b>
+   * <b>May be called async!</b>
+   * The returned future is always completed on the main server thread,
+   * so any callbacks thereafter are also synchronous on the main thread.
+   * The generate argument may be false if the caller does not want the server to generate the chunk
+   * if it hasn't already. If this is the case, the returned {@link JourneyChunk} will reflect the inaccessibility
+   * of the underlying chunk, given it is un-generated and unloaded.
+   * The returned future cannot be completed with null.
    *
    * @param chunkId the chunk id
-   * @return the journey chunk
+   * @param generate true to generate the chunk if it doesn't exist
+   * @return the journey chunk future, to be completed on the main server thread
    */
-  JourneyChunk toChunk(ChunkId chunkId);
+  CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate);
 
   /**
    * Convert a cell to a {@link JourneyBlock} with real-world data.

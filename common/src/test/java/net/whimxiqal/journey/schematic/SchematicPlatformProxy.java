@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.whimxiqal.journey.Cell;
@@ -55,8 +56,8 @@ public class SchematicPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public JourneyChunk toChunk(ChunkId chunkId) {
-    return new SchematicChunk(chunkId, clipboard.get());
+  public CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate) {
+    return CompletableFuture.completedFuture(new SchematicChunk(chunkId, clipboard.get()));
   }
 
   @Override

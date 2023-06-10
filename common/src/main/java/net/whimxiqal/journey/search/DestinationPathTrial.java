@@ -43,7 +43,7 @@ import net.whimxiqal.journey.search.function.WeightedDistanceCostFunction;
 public class DestinationPathTrial extends PathTrial {
 
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
-  public static final double COST_FUNCTION_WEIGHT = 1.4;
+  public static final double COST_FUNCTION_WEIGHT = 1.7;
   private static boolean loggedMaxCacheHit = false;  // only log this message once
   @Getter
   private final Cell destination;

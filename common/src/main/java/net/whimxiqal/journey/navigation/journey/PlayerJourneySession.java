@@ -126,9 +126,9 @@ public class PlayerJourneySession implements JourneySession {
         state = State.STOPPED_COMPLETE;
 
         // There is no other path after this one, we are done
-        Journey.get().proxy().audienceProvider().player(playerUuid).showTitle(Title.title(Component.empty(), Component.text("You have arrived", Formatter.THEME)));
+        Journey.get().proxy().audienceProvider().player(playerUuid).showTitle(Title.title(Component.empty(),
+                Component.text("You have arrived!").color(Formatter.SUCCESS)));
 
-        // Play a fun chord
         Journey.get().proxy().platform().playSuccess(playerUuid);
 
         stop();

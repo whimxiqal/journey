@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
@@ -60,8 +61,8 @@ public class TestPlatformProxy implements PlatformProxy {
   public static int animatedBlocks = 0;
 
   @Override
-  public JourneyChunk toChunk(ChunkId chunkId) {
-    return new TestJourneyChunk(chunkId);
+  public CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate) {
+    return CompletableFuture.completedFuture(new TestJourneyChunk(chunkId));
   }
 
   @Override

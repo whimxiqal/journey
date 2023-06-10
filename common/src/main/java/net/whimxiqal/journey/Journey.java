@@ -23,7 +23,6 @@
 
 package net.whimxiqal.journey;
 
-import java.util.UUID;
 import net.whimxiqal.journey.chunk.CentralChunkCache;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataVersion;
@@ -44,7 +43,6 @@ import net.whimxiqal.journey.util.CommonLogger;
 public final class Journey {
 
   public static final String NAME = "Journey";
-  public static final UUID JOURNEY_CALLER = UUID.randomUUID();
   private static Journey instance;
   private final PlayerManager playerManager = new PlayerManager();
   private final NetherManager netherManager = new NetherManager();
@@ -120,9 +118,14 @@ public final class Journey {
   }
 
   public void shutdown() {
-    searchManager.shutdown();
-    statsManager.shutdown();
+    logger().setImmediateSubmit(true);
+    // shutdown cache first so any executing searches can continue with the completed chunks requests
     centralChunkCache.shutdown();
+
+    // shutdown search manager and wait for all ongoing searches to cancel and complete
+    searchManager.shutdown();
+
+    statsManager.shutdown();
     animationManager.shutdown();
     cachedDataProvider.shutdown();
     proxy.shutdown();
