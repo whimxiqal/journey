@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.navigation.Mode;
+import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.search.ModeType;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,12 +42,12 @@ public class SwimMode extends Mode {
   @Override
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     List<Option> options = new LinkedList<>();
-    Cell cell;
+    JourneyBlock block;
     // Check every block in a 3x3 grid centered around the current location (complex)
     for (int offX = -1; offX <= 1; offX++) {
       for (int offY = -1; offY <= 1; offY++) {
         outerZ:
-        // Label so we can continue from these main loops when all checks fail
+        // Label so we can continue from these main loops when any check fails
         for (int offZ = -1; offZ <= 1; offZ++) {
           // Checks for the block -- checks between the offset block and the original block,
           //  which would be 1 for just 1 offset variable, 4 for 2 offset variables,
@@ -58,31 +59,29 @@ public class SwimMode extends Mode {
                 if (insideOffX == 0 && insideOffY == 0 && insideOffZ == 0) {
                   continue;
                 }
-                // Make sure we get the pillar of y values for the player's body
-                cell = origin.atOffset(// Floor
+                block = blockProvider.toBlock(origin.atOffset(
                     insideOffX * offX /* get sign back */,
                     insideOffY * offY /* get sign back */,
-                    insideOffZ * offZ /* get sign back */);
-                if (!blockProvider.toBlock(cell).isWater()) {
+                    insideOffZ * offZ /* get sign back */));
+                if (!block.isWater()) {
                   continue outerZ;
-                }
-                for (int h = 0; h <= insideOffY; h++) {
-                  // The rest of the pillar above the floor
-                  cell = origin.atOffset(
-                      insideOffX * offX /* get sign back */,
-                      ((insideOffY * offY + insideOffY) >> 1) /* 1 for positive, 0 for negative */
-                          + h
-                          + (1 - insideOffY) /* for if offYIn is 0 */,
-                      insideOffZ * offZ /* get sign back */);
-                  if (!blockProvider.toBlock(cell).isLaterallyPassable()) {
-                    continue outerZ;
-                  }
                 }
               }
             }
           }
-          Cell other = origin.atOffset(offX, offY, offZ);
-          options.add(new Option(other));
+          // checks for head level (1 more than whatever our highest y value was)
+          for (int insideOffX = offX * offX /* normalize sign */; insideOffX >= 0; insideOffX--) {
+            for (int insideOffZ = offZ * offZ /* normalize sign */; insideOffZ >= 0; insideOffZ--) {
+              block = blockProvider.toBlock(origin.atOffset(
+                  insideOffX * offX /* get sign back */,
+                  Math.max(0, offY) + 1,
+                  insideOffZ * offZ /* get sign back */));
+              if (!block.isWater()) {
+                continue outerZ;
+              }
+            }
+          }
+          options.add(new Option(origin.atOffset(offX, offY, offZ)));
         }
       }
     }

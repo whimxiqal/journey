@@ -45,19 +45,6 @@ public class WalkMode extends Mode {
     Cell cell;
     Cell cell1;
     Cell cell2;
-//    // Can you drop into an inhabitable block?
-//    cell = origin.atOffset(0, -1, 0);
-//    if (canStandOn(BukkitUtil.getBlock(origin.atOffset(0, -2, 0))) && isVerticallyPassable(BukkitUtil.getBlock(cell))) {
-//      accept(cell, 1.0d, options);
-//    } else {
-//      reject(cell);
-//    }
-
-    // Can we even stand here?
-    if (!blockProvider.toBlock(origin.atOffset(0, -1, 0)).canStandOn()
-        && !blockProvider.toBlock(origin).canStandIn()) {
-      return options;
-    }
 
     // 1 block away
     for (int offX = -1; offX <= 1; offX++) {

@@ -47,7 +47,7 @@ public final class Settings {
       = new BooleanSetting("search.flag.default-dig", false);
 
   public static final Setting<Integer> MAX_PATH_BLOCK_COUNT
-      = new IntegerSetting("search.max-path-block-count", 10000, 10, 10000000);
+      = new IntegerSetting("search.max-path-block-count", 100000, 10, 10000000);
 
   public static final Setting<Boolean> ALLOW_CHUNK_GENERATION
       = new BooleanSetting("search.chunk-gen.allow", false);
