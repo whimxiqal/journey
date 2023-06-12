@@ -43,6 +43,7 @@ public class FlyMode extends Mode {
   public Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException {
     List<Option> options = new LinkedList<>();
     Cell cell;
+    // TODO this is a mess, make this loop nicer
     // Check every block in a 3x3 grid centered around the current location
     for (int offX = -1; offX <= 1; offX++) {
       for (int offY = -1; offY <= 1; offY++) {
