@@ -23,24 +23,35 @@
 
 package net.whimxiqal.journey.data.sql.sqlite;
 
-import net.whimxiqal.journey.data.sql.SqlConnectionController;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import lombok.Value;
-import lombok.experimental.Accessors;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.data.sql.SqlConnectionController;
 
 /**
  * An SQL connection controller designed for the SQLite engine.
  */
-@Value
-@Accessors(fluent = true)
 public class SqliteConnectionController implements SqlConnectionController {
-  String address;
+  private final HikariDataSource dataSource;
+
+
+  public SqliteConnectionController(String filePath) {
+    HikariConfig config = new HikariConfig();
+    config.setJdbcUrl(String.format("jdbc:sqlite:%s", filePath));
+    dataSource = new HikariDataSource(config);
+  }
 
   @Override
-  public Connection establishConnection() throws SQLException {
-    return DriverManager.getConnection(address);
+  public final Connection establishConnection() throws SQLException {
+    try {
+      return dataSource.getConnection();
+    } catch (SQLException e) {
+      Journey.get().proxy().logger().error("Could not connect to database. "
+          + "Are you sure you are using the correct credentials?");
+      throw e;
+    }
   }
 
   @Override

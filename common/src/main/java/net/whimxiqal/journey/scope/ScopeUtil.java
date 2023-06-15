@@ -24,7 +24,6 @@
 package net.whimxiqal.journey.scope;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -33,16 +32,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ExecutionException;
 import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Destination;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
-import net.whimxiqal.journey.Permissible;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
 import net.whimxiqal.journey.search.InternalScope;
-import net.whimxiqal.journey.search.PlayerSurfaceGoalSearchSession;
 import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.SurfaceGoalSearchSession;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.journey.util.Validator;
 
@@ -63,14 +63,18 @@ public final class ScopeUtil {
         })
         .build(),
         player -> {
-          Map<String, SearchSession> sessions = new HashMap<>();
-          if (!Journey.get().proxy().platform().isAtSurface(player.location())) {
-            SearchSession surfaceSession = new PlayerSurfaceGoalSearchSession(player.uuid(), player.location());
-            surfaceSession.setName(Component.text("Go to surface"));
-            surfaceSession.addPermission(Permission.PATH_SURFACE.path());
-            sessions.put("surface", surfaceSession);
+          try {
+            Optional<Cell> playerLocation = player.location();
+            if (playerLocation.isPresent() && !Journey.get().locationManager().getAndTryUpdateIsAtSurface(player.uuid(), playerLocation.get())) {
+              SearchSession surfaceSession = new SurfaceGoalSearchSession(player.uuid(), SearchSession.Caller.PLAYER, player, playerLocation.get());
+              surfaceSession.setName(Component.text("Go to surface"));
+              surfaceSession.addPermission(Permission.PATH_SURFACE.path());
+              return VirtualMap.ofSingleton("surface", surfaceSession);
+            }
+          } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
           }
-          return VirtualMap.of(sessions);
+          return VirtualMap.empty();
         },
         player -> VirtualMap.of(Journey.get().scopeManager().scopes()));
   }

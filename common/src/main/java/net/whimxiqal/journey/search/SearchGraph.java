@@ -26,19 +26,18 @@ package net.whimxiqal.journey.search;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
-import net.whimxiqal.journey.Tunnel;
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.Tunnel;
+import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.navigation.Mode;
-import net.whimxiqal.journey.navigation.ModeType;
 import net.whimxiqal.journey.search.graph.WeightedGraph;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * An implementation of a weighted graph to be used for the overall search algorithm.
  */
-public abstract class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
+public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathTrial> {
 
   protected final GraphGoalSearchSession<?> session;
   protected final Cell origin;
@@ -85,19 +84,19 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
   }
 
   protected void addPathTrial(SearchSession session, Cell origin, Cell destination,
-                            Tunnel originNode,
-                            Tunnel destinationNode,
-                            Collection<Mode> modes, boolean saveOnComplete) {
+                              Tunnel originNode,
+                              Tunnel destinationNode,
+                              Collection<Mode> modes, boolean saveOnComplete) {
     // First, try to access a cached path
     Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
     boolean added = false;
     try {
-      if (Journey.get().dataManager()
+      if (Journey.get().proxy().dataManager()
           .pathRecordManager()
           .containsRecord(origin, destination, modeTypes)) {
-        addPathTrial(PathTrial.cached(session, origin, destination,
+        addPathTrial(DestinationPathTrial.cached(session, origin, destination,
                 modes,
-                Journey.get().dataManager()
+                Journey.get().proxy().dataManager()
                     .pathRecordManager()
                     .getPath(origin, destination, modeTypes)),
             originNode, destinationNode);
@@ -107,11 +106,11 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
       e.printStackTrace();
     }
     if (!added) {
-      addPathTrial(PathTrial.approximate(session, origin, destination, modes, saveOnComplete), originNode, destinationNode);
+      addPathTrial(DestinationPathTrial.approximate(session, origin, destination, modes, saveOnComplete), originNode, destinationNode);
     }
   }
 
-  private void addPathTrial(PathTrial trial, Tunnel start, Tunnel end) {
+  private void addPathTrial(DestinationPathTrial trial, Tunnel start, Tunnel end) {
     addEdge(start, end, trial);
   }
 
@@ -121,7 +120,7 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, PathTrial> {
   }
 
   @Override
-  protected double edgeLength(PathTrial edge) {
+  protected double edgeLength(DestinationPathTrial edge) {
     return edge.getLength();
   }
 

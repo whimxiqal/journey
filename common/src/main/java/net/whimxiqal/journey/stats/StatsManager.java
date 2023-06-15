@@ -39,27 +39,32 @@ public class StatsManager {
   private int storedBlocksTravelled = 0;  // per hour
 
   public void initialize() {
-    if (task != null) {
-      throw new IllegalStateException("We're already initialized");
+    synchronized (this) {
+      if (task != null) {
+        throw new IllegalStateException("We're already initialized");
+      }
+      lastStored = System.currentTimeMillis();
+      reset();
+      task = Journey.get().proxy().schedulingManager().scheduleRepeat(this::store, false, UPDATE_PERIOD);
     }
-    lastStored = System.currentTimeMillis();
-    reset();
-    task = Journey.get().proxy().schedulingManager().scheduleRepeat(this::store, false, UPDATE_PERIOD);
   }
 
-  private synchronized void store() {
-    long now = System.currentTimeMillis();
-    if (now - lastStored < MS_PER_HOUR) {
-      return;
-    }
+  private void store() {
+    synchronized (this) {
+      long now = System.currentTimeMillis();
+      if (now - lastStored < MS_PER_HOUR) {
+        return;
+      }
 
-    lastStored = now;
-    storedSearches = searches;
-    storedBlocksTravelled = (int) Math.floor(blocksTravelled);
-    reset();
+      lastStored = now;
+      storedSearches = searches;
+      storedBlocksTravelled = (int) Math.floor(blocksTravelled);
+      reset();
+    }
   }
 
-  private synchronized void reset() {
+  private void reset() {
+    // already synchronized
     searches = 0;
     blocksTravelled = 0;
   }
@@ -67,34 +72,45 @@ public class StatsManager {
   /**
    * Increment the number of searches that have occurred. Thread-safe.
    */
-  public synchronized void incrementSearches() {
-    searches++;
+  public void incrementSearches() {
+    synchronized (this) {
+      searches++;
+    }
   }
 
   /**
    * Get the number of searches in the last hour. Thread-safe.
+   *
    * @return searches
    */
-  public synchronized int searches() {
-    return storedSearches;
+  public int searches() {
+    synchronized (this) {
+      return storedSearches;
+    }
   }
 
   /**
    * Increment the number of blocks that have been travelled. Thread-safe.
    */
   public synchronized void addBlocksTravelled(double blocks) {
-    blocksTravelled += blocks;
+    synchronized (this) {
+      blocksTravelled += blocks;
+    }
   }
 
   /**
    * Get the number of blocks travelled in the last hour. Thread-safe.
+   *
    * @return blocks travelled
    */
   public synchronized int blocksTravelled() {
-    return storedBlocksTravelled;
+    synchronized (this) {
+      return storedBlocksTravelled;
+    }
   }
 
   public void shutdown() {
+    Journey.logger().debug("[Stats Manager] Shutting down...");
     if (task != null) {
       Journey.get().proxy().schedulingManager().cancelTask(task);
       task = null;

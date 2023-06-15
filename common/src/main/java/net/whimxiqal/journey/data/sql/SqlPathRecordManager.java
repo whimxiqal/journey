@@ -28,25 +28,23 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.DataAccessException;
 import net.whimxiqal.journey.data.PathRecordManager;
-import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
-import net.whimxiqal.journey.search.PathTrial;
+import net.whimxiqal.journey.search.DestinationPathTrial;
 import net.whimxiqal.journey.util.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +66,7 @@ public class SqlPathRecordManager
   }
 
   @Override
-  public void report(PathTrial trial,
+  public void report(DestinationPathTrial trial,
                      Set<ModeType> modeTypes,
                      long executionTime)
       throws DataAccessException {
@@ -89,8 +87,8 @@ public class SqlPathRecordManager
         if (oldRecord.pathCost() <= path.getCost()) {
           continue;
         }
-        if (modeTypes.containsAll(oldRecord.modes().stream().map(PathTrialModeRecord::modeType).collect(Collectors.toList()))) {
-          // this path cost is better and can do it in the same or fewer modes, so delete the current one
+        if (modeTypes.containsAll(oldRecord.modes().stream().map(PathTrialModeRecord::modeType).toList())) {
+          // this path distance is better and can do it in the same or fewer modes, so delete the current one
           connection.prepareStatement("DELETE FROM " + SqlManager.CACHED_PATHS_TABLE
                   + " WHERE "
                   + "id = " + oldRecord.id())
@@ -120,7 +118,7 @@ public class SqlPathRecordManager
               "domain_id"),
           Statement.RETURN_GENERATED_KEYS);
 
-      statement.setLong(1, System.currentTimeMillis() / 1000);
+      statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
       statement.setInt(2, (int) executionTime);
       statement.setDouble(3, trial.getLength());
       statement.setInt(4, trial.getOrigin().blockX());
@@ -165,7 +163,7 @@ public class SqlPathRecordManager
         statement.setInt(3, step.location().blockY());
         statement.setInt(4, step.location().blockZ());
         statement.setInt(5, i);
-        statement.setInt(6, step.modeType().ordinal());
+        statement.setInt(6, step.mode().id());
         statement.execute();
       } catch (SQLException e) {
         e.printStackTrace();
@@ -182,7 +180,7 @@ public class SqlPathRecordManager
             "mode_type"));
 
         statement.setLong(1, pathReportId);
-        statement.setInt(2, modeType.ordinal());
+        statement.setInt(2, modeType.id());
 
         statement.execute();
       } catch (SQLException e) {
@@ -223,7 +221,11 @@ public class SqlPathRecordManager
           "SELECT COUNT(*) FROM %s;",
           SqlManager.CACHED_PATH_CELLS_TABLE));
       ResultSet result = statement.executeQuery();
-      return result.getInt(1);
+      if (result.next()) {
+        return result.getInt(1);
+      } else {
+        return 0;
+      }
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
@@ -261,7 +263,7 @@ public class SqlPathRecordManager
             + "path_id = " + record.id()).executeQuery();
         while (modeResult.next()) {
           record.modes().add(new PathTrialModeRecord(record,
-              ModeType.values()[(modeResult.getInt("mode_type"))]));
+              Objects.requireNonNull(ModeType.get(modeResult.getInt("mode_type")))));
         }
         records.add(record);
       }
@@ -352,12 +354,7 @@ public class SqlPathRecordManager
 
   @Override
   public boolean containsRecord(Cell origin, Cell destination, Set<ModeType> modeTypeGroup) {
-    try (Connection connection = getConnectionController().establishConnection()) {
-      return findRecordWithModes(getRecordsWithoutCells(origin, destination), modeTypeGroup) != null;
-    } catch (SQLException e) {
-      e.printStackTrace();
-      return false;
-    }
+    return findRecordWithModes(getRecordsWithoutCells(origin, destination), modeTypeGroup) != null;
   }
 
   private PathTrialRecord extractRecord(final ResultSet resultSet) throws SQLException {
@@ -386,7 +383,7 @@ public class SqlPathRecordManager
         resultSet.getInt("y"),
         resultSet.getInt("z"),
         resultSet.getInt("path_index"),
-        ModeType.values()[resultSet.getInt("mode_type")]
+        Objects.requireNonNull(ModeType.get(resultSet.getInt("mode_type")))
     );
   }
 

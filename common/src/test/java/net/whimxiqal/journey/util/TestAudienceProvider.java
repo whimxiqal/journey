@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.platform.AudienceProvider;
 import net.kyori.adventure.text.flattener.ComponentFlattener;
+import net.whimxiqal.journey.JourneyTestHarness;
 import org.jetbrains.annotations.NotNull;
 
 public class TestAudienceProvider implements AudienceProvider {
@@ -49,6 +50,9 @@ public class TestAudienceProvider implements AudienceProvider {
 
   @Override
   public @NotNull Audience player(@NotNull UUID playerId) {
+    if (playerId.equals(JourneyTestHarness.PLAYER_UUID)) {
+      return new ConsoleAudience();
+    }
     return Audience.empty();
   }
 

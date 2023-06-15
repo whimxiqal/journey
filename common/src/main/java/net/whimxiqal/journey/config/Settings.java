@@ -23,6 +23,10 @@
 
 package net.whimxiqal.journey.config;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.StorageMethod;
 
 /**
@@ -31,7 +35,7 @@ import net.whimxiqal.journey.data.StorageMethod;
 public final class Settings {
 
   public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT
-      = new IntegerSetting("search.flag.default-timeout", 30);
+      = new IntegerSetting("search.flag.default-timeout", 30, 0, 24 * 60 * 60 /* a day */);
 
   public static final Setting<Boolean> DEFAULT_FLY_FLAG
       = new BooleanSetting("search.flag.default-fly", true);
@@ -43,13 +47,16 @@ public final class Settings {
       = new BooleanSetting("search.flag.default-dig", false);
 
   public static final Setting<Integer> MAX_PATH_BLOCK_COUNT
-      = new IntegerSetting("search.max-path-block-count", 10000);
+      = new IntegerSetting("search.max-path-block-count", 100000, 10, 10000000);
+
+  public static final Setting<Boolean> ALLOW_CHUNK_GENERATION
+      = new BooleanSetting("search.chunk-gen.allow", false);
 
   public static final Setting<Integer> MAX_SEARCHES
-      = new IntegerSetting("search.max-searches", 16);
+      = new IntegerSetting("search.max-searches", 16, 0, 1000000);
 
-  public static final Setting<Integer> MAX_CACHED_CELLS
-      = new IntegerSetting("storage.cache.max_cells", 500000) /* Somewhere around 10-20 MB */;
+  public static final Setting<Long> MAX_CACHED_CELLS
+      = new LongSetting("storage.cache.max_cells", 500000, 1, Long.MAX_VALUE) /* Default is somewhere around 10-20 MB */;
 
   public static final Setting<String> STORAGE_ADDRESS
       = new StringSetting("storage.auth.address", "my.address");
@@ -65,6 +72,32 @@ public final class Settings {
 
   public static final Setting<StorageMethod> STORAGE_TYPE
       = new EnumSetting<>("storage.type", StorageMethod.SQLITE, StorageMethod.class);
+
+  public static final Map<String, Setting<?>> ALL_SETTINGS = new HashMap<>();
+
+  static {
+    Arrays.stream(Settings.class.getDeclaredFields())
+        .map(field -> {
+          try {
+            return field.get(null);
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+          }
+        })
+        .filter(object -> object instanceof Setting)
+        .map(object -> ((Setting<?>) object))
+        .forEach(setting -> ALL_SETTINGS.put(setting.getPath(), setting));
+  }
+
+  public static void validate() {
+    ALL_SETTINGS.forEach((path, setting) -> {
+      if (!setting.isValid()) {
+        Journey.logger().warn("Setting " + setting.getPath() + " has invalid value " + setting.printValue() + ". Using default: " + setting.getDefaultValue() + ".");
+        setting.setToDefault();
+      }
+    });
+  }
 
   private Settings() {
   }

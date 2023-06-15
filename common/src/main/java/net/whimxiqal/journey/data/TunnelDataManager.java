@@ -37,6 +37,8 @@ public interface TunnelDataManager {
 
   Collection<Tunnel> getAllTunnels(TunnelType type);
 
+  void removeTunnelsWithOrigin(Cell origin, TunnelType type);
+
   void removeTunnels(Cell origin, Cell destination, TunnelType type);
 
   void removeTunnels(TunnelType type);

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 
 package net.whimxiqal.journey.platform;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,16 +31,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Tunnel;
+import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
-import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
-import net.whimxiqal.journey.search.AnimationManager;
+import net.whimxiqal.journey.proxy.JourneyBlock;
+import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.proxy.TestJourneyBlock;
+import net.whimxiqal.journey.proxy.TestJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bstats.charts.CustomChart;
@@ -51,11 +57,17 @@ public class TestPlatformProxy implements PlatformProxy {
   public static Map<Integer, TestWorld> worlds = new HashMap<>();  // domain -> world
   public static Map<String, Cell> pois = new HashMap<>();
   public static List<Tunnel> tunnels = new LinkedList<>();
-  public static List<JourneyPlayer> onlinePlayers = new LinkedList<>();
+  public static List<InternalJourneyPlayer> onlinePlayers = new LinkedList<>();
+  public static int animatedBlocks = 0;
 
   @Override
-  public boolean isNetherPortal(Cell cell) {
-    return false;
+  public CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate) {
+    return CompletableFuture.completedFuture(new TestJourneyChunk(chunkId));
+  }
+
+  @Override
+  public JourneyBlock toBlock(Cell cell) {
+    return new TestJourneyBlock(cell);
   }
 
   @Override
@@ -74,17 +86,17 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Collection<JourneyPlayer> onlinePlayers() {
+  public Collection<InternalJourneyPlayer> onlinePlayers() {
     return onlinePlayers;
   }
 
   @Override
-  public Optional<JourneyPlayer> onlinePlayer(UUID uuid) {
+  public Optional<InternalJourneyPlayer> onlinePlayer(UUID uuid) {
     return onlinePlayers.stream().filter(player -> player.uuid().equals(uuid)).findFirst();
   }
 
   @Override
-  public Optional<JourneyPlayer> onlinePlayer(String name) {
+  public Optional<InternalJourneyPlayer> onlinePlayer(String name) {
     return onlinePlayers.stream().filter(player -> player.name().equals(name)).findFirst();
   }
 
@@ -99,29 +111,19 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void prepareSearchSession(SearchSession searchSession, UUID player, FlagSet flags, boolean includePorts) {
-    searchSession.registerMode(new WalkMode(searchSession));
-    tunnels.forEach(searchSession::registerTunnel);
-  }
-
-  @Override
-  public void prepareDestinationSearchSession(SearchSession searchSession, UUID player, FlagSet flags, Cell destination) {
+  public void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination) {
     // do nothing extra here
   }
 
   @Override
-  public boolean isAtSurface(Cell cell) {
-    return false;
+  public void sendAnimationBlock(UUID player, Cell location) {
+    animatedBlocks += 1;
   }
 
   @Override
-  public boolean sendBlockData(UUID player, Cell location, AnimationManager.StageType stage, ModeType mode) {
-    return false;
-  }
-
-  @Override
-  public boolean resetBlockData(UUID player, Collection<Cell> locations) {
-    return false;
+  public void resetAnimationBlocks(UUID player, Collection<Cell> locations) {
+    animatedBlocks -= locations.size();
+    Journey.logger().info("Reset: " + locations.size());
   }
 
   @Override
@@ -132,11 +134,6 @@ public class TestPlatformProxy implements PlatformProxy {
   @Override
   public boolean sendGui(JourneyPlayer player) {
     return false;
-  }
-
-  @Override
-  public boolean synchronous() {
-    return true;
   }
 
   @Override

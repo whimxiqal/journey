@@ -23,48 +23,64 @@
 
 package net.whimxiqal.journey;
 
-import java.util.UUID;
-import net.whimxiqal.journey.data.DataManager;
-import net.whimxiqal.journey.data.DataManagerImpl;
+import net.whimxiqal.journey.chunk.CentralChunkCache;
+import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataVersion;
-import net.whimxiqal.journey.manager.DebugManager;
+import net.whimxiqal.journey.data.cache.CachedDataProvider;
+import net.whimxiqal.journey.manager.AnimationManager;
+import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.manager.DomainManager;
+import net.whimxiqal.journey.manager.LocationManager;
 import net.whimxiqal.journey.manager.NetherManager;
 import net.whimxiqal.journey.manager.PlayerManager;
 import net.whimxiqal.journey.manager.SearchManager;
 import net.whimxiqal.journey.manager.TunnelManager;
 import net.whimxiqal.journey.scope.ScopeManager;
-import net.whimxiqal.journey.search.EverythingSearch;
-import net.whimxiqal.journey.search.event.SearchDispatcher;
-import net.whimxiqal.journey.search.event.SearchDispatcherImpl;
 import net.whimxiqal.journey.stats.StatsManager;
 import net.whimxiqal.journey.util.BStatsUtil;
 import net.whimxiqal.journey.util.CommonLogger;
-import net.whimxiqal.journey.util.Initializable;
 
 public final class Journey {
 
   public static final String NAME = "Journey";
-  public static final UUID JOURNEY_CALLER = UUID.randomUUID();
-  private static final Journey instance = new Journey();
-  private final SearchDispatcherImpl searchEventDispatcher = new SearchDispatcherImpl();
+  private static Journey instance;
   private final PlayerManager playerManager = new PlayerManager();
-  private final DebugManager debugManager = new DebugManager();
   private final NetherManager netherManager = new NetherManager();
   private final SearchManager searchManager = new SearchManager();
+  private final LocationManager locationManager = new LocationManager();
   private final ScopeManager scopeManager = new ScopeManager();
   private final TunnelManager tunnelManager = new TunnelManager();
   private final StatsManager statsManager = new StatsManager();
   private final DomainManager domainManager = new DomainManager();
-  private DataManager dataManager = new DataManagerImpl();
+  private final CentralChunkCache centralChunkCache = new CentralChunkCache();
+  private final AnimationManager animationManager = new AnimationManager();
+  private final CachedDataProvider cachedDataProvider = new CachedDataProvider();
+  private DistributedWorkManager workManager;
   private Proxy proxy;
 
   public static CommonLogger logger() {
     return instance.proxy.logger();
   }
 
+  public static void create() {
+    if (instance != null) {
+      throw new IllegalStateException("Journey was already created");
+    }
+    instance = new Journey();
+  }
+
   public static Journey get() {
+    if (instance == null) {
+      throw new IllegalStateException("Journey is either uninitialized or has been shutdown");
+    }
     return instance;
+  }
+
+  public static void remove() {
+    if (instance == null) {
+      throw new IllegalStateException("Journey may only be removed after it was created");
+    }
+    instance = null;
   }
 
   public Proxy proxy() {
@@ -78,63 +94,70 @@ public final class Journey {
     this.proxy = proxy;
   }
 
-  public void init() {
+  public boolean init() {
     JourneyApiSupplier.set(new JourneyApiImpl());
-    proxy.logger().initialize();
-    dataManager.initialize();
-    netherManager.load();
-    searchEventDispatcher.initialize();
+
+    Settings.validate();  // Settings should already have been loaded from config by now
+    proxy.initialize();
+    netherManager.initialize();
     searchManager.initialize();
     scopeManager.initialize();
     statsManager.initialize();
     BStatsUtil.register(proxy.platform().bStatsChartConsumer());
+    centralChunkCache.initialize();
+    animationManager.initialize();
+    cachedDataProvider.initialize();
 
-    if (dataManager.version() != DataVersion.latest()) {
-      logger().error("The Journey database is using an invalid version.");
+    if (proxy.dataManager().version() != DataVersion.latest()) {
+      logger().error("There is an error in your database configuration. Please delete all Journey database files and tables and restart");
+      return false;
     }
+
+    workManager = new DistributedWorkManager(Settings.MAX_SEARCHES.getValue());
+    return true;
   }
 
   public void shutdown() {
-    searchEventDispatcher.shutdown();
+    logger().setImmediateSubmit(true);
+    // shutdown cache first so any executing searches can continue with the completed chunks requests
+    centralChunkCache.shutdown();
+
+    // shutdown search manager and wait for all ongoing searches to cancel and complete
     searchManager.shutdown();
-    proxy.audienceProvider().close();
+
     statsManager.shutdown();
-    proxy.logger().shutdown();
-  }
-
-  public DataManager dataManager() {
-    return dataManager;
-  }
-
-  public void setDataManager(DataManager dataManager) {
-    this.dataManager = dataManager;
-  }
-
-  public SearchDispatcher dispatcher() {
-    return searchEventDispatcher;
+    animationManager.shutdown();
+    cachedDataProvider.shutdown();
+    proxy.shutdown();
   }
 
   public PlayerManager deathManager() {
+    assertSynchronous();
     return playerManager;
   }
 
-  public DebugManager debugManager() {
-    return debugManager;
-  }
-
   public NetherManager netherManager() {
+    assertSynchronous();
     return netherManager;
   }
 
   public SearchManager searchManager() {
+    assertSynchronous();
     return searchManager;
   }
 
+  public LocationManager locationManager() {
+    assertSynchronous();
+    return locationManager;
+  }
+
   public ScopeManager scopeManager() {
+    assertSynchronous();
     return scopeManager;
   }
 
   public TunnelManager tunnelManager() {
+    assertSynchronous();
     return tunnelManager;
   }
 
@@ -144,6 +167,27 @@ public final class Journey {
 
   public DomainManager domainManager() {
     return domainManager;
+  }
+
+  public CentralChunkCache centralChunkCache() {
+    return centralChunkCache;
+  }
+
+  public AnimationManager animationManager() {
+    return animationManager;
+  }
+  public CachedDataProvider cachedDataProvider() {
+    return cachedDataProvider;
+  }
+
+  public DistributedWorkManager workManager() {
+    return workManager;
+  }
+
+  private void assertSynchronous() {
+    if (!proxy.schedulingManager().isMainThread()) {
+      Journey.logger().warn("This may only be called on the main server thread, but was called on thread: " + Thread.currentThread().getName());
+    }
   }
 
 }

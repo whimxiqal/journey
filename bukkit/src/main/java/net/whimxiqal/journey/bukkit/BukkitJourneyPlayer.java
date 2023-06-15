@@ -23,32 +23,42 @@
 
 package net.whimxiqal.journey.bukkit;
 
-import net.kyori.adventure.audience.Audience;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
+import java.util.Optional;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.JourneyPlayerImpl;
+import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.bukkit.util.BukkitUtil;
+import net.whimxiqal.journey.bukkit.util.MaterialGroups;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class BukkitJourneyPlayer extends JourneyPlayerImpl {
+public class BukkitJourneyPlayer extends InternalJourneyPlayer {
 
   public BukkitJourneyPlayer(Player player) {
     super(player.getUniqueId(), player.getName());
   }
 
-  private Player player() {
-    return Bukkit.getPlayer(uuid);
+  @Override
+  public Optional<Cell> location() {
+    return Optional.ofNullable(Bukkit.getPlayer(uuid)).map(player -> BukkitUtil.cell(player.getLocation()));
   }
 
   @Override
-  public Cell location() {
-    return BukkitUtil.cell(player().getLocation());
+  public boolean canFly() {
+    Player player = Bukkit.getPlayer(uuid);
+    if (player == null) {
+      // player is outdated
+      return false;
+    }
+    return player.getAllowFlight();
   }
 
   @Override
-  public Audience audience() {
-    return Journey.get().proxy().audienceProvider().player(uuid);
+  public boolean hasBoat() {
+    Player player = Bukkit.getPlayer(uuid);
+    if (player == null) {
+      // player is outdated
+      return false;
+    }
+    return MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType));
   }
-
 }

@@ -23,12 +23,14 @@
 
 package net.whimxiqal.journey.data;
 
-import net.whimxiqal.journey.util.Initializable;
-
 /**
  * An interface for describing what is needed to store the state for this application.
  */
-public interface DataManager extends Initializable {
+public interface DataManager {
+
+  default void initialize() {
+    // nothing
+  }
 
   /**
    * The current version of the database.

@@ -32,9 +32,10 @@ import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
+import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.search.DomainGoalSearchSession;
 import net.whimxiqal.journey.search.InternalScope;
-import net.whimxiqal.journey.search.PlayerDomainGoalSearchSession;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.journey.util.Validator;
@@ -48,22 +49,20 @@ public class ScopeManager {
     register(Journey.NAME, "personal", Scope.builder()
         .name(Component.text("My Waypoints"))
         .destinations(player -> VirtualMap.of(
-            () -> Journey.get().dataManager().personalWaypointManager()
+            () -> Journey.get().cachedDataProvider().personalWaypointCache()
                 .getAll(player.uuid(), false)
-                .entrySet()
                 .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> Destination.of(entry.getValue()))),
-            Journey.get().dataManager().personalWaypointManager().getCount(player.uuid(), false)))
+                .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
+            Journey.get().cachedDataProvider().personalWaypointCache().getCount(player.uuid(), false)))
         .permission(Permission.PATH_PERSONAL.path())
         .build());
     register(Journey.NAME, "server", Scope.builder()
         .name(Component.text("Server Waypoints"))
         .destinations(player -> VirtualMap.of(
-            () -> Journey.get().dataManager().publicWaypointManager().getAll()
-                .entrySet()
+            () -> Journey.get().cachedDataProvider().publicWaypointCache().getAll()
                 .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> Destination.of(entry.getValue()))),
-            Journey.get().dataManager().publicWaypointManager().getCount()))
+                .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
+            Journey.get().cachedDataProvider().publicWaypointCache().getCount()))
         .permission(Permission.PATH_SERVER.path())
         .build());
     register(Journey.NAME, "player", Scope.builder()
@@ -76,23 +75,25 @@ public class ScopeManager {
             .filter(p -> !p.uuid().equals(player.uuid()))
             .collect(Collectors.<JourneyPlayer, String, Scope>toMap(JourneyPlayer::name, p -> Scope.builder()
                 .name(Component.text(p.name()))
-                .destinations(() -> VirtualMap.ofSingleton(p.name(), Destination.builder(p.location()).permission(Permission.PATH_PLAYER_ENTITY.path()).build()))
+                .destinations(() -> p.location()
+                    .map(location -> VirtualMap.ofSingleton(p.name(), Destination.builder(location).permission(Permission.PATH_PLAYER_ENTITY.path()).build()))
+                    .orElse(VirtualMap.empty()))
                 .subScopes(() -> VirtualMap.ofSingleton("waypoints", Scope.builder()
                     .name(Component.text(p.name() + "'s Waypoints"))
                     .description(Formatter.dull("Go to this player"))
                     .permission(Permission.PATH_PLAYER_WAYPOINTS.path())
                     .destinations(VirtualMap.of(
-                        () -> Journey.get().dataManager().personalWaypointManager().getAll(p.uuid(), true)
-                            .entrySet()
+                        () -> Journey.get().cachedDataProvider().personalWaypointCache()
+                            .getAll(p.uuid(), true)
                             .stream()
-                            .collect(Collectors.toMap(Map.Entry::getKey, entry -> Destination.of(entry.getValue()))),
-                        Journey.get().dataManager().personalWaypointManager().getCount(p.uuid(), true)))
+                            .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
+                        Journey.get().cachedDataProvider().personalWaypointCache().getCount(p.uuid(), true)))
                     .build()))
                 .strict()  // to access any player destinations, you must at least scope to the player
                 .build()))))
         .build());
     register(Journey.NAME, "world", new InternalScope(Scope.builder()
-            .name(Component.text("Worlds"))
+        .name(Component.text("Worlds"))
         .build(),
         p1 -> VirtualMap.empty(),
         p1 -> VirtualMap.of(Journey.get().proxy().platform().domainResourceKeys()
@@ -102,13 +103,13 @@ public class ScopeManager {
                 new InternalScope(Scope.builder()
                     .name(Component.text(entry.getKey()))
                     .build(),
-                    p2 -> VirtualMap.of(entry.getValue().entrySet().stream()
-                        .filter(entry2 -> entry2.getValue() != p1.location().domain())  // can't request to go to their current domain
+                    p2 -> p2.location().map(cell -> VirtualMap.of(entry.getValue().entrySet().stream()
+                        .filter(entry2 -> entry2.getValue() != cell.domain())  // can't request to go to their current domain
                         .collect(Collectors.toMap(Map.Entry::getKey, entry2 -> {
-                          SearchSession session = new PlayerDomainGoalSearchSession(p2, entry2.getValue());
+                          SearchSession session = new DomainGoalSearchSession(p2.uuid(), SearchSession.Caller.PLAYER, p2, cell, entry2.getValue(), false);
                           session.addPermission(Permission.PATH_WORLD.path());
                           return session;
-                        }))),
+                        })))).orElseGet(VirtualMap::empty),
                     p2 -> VirtualMap.empty()))))));
   }
 

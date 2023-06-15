@@ -30,7 +30,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.Tunnel;
@@ -126,6 +125,31 @@ public class SqlTunnelDataManager extends SqlManager implements TunnelDataManage
       statement.setInt(1, type.id());
 
       return extractTunnels(statement.executeQuery());
+    } catch (SQLException e) {
+      e.printStackTrace();
+      throw new DataAccessException();
+    }
+  }
+
+  @Override
+  public void removeTunnelsWithOrigin(Cell origin, TunnelType type) {
+    try (Connection connection = getConnectionController().establishConnection()) {
+      PreparedStatement statement = connection.prepareStatement(String.format(
+          "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? AND %s = ?;",
+          NETHER_TUNNEL_TABLE_NAME,
+          "origin_domain_id",
+          "origin_x",
+          "origin_y",
+          "origin_z",
+          "tunnel_type"));
+
+      statement.setBytes(1, UUIDUtil.uuidToBytes(Journey.get().domainManager().domainId(origin.domain())));
+      statement.setInt(2, origin.blockX());
+      statement.setInt(3, origin.blockY());
+      statement.setInt(4, origin.blockZ());
+      statement.setInt(5, type.id());
+
+      statement.executeUpdate();
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();

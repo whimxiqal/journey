@@ -81,8 +81,9 @@ public final class Formatter {
    */
   public static Component prefix() {
     return Component.text()
-        .append(Component.text("Journey ").color(THEME))
-        .append(Component.text("% ").color(DARK))
+        .append(Component.text("[").color(DARK))
+        .append(Component.text("J").color(THEME))
+        .append(Component.text("] ").color(DARK))
         .build();
   }
 

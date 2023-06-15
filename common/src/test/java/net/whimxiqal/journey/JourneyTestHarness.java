@@ -1,60 +1,77 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
-import net.whimxiqal.journey.data.TestDataManager;
+import net.whimxiqal.journey.config.Settings;
+import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Itinerary;
-import net.whimxiqal.journey.search.event.FoundSolutionEvent;
-import net.whimxiqal.journey.search.event.SearchDispatcher;
-import net.whimxiqal.journey.search.event.SearchEvent;
-import net.whimxiqal.journey.search.event.StartItinerarySearchEvent;
-import net.whimxiqal.journey.search.event.StartPathSearchEvent;
-import net.whimxiqal.journey.search.event.StepSearchEvent;
-import net.whimxiqal.journey.search.event.StopItinerarySearchEvent;
+import net.whimxiqal.journey.platform.TestJourneyPlayer;
+import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
+import net.whimxiqal.journey.util.CommonLogger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 
 public class JourneyTestHarness {
 
-  protected static final boolean DEBUG = false;
-  protected static final Map<Class<SearchEvent>, Consumer<SearchEvent>> eventRunners = new HashMap<>();
-  protected static Map<UUID, Itinerary> sessionItineraries = new HashMap<>();
-
-  @SuppressWarnings("unchecked")
-  static <E extends SearchEvent> void registerEvent(Class<E> clazz, Consumer<E> runner) {
-    eventRunners.put((Class<SearchEvent>) clazz, (Consumer<SearchEvent>) runner);
-  }
+  public static final UUID PLAYER_UUID = UUID.randomUUID();
+  public static final boolean DEBUG = false;
+  protected static final Map<UUID, Itinerary> SESSION_ITINERARIES = new HashMap<>();
 
   @BeforeAll
-  static void setupWorlds() {
-    if (Journey.get().proxy() != null) {
-      return;
-    }
-    TestProxy proxy = new TestProxy();
-    Journey.get().registerProxy(proxy);
-    proxy.schedulingManager.startMainThread();
-    Journey.get().setDataManager(new TestDataManager());
-    Journey.get().debugManager().setConsoleDebugging(DEBUG);
-    Journey.get().init();
-    WorldLoader.initWorlds();
+  static void initializeHarness() {
+    Settings.MAX_SEARCHES.setValue(10);
 
-    SearchDispatcher.Editor<SearchEvent> dispatcher = Journey.get().dispatcher().editor();
-    registerEvent(FoundSolutionEvent.class, event -> {
-      Journey.logger().debug("FoundSolutionEvent");
-      sessionItineraries.put(event.getSession().uuid(), event.getItinerary());
-    });
-    registerEvent(StepSearchEvent.class, event -> Journey.logger().debug("StepSearchEvent: " + event.getStep().toString()));
-    registerEvent(StartItinerarySearchEvent.class, event -> Journey.logger().debug("StartItinerarySearchEvent"));
-    registerEvent(StopItinerarySearchEvent.class, event -> Journey.logger().debug("StopItinerarySearchEvent"));
-    registerEvent(StartPathSearchEvent.class, event -> Journey.logger().debug("StartPathSearchEvent"));
-    dispatcher.setExternalDispatcher(testEvent -> {
-      Consumer<SearchEvent> runner = eventRunners.get(testEvent.getClass());
-      if (runner != null) {
-        runner.accept(testEvent);
+    Journey.create();
+    TestProxy proxy = new TestProxy(new TestPlatformProxy());
+    Journey.get().registerProxy(proxy);
+
+    if (DEBUG) {
+      Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
+    }
+
+    proxy.schedulingManager.initialize();  // initialize early so that we can schedule on main thread
+    TestSchedulingManager.runOnMainThread(() -> {
+      // journey initialization must happen on main thread
+      if (!Journey.get().init()) {
+        Assertions.fail("Journey initialization failed");
       }
+      WorldLoader.initWorlds();
+
+      TestPlatformProxy.onlinePlayers.add(new TestJourneyPlayer(PLAYER_UUID));
+      JourneyApiProvider.get().registerTunnels("Journey", player -> TestPlatformProxy.tunnels);
     });
+  }
+
+  @AfterAll
+  static void shutdown() {
+    Journey.get().shutdown();
+    Journey.remove();
   }
 
 }

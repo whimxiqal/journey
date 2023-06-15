@@ -113,7 +113,7 @@ public class JourneyGui {
         .title(title.build())
         .rows(6)
         .create();
-    GuiItem fillerItem = ItemBuilder.from(Material.BLACK_STAINED_GLASS_PANE).asGuiItem();
+    GuiItem fillerItem = ItemBuilder.from(Material.BLACK_STAINED_GLASS_PANE).name(Component.empty()).asGuiItem();
     gui.getFiller().fillTop(fillerItem);
     gui.getFiller().fillBottom(fillerItem);
     gui.setItem(6, 2, ItemBuilder.from(Material.PAPER).name(Formatter.accent("Previous")).asGuiItem(event -> gui.previous()));
@@ -157,7 +157,7 @@ public class JourneyGui {
                 .name(entry.getValue().name() == Component.empty() ? Formatter.accent(entry.getKey()) : entry.getValue().name())
                 .lore(entry.getValue().description())
                 .asGuiItem(event -> {
-                  Journey.get().searchManager().launchSearch(entry.getValue());
+                  Journey.get().searchManager().launchIngameSearch(entry.getValue());
                   event.getWhoClicked().closeInventory();
                 });
             gui.addItem(guiItem);

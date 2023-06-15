@@ -66,8 +66,9 @@ shadowJar {
         include(dependency('com.vmware.antlr4-c3:.*'))
         include(dependency('net.kyori:adventure-platform.*'))
         include(dependency('org.bstats:.*'))
-        include(dependency('org.apache.httpcomponents:.*'))
         include(dependency('dev.triumphteam:.*'))
+        include(dependency('com.zaxxer:.*'))
+        include(dependency('org.json:.*'))
     }
 
     relocate 'net.whimxiqal.mantle', 'net.whimxiqal.journey.libs.mantle'
@@ -76,9 +77,9 @@ shadowJar {
     relocate 'org.stringtemplate', 'net.whimxiqal.journey.libs.stringtemplate'
     relocate 'net.kyori.adventure.platform', 'net.whimxiqal.journey.libs.kyori'
     relocate 'org.bstats', 'net.whimxiqal.journey.libs.bstats'
-    relocate 'org.apache.http', 'net.whimxiqal.journey.libs.http'
-    relocate 'mozilla', 'net.whimxiqal.journey.libs.mozilla'
     relocate 'dev.triumphteam.gui', 'net.whimxiqal.journey.libs.gui'
+    relocate 'com.zaxxer.hikari', 'net.whimxiqal.journey.libs.hikari'
+    relocate 'org.json', 'net.whimxiqal.journey.libs.json'
 }
 
 build {

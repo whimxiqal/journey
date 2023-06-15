@@ -23,17 +23,33 @@
 
 package net.whimxiqal.journey.search.flag;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import net.whimxiqal.journey.search.SearchFlag;
 
 public class FlagSet {
 
-  private final Map<Flag<?>, Object> flags = new HashMap<>();
+  private final Map<Flag<?>, Object> flags = new ConcurrentHashMap<>();
+
+  public static FlagSet from(SearchFlag<?>[] flags) {
+    FlagSet set = new FlagSet();
+    for (SearchFlag<?> flag : flags) {
+      switch (flag.type()) {
+        case TIMEOUT -> set.addFlag(Flags.TIMEOUT, (int) flag.value());
+        case FLY -> set.addFlag(Flags.FLY, (boolean) flag.value());
+      }
+    }
+    return set;
+  }
 
   public <T> void addFlag(Flag<T> flag, T value) {
     this.flags.put(flag, value);
+  }
+
+  public void addFlags(FlagSet other) {
+    flags.putAll(other.flags);
   }
 
   @SuppressWarnings("unchecked")
@@ -54,4 +70,8 @@ public class FlagSet {
     flags.forEach((key, value) -> consumer.accept(key, Optional.of(((Flag<Object>) key).printValue(value))));
   }
 
+  @Override
+  public String toString() {
+    return "FlagSet{" + flags + "}";
+  }
 }

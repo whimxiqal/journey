@@ -23,9 +23,6 @@
 
 package net.whimxiqal.journey;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -63,4 +60,5 @@ class DestinationImpl implements Destination {
   public Optional<String> permission() {
     return Optional.ofNullable(permission);
   }
+
 }

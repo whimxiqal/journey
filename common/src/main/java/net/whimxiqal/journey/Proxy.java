@@ -24,11 +24,12 @@
 package net.whimxiqal.journey;
 
 import java.nio.file.Path;
+import net.kyori.adventure.platform.AudienceProvider;
 import net.whimxiqal.journey.config.ConfigManager;
+import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.util.CommonLogger;
-import net.kyori.adventure.platform.AudienceProvider;
 
 public interface Proxy {
 
@@ -42,7 +43,24 @@ public interface Proxy {
 
   SchedulingManager schedulingManager();
 
+  DataManager dataManager();
+
   PlatformProxy platform();
 
   String version();
+
+  default void initialize() {
+    // initialize scheduling manager first because most init/shutdown scripts need it
+    schedulingManager().initialize();
+    logger().initialize();
+    dataManager().initialize();
+  }
+
+  default void shutdown() {
+    logger().shutdown();
+    audienceProvider().close();
+
+    // shutdown scheduling manager last because most init/shutdown scripts need it
+    schedulingManager().shutdown();
+  }
 }

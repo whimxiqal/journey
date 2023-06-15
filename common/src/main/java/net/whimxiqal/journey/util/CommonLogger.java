@@ -26,17 +26,19 @@ package net.whimxiqal.journey.util;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Logger;
-import net.kyori.adventure.text.Component;
+import java.util.concurrent.atomic.AtomicReference;
 import net.whimxiqal.journey.Journey;
 
 /**
  * A generic interface for common logging purposes.
  */
-public abstract class CommonLogger implements Initializable {
+public abstract class CommonLogger {
 
+  private static final int MAX_LOGS_PER_TICK = 100;
   private final Queue<Message> messageQueue = new ConcurrentLinkedQueue<>();
+  private final AtomicReference<LogLevel> logLevel = new AtomicReference<>(LogLevel.INFO);
   private UUID messageTaskId;
+  private boolean immediateSubmit = false;
 
   abstract protected void submit(Message message);
 
@@ -46,36 +48,52 @@ public abstract class CommonLogger implements Initializable {
    * @param message the message
    */
   public void info(String message) {
-    log(MessageType.INFO, message);
+    log(LogLevel.INFO, message);
   }
 
   /**
    * Log something at the warn-level.
    */
   public void warn(String message) {
-    log(MessageType.WARNING, message);
+    log(LogLevel.WARNING, message);
   }
 
   /**
    * Log something at the sever-level.
    */
   public void error(String message) {
-    log(MessageType.SEVERE, message);
+    log(LogLevel.SEVERE, message);
   }
 
   public void debug(String message) {
-    debug(Component.text(message));
+    log(LogLevel.DEBUG, message);
   }
 
-  public void debug(Component message) {
-    Journey.get().debugManager().broadcast(message);
+  public LogLevel level() {
+    return logLevel.get();
   }
 
-  private void log(MessageType type, String message) {
-    messageQueue.add(new Message(type, message));
+  /**
+   * Sets the level, so any messages that have a greater level are ignored.
+   *
+   * @param level the level
+   */
+  public void setLevel(LogLevel level) {
+    logLevel.set(level);
   }
 
-  @Override
+  private void log(LogLevel type, String message) {
+    if (type.level <= logLevel.get().level) {
+      // only queue this log if the level is below our allowed log level
+      Message msg = new Message(type, message);
+      if (immediateSubmit) {
+        submit(msg);
+      } else {
+        messageQueue.add(msg);
+      }
+    }
+  }
+
   public void initialize() {
     messageTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(this::flush, false, 1);
   }
@@ -87,19 +105,51 @@ public abstract class CommonLogger implements Initializable {
     flush();
   }
 
-  private void flush() {
+  public void setImmediateSubmit(boolean immediateSubmit) {
+    this.immediateSubmit = immediateSubmit;
+  }
+
+  public void flush() {
+    int count = 0;
     while (!messageQueue.isEmpty()) {
       submit(messageQueue.remove());
+      count++;
+      if (count > MAX_LOGS_PER_TICK) {
+        submit(new Message(LogLevel.WARNING, String.format("[Logger] Truncated %d logs", messageQueue.size())));
+        messageQueue.clear();
+        break;
+      }
     }
   }
 
-  protected enum MessageType {
-    INFO,
-    WARNING,
-    SEVERE,
+  public enum LogLevel {
+    SEVERE("SEVER", 0),
+    WARNING("WARN ", 1),
+    INFO("INFO ", 2),
+    DEBUG("DEBUG", 3);
+
+    private final String label;
+    private final int level;
+
+    LogLevel(String label, int level) {
+      this.label = label;
+      this.level = level;
+    }
+
+    public String label() {
+      return label;
+    }
+
+    public int level() {
+      return level;
+    }
   }
 
-  protected record Message(MessageType type, String message) {
+  protected record Message(LogLevel type, String message) {
+    @Override
+    public String toString() {
+      return "[" + type.label + "] " + message;
+    }
   }
 
 }

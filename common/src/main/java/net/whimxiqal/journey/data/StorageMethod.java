@@ -28,7 +28,7 @@ package net.whimxiqal.journey.data;
  */
 public enum StorageMethod {
 
-//  MYSQL,
+  MYSQL,
   SQLITE
 
 }

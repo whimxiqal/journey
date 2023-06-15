@@ -23,71 +23,12 @@
 
 package net.whimxiqal.journey;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 /**
  * A generic location within 3-dimensional domain.
  * A domain is just a grid that is geometrically distinct from other domains.
  * A Minecraft world is considered a domain by Journey.
  */
-public class Cell implements Serializable {
-
-  private final int blockX;
-  private final int blockY;
-  private final int blockZ;
-  private final int domain;
-
-  /**
-   * General constructor.
-   *
-   * @param x      the X coordinate
-   * @param y      the Y coordinate
-   * @param z      the Z coordinate
-   * @param domain the id of the domain
-   */
-  public Cell(int x, int y, int z, int domain) {
-    this.blockX = x;
-    this.blockY = y;
-    this.blockZ = z;
-    this.domain = domain;
-  }
-
-  /**
-   * Get X coordinate.
-   *
-   * @return x coordinate
-   */
-  public final int blockX() {
-    return blockX;
-  }
-
-  /**
-   * Get Y coordinate.
-   *
-   * @return y coordinate
-   */
-  public final int blockY() {
-    return blockY;
-  }
-
-  /**
-   * Get Z coordinate.
-   *
-   * @return z coordinate
-   */
-  public final int blockZ() {
-    return blockZ;
-  }
-
-  /**
-   * Get the id of the domain.
-   *
-   * @return the domain id
-   */
-  public final int domain() {
-    return domain;
-  }
+public record Cell(int blockX, int blockY, int blockZ, int domain) {
 
   /**
    * Get the cartesian from one locatable to another, ignoring domain.
@@ -129,24 +70,7 @@ public class Cell implements Serializable {
 
   @Override
   public String toString() {
-    return "[x: " + blockX + ", y: " + blockY + ", z: " + blockZ + ", domain: '" + domain + "']";
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Cell cell = (Cell) o;
-    return blockX == cell.blockX && blockY == cell.blockY && blockZ == cell.blockZ && domain == cell.domain;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(blockX, blockY, blockZ, domain);
+    return "{x: " + blockX + ", y: " + blockY + ", z: " + blockZ + ", domain: " + domain + "}";
   }
 
 }

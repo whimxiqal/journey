@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) Pieter Svenson
+ * Copyright (c) whimxiqal
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,6 @@ package net.whimxiqal.journey.util;
 public class TestLogger extends CommonLogger {
   @Override
   protected void submit(Message message) {
-    switch (message.type()) {
-      case INFO -> System.out.println("INFO: " + message);
-      case WARNING -> System.out.println("WARN: " + message);
-      case SEVERE -> System.out.println("ERROR: " + message);
-      default -> System.out.println(message);
-    }
+    System.out.println(message);
   }
 }

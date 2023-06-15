@@ -25,36 +25,32 @@ package net.whimxiqal.journey.bukkit;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.bukkit.gui.JourneyGui;
-import net.whimxiqal.journey.JourneyPlayer;
-import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigation.ModeType;
+import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.JourneyAgent;
+import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyBlock;
+import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyChunk;
+import net.whimxiqal.journey.bukkit.gui.JourneyGui;
+import net.whimxiqal.journey.bukkit.music.Song;
+import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
+import net.whimxiqal.journey.bukkit.util.BukkitUtil;
+import net.whimxiqal.journey.chunk.ChunkId;
+import net.whimxiqal.journey.math.Vector;
+import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
-import net.whimxiqal.journey.search.AnimationManager;
+import net.whimxiqal.journey.proxy.JourneyBlock;
+import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
-import net.whimxiqal.journey.bukkit.music.Song;
-import net.whimxiqal.journey.bukkit.navigation.mode.BoatMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.ClimbMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.DigMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.DoorMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.FlyMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.JumpMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.SwimMode;
-import net.whimxiqal.journey.bukkit.navigation.mode.WalkMode;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import net.whimxiqal.journey.bukkit.util.MaterialGroups;
 import net.whimxiqal.journey.util.BStatsUtil;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.CustomChart;
@@ -69,10 +65,9 @@ import org.bukkit.entity.Player;
 
 public class BukkitPlatformProxy implements PlatformProxy {
 
-  /**
-   * The height of the space filled with air to be considered the surface of the world.
-   */
-  private static final int AT_SURFACE_HEIGHT = 64;
+  private final BlockData animationBlockData = Material.WHITE_STAINED_GLASS.createBlockData();
+
+
   private final Metrics metrics;
 
   public BukkitPlatformProxy() {
@@ -80,8 +75,20 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public boolean isNetherPortal(Cell cell) {
-    return BukkitUtil.getBlock(cell).getMaterial() == Material.NETHER_PORTAL;
+  public CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate) {
+    World world = BukkitUtil.getWorld(chunkId.domain());
+    return world.getChunkAtAsync(chunkId.x(), chunkId.z(), generate).thenApply(chunk -> {
+      if (chunk == null) {
+        return new UnavailableJourneyChunk(chunkId);
+      } else {
+        return new BukkitSessionJourneyChunk(chunk.getChunkSnapshot(), world.getUID());
+      }
+    });
+  }
+
+  @Override
+  public JourneyBlock toBlock(Cell cell) {
+    return new BukkitSessionJourneyBlock(cell, BukkitUtil.getBlock(cell), BukkitUtil.getBlock(cell.atOffset(0, -1, 0)), new FlagSet());
   }
 
   @Override
@@ -101,8 +108,6 @@ public class BukkitPlatformProxy implements PlatformProxy {
   @Override
   public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     Particle particle;
-    int particleCount;
-    int multiplier;
     if (type == ModeType.FLY) {
       particle = Particle.WAX_OFF;
     } else if (type == ModeType.DIG) {
@@ -127,17 +132,17 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Collection<JourneyPlayer> onlinePlayers() {
+  public Collection<InternalJourneyPlayer> onlinePlayers() {
     return Bukkit.getOnlinePlayers().stream().map(BukkitJourneyPlayer::new).collect(Collectors.toList());
   }
 
   @Override
-  public Optional<JourneyPlayer> onlinePlayer(UUID uuid) {
+  public Optional<InternalJourneyPlayer> onlinePlayer(UUID uuid) {
     return Optional.ofNullable(Bukkit.getPlayer(uuid)).map(BukkitJourneyPlayer::new);
   }
 
   @Override
-  public Optional<JourneyPlayer> onlinePlayer(String name) {
+  public Optional<InternalJourneyPlayer> onlinePlayer(String name) {
     return Optional.ofNullable(Bukkit.getPlayer(name)).map(BukkitJourneyPlayer::new);
   }
 
@@ -152,122 +157,45 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void prepareSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, boolean includePorts) {
-    // MODES
-    Set<Material> passableBlocks = new HashSet<>();
-    if (flags.getValueFor(Flags.DOOR)) {
-      passableBlocks.add(Material.IRON_DOOR);
-    }
-
-    // Register modes in order of preference
-    Player player = Bukkit.getPlayer(playerUuid);
-    boolean fly = flags.getValueFor(Flags.FLY);
-    boolean boat = false;
-    if (player != null) {
-      fly &= player.getAllowFlight();
-      boat = MaterialGroups.BOATS.stream().anyMatch(boatType -> player.getInventory().contains(boatType));
-    }
-    if (fly) {
-      search.registerMode(new FlyMode(search, passableBlocks));
-    } else {
-      search.registerMode(new WalkMode(search, passableBlocks));
-      search.registerMode(new JumpMode(search, passableBlocks));
-      search.registerMode(new SwimMode(search, passableBlocks));
-      if (boat) {
-        search.registerMode(new BoatMode(search, passableBlocks));
-      }
-    }
-    search.registerMode(new DoorMode(search, passableBlocks));
-    search.registerMode(new ClimbMode(search, passableBlocks));
-    if (flags.getValueFor(Flags.DIG)) {
-      search.registerMode(new DigMode(search, passableBlocks));
-    }
-  }
-
-  @Override
-  public void prepareDestinationSearchSession(SearchSession search, UUID playerUuid, FlagSet flags, Cell destination) {
-    Set<Material> passableBlocks = new HashSet<>();
-    if (!flags.getValueFor(Flags.DOOR)) {
-      passableBlocks.add(Material.IRON_DOOR);
-    }
-
-    Player player = Bukkit.getPlayer(playerUuid);
+  public void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination) {
+    Player player = Bukkit.getPlayer(agent.uuid());
     if (player == null) {
       return;
     }
     if (player.getAllowFlight() && flags.getValueFor(Flags.FLY)) {
-      search.registerMode(new FlyRayTraceMode(search, passableBlocks, destination));
+      searchSession.addMode(new FlyRayTraceMode(destination));
     }
   }
 
   @Override
-  public boolean isAtSurface(Cell cell) {
-    int x = cell.blockX();
-    int z = cell.blockZ();
-    for (int y = cell.blockY() + 1; y <= Math.min(256, cell.blockY() + AT_SURFACE_HEIGHT); y++) {
-      if (BukkitUtil.getBlock(new Cell(x, y, z, cell.domain())).getMaterial() != Material.AIR) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Override
-  public boolean sendBlockData(UUID playerUuid, Cell location, AnimationManager.StageType stage, ModeType mode) {
+  public void sendAnimationBlock(UUID playerUuid, Cell location) {
     Player player = Bukkit.getPlayer(playerUuid);
     if (player == null) {
-      return false;
+      return;
     }
     if (BukkitUtil.cell(player.getLocation()).equals(location)
         || BukkitUtil.cell(player.getLocation().add(0, 1, 0)).equals(location)) {
-      return false;
+      return;
     }
-
-    switch (stage) {
-      case SUCCESS: {
-        BlockData blockData;
-        switch (mode) {
-          case WALK:
-            blockData = Material.LIME_STAINED_GLASS.createBlockData();
-            break;
-          case JUMP:
-            blockData = Material.MAGENTA_STAINED_GLASS.createBlockData();
-            break;
-          case FLY:
-            blockData = Material.WHITE_STAINED_GLASS.createBlockData();
-            break;
-          default:
-            blockData = Material.COBWEB.createBlockData();
-            break;
-        }
-        return showBlock(player, location, blockData);
-      }
-      case FAILURE:
-        return showBlock(player, location, Material.GLOWSTONE.createBlockData());
-      case STEP:
-        return showBlock(player, location, Material.OBSIDIAN.createBlockData());
-    }
-    return true;
-  }
-
-  private boolean showBlock(Player player, Cell cell, BlockData blockData) {
-    if (BukkitUtil.getWorld(cell) != player.getWorld()
-        || cell.distanceToSquared(BukkitUtil.cell(player.getLocation())) > 10000) {
-      return false;
-    }
-    player.sendBlockChange(BukkitUtil.toLocation(cell), blockData);
-    return true;
+    showBlock(player, location, animationBlockData);
   }
 
   @Override
-  public boolean resetBlockData(UUID playerUuid, Collection<Cell> locations) {
+  public void resetAnimationBlocks(UUID playerUuid, Collection<Cell> locations) {
     Player player = Bukkit.getPlayer(playerUuid);
     if (player == null) {
-      return false;
+      return;
     }
+    for (Cell cell : locations) {
+      showBlock(player, cell, BukkitUtil.getBlock(cell));
+    }
+  }
 
-    locations.forEach(cell -> showBlock(player, cell, BukkitUtil.getBlock(cell)));
-    return true;
+  private void showBlock(Player player, Cell cell, BlockData blockData) {
+    if (BukkitUtil.getWorld(cell) == player.getWorld()
+        && cell.distanceToSquared(BukkitUtil.cell(player.getLocation())) < 10000 /* 100 blocks away, ignore */) {
+      player.sendBlockChange(BukkitUtil.toLocation(cell), blockData);
+    }
   }
 
   @Override
@@ -280,11 +208,6 @@ public class BukkitPlatformProxy implements PlatformProxy {
     JourneyGui journeyGui = new JourneyGui(player);
     journeyGui.open();
     return true;
-  }
-
-  @Override
-  public boolean synchronous() {
-    return Bukkit.isPrimaryThread();
   }
 
   @Override

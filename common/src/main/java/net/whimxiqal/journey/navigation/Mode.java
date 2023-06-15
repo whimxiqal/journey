@@ -24,13 +24,10 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.search.event.ModeFailureEvent;
-import net.whimxiqal.journey.search.event.ModeSuccessEvent;
+import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.search.ModeType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,17 +36,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class Mode {
 
-  private final SearchSession session;
-
-  /**
-   * General constructor.
-   *
-   * @param session the search session requesting information from this mode
-   */
-  public Mode(@NotNull SearchSession session) {
-    this.session = session;
-  }
-
   /**
    * Collect and return all the destinations that are reachable from an original location
    * based on the implementation of this mode.
@@ -57,57 +43,10 @@ public abstract class Mode {
    *
    * @param origin the original (current) location
    * @return all options
+   * @throws ExecutionException   if the async retrieval of a block had an error
+   * @throws InterruptedException if the async retrieval of a block was interrupted
    */
-  @NotNull
-  public final Collection<Option> getDestinations(@NotNull Cell origin) {
-    List<Option> options = new LinkedList<>();
-    collectDestinations(origin, options);
-    return options;
-  }
-
-  /**
-   * Accept a location and its distance to the list of possible options.
-   * This adds it to the list and performs other somewhat unnecessary management operations.
-   * All implementations of {@link Mode} should use accept instead of adding directly to the option list.
-   *
-   * @param destination the accepted destination
-   * @param distance    the distance to the destination
-   * @param options     the options list, passed from the previous caller
-   */
-  protected final void accept(@NotNull Cell destination,
-                              double distance,
-                              @NotNull List<Option> options) {
-    options.add(new Option(destination, distance));
-    delay();
-    Journey.get().dispatcher().dispatch(new ModeSuccessEvent(session, destination, type()));
-  }
-
-  /**
-   * Reject a location and its distance.
-   * This performs somewhat unnecessary management operations.
-   * All implementations of {@link Mode} should use this method if the mode operation
-   * determined that a block is unreachable given the current circumstances.
-   *
-   * @param destination the rejected destination
-   */
-  protected final void reject(@NotNull Cell destination) {
-    delay();
-    Journey.get().dispatcher().dispatch(new ModeFailureEvent(session, destination, type()));
-  }
-
-  private void delay() {
-    // Delay the algorithm, if requested by implementation of search session
-    // (Primarily used in animating the search process)
-    if (session.getAlgorithmStepDelay() != 0) {
-      try {
-        Thread.sleep(session.getAlgorithmStepDelay());
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-  }
-
-  protected abstract void collectDestinations(@NotNull Cell origin, @NotNull List<Option> options);
+  public abstract Collection<Option> getDestinations(Cell origin, BlockProvider blockProvider) throws ExecutionException, InterruptedException;
 
   /**
    * Get the mode type.
@@ -118,51 +57,10 @@ public abstract class Mode {
   public abstract ModeType type();
 
   /**
-   * A record to store a movement option. It just contains a location and a distance to that location.
+   * A record to store a movement option. It just contains a location for now, but it could later
+   * contain information about the speed at which the distance to the location can be traversed.
    */
-  public static class Option {
-
-    final Cell location;
-    final double cost;
-
-    public static Option between(Cell origin, int destinationX, int destinationY, int destinationZ) {
-      Cell destination = new Cell(destinationX, destinationY, destinationZ, origin.domain());
-      return new Option(destination, origin.distanceTo(destination));
-    }
-
-    public static Option between(Cell origin, Cell destination, double costMultiplier) {
-      return new Option(destination, origin.distanceTo(destination));
-    }
-
-    /**
-     * General constructor.
-     *
-     * @param location the location
-     * @param cost the destination
-     */
-    public Option(@NotNull Cell location, double cost) {
-      this.location = location;
-      this.cost = cost;
-    }
-
-    /**
-     * Get location.
-     *
-     * @return the location
-     */
-    @NotNull
-    public Cell location() {
-      return location;
-    }
-
-    /**
-     * Get the distance it would take to reach the location.
-     *
-     * @return the distance
-     */
-    public double cost() {
-      return cost;
-    }
+  public record Option(Cell location) {
   }
 
 }

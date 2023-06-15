@@ -33,10 +33,12 @@ public interface TunnelSupplier {
 
   /**
    * Get a collection of tunnels when given a specific player who's requesting them.
+   * The player may be null if another source is requesting tunnels, such as the console.
    *
    * @param player the player
    * @return the tunnels
    */
-  Collection<? extends Tunnel> tunnels(JourneyPlayer player);
+  @Synchronous
+  Collection<? extends Tunnel> tunnels(JourneyAgent player);
 
 }

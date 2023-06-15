@@ -23,7 +23,6 @@
 
 package net.whimxiqal.journey.bukkit;
 
-import java.util.Objects;
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Key;
@@ -31,16 +30,9 @@ import net.kyori.adventure.platform.AudienceProvider;
 import net.kyori.adventure.text.flattener.ComponentFlattener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public class PaperAudiences implements AudienceProvider {
-
-  private final JavaPlugin plugin;
-
-  PaperAudiences(JavaPlugin plugin) {
-    this.plugin = plugin;
-  }
 
   @Override
   public @NotNull Audience all() {
@@ -59,7 +51,11 @@ public class PaperAudiences implements AudienceProvider {
 
   @Override
   public @NotNull Audience player(@NotNull UUID playerId) {
-    return Objects.requireNonNull(Bukkit.getPlayer(playerId));
+    Player player = Bukkit.getPlayer(playerId);
+    if (player == null) {
+      return Audience.empty();
+    }
+    return player;
   }
 
   @Override

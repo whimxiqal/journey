@@ -85,4 +85,13 @@ CREATE INDEX journey_tunnels_destination_idx ON journey_tunnels (
 	destination_domain_id, destination_x, destination_y, destination_z
 );
 
+-- Journey Database Version Tracker
+
+CREATE TABLE journey_db_version (
+    db_version INT
+);
+CREATE INDEX journey_db_version_idx ON journey_db_version (
+    db_version
+);
+
 COMMIT;

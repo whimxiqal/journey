@@ -23,15 +23,13 @@
 
 package net.whimxiqal.journey.data;
 
-import java.util.Map;
 import net.whimxiqal.journey.Cell;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A manager to handle public endpoints.
  */
-public interface PublicWaypointManager {
+public interface PublicWaypointManager extends PublicWaypointProvider {
 
   /**
    * Add a server endpoint.
@@ -59,26 +57,6 @@ public interface PublicWaypointManager {
   void remove(@NotNull String name) throws DataAccessException;
 
   /**
-   * Check if a saved cell exists at this location.
-   *
-   * @param cell the cell location
-   * @return true if the cell exists
-   */
-  default boolean hasWaypoint(@NotNull Cell cell) throws DataAccessException {
-    return getName(cell) != null;
-  }
-
-  /**
-   * Check if a saved cell exists with this name.
-   *
-   * @param name the cell name
-   * @return true if the cell exists
-   */
-  default boolean hasWaypoint(@NotNull String name) throws DataAccessException {
-    return getWaypoint(name) != null;
-  }
-
-  /**
    * Rename a waypoint.
    *
    * @param name    the name
@@ -86,35 +64,4 @@ public interface PublicWaypointManager {
    */
   void renameWaypoint(String name, String newName) throws DataAccessException;
 
-  /**
-   * Get the name of a saved location.
-   *
-   * @param cell the saved location
-   * @return the cell's name, or null if it doesn't exist
-   */
-  @Nullable
-  String getName(@NotNull Cell cell) throws DataAccessException;
-
-  /**
-   * Get a specific cell by its given name.
-   *
-   * @param name the cell name
-   * @return the cell, or null if it doesn't
-   */
-  @Nullable
-  Cell getWaypoint(@NotNull String name) throws DataAccessException;
-
-  /**
-   * Get a list of all saved endpoints.
-   *
-   * @return all names of cells mapped to their corresponding cells
-   */
-  Map<String, Cell> getAll() throws DataAccessException;
-
-  /**
-   * Get the total number of waypoints
-   *
-   * @return waypoint count
-   */
-  int getCount();
 }

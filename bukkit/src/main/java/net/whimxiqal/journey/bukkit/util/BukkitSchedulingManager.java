@@ -76,4 +76,9 @@ public class BukkitSchedulingManager implements SchedulingManager {
     }
     Bukkit.getScheduler().cancelTask(id);
   }
+
+  @Override
+  public boolean isMainThread() {
+    return Bukkit.isPrimaryThread();
+  }
 }

@@ -30,10 +30,9 @@ public enum ResultState {
 
   IDLE("idle"),
   RUNNING("running"),
-  RUNNING_SUCCESSFUL("running (successful)"),
   STOPPING_CANCELED("stopping (canceled)"), // manually canceled
   STOPPING_FAILED("stopping (failed)"),
-  STOPPING_SUCCESSFUL("stopping (successful)"),
+  STOPPING_ERROR("stopping (error)"),
   STOPPED_FAILED("stopped (failed)"),
   STOPPED_SUCCESSFUL("stopped (successful)"),
   STOPPED_CANCELED("stopped (canceled)"),
@@ -53,10 +52,8 @@ public enum ResultState {
   public boolean isRunning() {
     switch (this) {
       case RUNNING:
-      case RUNNING_SUCCESSFUL:
       case STOPPING_FAILED:
       case STOPPING_CANCELED:
-      case STOPPING_SUCCESSFUL:
         return true;
       default:
         return false;
@@ -81,6 +78,13 @@ public enum ResultState {
     }
   }
 
+  public boolean isStopping() {
+    return switch (this) {
+      case STOPPING_FAILED, STOPPING_CANCELED, STOPPING_ERROR -> true;
+      default -> false;
+    };
+  }
+
   /**
    * Determine if this state is implying the process had or will have a successful result upon completion.
    *
@@ -89,7 +93,6 @@ public enum ResultState {
   public boolean isSuccessful() {
     switch (this) {
       case STOPPED_SUCCESSFUL:
-      case RUNNING_SUCCESSFUL:
         return true;
       default:
         return false;
@@ -97,15 +100,15 @@ public enum ResultState {
   }
 
   /**
-   * Determine if this state was canceled at any point, whether a successful result had been found or not.
+   * Determine if the state signals a stopping state, whether a successful result had been found or not.
    *
-   * @return true if canceled (manually stopped)
+   * @return true if stopping
    */
   public boolean shouldStop() {
     switch (this) {
       case STOPPING_FAILED:
-      case STOPPING_SUCCESSFUL:
       case STOPPING_CANCELED:
+      case STOPPING_ERROR:
       case STOPPED_CANCELED:
       case STOPPED_ERROR:
       case STOPPED_FAILED:
@@ -126,8 +129,6 @@ public enum ResultState {
       case IDLE:
       case RUNNING:
         return cancel ? ResultState.STOPPING_CANCELED : ResultState.STOPPING_FAILED;
-      case RUNNING_SUCCESSFUL:
-        return ResultState.STOPPING_SUCCESSFUL;
       default:
         return this;
     }
@@ -144,11 +145,10 @@ public enum ResultState {
       case RUNNING:
       case STOPPING_FAILED:
         return STOPPED_FAILED;
-      case RUNNING_SUCCESSFUL:
-      case STOPPING_SUCCESSFUL:
-        return STOPPED_SUCCESSFUL;
       case STOPPING_CANCELED:
         return STOPPED_CANCELED;
+      case STOPPING_ERROR:
+        return STOPPED_ERROR;
       default:
         // already is stopped
         return this;

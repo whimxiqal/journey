@@ -29,7 +29,8 @@ import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.common.JourneyLexer;
 import net.whimxiqal.journey.common.JourneyParser;
-import net.whimxiqal.journey.JourneyPlayerImpl;
+import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.mantle.common.CommandSource;
@@ -58,16 +59,21 @@ public class JourneyConnectorProvider {
             .addParameter(Parameter.builder("waypoint")
                 .options(ctx -> {
                   if (ctx.source().type() == CommandSource.Type.PLAYER) {
-                    return Journey.get().dataManager().personalWaypointManager().getAll(ctx.source().uuid(), false).keySet();
+                    return Journey.get().cachedDataProvider().personalWaypointCache()
+                        .getAll(ctx.source().uuid(), false)
+                        .stream().map(Waypoint::name)
+                        .collect(Collectors.toList());
                   }
                   return Collections.emptyList();
                 })
                 .build())
             .addParameter(Parameter.builder("server-waypoint")
-                .options(ctx -> Journey.get().dataManager().publicWaypointManager().getAll().keySet())
+                .options(ctx -> Journey.get().cachedDataProvider().publicWaypointCache()
+                    .getAll().stream().map(Waypoint::name)
+                    .collect(Collectors.toList()))
                 .build())
             .addParameter(Parameter.builder("scope")
-                .options(ctx -> ScopeUtil.options(JourneyPlayerImpl.from(ctx.source())))
+                .options(ctx -> ScopeUtil.options(InternalJourneyPlayer.from(ctx.source())))
                 .build())
             .registerCompletion(JourneyParser.RULE_waypoint, 0, "waypoint")
             .registerCompletion(JourneyParser.RULE_serverWaypoint, 0, "server-waypoint")

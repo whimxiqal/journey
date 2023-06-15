@@ -39,20 +39,24 @@ public interface Scope extends Describable, Permissible {
 
   /**
    * A supplier of scopes to be accessed only under the current scope.
+   * The {@link VirtualMap} must only be accessed on the main thread.
    *
    * @param player the player
    * @return the supplier of sub-scopes
    */
+  @Synchronous
   default VirtualMap<Scope> subScopes(JourneyPlayer player) {
     return VirtualMap.empty();
   }
 
   /**
    * A supplier of destinations to which players may travel.
+   * The {@link VirtualMap} must only be accessed on the main thread.
    *
    * @param player the player
    * @return the supplier
    */
+  @Synchronous
   default VirtualMap<Destination> destinations(JourneyPlayer player) {
     return VirtualMap.empty();
   }

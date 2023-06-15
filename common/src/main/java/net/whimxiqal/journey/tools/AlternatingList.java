@@ -25,6 +25,7 @@ package net.whimxiqal.journey.tools;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -56,15 +57,19 @@ public final class AlternatingList<A extends C, B extends C, C> {
   /**
    * The items that start and end the list. Minors lie in between them.
    */
-  private final ArrayList<A> majors = new ArrayList<>();
+  private final List<A> majors;
   /**
    * The items that lie between the majors.
    */
-  private final ArrayList<B> minors = new ArrayList<>();
+  private final List<B> minors;
 
   private AlternatingList(@NotNull List<A> majors, @NotNull List<B> minors) {
-    this.majors.addAll(majors);
-    this.minors.addAll(minors);
+    this.majors = Collections.unmodifiableList(majors);
+    this.minors = Collections.unmodifiableList(minors);
+  }
+
+  public int size() {
+    return majors.size() * 2 - 1;
   }
 
   /**

@@ -35,10 +35,11 @@ import java.util.function.Supplier;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
+import net.whimxiqal.journey.search.flag.FlagSet;
+import net.whimxiqal.journey.search.flag.Flags;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Snow;
@@ -82,7 +83,10 @@ public final class BukkitUtil {
    * @return true if passable
    */
   public static boolean isLaterallyPassable(BlockData block) {
-    return isVerticallyPassable(block, Collections.emptySet());
+    if (isPassable(block)) {
+      return true;
+    }
+    return MaterialGroups.isLaterallySpecialPassable(block.getMaterial());
   }
 
   /**
@@ -91,8 +95,11 @@ public final class BukkitUtil {
    * @param block the block
    * @return false if you cannot pass through this block laterally
    */
-  public static boolean isLaterallyPassable(BlockData block, Set<Material> forcePassable) {
-    if (isPassable(block, forcePassable)) {
+  public static boolean isLaterallyPassable(BlockData block, FlagSet flagSet) {
+    if (isPassable(block)) {
+      return true;
+    }
+    if (block.getMaterial() == Material.IRON_DOOR && flagSet.getValueFor(Flags.DOOR)) {
       return true;
     }
     return MaterialGroups.isLaterallySpecialPassable(block.getMaterial());
@@ -132,13 +139,9 @@ public final class BukkitUtil {
    * @param block the block
    * @return false if a player cannot stand on top of the block
    */
-  public static boolean canStandOn(BlockData block, Set<Material> forcePassable) {
-    if (forcePassable.contains(block.getMaterial())) {
-      return false;
-    } else {
-      return !MaterialGroups.isPassable(block.getMaterial())
-          || MaterialGroups.TALL_SOLIDS.contains(block.getMaterial());
-    }
+  public static boolean canStandOn(BlockData block) {
+    return !MaterialGroups.isPassable(block.getMaterial())
+        || MaterialGroups.TALL_SOLIDS.contains(block.getMaterial());
   }
 
   /**
@@ -147,9 +150,9 @@ public final class BukkitUtil {
    * @param block the block
    * @return false if a player cannot stand within this block and be supported
    */
-  public static boolean canStandIn(BlockData block, Set<Material> forcePassable) {
-    return isLaterallyPassable(block, forcePassable)
-        && !isVerticallyPassable(block, forcePassable);
+  public static boolean canStandIn(BlockData block) {
+    return isLaterallyPassable(block)
+        && !isVerticallyPassable(block);
   }
 
   public static int getDomain(World world) {
@@ -181,16 +184,17 @@ public final class BukkitUtil {
   }
 
   /**
-   * Thread safe :)
+   * Get the Bukkit block data at the given location.
+   * Must be called on the main server thread.
    *
    * @param cell cell
    * @return the block data at the cell location
    */
   public static BlockData getBlock(Cell cell) {
-    if (Bukkit.isPrimaryThread()) {
-      return getWorld(Journey.get().domainManager().domainId(cell.domain())).getBlockAt(cell.blockX(), cell.blockY(), cell.blockZ()).getBlockData();
+    if (!Bukkit.isPrimaryThread()) {
+      throw new IllegalThreadStateException("Calls to getBlock must be made on the main thread");
     }
-    return JourneyBukkit.get().getBlockAccessor().getBlock(cell);
+    return getWorld(Journey.get().domainManager().domainId(cell.domain())).getBlockAt(cell.blockX(), cell.blockY(), cell.blockZ()).getBlockData();
   }
 
   public static Location toLocation(Cell cell) {

@@ -55,4 +55,9 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
   public String printValue() {
     return getValue().name().toLowerCase();
   }
+
+  @Override
+  public boolean isValid() {
+    return value != null;
+  }
 }

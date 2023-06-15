@@ -23,10 +23,10 @@
 
 package net.whimxiqal.journey.data.sql.mysql;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.sql.SqlConnectionController;
@@ -36,24 +36,24 @@ import net.whimxiqal.journey.data.sql.SqlConnectionController;
  */
 public class MySqlConnectionController implements SqlConnectionController {
 
-  private final String address = String.format("jdbc:mysql://%s/%s",
-      Settings.STORAGE_ADDRESS.getValue(),
-      Settings.STORAGE_DATABASE.getValue());
-  private final Properties databaseProperties;
+  private final HikariDataSource dataSource;
 
   public MySqlConnectionController() {
-    databaseProperties = new Properties();
-    databaseProperties.setProperty("user", Settings.STORAGE_USERNAME.getValue());
-    databaseProperties.setProperty("password", Settings.STORAGE_PASSWORD.getValue());
+    HikariConfig config = new HikariConfig();
+    config.setJdbcUrl(String.format("jdbc:mysql://%s/%s",
+        Settings.STORAGE_ADDRESS.getValue(),
+        Settings.STORAGE_DATABASE.getValue()));
+    config.setUsername(Settings.STORAGE_USERNAME.getValue());
+    config.setPassword(Settings.STORAGE_PASSWORD.getValue());
+    dataSource = new HikariDataSource(config);
   }
 
   @Override
   public final Connection establishConnection() throws SQLException {
     try {
-      return DriverManager.getConnection(address, databaseProperties);
+      return dataSource.getConnection();
     } catch (SQLException e) {
-      Journey.get().proxy().logger().error("Could not connect to database. "
-          + "Are you sure you are using the correct credentials?");
+      Journey.logger().error("Could not connect to database. Are you sure you are using the correct credentials?");
       throw e;
     }
   }

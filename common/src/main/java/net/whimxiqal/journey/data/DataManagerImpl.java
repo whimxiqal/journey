@@ -23,16 +23,7 @@
 
 package net.whimxiqal.journey.data;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
+import com.zaxxer.hikari.pool.HikariPool;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.sql.SqlPathRecordManager;
@@ -41,80 +32,91 @@ import net.whimxiqal.journey.data.sql.SqlTunnelDataManager;
 import net.whimxiqal.journey.data.sql.SqlPublicWaypointManager;
 import net.whimxiqal.journey.data.sql.mysql.MySqlConnectionController;
 import net.whimxiqal.journey.data.sql.sqlite.SqliteConnectionController;
-import net.whimxiqal.journey.util.Initializable;
+import net.whimxiqal.journey.data.version.DataVersionHandler;
+import net.whimxiqal.journey.data.version.MysqlDataVersionHandler;
+import net.whimxiqal.journey.data.version.SqliteDataVersionHandler;
 
-/**
- * Implementation of the {@link DataManager} in Spigot Minecraft.
- */
 public class DataManagerImpl implements DataManager {
 
-  public static final String DATABASE_FILE_NAME = "journey.db";
   private PersonalWaypointManager personalWaypointManager;
   private PublicWaypointManager publicWaypointManager;
   private PathRecordManager pathRecordManager;
   private TunnelDataManager tunnelDataManager;
 
+  public static final String DATABASE_FILE_NAME = "journey.db";
+
+  public static final String VERSION_FILE_NAME = "journeydb.ver";
+
+  public static final String VERSION_TABLE_NAME = "journey_db_version";
+
+  public static final String VERSION_COLUMN_NAME = "db_version";
+
+  private DataVersion databaseVersion = null;
+
   @Override
   public void initialize() {
-    boolean setupSchema = version() == DataVersion.V000;
-    switch (Settings.STORAGE_TYPE.getValue()) {
-      case SQLITE:
-        String sqliteAddress = "jdbc:sqlite:" + Journey.get().proxy().dataFolder() + "/" + DATABASE_FILE_NAME;
-        SqliteConnectionController sqliteController = new SqliteConnectionController(sqliteAddress);
-        personalWaypointManager = new SqlPersonalWaypointManager(sqliteController);
-        publicWaypointManager = new SqlPublicWaypointManager(sqliteController);
-        pathRecordManager = new SqlPathRecordManager(sqliteController);
-        tunnelDataManager = new SqlTunnelDataManager(sqliteController);
-        if (setupSchema) {
-          try (Connection connection = sqliteController.establishConnection()) {
-            Statement statement = connection.createStatement();
-            addBatchesToStatement("/data/sql/schema/sqlite.sql", statement);
-            statement.executeBatch();
-          } catch (SQLException e) {
-            setupSchema = false;
-            e.printStackTrace();
-          }
+    DataVersionHandler versionHandler;
+    try {
+      switch (Settings.STORAGE_TYPE.getValue()) {
+        case SQLITE -> {
+          SqliteConnectionController sqliteController = new SqliteConnectionController(Journey.get().proxy().dataFolder() + "/" + DATABASE_FILE_NAME);
+          personalWaypointManager = new SqlPersonalWaypointManager(sqliteController);
+          publicWaypointManager = new SqlPublicWaypointManager(sqliteController);
+          pathRecordManager = new SqlPathRecordManager(sqliteController);
+          tunnelDataManager = new SqlTunnelDataManager(sqliteController);
+          versionHandler = new SqliteDataVersionHandler(sqliteController);
         }
-        break;
-//      case MYSQL:
-//        MySqlConnectionController mysqlController = new MySqlConnectionController();
-//        personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
-//        publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
-//        pathRecordManager = new SqlPathRecordManager(mysqlController);
-//        tunnelDataManager = new SqlTunnelDataManager(mysqlController);
-//        if (setupSchema) {
-//          try (Connection connection = mysqlController.establishConnection()) {
-//            Statement statement = connection.createStatement();
-//            addBatchesToStatement("/data/sql/schema/mysql.sql", statement);
-//            statement.executeBatch();
-//          } catch (SQLException e) {
-//            setupSchema = false;
-//            e.printStackTrace();
-//          }
-//        }
-//        break;
-      default:
-        throw new RuntimeException();
+        case MYSQL -> {
+          MySqlConnectionController mysqlController = new MySqlConnectionController();
+          personalWaypointManager = new SqlPersonalWaypointManager(mysqlController);
+          publicWaypointManager = new SqlPublicWaypointManager(mysqlController);
+          pathRecordManager = new SqlPathRecordManager(mysqlController);
+          tunnelDataManager = new SqlTunnelDataManager(mysqlController);
+          versionHandler = new MysqlDataVersionHandler(mysqlController);
+        }
+        default -> throw new RuntimeException();
+      }
+    } catch (HikariPool.PoolInitializationException e) {
+      Journey.logger().error("[Data Manager] Database connection pool initialization failed: " + e.getMessage());
+      databaseVersion = DataVersion.ERROR;
+      return;
     }
-    if (setupSchema) {
-      DataVersion.writeVersion(DataVersion.latest());
-    }
-  }
 
-  private void addBatchesToStatement(String queryResource, Statement statement) throws SQLException {
-    InputStream resourceStream = this.getClass().getResourceAsStream(queryResource);
-    if (resourceStream == null) {
-      throw new NoSuchElementException("Cannot find resource at path " + queryResource);
+    this.databaseVersion = versionHandler.getVersion();
+    if (this.databaseVersion == DataVersion.ERROR) {
+      return;
     }
-    for (String query : new BufferedReader(new InputStreamReader(resourceStream))
-        .lines().collect(Collectors.joining("\n")).split(";")) {
-      statement.addBatch(query);
+
+    DataVersion previousVersion = this.databaseVersion;
+    boolean updated = false;
+    // run migrations until we are fully up-to-date
+    while (previousVersion != DataVersion.latest()) {
+      this.databaseVersion = versionHandler.runMigration(previousVersion);
+      if (this.databaseVersion == DataVersion.ERROR) {
+        return;
+      }
+      if (previousVersion == this.databaseVersion) {
+        // no progress was made, quit now
+        break;
+      }
+      updated = true;
+      previousVersion = this.databaseVersion;
+    }
+
+    if (this.databaseVersion != DataVersion.latest()) {
+      Journey.logger().error(String.format("Failed to migrate database beyond %s", this.databaseVersion));
+    } else if (updated) {
+      Journey.logger().info(String.format("[Data Manager] Updated database to latest version (%s)", this.databaseVersion));
+    }
+
+    if (updated) {
+      versionHandler.saveVersion(this.databaseVersion);
     }
   }
 
   @Override
   public DataVersion version() {
-    return DataVersion.version();
+    return databaseVersion;
   }
 
   @Override

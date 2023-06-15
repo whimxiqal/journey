@@ -29,8 +29,13 @@ import org.jetbrains.annotations.NotNull;
  * A setting used to store an integer.
  */
 public class IntegerSetting extends Setting<Integer> {
-  IntegerSetting(@NotNull String path, @NotNull Integer defaultValue) {
+  private final int min;
+  private final int max;
+
+  IntegerSetting(@NotNull String path, int defaultValue, int min, int max) {
     super(path, defaultValue, Integer.class);
+    this.min = min;
+    this.max = max;
   }
 
   @Override
@@ -42,5 +47,10 @@ public class IntegerSetting extends Setting<Integer> {
   @NotNull
   public String printValue() {
     return getValue().toString();
+  }
+
+  @Override
+  public boolean isValid() {
+    return value >= min && value <= max;
   }
 }

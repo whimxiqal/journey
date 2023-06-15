@@ -24,22 +24,59 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
+import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.chunk.BlockProvider;
+import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
+import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
-import net.whimxiqal.journey.search.AnimationManager;
+import net.whimxiqal.journey.proxy.JourneyBlock;
+import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bstats.charts.CustomChart;
 
-public interface PlatformProxy {
+/**
+ * An interface to the specific platform/engine that is running Minecraft.
+ * All calls to this proxy must be made synchronously on the main server thread.
+ */
+public interface PlatformProxy extends BlockProvider {
 
-  boolean isNetherPortal(Cell cell);
+  /**
+   * Convert chunk id to a {@link JourneyChunk}.
+   * <b>May be called async!</b>
+   * The returned future is always completed on the main server thread,
+   * so any callbacks thereafter are also synchronous on the main thread.
+   * The generate argument may be false if the caller does not want the server to generate the chunk
+   * if it hasn't already. If this is the case, the returned {@link JourneyChunk} will reflect the inaccessibility
+   * of the underlying chunk, given it is un-generated and unloaded.
+   * The returned future cannot be completed with null.
+   *
+   * @param chunkId the chunk id
+   * @param generate true to generate the chunk if it doesn't exist
+   * @return the journey chunk future, to be completed on the main server thread
+   */
+  CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate);
+
+  /**
+   * Convert a cell to a {@link JourneyBlock} with real-world data.
+   * <b>Must be called on the main server thread!</b>
+   * If you need a block asynchronously, use a {@link ChunkCacheBlockProvider}
+   * or the {@link net.whimxiqal.journey.chunk.CentralChunkCache}.
+   *
+   * @param cell the cell with the location information for the block
+   * @return the block
+   */
+  @Override
+  JourneyBlock toBlock(Cell cell);
 
   void playSuccess(UUID playerUuid);
 
@@ -47,31 +84,25 @@ public interface PlatformProxy {
 
   void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
 
-  Collection<JourneyPlayer> onlinePlayers();
+  Collection<InternalJourneyPlayer> onlinePlayers();
 
-  Optional<JourneyPlayer> onlinePlayer(UUID uuid);
+  Optional<InternalJourneyPlayer> onlinePlayer(UUID uuid);
 
-  Optional<JourneyPlayer> onlinePlayer(String name);
+  Optional<InternalJourneyPlayer> onlinePlayer(String name);
 
   Optional<Cell> entityCellLocation(UUID entityUuid);
 
   Optional<Vector> entityVector(UUID entityUuid);
 
-  void prepareSearchSession(SearchSession searchSession, UUID player, FlagSet flags, boolean includePorts);
+  void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination);
 
-  void prepareDestinationSearchSession(SearchSession searchSession, UUID player, FlagSet flags, Cell destination);
+  void sendAnimationBlock(UUID player, Cell location);
 
-  boolean isAtSurface(Cell cell);
-
-  boolean sendBlockData(UUID player, Cell location, AnimationManager.StageType stage, ModeType mode);
-
-  boolean resetBlockData(UUID player, Collection<Cell> locations);
+  void resetAnimationBlocks(UUID player, Collection<Cell> locations);
 
   String domainName(int domainId);
 
   boolean sendGui(JourneyPlayer source);
-
-  boolean synchronous();
 
   Consumer<CustomChart> bStatsChartConsumer();
 

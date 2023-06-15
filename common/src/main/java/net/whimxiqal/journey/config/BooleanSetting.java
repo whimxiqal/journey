@@ -45,4 +45,9 @@ public class BooleanSetting extends Setting<Boolean> {
     return getValue().toString();
   }
 
+  @Override
+  public boolean isValid() {
+    return true;
+  }
+
 }

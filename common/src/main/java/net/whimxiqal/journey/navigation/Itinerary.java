@@ -23,8 +23,8 @@
 
 package net.whimxiqal.journey.navigation;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.navigation.journey.JourneySession;
@@ -35,6 +35,7 @@ import net.whimxiqal.journey.tools.AlternatingList;
 /**
  * A description of all step required to move from some arbitrary origin
  * to some arbitrary destination.
+ * It is thread-safe because everything is read-only.
  *
  * <p>The result of a {@link SearchSession} calculation.
  *
@@ -42,12 +43,7 @@ import net.whimxiqal.journey.tools.AlternatingList;
  * @see ItineraryTrial
  * @see JourneySession
  */
-public final class Itinerary {
-
-  private final Cell origin;
-  private final ArrayList<Step> steps;
-  private final AlternatingList<Path, Path, Path> stages;
-  private final double cost;
+public record Itinerary(Cell origin, List<Step> steps, AlternatingList<Path, Path, Path> stages, double cost) {
 
   /**
    * General constructor.
@@ -55,53 +51,16 @@ public final class Itinerary {
    * @param origin the origin of the itinerary
    * @param steps  the steps to get to the destination
    * @param stages the list of stages to complete to traverse this itinerary
-   * @param cost the length of the entire thing
+   * @param cost   the length of the entire thing
    */
   public Itinerary(Cell origin,
-                   Collection<Step> steps,
+                   List<Step> steps,
                    AlternatingList<Path, Path, Path> stages,
                    double cost) {
     this.origin = origin;
-    this.steps = new ArrayList<>(steps);
+    this.steps = Collections.unmodifiableList(steps);
     this.stages = stages;
     this.cost = cost;
-  }
-
-  /**
-   * Get the first location of the entire itinerary.
-   *
-   * @return the origin
-   */
-  public Cell getOrigin() {
-    return origin;
-  }
-
-  /**
-   * Get all the steps to complete the itinerary in list form.
-   *
-   * @return the steps
-   */
-  public ArrayList<Step> getSteps() {
-    return new ArrayList<>(steps);
-  }
-
-  /**
-   * Get the stages to complete the itinerary, separating out paths
-   * from their connecting tunnels.
-   *
-   * @return the stages
-   */
-  public AlternatingList<Path, Path, Path> getStages() {
-    return stages;
-  }
-
-  /**
-   * Get the length of the whole itinerary.
-   *
-   * @return the length
-   */
-  public double cost() {
-    return cost;
   }
 
   @Override

@@ -24,41 +24,52 @@
 package net.whimxiqal.journey.util;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import javax.json.Json;
-import javax.json.JsonObject;
 import net.whimxiqal.journey.Journey;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 public final class Request {
   private Request() {
   }
 
-  public static CompletableFuture<UUID> getPlayerUuid(String player) {
-    CompletableFuture<UUID> future = new CompletableFuture<>();
-    Journey.get().proxy().schedulingManager().schedule(() -> {
-      HttpClient client = HttpClientBuilder.create().build();
-      HttpGet request = new HttpGet("https://api.mojang.com/users/profiles/minecraft/" + player);
-      request.addHeader("accept", "application/json");
-      HttpResponse response;
-      InputStream content;
-      try {
-        response = client.execute(request);
-        content = response.getEntity().getContent();
-      } catch (IOException e) {
-        e.printStackTrace();
-        future.complete(null);
-        return;
+  /**
+   * Asynchronously call the Mojang API for the UUID of the player with the given name.
+   * Player names may be changed, so this should only be called for requesting temporary information,
+   * like for a user command to access a player by their name for an immediate one-time request.
+   *
+   * @param player the player
+   * @return the uuid
+   */
+  public static UUID requestPlayerUuid(String player) {
+    try {
+      URL apiUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + player);
+      URLConnection connection = apiUrl.openConnection();
+      if (!(connection instanceof HttpURLConnection httpsConnection)) {
+        return null;
       }
-      JsonObject obj = Json.createReader(content).readObject();
-      future.complete(UUIDUtil.bytesToUuid(obj.getString("id").getBytes(StandardCharsets.UTF_8)));
-    }, true);
-    return future;
+      httpsConnection.setRequestMethod("GET");
+      if (httpsConnection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+        Journey.logger().warn("Mojang API request for player " + player + " resulted in response code: " + httpsConnection.getResponseCode());
+        return null;
+      }
+      JSONObject obj = new JSONObject(new JSONTokener(new InputStreamReader(httpsConnection.getInputStream())));
+
+      String hexString = obj.getString("id");
+      byte[] uuidBytes = new byte[hexString.length() / 2];
+
+      for (int i = 0; i < uuidBytes.length; i++) {
+        int stringIndex = i * 2;
+        uuidBytes[i] = (byte) Integer.parseInt(hexString.substring(stringIndex, stringIndex + 2), 16);
+      }
+      return UUIDUtil.bytesToUuid(uuidBytes);
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
   }
 }

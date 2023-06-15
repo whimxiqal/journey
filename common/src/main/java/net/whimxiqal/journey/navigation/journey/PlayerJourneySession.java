@@ -26,6 +26,8 @@ package net.whimxiqal.journey.navigation.journey;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
@@ -39,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 public class PlayerJourneySession implements JourneySession {
 
   public static final double CACHED_JOURNEY_STEPS_LENGTH = 128;  // length of all journey steps to cache for showing their particles
-  public static final int TICKS_PER_PARTICLE_CYCLE = 2;
+  public static final int TICKS_PER_PARTICLE_CYCLE = 3;
   public static final double PARTICLE_UNIT_DISTANCE = 0.5;  // number of blocks between which particles will be shown
   public static final int PARTICLE_CYCLE_COUNT = 1;
   public static final float PARTICLE_SPAWN_DENSITY = 0.6f;
@@ -66,7 +68,7 @@ public class PlayerJourneySession implements JourneySession {
                               @NotNull final Itinerary itinerary) {
     this.session = search;
     this.itinerary = itinerary;
-    this.traversal = itinerary.getStages().traverse();
+    this.traversal = itinerary.stages().traverse();
     this.playerUuid = playerUuid;
   }
 
@@ -105,7 +107,7 @@ public class PlayerJourneySession implements JourneySession {
   }
 
   protected final void resetTraversal() {
-    this.traversal = getItinerary().getStages().traverse();
+    this.traversal = getItinerary().stages().traverse();
   }
 
   @Override
@@ -124,9 +126,9 @@ public class PlayerJourneySession implements JourneySession {
         state = State.STOPPED_COMPLETE;
 
         // There is no other path after this one, we are done
-        Journey.get().proxy().audienceProvider().player(playerUuid).sendMessage(Formatter.success("You've arrived!"));
+        Journey.get().proxy().audienceProvider().player(playerUuid).showTitle(Title.title(Component.empty(),
+                Component.text("You have arrived!").color(Formatter.SUCCESS)));
 
-        // Play a fun chord
         Journey.get().proxy().platform().playSuccess(playerUuid);
 
         stop();
@@ -167,7 +169,6 @@ public class PlayerJourneySession implements JourneySession {
         ++i;
       }
       if (foundLocation) {
-        madeProgress = true;
         // go back and remove every one up to index i
         for (int j = 0; j <= i; j++) {
           journeySteps.pop();
@@ -182,7 +183,7 @@ public class PlayerJourneySession implements JourneySession {
     while (journeyStepsLength < CACHED_JOURNEY_STEPS_LENGTH && lastAddedJourneyStepIndex + 1 < traversal().get().getSteps().size()) {
       Cell origin = steps.get(lastAddedJourneyStepIndex).location();
       Step nextStep = steps.get(lastAddedJourneyStepIndex + 1);
-      JourneyStep jStep = new JourneyStep(playerUuid, origin, nextStep.location(), nextStep.modeType());
+      JourneyStep jStep = new JourneyStep(playerUuid, origin, nextStep.location(), nextStep.mode());
       journeySteps.add(jStep);
       journeyStepsLength += jStep.length();
       lastAddedJourneyStepIndex++;
@@ -191,7 +192,9 @@ public class PlayerJourneySession implements JourneySession {
 
   @Override
   public void stop() {
-    Journey.get().proxy().schedulingManager().cancelTask(illuminationTaskId);
+    if (illuminationTaskId != null) {
+      Journey.get().proxy().schedulingManager().cancelTask(illuminationTaskId);
+    }
     if (state == State.RUNNING) {
       state = State.STOPPED_INCOMPLETE;
     }
