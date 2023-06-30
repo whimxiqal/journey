@@ -26,7 +26,7 @@ dependencies {
     implementation 'org.bstats:bstats-bukkit:3.0.1'
     implementation 'com.zaxxer:HikariCP:5.0.1'
     implementation 'org.json:json:20230227'
-
+    implementation 'org.spongepowered:configurate-yaml:4.2.0-SNAPSHOT'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
     testImplementation 'com.sk89q.worldedit:worldedit-core:7.2.14'

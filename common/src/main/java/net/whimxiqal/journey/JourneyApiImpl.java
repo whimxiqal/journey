@@ -29,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.navigation.Itinerary;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
+import net.whimxiqal.journey.navigation.journey.TrailNavigator;
 import net.whimxiqal.journey.search.DestinationGoalSearchSession;
 import net.whimxiqal.journey.search.SearchFlag;
 import net.whimxiqal.journey.search.SearchResult;
@@ -149,9 +149,9 @@ public class JourneyApiImpl implements JourneyApi {
               .collect(Collectors.toUnmodifiableList()));
           if (display) {
             Journey.get().proxy().schedulingManager().schedule(() -> {
-              PlayerJourneySession journey = new PlayerJourneySession(session.getAgentUuid(), session, itinerary);
+              TrailNavigator journey = new TrailNavigator(session.getAgentUuid(), session, itinerary);
               // Save the journey
-              Journey.get().searchManager().putJourney(session.getAgentUuid(), journey);  // cancels any ongoing ones
+              Journey.get().searchManager().putNavigator(session.getAgentUuid(), journey);  // cancels any ongoing ones
               // start the journey
               journey.run();
               future.complete(searchResult);

@@ -23,6 +23,8 @@
 
 package net.whimxiqal.journey.math;
 
+import java.util.Objects;
+
 public class Vector {
   private final double x;
   private final double y;
@@ -61,6 +63,11 @@ public class Vector {
   public double dot(Vector other) {
     return x * other.x + y * other.y + z * other.z;
   }
+  public Vector cross(Vector other) {
+    return new Vector(this.y * other.z - this.z * other.y,
+        this.z * other.x - this.x * other.z,
+        this.x * other.y - this.y * other.x);
+  }
 
   public double magnitude() {
     return Math.sqrt(magnitudeSquared());
@@ -77,5 +84,18 @@ public class Vector {
   @Override
   public String toString() {
     return "Vector{" + "x=" + x + ", y=" + y + ", z=" + z + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Vector vector = (Vector) o;
+    return Double.compare(vector.x, x) == 0 && Double.compare(vector.y, y) == 0 && Double.compare(vector.z, z) == 0;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(x, y, z);
   }
 }

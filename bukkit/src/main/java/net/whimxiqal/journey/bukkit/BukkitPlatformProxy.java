@@ -23,8 +23,12 @@
 
 package net.whimxiqal.journey.bukkit;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,11 +47,10 @@ import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
-import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
-import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
@@ -55,7 +58,6 @@ import net.whimxiqal.journey.util.BStatsUtil;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.CustomChart;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
@@ -67,8 +69,9 @@ public class BukkitPlatformProxy implements PlatformProxy {
 
   private final BlockData animationBlockData = Material.WHITE_STAINED_GLASS.createBlockData();
 
-
   private final Metrics metrics;
+  private List<String> cachedParticleTypeList;
+  private Map<String, Particle> cachedParticleTypeMap;
 
   public BukkitPlatformProxy() {
     metrics = new Metrics(JourneyBukkit.get(), BStatsUtil.BSTATS_ID);
@@ -106,29 +109,18 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-    Particle particle;
-    if (type == ModeType.FLY) {
-      particle = Particle.WAX_OFF;
-    } else if (type == ModeType.DIG) {
-      particle = Particle.CRIT;
-      count *= 5;
-    } else {
-      particle = Particle.GLOW;
-    }
-
+  public void spawnModeParticle(UUID playerUuid, String particleName, int domain, double x, double y, double z) {
     Player player = Bukkit.getPlayer(playerUuid);
     World world = BukkitUtil.getWorld(domain);
     if (player == null || !player.getWorld().equals(world)) {
       return;
     }
-    player.spawnParticle(particle, x, y, z, count, offsetX, offsetY, offsetZ, 0);
-
-    // Check if we need to "hint" where the trail is because the water obscures the particle
-    if (world.getBlockAt(Location.locToBlock(x), Location.locToBlock(y), Location.locToBlock(z)).isLiquid()
-        && !world.getBlockAt(Location.locToBlock(x), Location.locToBlock(y + 1), Location.locToBlock(z)).isLiquid()) {
-      world.spawnParticle(particle, x, y, z, count, offsetX, offsetY, offsetZ);
+    ensureParticleTypeCache();
+    Particle particle = cachedParticleTypeMap.get(particleName);
+    if (particle == null) {
+      return;
     }
+    player.spawnParticle(particle, x, y, z, 1);
   }
 
   @Override
@@ -223,5 +215,32 @@ public class BukkitPlatformProxy implements PlatformProxy {
       domains.computeIfAbsent(key.namespace(), k -> new HashMap<>()).put(key.getKey(), BukkitUtil.getDomain(world));
     }
     return domains;
+  }
+
+  @Override
+  public List<String> particleTypes() {
+    ensureParticleTypeCache();
+    return cachedParticleTypeList;
+  }
+
+  @Override
+  public boolean isValidParticleType(String particleType) {
+    ensureParticleTypeCache();
+    return cachedParticleTypeMap.containsKey(particleType.toLowerCase(Locale.ENGLISH));
+  }
+
+  private void ensureParticleTypeCache() {
+    if (cachedParticleTypeList != null) {
+      return;
+    }
+    List<String> particleNames = new ArrayList<>(Particle.values().length);
+    cachedParticleTypeMap = new HashMap<>();
+    for (Particle particle : Particle.values()) {
+      String name = particle.name().toLowerCase(Locale.ENGLISH);
+      particleNames.add(name);
+      cachedParticleTypeMap.put(name, particle);
+    }
+    Collections.sort(particleNames);
+    cachedParticleTypeList = Collections.unmodifiableList(particleNames);
   }
 }

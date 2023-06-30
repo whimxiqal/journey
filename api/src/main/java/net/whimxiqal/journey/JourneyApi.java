@@ -23,10 +23,16 @@
 
 package net.whimxiqal.journey;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Future;
+import net.whimxiqal.journey.navigator.Navigator;
+import net.whimxiqal.journey.navigator.NavigatorApi;
+import net.whimxiqal.journey.navigator.NavigatorSupplier;
+import net.whimxiqal.journey.search.SearchApi;
 import net.whimxiqal.journey.search.SearchFlag;
 import net.whimxiqal.journey.search.SearchResult;
+import net.whimxiqal.journey.search.SearchStep;
 
 /**
  * The central interface for all external-facing endpoints for Journey.
@@ -85,5 +91,7 @@ public interface JourneyApi {
    */
   Future<SearchResult> runPlayerDestinationSearch(UUID playerUuid, Cell destination,
                                                   boolean display, SearchFlag<?>... flags);
+
+  boolean navigate(UUID playerUuid, List<SearchStep> path, )
 
 }

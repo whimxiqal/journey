@@ -32,25 +32,14 @@ public class IntegerSetting extends Setting<Integer> {
   private final int min;
   private final int max;
 
-  IntegerSetting(@NotNull String path, int defaultValue, int min, int max) {
-    super(path, defaultValue, Integer.class);
+  IntegerSetting(@NotNull String path, int defaultValue, boolean reloadable, int min, int max) {
+    super(path, defaultValue, Integer.class, reloadable);
     this.min = min;
     this.max = max;
   }
 
   @Override
-  public Integer parseValue(@NotNull String string) {
-    return Integer.parseInt(string);
-  }
-
-  @Override
-  @NotNull
-  public String printValue() {
-    return getValue().toString();
-  }
-
-  @Override
-  public boolean isValid() {
+  public boolean valid(Integer value) {
     return value >= min && value <= max;
   }
 }

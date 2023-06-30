@@ -40,11 +40,13 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
-import net.whimxiqal.journey.navigation.journey.JourneySession;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
+import net.whimxiqal.journey.navigator.Navigator;
+import net.whimxiqal.journey.navigation.journey.TrailNavigator;
 import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.TimeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +67,9 @@ public final class SearchManager {
   private final HashMap<UUID, QueuedSearch> nextPlayerSearches = new HashMap<>();
 
   // Current journeying-sessions for players that have a completed search
-  private final Map<UUID, PlayerJourneySession> playerJourneys = new HashMap<>();
+  private final Map<UUID, Navigator> navigators = new HashMap<>();
+
+  private final Map<UUID, FlagSet> flagPreferences = new HashMap<>();
 
   // Task id for the task that updates players' locations
   private UUID locationUpdateTaskId;
@@ -76,10 +80,10 @@ public final class SearchManager {
    * @param playerId the player id
    * @param journey  the journey
    */
-  public void putJourney(@NotNull UUID playerId, PlayerJourneySession journey) {
-    PlayerJourneySession oldJourney = this.playerJourneys.put(playerId, journey);
-    if (oldJourney != null) {
-      oldJourney.stop();
+  public void putNavigator(@NotNull UUID playerId, TrailNavigator journey) {
+    Navigator oldNavigator = this.navigators.put(playerId, journey);
+    if (oldNavigator != null) {
+      oldNavigator.stop();
     }
   }
 
@@ -90,13 +94,13 @@ public final class SearchManager {
    * @return the journey, or null if it doesn't exist
    */
   @Nullable
-  public PlayerJourneySession getJourney(@NotNull UUID playerId) {
-    return playerJourneys.get(playerId);
+  public Navigator getNavigator(@NotNull UUID playerId) {
+    return navigators.get(playerId);
   }
 
   /**
    * Start searching with the given search session, and register it with this manager to enforce
-   * that no more than one session is executing per player and also to store the {@link JourneySession}
+   * that no more than one session is executing per player and also to store the {@link Navigator}
    * if it completes successfully.
    *
    * @param session the session
@@ -137,7 +141,7 @@ public final class SearchManager {
    * A helper method that may be called again for the purposes of re-queueing the request
    * if another search is still executing, and we must wait for it to stop
    *
-   * @param session  the session we wish to run
+   * @param session the session we wish to run
    */
   private void doLaunchSearch(SearchSession session, CompletableFuture<SearchSession.Result> future) {
     Journey.get().statsManager().incrementSearches();
@@ -162,7 +166,7 @@ public final class SearchManager {
     }
 
     AtomicReference<TextComponent> hoverText = new AtomicReference<>(Component.text("Search Parameters").color(Formatter.THEME));
-    Flags.allFlags.forEach(flag -> hoverText.set(hoverText.get()
+    Flags.ALL_FLAGS.forEach(flag -> hoverText.set(hoverText.get()
         .append(Component.newline())
         .append(Component.text(flag.name() + ": ").color(Formatter.DARK))
         .append(Component.text(session.flags().printValueFor(flag)).color(Formatter.GOLD))));
@@ -211,12 +215,15 @@ public final class SearchManager {
                                       .color(Formatter.ACCENT)))
                               .build()))));
 
-              PlayerJourneySession journey = new PlayerJourneySession(session.getAgentUuid(), session, itinerary);
+              TrailNavigator journey = new TrailNavigator(session.getAgentUuid(), itinerary,
+                  session.flags().printValueFor(Flags.TRAIL_PARTICLE),
+                  Settings.TRAIL_WIDTH.getValue(),
+                  Settings.TRAIL_DENSITY.getValue());
               // Save the journey
-              putJourney(session.getAgentUuid(), journey);
-              journey.run();
+              putNavigator(session.getAgentUuid(), journey);
+              journey.start();
             } else {
-              // itinerary is null, so we have no JourneySession to start
+              // itinerary is null, so we have no Navigator to start
               audience.sendMessage(Formatter.success("Search complete!"));
             }
           }
@@ -247,10 +254,34 @@ public final class SearchManager {
     return playerSearches.get(callerId);
   }
 
+  /**
+   * Get the caller's flag preferences. If "persistent" is set, then the returned flag set will be stored
+   * in memory for future retrieval. If the flag set is just used for reading, don't set "persistent" so that
+   * it needn't be saved in memory. Must be called on main thread.
+   *
+   * @param callerId the caller
+   * @param persistent whether to keep the returned flag set in memory or not, so that edits affect the stored set
+   * @return the flag set of preferences
+   */
+  public @NotNull FlagSet getFlagPreferences(UUID callerId, boolean persistent) {
+    FlagSet flagSet = flagPreferences.get(callerId);
+    if (flagSet == null) {
+      flagSet = new FlagSet();
+      if (persistent) {
+        flagPreferences.put(callerId, flagSet);
+      }
+      return flagSet;
+    }
+    if (flagSet.isEmpty() && !persistent) {
+      flagPreferences.remove(callerId);  // don't need this, clean up memory
+    }
+    return flagSet;
+  }
+
   public void initialize() {
     // task for updating player locations lazily
     locationUpdateTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
-      for (UUID journeyingPlayer : playerJourneys.keySet()) {
+      for (UUID journeyingPlayer : navigators.keySet()) {
         Optional<InternalJourneyPlayer> player = Journey.get().proxy()
             .platform()
             .onlinePlayer(journeyingPlayer);
@@ -277,7 +308,7 @@ public final class SearchManager {
     // cancel all searches
     playerSearches.values().forEach(session -> session.stop(false));
     // stop all journeys
-    playerJourneys.values().forEach(JourneySession::stop);
+    navigators.values().forEach(Navigator::stop);
     if (locationUpdateTaskId != null) {
       Journey.get().proxy().schedulingManager().cancelTask(locationUpdateTaskId);
       locationUpdateTaskId = null;

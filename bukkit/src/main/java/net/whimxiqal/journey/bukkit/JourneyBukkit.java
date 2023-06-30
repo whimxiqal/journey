@@ -26,7 +26,6 @@ package net.whimxiqal.journey.bukkit;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
 import net.whimxiqal.journey.command.JourneyConnectorProvider;
-import net.whimxiqal.journey.bukkit.config.BukkitConfigManager;
 import net.whimxiqal.journey.bukkit.listener.DeathListener;
 import net.whimxiqal.journey.bukkit.listener.NetherListener;
 import net.whimxiqal.journey.bukkit.search.listener.PlayerListener;
@@ -73,7 +72,7 @@ public final class JourneyBukkit extends JavaPlugin {
     proxy.logger(new BukkitLogger());
     proxy.dataFolder(this.getDataFolder().toPath());
     proxy.audienceProvider(new PaperAudiences());
-    proxy.configManager(BukkitConfigManager.initialize("config.yml"));
+    proxy.configPath(this.getDataFolder().toPath().resolve("config.yml"));
     proxy.schedulingManager(new BukkitSchedulingManager());
     proxy.platform(new BukkitPlatformProxy());
     proxy.version(getDescription().getVersion());

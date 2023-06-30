@@ -24,6 +24,7 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -82,7 +83,7 @@ public interface PlatformProxy extends BlockProvider {
 
   void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
 
-  void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
+  void spawnModeParticle(UUID playerUuid, String particle, int domain, double x, double y, double z);
 
   Collection<InternalJourneyPlayer> onlinePlayers();
 
@@ -107,4 +108,8 @@ public interface PlatformProxy extends BlockProvider {
   Consumer<CustomChart> bStatsChartConsumer();
 
   Map<String, Map<String, Integer>> domainResourceKeys();
+
+  List<String> particleTypes();
+
+  boolean isValidParticleType(String particleType);
 }

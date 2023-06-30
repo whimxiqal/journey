@@ -33,12 +33,16 @@ cancel: CANCEL;
 
 journeytoTarget: identifier flagSet?;
 
-flagSet: (timeoutFlag | animateFlag | flyFlag | doorFlag | digFlag)+;
+flagSet: (timeoutFlag | animateFlag | flyFlag | doorFlag | digFlag | navigatorFlag | trailParticleFlag | trailWidthFlag | trailDensityFlag)+;
 timeoutFlag: FLAG_TIMEOUT EQUAL timeout=ID;
 animateFlag: FLAG_ANIMATE (EQUAL delay=ID)?;
 flyFlag: FLAG_FLY (EQUAL (TRUE | FALSE))?;
 doorFlag: FLAG_DOOR (EQUAL (TRUE | FALSE))?;
 digFlag: FLAG_DIG (EQUAL (TRUE | FALSE))?;
+navigatorFlag: FLAG_NAVIGATOR EQUAL type=ID;
+trailParticleFlag: FLAG_TRAIL_PARTICLE EQUAL particle=ID;
+trailWidthFlag: FLAG_TRAIL_WIDTH EQUAL width=ID;
+trailDensityFlag: FLAG_TRAIL_DENSITY EQUAL density=ID;
 
 ADMIN: 'admin';
 BUILD: 'build';
@@ -71,7 +75,11 @@ FLAG_ANIMATE: '-animate';
 FLAG_DIG: '-dig';
 FLAG_DOOR: '-door';
 FLAG_FLY: '-fly';
+FLAG_NAVIGATOR: '-navigator';
 FLAG_TIMEOUT: '-timeout';
+FLAG_TRAIL_PARTICLE: '-trailParticle';
+FLAG_TRAIL_WIDTH: '-trailWidth';
+FLAG_TRAIL_DENSITY: '-trailDensity';
 
 EQUAL: '=';
 
@@ -101,7 +109,7 @@ ident: ID
         | TRUE
         | UNSET
         | WAYPOINT;
-ID: [a-zA-Z0-9\-_:]+;
+ID: [a-zA-Z0-9\-_:.]+;
 ID_SET: ID (COMMA ID)+;
 COMMA: ',';
 SINGLE_QUOTE: '\'';

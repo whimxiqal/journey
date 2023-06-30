@@ -133,7 +133,7 @@ public class TestCommands extends JourneyTestHarness {
     TestJourneyPlayer.LOCATION = originalLocation;
     commandSuccess("journeyto world:" + WorldLoader.worldResources[1]);
     commandFailure("journeyto death");
-    Journey.get().deathManager().setDeathLocation(PLAYER_UUID, new Cell(0, 0, 0, 0));
+    Journey.get().playerManager().setDeathLocation(PLAYER_UUID, new Cell(0, 0, 0, 0));
     commandSuccess("journeyto death");
 
     testProxy.revokeAllPermissions(PLAYER_UUID);

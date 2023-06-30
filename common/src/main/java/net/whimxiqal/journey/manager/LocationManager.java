@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.chunk.BlockProvider;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
+import net.whimxiqal.journey.navigation.journey.TrailNavigator;
 
 public class LocationManager {
   public static final long VISITATION_TIMEOUT_MS = 10;  // Any visits with 10 ms
@@ -101,7 +101,7 @@ public class LocationManager {
       return;
     }
     if (updatedLocation) {
-      PlayerJourneySession playerJourney = Journey.get().searchManager().getJourney(playerUuid);
+      TrailNavigator playerJourney = Journey.get().searchManager().getNavigator(playerUuid);
       if (playerJourney != null) {
         playerJourney.visit(location);
       }

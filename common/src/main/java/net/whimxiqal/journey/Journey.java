@@ -23,7 +23,9 @@
 
 package net.whimxiqal.journey;
 
+import java.io.IOException;
 import net.whimxiqal.journey.chunk.CentralChunkCache;
+import net.whimxiqal.journey.config.ConfigManager;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataVersion;
 import net.whimxiqal.journey.data.cache.CachedDataProvider;
@@ -39,11 +41,13 @@ import net.whimxiqal.journey.scope.ScopeManager;
 import net.whimxiqal.journey.stats.StatsManager;
 import net.whimxiqal.journey.util.BStatsUtil;
 import net.whimxiqal.journey.util.CommonLogger;
+import org.spongepowered.configurate.ConfigurateException;
 
 public final class Journey {
 
   public static final String NAME = "Journey";
   private static Journey instance;
+  private final ConfigManager configManager = new ConfigManager();
   private final PlayerManager playerManager = new PlayerManager();
   private final NetherManager netherManager = new NetherManager();
   private final SearchManager searchManager = new SearchManager();
@@ -97,7 +101,15 @@ public final class Journey {
   public boolean init() {
     JourneyApiSupplier.set(new JourneyApiImpl());
 
-    Settings.validate();  // Settings should already have been loaded from config by now
+    // load settings first
+    try {
+      configManager.initialize(proxy.configPath());
+    } catch (IOException e) {
+      logger().error("There was an error trying to read the config");
+      e.printStackTrace();
+      return false;
+    }
+
     proxy.initialize();
     netherManager.initialize();
     searchManager.initialize();
@@ -131,7 +143,11 @@ public final class Journey {
     proxy.shutdown();
   }
 
-  public PlayerManager deathManager() {
+  public ConfigManager configManager() {
+    return configManager;
+  }
+
+  public PlayerManager playerManager() {
     assertSynchronous();
     return playerManager;
   }

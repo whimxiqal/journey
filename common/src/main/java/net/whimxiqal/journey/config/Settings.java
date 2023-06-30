@@ -23,10 +23,9 @@
 
 package net.whimxiqal.journey.config;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.lang.reflect.Field;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.data.StorageMethod;
 
 /**
@@ -35,68 +34,69 @@ import net.whimxiqal.journey.data.StorageMethod;
 public final class Settings {
 
   public static final Setting<Integer> DEFAULT_SEARCH_TIMEOUT
-      = new IntegerSetting("search.flag.default-timeout", 30, 0, 24 * 60 * 60 /* a day */);
+      = new IntegerSetting("search.flag.default-timeout", 30, true, 0, 24 * 60 * 60 /* a day */);
 
   public static final Setting<Boolean> DEFAULT_FLY_FLAG
-      = new BooleanSetting("search.flag.default-fly", true);
+      = new BooleanSetting("search.flag.default-fly", true, true);
 
   public static final Setting<Boolean> DEFAULT_DOORS_FLAG
-      = new BooleanSetting("search.flag.default-door", true);
+      = new BooleanSetting("search.flag.default-door", true, true);
 
   public static final Setting<Boolean> DEFAULT_DIG_FLAG
-      = new BooleanSetting("search.flag.default-dig", false);
+      = new BooleanSetting("search.flag.default-dig", false, true);
+
+  public static final Setting<String> DEFAULT_TRAIL_PARTICLE_FLAG
+      = new StringSetting("search.flag.default-trail-particle", "glow", true);
+
+  public static final Setting<Double> TRAIL_WIDTH
+      = new DoubleSetting("search.trail.width", 1.0, true, 0.1, 5);
+
+  public static final Setting<Double> TRAIL_DENSITY
+      = new DoubleSetting("search.trail.density", 5, true, 1, 10);
 
   public static final Setting<Integer> MAX_PATH_BLOCK_COUNT
-      = new IntegerSetting("search.max-path-block-count", 100000, 10, 10000000);
+      = new IntegerSetting("search.max-path-block-count", 100000, true, 1000, 10000000);
 
   public static final Setting<Boolean> ALLOW_CHUNK_GENERATION
-      = new BooleanSetting("search.chunk-gen.allow", false);
+      = new BooleanSetting("search.chunk-gen.allow", false, false);
 
   public static final Setting<Integer> MAX_SEARCHES
-      = new IntegerSetting("search.max-searches", 16, 0, 1000000);
+      = new IntegerSetting("search.max-searches", 16, false, 0, Integer.MAX_VALUE);
 
-  public static final Setting<Long> MAX_CACHED_CELLS
-      = new LongSetting("storage.cache.max_cells", 500000, 1, Long.MAX_VALUE) /* Default is somewhere around 10-20 MB */;
+  public static final Setting<Integer> MAX_CACHED_CELLS
+      = new IntegerSetting("storage.cache.max-cells", 500000, true, 1, Integer.MAX_VALUE) /* Default is somewhere around 10-20 MB */;
 
   public static final Setting<String> STORAGE_ADDRESS
-      = new StringSetting("storage.auth.address", "my.address");
+      = new StringSetting("storage.auth.address", "my.address", false);
 
   public static final Setting<String> STORAGE_DATABASE
-      = new StringSetting("storage.auth.database", "my_database");
+      = new StringSetting("storage.auth.database", "my_database", false);
 
   public static final Setting<String> STORAGE_USERNAME
-      = new StringSetting("storage.auth.username", "username");
+      = new StringSetting("storage.auth.username", "username", false);
 
   public static final Setting<String> STORAGE_PASSWORD
-      = new StringSetting("storage.auth.password", "p@ssword");
+      = new StringSetting("storage.auth.password", "p@ssword", false);
 
   public static final Setting<StorageMethod> STORAGE_TYPE
-      = new EnumSetting<>("storage.type", StorageMethod.SQLITE, StorageMethod.class);
+      = new EnumSetting<>("storage.type", StorageMethod.SQLITE, StorageMethod.class, false);
 
-  public static final Map<String, Setting<?>> ALL_SETTINGS = new HashMap<>();
+  public static final Map<String, Setting<?>> ALL_SETTINGS = new LinkedHashMap<>();  // preserve order
 
   static {
-    Arrays.stream(Settings.class.getDeclaredFields())
-        .map(field -> {
-          try {
-            return field.get(null);
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
-          }
-        })
-        .filter(object -> object instanceof Setting)
-        .map(object -> ((Setting<?>) object))
-        .forEach(setting -> ALL_SETTINGS.put(setting.getPath(), setting));
-  }
-
-  public static void validate() {
-    ALL_SETTINGS.forEach((path, setting) -> {
-      if (!setting.isValid()) {
-        Journey.logger().warn("Setting " + setting.getPath() + " has invalid value " + setting.printValue() + ". Using default: " + setting.getDefaultValue() + ".");
-        setting.setToDefault();
+    for (Field field : Settings.class.getDeclaredFields()) {
+      Object obj;
+      try {
+        obj = field.get(null);
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+        continue;
       }
-    });
+      if (!(obj instanceof Setting<?> setting)) {
+        continue;
+      }
+      ALL_SETTINGS.put(setting.getPath(), setting);
+    }
   }
 
   private Settings() {

@@ -21,16 +21,34 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.config;
+package net.whimxiqal.journey.navigator;
 
-public class TestConfigManager implements ConfigManager {
-  @Override
-  public void save() {
-    // do nothing
-  }
+import net.whimxiqal.journey.Cell;
 
-  @Override
-  public void load() {
-    // do nothing
-  }
+/**
+ * Manage information about the traversal of locatables
+ * within the game.
+ */
+public interface Navigator {
+
+  /**
+   * Begin navigation, or restart if it's already been started.
+   */
+  void start();
+
+  /**
+   * Should run when the journey is completed or
+   * the journey is otherwise left.
+   */
+  void stop();
+
+  /**
+   * Notify this {@link Navigator} that the given {@link Cell}
+   * has been visited. This may be called very often, so efficiency
+   * is important here.
+   *
+   * @param locatable the visited locatable
+   */
+  void visit(Cell locatable);
+
 }

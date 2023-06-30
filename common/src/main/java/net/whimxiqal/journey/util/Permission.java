@@ -56,7 +56,11 @@ public enum Permission {
   FLAG_ANIMATE("journey.flag.animate"),
   FLAG_FLY("journey.flag.fly"),
   FLAG_DOOR("journey.flag.door"),
-  FLAG_DIG("journey.flag.dig");
+  FLAG_DIG("journey.flag.dig"),
+  NAVIGATOR("journey.flag.navigator"),
+  FLAG_TRAIL_PARTICLE("journey.flag.trail-particle"),
+  FLAG_TRAIL_WIDTH("journey.flag.trail-width"),
+  FLAG_TRAIL_DENSITY("journey.flag.trail-density");
 
   public static final String JOURNEY_PATH_PERMISSION_PREFIX = "journey.path";
   private final String path;

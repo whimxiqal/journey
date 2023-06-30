@@ -70,8 +70,10 @@ public class JourneyTestHarness {
 
   @AfterAll
   static void shutdown() {
-    Journey.get().shutdown();
-    Journey.remove();
+    TestSchedulingManager.runOnMainThread(() -> {
+      Journey.get().shutdown();
+      Journey.remove();
+    });
   }
 
 }

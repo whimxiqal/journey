@@ -23,10 +23,10 @@
 
 package net.whimxiqal.journey;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import net.kyori.adventure.platform.AudienceProvider;
-import net.whimxiqal.journey.config.ConfigManager;
-import net.whimxiqal.journey.config.TestConfigManager;
 import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.data.TestDataManager;
 import net.whimxiqal.journey.manager.SchedulingManager;
@@ -37,15 +37,23 @@ import net.whimxiqal.journey.util.TestAudienceProvider;
 import net.whimxiqal.journey.util.TestLogger;
 
 public class TestProxy implements Proxy {
+
+  final Path configPath;
   TestLogger logger = new TestLogger();
   AudienceProvider audienceProvider = new TestAudienceProvider();
-  ConfigManager configManager = new TestConfigManager();
   TestSchedulingManager schedulingManager = new TestSchedulingManager();
   DataManager dataManager = new TestDataManager();
   PlatformProxy platformProxy;
 
   public TestProxy(PlatformProxy platformProxy) {
     this.platformProxy = platformProxy;
+
+    try {
+      configPath = File.createTempFile("journey-config", "yml").toPath();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 
   @Override
@@ -64,8 +72,8 @@ public class TestProxy implements Proxy {
   }
 
   @Override
-  public ConfigManager configManager() {
-    return configManager;
+  public Path configPath() {
+    return configPath;
   }
 
   @Override

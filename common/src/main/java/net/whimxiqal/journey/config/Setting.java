@@ -24,8 +24,11 @@
 package net.whimxiqal.journey.config;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import net.whimxiqal.journey.Journey;
 import org.jetbrains.annotations.NotNull;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 /**
  * A setting, generally used as a key-value pair from a configuration file.
@@ -37,18 +40,23 @@ public abstract class Setting<T> {
 
   protected final Class<T> clazz;
   protected final String path;
+  protected final String[] pathTokens;
   protected final T defaultValue;
-  protected T value;
+  private final boolean reloadable;
+  protected final AtomicReference<T> value;
   protected boolean initialized = false;
+  protected boolean loaded = false;  // true if loaded from config, otherwise could have just been set from default
 
-  Setting(@NotNull String path, @NotNull T defaultValue, @NotNull Class<T> clazz) {
+  Setting(@NotNull String path, @NotNull T defaultValue, @NotNull Class<T> clazz, boolean reloadable) {
     if (!clazz.isInstance(defaultValue)) {
       throw new IllegalArgumentException("The value must match the class type");
     }
     this.path = Objects.requireNonNull(path);
+    this.pathTokens = path.split("\\.");
     this.defaultValue = Objects.requireNonNull(defaultValue);
-    this.value = defaultValue;
+    this.value = new AtomicReference<>(defaultValue);
     this.clazz = clazz;
+    this.reloadable = reloadable;
   }
 
   /**
@@ -79,11 +87,9 @@ public abstract class Setting<T> {
   @NotNull
   public T getValue() {
     if (!initialized) {
-      Journey.get().proxy().logger().info("Using default value for config setting at " + path);
-      value = getDefaultValue();
-      initialized = true;
+      throw new RuntimeException("Setting " + path + " was not initialized");
     }
-    return value;
+    return value.get();
   }
 
   /**
@@ -92,17 +98,9 @@ public abstract class Setting<T> {
    * @param value the value
    */
   public void setValue(@NotNull T value) {
-    this.value = Objects.requireNonNull(value);
+    this.value.set(Objects.requireNonNull(value));
     this.initialized = true;
   }
-
-  /**
-   * Parse a string into a value accepted by this setting.
-   *
-   * @param string the serialized value string
-   * @return the value
-   */
-  public abstract T parseValue(@NotNull String string);
 
   /**
    * Print the value stored in this setting into a serialized format.
@@ -110,12 +108,58 @@ public abstract class Setting<T> {
    * @return the string (serialized) form of the value
    */
   @NotNull
-  public abstract String printValue();
-
-  public abstract boolean isValid();
-
-  public final void setToDefault() {
-    setValue(getDefaultValue());
+  public String printValue(T value) {
+    return value.toString();
   }
+
+  public final String printValue() {
+    return printValue(value.get());
+  }
+
+  public final void load(CommentedConfigurationNode root) throws SerializationException {
+    CommentedConfigurationNode node = root.node((Object[]) pathTokens);
+    if (node.virtual()) {
+      Journey.logger().warn(String.format("Setting %s was not set in your config file. Using default: %s", path, printValue()));
+      this.value.set(getDefaultValue());
+      this.initialized = true;
+      return;
+    }
+
+    T currentValue = this.value.get();
+    T loadedValue = node.get(clazz, currentValue);
+    if (!valid(loadedValue)) {
+      this.value.set(getDefaultValue());
+      Journey.logger().warn(String.format("Setting %s has invalid value %s. Using default: %s",
+          path, printValue(currentValue), printValue()));
+      this.initialized = true;
+      return;
+    }
+
+    if (this.initialized && !currentValue.equals(loadedValue) && !reloadable) {
+      Journey.logger().warn(String.format("Saw setting %s was reloaded from config, but the server must be restarted to observe its effect", path));
+      return;
+    }
+
+    this.value.set(loadedValue);
+    this.loaded = true;
+    this.initialized = true;
+  }
+
+  public final boolean valid() {
+    if (!initialized) {
+      return false;
+    }
+    return valid(value.get());
+  }
+
+  public final boolean wasLoaded() {
+    return loaded;
+  }
+
+  public final boolean reloadable() {
+    return reloadable;
+  }
+
+  public abstract boolean valid(T value);
 
 }

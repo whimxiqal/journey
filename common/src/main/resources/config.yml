@@ -1,0 +1,132 @@
+#######################################################################################################################
+#                                               Journey by whimxiqal                                                  #
+#                                                    config.yml                                                       #
+#                                                                                                                     #
+# Docs                |   https://journey.whimxiqal.net/                                                              #
+# Configuration Docs  |   https://journey.whimxiqal.net/docs/admin/config                                             #
+# Issue Tracker       |   https://github.com/whimxiqal/journey/issues                                                 #
+# Discord             |   https://discord.gg/Yqh6qxNsq3                                                               #
+#                                                                                                                     #
+#   These settings will not automatically be populated with new config parameters, so please refer to the wiki for    #
+# any new parameters after updating to a new version. Most parameters may be reloaded on the server with the command  #
+# "/journey admin reload", but changes to some settings may only be observed with a server restart.                   #
+#######################################################################################################################
+
+# =============== #
+# SEARCH SETTINGS #
+# =============== #
+search:
+
+  # Settings for altering the default search flags
+  flag:
+
+    # =============================================================================================================== #
+    #   The default value for the TIMEOUT search flag (in seconds).
+    #
+    #   The timeout flag determines how long the search will execute before internally canceling and failing.
+    # If set to 0, then no timeout will occur.
+    #
+    #   - default = 30
+    #   - range   = [0, 86400]
+    default-timeout: 30
+    # =============================================================================================================== #
+    #   The default value for the FLY search flag.
+    #
+    #   The fly flag determines whether a search will consider flight as a possible movement mode,
+    # but only if the player already has the ability to fly.
+    #
+    #   - default = true
+    default-fly: true
+    # =============================================================================================================== #
+    #   The default value for the DOOR search flag.
+    #
+    #   The door flag determines whether iron doors will be ignored in the search algorithm. Otherwise,
+    # Journey will attempt to determine whether an obstructive iron door may be opened by the player.
+    #
+    #   - default = true
+    default-door: true
+    # =============================================================================================================== #
+    #   The default value for the DIG search flag.
+    #
+    #   The dig flag determines whether players should be able to dig through blocks to get to the destination.
+    #
+    #   - default = false
+    default-dig: false
+    default-navigator: trail
+    default-trail-particle: glow
+    default-trail-width: 1.0
+    default-trail-density: 5.0
+
+  # ================================================================================================================= #
+  #   The maximum number of blocks a single local path search can discover before failing
+  #
+  #   Increasing this value increases the memory strain on the server but lets the search algorithm discover more
+  # blocks towards the destination. If searches are regularly hitting this limit, don't immediately raise the value
+  # because the searches may be failing just because the destination isn't reachable according to Journey. The
+  # default is probably good for any server.
+  #
+  #   - default = 100000
+  #   - range   = [1000, 10'000'000]
+  max-path-block-count: 100000
+
+  # Settings for altering the behavior of chunk generation during searches
+  chunk-gen:
+
+    # =============================================================================================================== #
+    #   Allow searches to generate chunks
+    #
+    #   Some servers have a set amount of chunks they would like to generate, so Journey will only generate chunks
+    # for searches if allowed. Otherwise, un-generated chunks are treated like barriers.
+    #
+    #   - default = false
+    allow: false
+
+  # ================================================================================================================= #
+  #   The maximum number of local path searches that can occur at any one time
+  #
+  #   This is not the maximum number of searches, but rather the number of local path search algorithms that are
+  # executing, which are the algorithms that take the most memory. One search may require multiple local path
+  # searches to finish, like if a player would use a nether portal or teleport. This parameter should be adjusted
+  # to limit memory usage.
+  #
+  #   - default = 16
+  #   - range   = [1, MAX_INTEGER]
+  max-searches: 16
+
+# ================ #
+# STORAGE SETTINGS #
+# ================ #
+storage:
+  # ================================================================================================================= #
+  #   Storage type
+  #
+  #   Options are:
+  #     - SQLite
+  #     - MySQL
+  #
+  #   default = SQLite
+  type: SQLite
+
+  # ================================================================================================================= #
+  #   Settings for authentication to a remote database
+  #
+  #   Setting these values are only needed if type is a remote type, like MySQL.
+  auth:
+    address: my.address
+    database: my_database
+    username: username
+    password: p@ssword
+
+  # Settings for altering the path cache, which is the collection of completed paths for speedy re-calculation
+  cache:
+
+    # =============================================================================================================== #
+    #   The maximum total number of cells (block locations) allowed to be stored in the cache
+    #
+    #   This does not affect the number of paths, per se, but indirectly affects it because every path has one
+    # or more cells. Tune this value to your storage capacity. Increasing this value will speed up your searches
+    # over time because more paths will be cached. Decreasing this value will save storage space.
+    #
+    #   default = 500'000
+    #   range   = [1, MAX_INTEGER]
+    max-cells: 500000

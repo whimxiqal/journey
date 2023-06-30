@@ -27,6 +27,7 @@ import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.math.BlockVector3;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,7 +77,7 @@ public class SchematicPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnModeParticle(UUID playerUuid, String particle, int domain, double x, double y, double z) {
     // do nothing
   }
 
@@ -142,5 +143,15 @@ public class SchematicPlatformProxy implements PlatformProxy {
   @Override
   public Map<String, Map<String, Integer>> domainResourceKeys() {
     return Collections.emptyMap();
+  }
+
+  @Override
+  public List<String> particleTypes() {
+    return List.of("glow");
+  }
+
+  @Override
+  public boolean isValidParticleType(String particleType) {
+    return particleType.equals("glow");
   }
 }

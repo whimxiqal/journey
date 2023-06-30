@@ -30,55 +30,50 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.navigator.Navigator;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Path;
 import net.whimxiqal.journey.navigation.Step;
-import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.tools.AlternatingList;
 import org.jetbrains.annotations.NotNull;
 
-public class PlayerJourneySession implements JourneySession {
+public class TrailNavigator implements Navigator {
 
   public static final double CACHED_JOURNEY_STEPS_LENGTH = 128;  // length of all journey steps to cache for showing their particles
   public static final int TICKS_PER_PARTICLE_CYCLE = 3;
-  public static final double PARTICLE_UNIT_DISTANCE = 0.5;  // number of blocks between which particles will be shown
   public static final int PARTICLE_CYCLE_COUNT = 1;
   public static final float PARTICLE_SPAWN_DENSITY = 0.6f;
 
   private final UUID playerUuid;
   private final LinkedList<JourneyStep> journeySteps = new LinkedList<>();
-  private final SearchSession session;
   private final Itinerary itinerary;
   private int lastAddedJourneyStepIndex = 0;
   private double journeyStepsLength = 0;
   private State state = State.STOPPED_INCOMPLETE;
   private UUID illuminationTaskId;
   private AlternatingList.Traversal<Path, Path, Path> traversal;
+  private final String trailParticleName;
+  private final double trailWidth;
+  private final double trailDensity;
 
   /**
    * General constructor.
    *
    * @param playerUuid the identifier for the player
-   * @param search     the player search
    * @param itinerary  the itinerary that determines the path
    */
-  public PlayerJourneySession(@NotNull final UUID playerUuid,
-                              @NotNull SearchSession search,
-                              @NotNull final Itinerary itinerary) {
-    this.session = search;
+  public TrailNavigator(@NotNull final UUID playerUuid,
+                        @NotNull final Itinerary itinerary,
+                        String trailParticleName,
+                        double trailWidth,
+                        double trailDensity) {
     this.itinerary = itinerary;
     this.traversal = itinerary.stages().traverse();
     this.playerUuid = playerUuid;
-  }
-
-  /**
-   * Get the player search session used to calculate this journey.
-   *
-   * @return the session
-   */
-  public SearchSession getSession() {
-    return session;
+    this.trailParticleName = trailParticleName;
+    this.trailWidth = trailWidth;
+    this.trailDensity = trailDensity;
   }
 
   /**
@@ -183,7 +178,7 @@ public class PlayerJourneySession implements JourneySession {
     while (journeyStepsLength < CACHED_JOURNEY_STEPS_LENGTH && lastAddedJourneyStepIndex + 1 < traversal().get().getSteps().size()) {
       Cell origin = steps.get(lastAddedJourneyStepIndex).location();
       Step nextStep = steps.get(lastAddedJourneyStepIndex + 1);
-      JourneyStep jStep = new JourneyStep(playerUuid, origin, nextStep.location(), nextStep.mode());
+      JourneyStep jStep = new JourneyStep(playerUuid, origin, nextStep.location(), trailParticleName, trailWidth, trailDensity);
       journeySteps.add(jStep);
       journeyStepsLength += jStep.length();
       lastAddedJourneyStepIndex++;
@@ -201,7 +196,7 @@ public class PlayerJourneySession implements JourneySession {
   }
 
   @Override
-  public void run() {
+  public void start() {
     stop();
     resetTraversal();
     traversal().next();

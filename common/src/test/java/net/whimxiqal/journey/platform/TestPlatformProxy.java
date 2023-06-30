@@ -42,7 +42,6 @@ import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
-import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
@@ -75,13 +74,12 @@ public class TestPlatformProxy implements PlatformProxy {
     // ignore
   }
 
-  @Override
   public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
     // ignore
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnModeParticle(UUID playerUuid, String particle, int domain, double x, double y, double z) {
     // ignore
   }
 
@@ -144,5 +142,15 @@ public class TestPlatformProxy implements PlatformProxy {
   @Override
   public Map<String, Map<String, Integer>> domainResourceKeys() {
     return Collections.singletonMap("whimxiqal", TestPlatformProxy.worlds.values().stream().collect(Collectors.toMap(k -> k.name, k -> Journey.get().domainManager().domainIndex(k.uuid))));
+  }
+
+  @Override
+  public List<String> particleTypes() {
+    return List.of("glow");  // that's it
+  }
+
+  @Override
+  public boolean isValidParticleType(String particleType) {
+    return particleType.equals("glow");
   }
 }

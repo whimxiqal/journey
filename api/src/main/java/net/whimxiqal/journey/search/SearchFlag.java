@@ -1,22 +1,20 @@
 package net.whimxiqal.journey.search;
 
+import net.whimxiqal.journey.Flag;
+
 /**
  * An optional parameter to change the behavior of a path search.
  *
  * @param <T> the type of value associated with the flag
  */
-public class SearchFlag<T> {
-
-  private final Type type;
-  private final T value;
+public class SearchFlag<T> extends Flag<T> {
 
   private SearchFlag(Type type, T value) {
+    super(type, value);
     if (!type.clazz.isInstance(value)) {
       throw new IllegalArgumentException("Flag with type " + type.name()
           + " was given incompatible value type: " + value.getClass().getSimpleName());
     }
-    this.type = type;
-    this.value = value;
   }
 
   /**
@@ -31,23 +29,6 @@ public class SearchFlag<T> {
     return new SearchFlag<>(type, value);
   }
 
-  /**
-   * The type of flag, to determine which behavior to alter.
-   *
-   * @return the type of flag
-   */
-  public Type type() {
-    return type;
-  }
-
-  /**
-   * The value of the flag, to determine how the behavior is altered.
-   *
-   * @return the value of the flag
-   */
-  public T value() {
-    return value;
-  }
 
   /**
    * The types of flags allowed to alter the behavior of a search.
@@ -72,5 +53,4 @@ public class SearchFlag<T> {
       this.clazz = clazz;
     }
   }
-
 }

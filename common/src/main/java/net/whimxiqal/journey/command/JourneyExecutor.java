@@ -26,12 +26,14 @@ package net.whimxiqal.journey.command;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.navigator.Navigator;
 import net.whimxiqal.journey.common.JourneyBaseVisitor;
 import net.whimxiqal.journey.common.JourneyParser;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
@@ -41,7 +43,6 @@ import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.manager.SearchManager;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.message.Pager;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.scope.ScopedSessionResult;
 import net.whimxiqal.journey.search.DestinationGoalSearchSession;
@@ -60,6 +61,7 @@ import net.whimxiqal.mantle.common.CommandSource;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 public class JourneyExecutor implements CommandExecutor {
 
@@ -106,23 +108,26 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitJourneytoTarget(JourneyParser.JourneytoTargetContext ctx) {
-        visitChildren(ctx);  // populate flags
+        CommandResult result = visitChildren(ctx);  // populate flags
+        if (result != null && result.type() == CommandResult.Type.FAILURE) {
+          return result;
+        }
         String scopedText = String.join(":", cmd.identifiers().getAll());
 
-        ScopedSessionResult result = ScopeUtil.session(InternalJourneyPlayer.from(src), scopedText);
-        switch (result.type()) {
+        ScopedSessionResult scopedSessionResult = ScopeUtil.session(InternalJourneyPlayer.from(src), scopedText);
+        switch (scopedSessionResult.type()) {
           case EXISTS:
-            SearchSession session = result.session().get();
+            SearchSession session = scopedSessionResult.session().get();
             session.setFlags(flags);
             Journey.get().searchManager().launchIngameSearch(session);
             return CommandResult.success();
           case AMBIGUOUS:
             src.audience().sendMessage(Formatter.error("That name is ambiguous between scopes ___ and ___",
-                result.ambiguousItem().get().scope1, result.ambiguousItem().get().scope2));
+                scopedSessionResult.ambiguousItem().get().scope1, scopedSessionResult.ambiguousItem().get().scope2));
             return CommandResult.failure();
           case NO_SCOPE:
             src.audience().sendMessage(Formatter.error("Could not find a scope named ___",
-                result.missing().get()));
+                scopedSessionResult.missing().get()));
           case NONE:
             src.audience().sendMessage(Formatter.error("Could not find anything with that name"));
             return CommandResult.failure();
@@ -641,9 +646,9 @@ public class JourneyExecutor implements CommandExecutor {
           src.audience().sendMessage(Formatter.info("Your search is being canceled"));
           canceled = true;
         }
-        PlayerJourneySession journey = Journey.get().searchManager().getJourney(searcherUuid);
-        if (journey != null && journey.running()) {
-          journey.stop();
+        Navigator navigator = Journey.get().searchManager().getNavigator(searcherUuid);
+        if (navigator != null && navigator.running()) {
+          navigator.stop();
           src.audience().sendMessage(Formatter.info("Your path has been hidden"));
           canceled = true;
         }
@@ -700,7 +705,13 @@ public class JourneyExecutor implements CommandExecutor {
           if (notAllowed(Permission.ADMIN_RELOAD, false)) {
             return CommandResult.failure();
           }
-          Journey.get().proxy().configManager().load();
+          try {
+            Journey.get().configManager().load();
+          } catch (SerializationException e) {
+            src.audience().sendMessage(Formatter.error("An internal error occurred"));
+            e.printStackTrace();
+            return CommandResult.failure();
+          }
           src.audience().sendMessage(Formatter.success("Reloaded config"));
           return CommandResult.success();
         }
@@ -775,6 +786,58 @@ public class JourneyExecutor implements CommandExecutor {
           flags.addFlag(Flags.DIG, !Flags.DIG.defaultValue());
         }
         return super.visitDigFlag(ctx);
+      }
+
+      @Override
+      public CommandResult visitNavigatorFlag(JourneyParser.NavigatorFlagContext ctx) {
+        // TODO validate navigator with navigator manager (not yet built)
+        flags.addFlag(Flags.NAVIGATOR, ctx.type.getText());
+        return super.visitNavigatorFlag(ctx);
+      }
+
+      @Override
+      public CommandResult visitTrailParticleFlag(JourneyParser.TrailParticleFlagContext ctx) {
+        String toLower = ctx.particle.getText().toLowerCase(Locale.ENGLISH);
+        if (!Journey.get().proxy().platform().isValidParticleType(toLower)) {
+          src.audience().sendMessage(Formatter.error("Invalid particle type: " + toLower));
+          return CommandResult.failure();
+        }
+        flags.addFlag(Flags.TRAIL_PARTICLE, toLower);
+        return super.visitTrailParticleFlag(ctx);
+      }
+
+      @Override
+      public CommandResult visitTrailWidthFlag(JourneyParser.TrailWidthFlagContext ctx) {
+        double width;
+        try {
+          width = Double.parseDouble(ctx.width.getText());
+        } catch (NumberFormatException e) {
+          src.audience().sendMessage(Formatter.error("Your trail width parameter could not be parsed"));
+          return CommandResult.failure();
+        }
+        if (!Flags.TRAIL_WIDTH.valid(width)) {
+          src.audience().sendMessage(Formatter.error("Trail width " + width + " is not valid"));
+          return CommandResult.failure();
+        }
+        flags.addFlag(Flags.TRAIL_WIDTH, width);
+        return super.visitTrailWidthFlag(ctx);
+      }
+
+      @Override
+      public CommandResult visitTrailDensityFlag(JourneyParser.TrailDensityFlagContext ctx) {
+        double density;
+        try {
+          density = Double.parseDouble(ctx.density.getText());
+        } catch (NumberFormatException e) {
+          src.audience().sendMessage(Formatter.error("Your trail density parameter could not be parsed"));
+          return CommandResult.failure();
+        }
+        if (!Flags.TRAIL_DENSITY.valid(density)) {
+          src.audience().sendMessage(Formatter.error("Trail density " + density + " is not valid"));
+          return CommandResult.failure();
+        }
+        flags.addFlag(Flags.TRAIL_DENSITY, density);
+        return super.visitTrailDensityFlag(ctx);
       }
 
       private boolean notAllowed(@Nullable Permission permission, boolean onlyPlayer) {

@@ -36,8 +36,8 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
 
   final Map<String, E> capitalNameToEnum;
 
-  EnumSetting(@NotNull String path, @NotNull E defaultValue, @NotNull Class<E> clazz) {
-    super(path, defaultValue, clazz);
+  EnumSetting(@NotNull String path, @NotNull E defaultValue, @NotNull Class<E> clazz, boolean reloadable) {
+    super(path, defaultValue, clazz, reloadable);
     HashMap<String, E> nameMap = new HashMap<>();
     for (E enumConstant : clazz.getEnumConstants()) {
       nameMap.put(enumConstant.name().toUpperCase(), enumConstant);
@@ -46,18 +46,13 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
   }
 
   @Override
-  public E parseValue(@NotNull String string) {
-    return capitalNameToEnum.get(string.toUpperCase());
-  }
-
-  @Override
   @NotNull
-  public String printValue() {
-    return getValue().name().toLowerCase();
+  public String printValue(E value) {
+    return value.name().toLowerCase();
   }
 
   @Override
-  public boolean isValid() {
+  public boolean valid(E value) {
     return value != null;
   }
 }
