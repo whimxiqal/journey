@@ -35,7 +35,17 @@ public class JourneyBukkitApiImpl implements JourneyBukkitApi {
   }
 
   @Override
+  public World toWorld(int domain) {
+    return BukkitUtil.getWorld(domain);
+  }
+
+  @Override
   public Cell toCell(Location location) {
-    return BukkitUtil.cell(location);
+    return BukkitUtil.toCell(location);
+  }
+
+  @Override
+  public Location toLocation(Cell cell) {
+    return BukkitUtil.toLocation(cell);
   }
 }

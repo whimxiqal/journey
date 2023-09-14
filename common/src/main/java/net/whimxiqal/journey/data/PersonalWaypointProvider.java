@@ -32,42 +32,6 @@ import org.jetbrains.annotations.Nullable;
 public interface PersonalWaypointProvider {
 
   /**
-   * Check if a player has a personal endpoint at the certain cell location.
-   *
-   * @param playerUuid the player's uuid
-   * @param cell       the cell location
-   * @return true if the cell exists for the given player
-   */
-  default boolean hasWaypoint(@NotNull UUID playerUuid,
-                              @NotNull Cell cell) throws DataAccessException {
-    return getName(playerUuid, cell) != null;
-  }
-
-  /**
-   * Check if a player has a certain named personal endpoint.
-   *
-   * @param playerUuid the player's uuid
-   * @param name       the cell name
-   * @return true if the cell exists for the given player
-   */
-  default boolean hasWaypoint(@NotNull UUID playerUuid,
-                              @NotNull String name) throws DataAccessException {
-    return getWaypoint(playerUuid, name) != null;
-  }
-
-
-  /**
-   * Get the name of a personal location with a given unique player and cell.
-   *
-   * @param playerUuid the player's uuid
-   * @param cell       the personal location
-   * @return the cell's name, or null if it doesn't exist
-   */
-  @Nullable
-  String getName(@NotNull UUID playerUuid,
-                 @NotNull Cell cell) throws DataAccessException;
-
-  /**
    * Get a specific cell with a given unique player and name combination.
    *
    * @param playerUuid the player's uuid

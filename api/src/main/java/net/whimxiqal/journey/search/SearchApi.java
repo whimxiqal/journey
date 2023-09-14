@@ -21,6 +21,7 @@ public interface SearchApi {
    * @param flags       optional flags to adjust the behavior of the search
    * @return a future of the result of the search
    */
+  @Deprecated(since = "1.2.0")
   Future<SearchResult> runDestinationSearch(JourneyAgent agent, Cell origin, Cell destination,
                                             SearchFlag<?>... flags);
 
@@ -36,10 +37,12 @@ public interface SearchApi {
    * @param flags       optional flags to adjust the behavior of the search
    * @return a future of the result of the search
    */
-  @Deprecated(since = "1.2.0", forRemoval = true)
+  @Deprecated(since = "1.2.0")
   Future<SearchResult> runPlayerDestinationSearch(UUID playerUuid, Cell destination,
                                                   boolean display, SearchFlag<?>... flags);
 
-  Future<SearchResult> runPlayerDestinationSearch(UUID playerUuid, Cell destination, SearchFlag<?>... flags);
+  Future<SearchResult> runDestinationSearch(JourneyAgent agent, Cell origin, Cell destination, SearchFlags flags);
+
+  Future<SearchResult> runPlayerDestinationSearch(UUID playerUuid, Cell destination, SearchFlags searchFlags);
 
 }

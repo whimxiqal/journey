@@ -98,12 +98,6 @@ public class SqlPersonalWaypointManager
   }
 
   @Override
-  public @Nullable String getName(@NotNull UUID playerUuid, @NotNull Cell cell)
-      throws DataAccessException {
-    return super.getWaypointName(playerUuid, cell);
-  }
-
-  @Override
   public @Nullable Cell getWaypoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
     if (playerUuid == null) {
       throw new IllegalArgumentException("Personal waypoints may only be accessed with a valid player uuid");

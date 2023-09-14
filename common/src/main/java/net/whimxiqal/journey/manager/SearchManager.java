@@ -26,7 +26,6 @@ package net.whimxiqal.journey.manager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,14 +36,11 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.message.Messages;
 import net.whimxiqal.journey.navigation.Itinerary;
-import net.whimxiqal.journey.navigator.Navigator;
-import net.whimxiqal.journey.navigation.journey.TrailNavigator;
+import net.whimxiqal.journey.navigation.Navigator;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
@@ -66,37 +62,7 @@ public final class SearchManager {
   // Queued searches for each player to run after the currently-executing search stops
   private final HashMap<UUID, QueuedSearch> nextPlayerSearches = new HashMap<>();
 
-  // Current journeying-sessions for players that have a completed search
-  private final Map<UUID, Navigator> navigators = new HashMap<>();
-
   private final Map<UUID, FlagSet> flagPreferences = new HashMap<>();
-
-  // Task id for the task that updates players' locations
-  private UUID locationUpdateTaskId;
-
-  /**
-   * Store a journey. Stops the previously running journey if there was one.
-   *
-   * @param playerId the player id
-   * @param journey  the journey
-   */
-  public void putNavigator(@NotNull UUID playerId, TrailNavigator journey) {
-    Navigator oldNavigator = this.navigators.put(playerId, journey);
-    if (oldNavigator != null) {
-      oldNavigator.stop();
-    }
-  }
-
-  /**
-   * Get the journey.
-   *
-   * @param playerId the player id
-   * @return the journey, or null if it doesn't exist
-   */
-  @Nullable
-  public Navigator getNavigator(@NotNull UUID playerId) {
-    return navigators.get(playerId);
-  }
 
   /**
    * Start searching with the given search session, and register it with this manager to enforce
@@ -159,7 +125,7 @@ public final class SearchManager {
     } catch (Exception e) {
       // the initialize function can cause unknown errors because it uses registered functions from the API,
       //  so we want to handle other dev's bugs gracefully
-      audience.sendMessage(Formatter.error("An internal error occurred"));
+      Messages.COMMAND_INTERNAL_ERROR.sendTo(audience, Formatter.ERROR);
       e.printStackTrace();
       playerSearches.remove(caller);
       return;
@@ -215,21 +181,18 @@ public final class SearchManager {
                                       .color(Formatter.ACCENT)))
                               .build()))));
 
-              TrailNavigator journey = new TrailNavigator(session.getAgentUuid(), itinerary,
-                  session.flags().printValueFor(Flags.TRAIL_PARTICLE),
-                  Settings.TRAIL_WIDTH.getValue(),
-                  Settings.TRAIL_DENSITY.getValue());
-              // Save the journey
-              putNavigator(session.getAgentUuid(), journey);
-              journey.start();
+              Journey.get().navigatorManager().stopNavigators(session.agent().uuid());
+              Journey.get().navigatorManager().startNavigating(session.flags().getValueFor(Flags.NAVIGATOR),
+                  session.agent(),
+                  itinerary.steps());
             } else {
               // itinerary is null, so we have no Navigator to start
-              audience.sendMessage(Formatter.success("Search complete!"));
+              Messages.COMMAND_SEARCH_SUCCESS.sendTo(audience, Formatter.SUCCESS);
             }
           }
-          case STOPPED_CANCELED -> audience.sendMessage(Formatter.error("Search canceled"));
-          case STOPPED_FAILED -> audience.sendMessage(Formatter.error("Search failed"));
-          case STOPPED_ERROR -> audience.sendMessage(Formatter.error("Search failed due to an internal error"));
+          case STOPPED_CANCELED -> Messages.COMMAND_SEARCH_CANCELED.sendTo(audience, Formatter.ERROR);
+          case STOPPED_FAILED -> Messages.COMMAND_SEARCH_FAILED.sendTo(audience, Formatter.WARN);
+          case STOPPED_ERROR -> Messages.COMMAND_SEARCH_ERROR.sendTo(audience, Formatter.ERROR);
           default -> throw new RuntimeException();  // programmer error, should never finish the search with this state
         }
 
@@ -259,7 +222,7 @@ public final class SearchManager {
    * in memory for future retrieval. If the flag set is just used for reading, don't set "persistent" so that
    * it needn't be saved in memory. Must be called on main thread.
    *
-   * @param callerId the caller
+   * @param callerId   the caller
    * @param persistent whether to keep the returned flag set in memory or not, so that edits affect the stored set
    * @return the flag set of preferences
    */
@@ -278,41 +241,10 @@ public final class SearchManager {
     return flagSet;
   }
 
-  public void initialize() {
-    // task for updating player locations lazily
-    locationUpdateTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
-      for (UUID journeyingPlayer : navigators.keySet()) {
-        Optional<InternalJourneyPlayer> player = Journey.get().proxy()
-            .platform()
-            .onlinePlayer(journeyingPlayer);
-        if (player.isEmpty()) {
-          continue;
-        }
-        Optional<Cell> location = player.get().location();
-        if (location.isEmpty()) {
-          continue;
-        }
-        try {
-          Journey.get().locationManager().tryUpdateLocation(journeyingPlayer, location.get());
-        } catch (ExecutionException | InterruptedException e) {
-          Journey.logger().error("Internal error trying to update the cached location of player " + player.get().uuid());
-          e.printStackTrace();
-          // just log and continue
-        }
-      }
-    }, false, 5);
-  }
-
   public void shutdown() {
     Journey.logger().debug("[Search Manager] Shutting down...");
     // cancel all searches
     playerSearches.values().forEach(session -> session.stop(false));
-    // stop all journeys
-    navigators.values().forEach(Navigator::stop);
-    if (locationUpdateTaskId != null) {
-      Journey.get().proxy().schedulingManager().cancelTask(locationUpdateTaskId);
-      locationUpdateTaskId = null;
-    }
 
     // now wait for all sessions to stop
     for (SearchSession canceledSession : playerSearches.values()) {

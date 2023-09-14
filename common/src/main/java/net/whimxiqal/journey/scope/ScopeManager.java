@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.whimxiqal.journey.Destination;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
@@ -34,10 +35,12 @@ import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
 import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.message.Messages;
 import net.whimxiqal.journey.search.DomainGoalSearchSession;
 import net.whimxiqal.journey.search.InternalScope;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.util.Permission;
+import net.whimxiqal.journey.util.StringUtil;
 import net.whimxiqal.journey.util.Validator;
 
 public class ScopeManager {
@@ -47,7 +50,7 @@ public class ScopeManager {
 
   public void registerDefault() {
     register(Journey.NAME, "personal", Scope.builder()
-        .name(Component.text("My Waypoints"))
+        .name(Component.text(Messages.GUI_PERSONAL_TITLE.message()))
         .destinations(player -> VirtualMap.of(
             () -> Journey.get().cachedDataProvider().personalWaypointCache()
                 .getAll(player.uuid(), false)
@@ -57,7 +60,7 @@ public class ScopeManager {
         .permission(Permission.PATH_PERSONAL.path())
         .build());
     register(Journey.NAME, "server", Scope.builder()
-        .name(Component.text("Server Waypoints"))
+        .name(Component.text(Messages.GUI_SERVER_TITLE.message()))
         .destinations(player -> VirtualMap.of(
             () -> Journey.get().cachedDataProvider().publicWaypointCache().getAll()
                 .stream()
@@ -66,21 +69,27 @@ public class ScopeManager {
         .permission(Permission.PATH_SERVER.path())
         .build());
     register(Journey.NAME, "player", Scope.builder()
-        .name(Component.text("Players"))
-        .description(Formatter.dull("Online players and their"),
-            Formatter.dull("public personal waypoints"))
+        .name(Component.text(Messages.GUI_PLAYERS_TITLE.message()))
+        .description(StringUtil.segmentPhrase(Messages.GUI_PLAYERS_DESCRIPTION.message(), 26)
+            .stream()
+            .map(s -> Component.text(s).color(Formatter.DULL))
+            .collect(Component.toComponent()))
         .subScopes(player -> VirtualMap.of(Journey.get().proxy().platform()
             .onlinePlayers()
             .stream()
             .filter(p -> !p.uuid().equals(player.uuid()))
             .collect(Collectors.<JourneyPlayer, String, Scope>toMap(JourneyPlayer::name, p -> Scope.builder()
                 .name(Component.text(p.name()))
+                .description(Messages.GUI_PLAYERS_TO_ENTITY_DESCRIPTION.resolve(Formatter.DULL, Formatter.ACCENT, false))
                 .destinations(() -> p.location()
                     .map(location -> VirtualMap.ofSingleton(p.name(), Destination.builder(location).permission(Permission.PATH_PLAYER_ENTITY.path()).build()))
                     .orElse(VirtualMap.empty()))
                 .subScopes(() -> VirtualMap.ofSingleton("waypoints", Scope.builder()
-                    .name(Component.text(p.name() + "'s Waypoints"))
-                    .description(Formatter.dull("Go to this player"))
+                    .name(Messages.GUI_PLAYERS_WAYPOINTS_TITLE.resolve(NamedTextColor.WHITE, Formatter.ACCENT, false, p.name()))
+                    .description(StringUtil.segmentPhrase(Messages.GUI_PLAYERS_WAYPOINTS_DESCRIPTION.message(), 26)
+                        .stream()
+                        .map(s -> Component.text(s).color(Formatter.DULL))
+                        .collect(Component.toComponent()))
                     .permission(Permission.PATH_PLAYER_WAYPOINTS.path())
                     .destinations(VirtualMap.of(
                         () -> Journey.get().cachedDataProvider().personalWaypointCache()

@@ -33,6 +33,8 @@ import net.whimxiqal.journey.manager.AnimationManager;
 import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.manager.DomainManager;
 import net.whimxiqal.journey.manager.LocationManager;
+import net.whimxiqal.journey.message.MessageManager;
+import net.whimxiqal.journey.navigation.NavigationManager;
 import net.whimxiqal.journey.manager.NetherManager;
 import net.whimxiqal.journey.manager.PlayerManager;
 import net.whimxiqal.journey.manager.SearchManager;
@@ -41,7 +43,6 @@ import net.whimxiqal.journey.scope.ScopeManager;
 import net.whimxiqal.journey.stats.StatsManager;
 import net.whimxiqal.journey.util.BStatsUtil;
 import net.whimxiqal.journey.util.CommonLogger;
-import org.spongepowered.configurate.ConfigurateException;
 
 public final class Journey {
 
@@ -51,6 +52,7 @@ public final class Journey {
   private final PlayerManager playerManager = new PlayerManager();
   private final NetherManager netherManager = new NetherManager();
   private final SearchManager searchManager = new SearchManager();
+  private final NavigationManager navigationManager = new NavigationManager();
   private final LocationManager locationManager = new LocationManager();
   private final ScopeManager scopeManager = new ScopeManager();
   private final TunnelManager tunnelManager = new TunnelManager();
@@ -59,6 +61,7 @@ public final class Journey {
   private final CentralChunkCache centralChunkCache = new CentralChunkCache();
   private final AnimationManager animationManager = new AnimationManager();
   private final CachedDataProvider cachedDataProvider = new CachedDataProvider();
+  private final MessageManager messageManager = new MessageManager();
   private DistributedWorkManager workManager;
   private Proxy proxy;
 
@@ -110,9 +113,11 @@ public final class Journey {
       return false;
     }
 
+    messageManager.initialize();
     proxy.initialize();
     netherManager.initialize();
-    searchManager.initialize();
+    navigationManager.initialize();
+    locationManager.initialize();
     scopeManager.initialize();
     statsManager.initialize();
     BStatsUtil.register(proxy.platform().bStatsChartConsumer());
@@ -136,6 +141,8 @@ public final class Journey {
 
     // shutdown search manager and wait for all ongoing searches to cancel and complete
     searchManager.shutdown();
+    navigationManager.shutdown();
+    locationManager.shutdown();
 
     statsManager.shutdown();
     animationManager.shutdown();
@@ -160,6 +167,11 @@ public final class Journey {
   public SearchManager searchManager() {
     assertSynchronous();
     return searchManager;
+  }
+
+  public NavigationManager navigatorManager() {
+    assertSynchronous();
+    return navigationManager;
   }
 
   public LocationManager locationManager() {
@@ -194,6 +206,10 @@ public final class Journey {
   }
   public CachedDataProvider cachedDataProvider() {
     return cachedDataProvider;
+  }
+
+  public MessageManager messageManager() {
+    return messageManager;
   }
 
   public DistributedWorkManager workManager() {

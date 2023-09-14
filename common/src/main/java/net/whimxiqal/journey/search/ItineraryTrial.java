@@ -210,7 +210,6 @@ public class ItineraryTrial {
     future.complete(new TrialResult(state.get(),
         new Itinerary(origin,
             allSteps,
-            alternatingList.convert(Path::fromTunnel, trial -> Objects.requireNonNull(trial.getPath())),
             length),
         changedProblem));
   }

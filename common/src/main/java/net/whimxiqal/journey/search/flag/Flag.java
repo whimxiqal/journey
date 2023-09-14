@@ -67,7 +67,7 @@ public class Flag<T> {
    *
    * @return list of suggested values
    */
-  public List<T> suggestedValues() {
+  public List<? extends T> suggestedValues() {
     return Collections.emptyList();
   }
 

@@ -25,8 +25,13 @@ package net.whimxiqal.journey.config;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.data.StorageMethod;
+import net.whimxiqal.journey.navigation.TrailNavigator;
+import net.whimxiqal.journey.navigation.option.Color;
 
 /**
  * An enumeration of all {@link Setting}s. No need to register anywhere, that's done dynamically.
@@ -45,14 +50,29 @@ public final class Settings {
   public static final Setting<Boolean> DEFAULT_DIG_FLAG
       = new BooleanSetting("search.flag.default-dig", false, true);
 
-  public static final Setting<String> DEFAULT_TRAIL_PARTICLE_FLAG
-      = new StringSetting("search.flag.default-trail-particle", "glow", true);
+  public static final Setting<String> DEFAULT_NAVIGATOR
+      = new StringSetting("search.flag.default-navigator", TrailNavigator.TRAIL_NAVIGATOR_ID, true);
 
-  public static final Setting<Double> TRAIL_WIDTH
-      = new DoubleSetting("search.trail.width", 1.0, true, 0.1, 5);
+  public static final Setting<Component> DEFAULT_NAVIGATION_COMPLETION_MESSAGE
+      = new ComponentSetting("navigation.completion.message", Component.empty(), true);
 
-  public static final Setting<Double> TRAIL_DENSITY
-      = new DoubleSetting("search.trail.density", 5, true, 1, 10);
+  public static final Setting<Component> DEFAULT_NAVIGATION_COMPLETION_TITLE
+      = new ComponentSetting("navigation.completion.title", Component.empty(), true);
+
+  public static final Setting<Component> DEFAULT_NAVIGATION_COMPLETION_SUBTITLE
+      = new ComponentSetting("navigation.completion.subtitle", Component.empty(), true);
+
+  public static final Setting<List<String>> DEFAULT_TRAIL_PARTICLE
+      = new StringListSetting("navigation.trail.particle", List.of("glow", "redstone"), true);
+
+  public static final Setting<List<Color>> DEFAULT_TRAIL_COLOR
+      = new ColorListSetting("navigation.trail.color", List.of(new Color(172, 21, 219)), true);
+
+  public static final Setting<Double> DEFAULT_TRAIL_WIDTH
+      = new DoubleSetting("navigation.trail.width", 1.0, true, 0.1, 5);
+
+  public static final Setting<Double> DEFAULT_TRAIL_DENSITY
+      = new DoubleSetting("navigation.trail.density", 5.0, true, 1.0, 10.0);
 
   public static final Setting<Integer> MAX_PATH_BLOCK_COUNT
       = new IntegerSetting("search.max-path-block-count", 100000, true, 1000, 10000000);
@@ -81,6 +101,8 @@ public final class Settings {
   public static final Setting<StorageMethod> STORAGE_TYPE
       = new EnumSetting<>("storage.type", StorageMethod.SQLITE, StorageMethod.class, false);
 
+  public static final Setting<Locale> LOCALE = new LocaleSetting("language", Locale.ENGLISH, false);
+
   public static final Map<String, Setting<?>> ALL_SETTINGS = new LinkedHashMap<>();  // preserve order
 
   static {
@@ -95,7 +117,10 @@ public final class Settings {
       if (!(obj instanceof Setting<?> setting)) {
         continue;
       }
-      ALL_SETTINGS.put(setting.getPath(), setting);
+      Setting<?> previous = ALL_SETTINGS.put(setting.getPath(), setting);
+      if (previous != null) {
+        throw new IllegalStateException("Found two settings with the same path: " + setting.getPath());
+      }
     }
   }
 

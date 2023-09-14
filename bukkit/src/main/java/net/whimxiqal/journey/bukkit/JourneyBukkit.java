@@ -25,10 +25,11 @@ package net.whimxiqal.journey.bukkit;
 
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
+import net.whimxiqal.journey.bukkit.listener.PluginDisableListener;
 import net.whimxiqal.journey.command.JourneyConnectorProvider;
 import net.whimxiqal.journey.bukkit.listener.DeathListener;
 import net.whimxiqal.journey.bukkit.listener.NetherListener;
-import net.whimxiqal.journey.bukkit.search.listener.PlayerListener;
+import net.whimxiqal.journey.bukkit.listener.PlayerListener;
 import net.whimxiqal.journey.bukkit.util.BukkitLogger;
 import net.whimxiqal.journey.bukkit.util.BukkitSchedulingManager;
 import net.whimxiqal.mantle.paper.PaperRegistrarProvider;
@@ -101,6 +102,7 @@ public final class JourneyBukkit extends JavaPlugin {
     Bukkit.getPluginManager().registerEvents(new NetherListener(), this);
     Bukkit.getPluginManager().registerEvents(new PlayerListener(), this);
     Bukkit.getPluginManager().registerEvents(new DeathListener(), this);
+    Bukkit.getPluginManager().registerEvents(new PluginDisableListener(), this);
   }
 
   @Override

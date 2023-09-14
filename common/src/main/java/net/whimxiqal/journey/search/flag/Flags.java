@@ -24,11 +24,14 @@
 package net.whimxiqal.journey.search.flag;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.config.Settings;
+import net.whimxiqal.journey.navigation.NavigationRequest;
 import net.whimxiqal.journey.util.Permission;
 
 public final class Flags {
@@ -42,6 +45,7 @@ public final class Flags {
       5 * 60 /* five minutes */);
   public static final Flag<Integer> ANIMATE = new MillisecondsFlag("animate", () -> 0,
       Permission.FLAG_ANIMATE.path(),
+      0, 30000 /* 30 seconds, there's no reason this has to be this high */,
       0, 5, 20, 100, 1000 /* 1 second */, 10000 /* 10 seconds */);
   public static final Flag<Boolean> DIG = new BooleanFlag("dig",
       Settings.DEFAULT_DIG_FLAG::getValue,
@@ -52,10 +56,9 @@ public final class Flags {
   public static final Flag<Boolean> FLY = new BooleanFlag("fly",
       Settings.DEFAULT_FLY_FLAG::getValue,
       Permission.FLAG_FLY.path());
-  public static final Flag<String> TRAIL_PARTICLE = new StringFlag("trail-particle",
-      Settings.DEFAULT_TRAIL_PARTICLE_FLAG::getValue,
-      Permission.FLAG_TRAIL_PARTICLE.path(),
-      Journey.get().proxy().platform()::particleTypes);
+  public static final Flag<NavigationRequest> NAVIGATOR = new NavigationRequestFlag("navigator",
+      () -> NavigationRequest.of(Settings.DEFAULT_NAVIGATOR.getValue()),
+      Permission.FLAG_NAVIGATOR.path());
   public static final List<Flag<?>> ALL_FLAGS = new LinkedList<>();
 
   static {

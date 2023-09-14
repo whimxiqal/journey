@@ -96,7 +96,6 @@ public class SurfaceGoalSearchSession extends SearchSession {
       stages.addLast(pathTrialResult.path(), Path.stationary(pathTrialResult.path().getDestination()));
       complete(new Itinerary(this.origin,
           pathTrialResult.path().getSteps(),
-          stages.build(),
           pathTrialResult.path().getCost()));
     }
   }

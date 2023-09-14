@@ -31,18 +31,15 @@ listNetherPortals: LIST_NETHER_PORTALS page=ID?;
 
 cancel: CANCEL;
 
-journeytoTarget: identifier flagSet?;
+journeytoTarget: name=identifier flagSet?;
 
-flagSet: (timeoutFlag | animateFlag | flyFlag | doorFlag | digFlag | navigatorFlag | trailParticleFlag | trailWidthFlag | trailDensityFlag)+;
-timeoutFlag: FLAG_TIMEOUT EQUAL timeout=ID;
-animateFlag: FLAG_ANIMATE (EQUAL delay=ID)?;
-flyFlag: FLAG_FLY (EQUAL (TRUE | FALSE))?;
-doorFlag: FLAG_DOOR (EQUAL (TRUE | FALSE))?;
-digFlag: FLAG_DIG (EQUAL (TRUE | FALSE))?;
-navigatorFlag: FLAG_NAVIGATOR EQUAL type=ID;
-trailParticleFlag: FLAG_TRAIL_PARTICLE EQUAL particle=ID;
-trailWidthFlag: FLAG_TRAIL_WIDTH EQUAL width=ID;
-trailDensityFlag: FLAG_TRAIL_DENSITY EQUAL density=ID;
+flagSet: (timeoutFlag | animateFlag | flyFlag | doorFlag | digFlag | navigatorFlag)+;
+timeoutFlag: FLAG_TIMEOUT timeout=ID;
+animateFlag: FLAG_ANIMATE (delay=ID)?;
+flyFlag: FLAG_FLY (TRUE | FALSE)?;
+doorFlag: FLAG_DOOR (TRUE | FALSE)?;
+digFlag: FLAG_DIG (TRUE | FALSE)?;
+navigatorFlag: FLAG_NAVIGATOR navigator=identifier (OPEN_BRACE options=identifier CLOSED_BRACE);
 
 ADMIN: 'admin';
 BUILD: 'build';
@@ -77,11 +74,9 @@ FLAG_DOOR: '-door';
 FLAG_FLY: '-fly';
 FLAG_NAVIGATOR: '-navigator';
 FLAG_TIMEOUT: '-timeout';
-FLAG_TRAIL_PARTICLE: '-trailParticle';
-FLAG_TRAIL_WIDTH: '-trailWidth';
-FLAG_TRAIL_DENSITY: '-trailDensity';
 
-EQUAL: '=';
+OPEN_BRACE: '{';
+CLOSED_BRACE: '}';
 
 // MANTLE NODES
 identifier: ident | SINGLE_QUOTE ident+ SINGLE_QUOTE | DOUBLE_QUOTE ident+ DOUBLE_QUOTE;
@@ -109,9 +104,7 @@ ident: ID
         | TRUE
         | UNSET
         | WAYPOINT;
-ID: [a-zA-Z0-9\-_:.]+;
-ID_SET: ID (COMMA ID)+;
-COMMA: ',';
+ID: [a-zA-Z0-9\-_:,.]+;
 SINGLE_QUOTE: '\'';
 DOUBLE_QUOTE: '"';
 WS : [ \t\r\n]+ -> channel(HIDDEN); // skip spaces, tabs, newlines

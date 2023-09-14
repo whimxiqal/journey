@@ -77,14 +77,11 @@ public class Pager {
     if (page < 1) {
       throw new IllegalArgumentException("Page must be greater than 0");
     }
-    if (page > totalPages) {
-      audience.sendMessage(Formatter.info("There are only ___ pages", totalPages));
-      return;
-    }
+    page = Math.min(page, totalPages);
     audience.sendMessage(header.append(Component.text(" % ").color(Formatter.DARK))
-        .append(Formatter.dull("page "))
+        .append(Component.text("page ").color(Formatter.DULL))
         .append(Formatter.accent(Integer.toString(page)))
-        .append(Formatter.dull(" / " + totalPages)));
+        .append(Component.text(" / " + totalPages).color(Formatter.DULL)));
     components.subList((page - 1) * MESSAGES_PER_PAGE,
             Math.min(components.size(), page * MESSAGES_PER_PAGE))
         .forEach(audience::sendMessage);

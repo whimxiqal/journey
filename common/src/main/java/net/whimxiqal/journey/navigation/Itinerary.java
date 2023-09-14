@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.navigator.Navigator;
 import net.whimxiqal.journey.search.ItineraryTrial;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.tools.AlternatingList;
@@ -43,7 +42,7 @@ import net.whimxiqal.journey.tools.AlternatingList;
  * @see ItineraryTrial
  * @see Navigator
  */
-public record Itinerary(Cell origin, List<Step> steps, AlternatingList<Path, Path, Path> stages, double cost) {
+public record Itinerary(Cell origin, List<Step> steps, double cost) {
 
   /**
    * General constructor.
@@ -55,11 +54,9 @@ public record Itinerary(Cell origin, List<Step> steps, AlternatingList<Path, Pat
    */
   public Itinerary(Cell origin,
                    List<Step> steps,
-                   AlternatingList<Path, Path, Path> stages,
                    double cost) {
     this.origin = origin;
     this.steps = Collections.unmodifiableList(steps);
-    this.stages = stages;
     this.cost = cost;
   }
 

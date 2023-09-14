@@ -356,8 +356,8 @@ public abstract class SearchSession implements Describable {
     return permissions;
   }
 
-  public UUID getAgentUuid() {
-    return agent.uuid();
+  public JourneyAgent agent() {
+    return agent;
   }
 
   /**

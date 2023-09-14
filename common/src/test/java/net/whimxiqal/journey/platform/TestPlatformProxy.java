@@ -49,6 +49,7 @@ import net.whimxiqal.journey.proxy.TestJourneyBlock;
 import net.whimxiqal.journey.proxy.TestJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
+import net.whimxiqal.journey.navigation.option.Color;
 import org.bstats.charts.CustomChart;
 
 public class TestPlatformProxy implements PlatformProxy {
@@ -70,21 +71,12 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void playSuccess(UUID playerUuid) {
-    // ignore
-  }
-
-  public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
+  public void spawnParticle(UUID playerUuid, String particle, Color color, int domain, double x, double y, double z) {
     // ignore
   }
 
   @Override
-  public void spawnModeParticle(UUID playerUuid, String particle, int domain, double x, double y, double z) {
-    // ignore
-  }
-
-  @Override
-  public Collection<InternalJourneyPlayer> onlinePlayers() {
+  public List<InternalJourneyPlayer> onlinePlayers() {
     return onlinePlayers;
   }
 

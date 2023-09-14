@@ -40,9 +40,9 @@ import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
-import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
+import net.whimxiqal.journey.navigation.option.Color;
 import org.bstats.charts.CustomChart;
 
 /**
@@ -79,13 +79,9 @@ public interface PlatformProxy extends BlockProvider {
   @Override
   JourneyBlock toBlock(Cell cell);
 
-  void playSuccess(UUID playerUuid);
+  void spawnParticle(UUID playerUuid, String particle, Color color, int domain, double x, double y, double z);
 
-  void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ);
-
-  void spawnModeParticle(UUID playerUuid, String particle, int domain, double x, double y, double z);
-
-  Collection<InternalJourneyPlayer> onlinePlayers();
+  List<InternalJourneyPlayer> onlinePlayers();
 
   Optional<InternalJourneyPlayer> onlinePlayer(UUID uuid);
 

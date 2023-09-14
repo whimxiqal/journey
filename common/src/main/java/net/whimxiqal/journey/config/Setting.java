@@ -65,7 +65,7 @@ public abstract class Setting<T> {
    * @return the path
    */
   @NotNull
-  public String getPath() {
+  public final String getPath() {
     return path;
   }
 
@@ -75,7 +75,7 @@ public abstract class Setting<T> {
    * @return the default value
    */
   @NotNull
-  public T getDefaultValue() {
+  public final T getDefaultValue() {
     return clazz.cast(defaultValue);
   }
 
@@ -85,7 +85,7 @@ public abstract class Setting<T> {
    * @return the setting value
    */
   @NotNull
-  public T getValue() {
+  public final T getValue() {
     if (!initialized) {
       throw new RuntimeException("Setting " + path + " was not initialized");
     }
@@ -97,7 +97,7 @@ public abstract class Setting<T> {
    *
    * @param value the value
    */
-  public void setValue(@NotNull T value) {
+  public final void setValue(@NotNull T value) {
     this.value.set(Objects.requireNonNull(value));
     this.initialized = true;
   }
@@ -125,17 +125,17 @@ public abstract class Setting<T> {
       return;
     }
 
-    T currentValue = this.value.get();
-    T loadedValue = node.get(clazz, currentValue);
+    T originalValue = this.value.get();
+    T loadedValue = deserialize(node);
     if (!valid(loadedValue)) {
       this.value.set(getDefaultValue());
       Journey.logger().warn(String.format("Setting %s has invalid value %s. Using default: %s",
-          path, printValue(currentValue), printValue()));
+          path, printValue(), printValue()));
       this.initialized = true;
       return;
     }
 
-    if (this.initialized && !currentValue.equals(loadedValue) && !reloadable) {
+    if (this.initialized && !originalValue.equals(loadedValue) && !reloadable) {
       Journey.logger().warn(String.format("Saw setting %s was reloaded from config, but the server must be restarted to observe its effect", path));
       return;
     }
@@ -143,6 +143,10 @@ public abstract class Setting<T> {
     this.value.set(loadedValue);
     this.loaded = true;
     this.initialized = true;
+  }
+
+  protected T deserialize(CommentedConfigurationNode node) throws SerializationException {
+    return node.get(this.clazz, getDefaultValue());
   }
 
   public final boolean valid() {

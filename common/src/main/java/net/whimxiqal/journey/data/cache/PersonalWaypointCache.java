@@ -119,11 +119,6 @@ public class PersonalWaypointCache implements PersonalWaypointProvider {
   }
 
   @Override
-  public @Nullable String getName(@NotNull UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
-    throw new UnsupportedOperationException("This operation isn't implemented");
-  }
-
-  @Override
   public @Nullable Cell getWaypoint(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
     throw new UnsupportedOperationException("This operation isn't implemented");
   }

@@ -14,7 +14,6 @@ CREATE TABLE journey_waypoints (
     publicity   BIT             NOT NULL    DEFAULT 0,
     INDEX       (player_uuid),
     INDEX       (name_id),
-    INDEX       location_idx    (domain_id, x, y, z),
     UNIQUE      (player_uuid, name_id)
 );
 

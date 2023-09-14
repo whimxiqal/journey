@@ -133,10 +133,10 @@ public abstract class RayTraceMode extends Mode {
         }
       }
       if (canGoDirect) {
-        result.set(BukkitUtil.cell(destination));
+        result.set(BukkitUtil.toCell(destination));
       } else {
         assert worstTrace != null;
-        result.set(BukkitUtil.cell(worstTrace.getHitBlock()
+        result.set(BukkitUtil.toCell(worstTrace.getHitBlock()
             .getLocation()
             .add(worstTrace.getHitBlockFace().getDirection())
             .subtract(0, -Math.floor(worstTraceYOffset), 0)));

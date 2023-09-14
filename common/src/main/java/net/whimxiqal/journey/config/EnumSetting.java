@@ -24,8 +24,11 @@
 package net.whimxiqal.journey.config;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 /**
  * A setting that holds an enum value.
@@ -43,6 +46,19 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
       nameMap.put(enumConstant.name().toUpperCase(), enumConstant);
     }
     capitalNameToEnum = nameMap;
+  }
+
+  @Override
+  public E deserialize(CommentedConfigurationNode node) throws SerializationException {
+    String value = node.getString();
+    if (value == null) {
+      throw new SerializationException("Value was null");
+    }
+    try {
+      return Enum.valueOf(clazz, value.toUpperCase(Locale.ENGLISH));
+    } catch (IllegalArgumentException e) {
+      throw new SerializationException(e);
+    }
   }
 
   @Override

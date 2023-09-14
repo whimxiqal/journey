@@ -47,7 +47,7 @@ subprojects {
     project.ext.snapshot = true
 
     project.ext.majorVersion = '1'
-    project.ext.minorVersion = '1'
+    project.ext.minorVersion = '2'
 
     project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
     project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion

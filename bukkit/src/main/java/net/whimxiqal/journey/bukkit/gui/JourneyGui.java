@@ -175,7 +175,7 @@ public class JourneyGui {
         if (preferences.contains(flag)) {
           guiItem.lore(Component.text(preferences.printValueFor(flag)));
         } else {
-          guiItem.lore(Formatter.dull(preferences.printValueFor(flag) + " (default)"));
+          guiItem.lore(Component.text(preferences.printValueFor(flag) + " (default)").color(Formatter.DULL));
         }
         gui.addItem(guiItem.asGuiItem(event -> {
           incrementBySuggestedValues(flag);

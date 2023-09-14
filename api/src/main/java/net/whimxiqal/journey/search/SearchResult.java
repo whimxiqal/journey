@@ -19,7 +19,7 @@ public interface SearchResult {
    *
    * @return the steps of the path, or null if the search wasn't successful
    */
-  List<SearchStep> path();
+  List<? extends SearchStep> path();
 
   /**
    * The status of a result of a search.

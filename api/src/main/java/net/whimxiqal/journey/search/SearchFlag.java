@@ -7,7 +7,7 @@ import net.whimxiqal.journey.Flag;
  *
  * @param <T> the type of value associated with the flag
  */
-public class SearchFlag<T> extends Flag<T> {
+public class SearchFlag<T> extends Flag<SearchFlag.Type, T> {
 
   private SearchFlag(Type type, T value) {
     super(type, value);

@@ -41,6 +41,8 @@ public interface JourneyBukkitApi {
    */
   int toDomain(World world);
 
+  World toWorld(int domain);
+
   /**
    * Convert a {@link Location} to a {@link Cell}, which is just Journey's version of a location.
    *
@@ -48,5 +50,7 @@ public interface JourneyBukkitApi {
    * @return the cell
    */
   Cell toCell(Location location);
+
+  Location toLocation(Cell cell);
 
 }

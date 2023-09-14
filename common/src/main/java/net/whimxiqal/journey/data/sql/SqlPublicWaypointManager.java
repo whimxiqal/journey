@@ -69,11 +69,6 @@ public class SqlPublicWaypointManager
   }
 
   @Override
-  public @Nullable String getName(@NotNull Cell cell) throws DataAccessException {
-    return getWaypointName(null, cell);
-  }
-
-  @Override
   public @Nullable Cell getWaypoint(@NotNull String name) throws DataAccessException {
     return getWaypoint(null, name);
   }

@@ -71,15 +71,6 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
   }
 
   @Override
-  public @Nullable String getName(@NotNull UUID playerUuid, @NotNull Cell cell) throws DataAccessException {
-    List<Waypoint> waypoints = this.waypoints.get(playerUuid);
-    if (waypoints == null) {
-      return null;
-    }
-    return waypoints.stream().filter(waypoint -> waypoint.location().equals(cell)).findFirst().map(Waypoint::name).orElse(null);
-  }
-
-  @Override
   public @Nullable Cell getWaypoint(@NotNull UUID playerUuid, @NotNull String name) throws DataAccessException {
     List<Waypoint> waypoints = this.waypoints.get(playerUuid);
     if (waypoints == null) {

@@ -80,7 +80,7 @@ public class TestCommands extends JourneyTestHarness {
   }
 
   static void addHome() throws ExecutionException, InterruptedException {
-    if (Journey.get().proxy().dataManager().personalWaypointManager().hasWaypoint(PLAYER_UUID, "home")) {
+    if (Journey.get().proxy().dataManager().personalWaypointManager().getWaypoint(PLAYER_UUID, "home") != null) {
       // already has it
       return;
     }

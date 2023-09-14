@@ -163,7 +163,7 @@ public final class BukkitUtil {
     return world.getUID();
   }
 
-  public static Cell cell(Location location) {
+  public static Cell toCell(Location location) {
     return new Cell(location.getBlockX(), location.getBlockY(), location.getBlockZ(), getDomain(Objects.requireNonNull(location.getWorld())));
   }
 

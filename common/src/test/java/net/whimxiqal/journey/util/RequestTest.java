@@ -33,9 +33,9 @@ class RequestTest extends JourneyTestHarness {
 
   @Test
   public void testGetPlayerUuid() {
-    UUID notchUuid = Request.requestPlayerUuid("Notch");
-    Assertions.assertNotNull(notchUuid, "Request to get UUID failed");
-    Assertions.assertEquals("069a79f4-44e9-4726-a5be-fca90e38aaf5", notchUuid.toString(), "Request got the wrong UUID");
+    Request.PlayerResponse notchPlayer = Request.requestPlayerUuid("Notch");
+    Assertions.assertNotNull(notchPlayer, "Request to get UUID failed");
+    Assertions.assertEquals("069a79f4-44e9-4726-a5be-fca90e38aaf5", notchPlayer.uuid().toString(), "Request got the wrong UUID");
   }
 
 }

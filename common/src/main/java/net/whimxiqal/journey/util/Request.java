@@ -37,6 +37,9 @@ public final class Request {
   private Request() {
   }
 
+  public record PlayerResponse(UUID uuid, String name) {
+  }
+
   /**
    * Asynchronously call the Mojang API for the UUID of the player with the given name.
    * Player names may be changed, so this should only be called for requesting temporary information,
@@ -45,7 +48,7 @@ public final class Request {
    * @param player the player
    * @return the uuid
    */
-  public static UUID requestPlayerUuid(String player) {
+  public static PlayerResponse requestPlayerUuid(String player) {
     try {
       URL apiUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + player);
       URLConnection connection = apiUrl.openConnection();
@@ -66,7 +69,7 @@ public final class Request {
         int stringIndex = i * 2;
         uuidBytes[i] = (byte) Integer.parseInt(hexString.substring(stringIndex, stringIndex + 2), 16);
       }
-      return UUIDUtil.bytesToUuid(uuidBytes);
+      return new PlayerResponse(UUIDUtil.bytesToUuid(uuidBytes), obj.getString("name"));
     } catch (IOException e) {
       e.printStackTrace();
       return null;

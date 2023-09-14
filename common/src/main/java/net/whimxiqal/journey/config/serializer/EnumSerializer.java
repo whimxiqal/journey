@@ -7,7 +7,7 @@ import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
-public class EnumSerializer<E extends Enum<E>> implements TypeSerializer<Enum<E>> {
+public class EnumSerializer<E extends Enum<E>> extends TypeDeserializer<Enum<E>> {
 
   private final Class<E> clazz;
 
@@ -28,11 +28,4 @@ public class EnumSerializer<E extends Enum<E>> implements TypeSerializer<Enum<E>
     }
   }
 
-  @Override
-  public void serialize(Type type, @Nullable Enum<E> obj, ConfigurationNode node) throws SerializationException {
-    if (obj == null) {
-      throw new SerializationException("Enum object was null");
-    }
-    node.set(String.class, obj.toString());
-  }
 }

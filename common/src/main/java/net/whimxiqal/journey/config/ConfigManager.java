@@ -29,8 +29,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import net.whimxiqal.journey.config.serializer.EnumSerializer;
-import net.whimxiqal.journey.data.StorageMethod;
+import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.config.serializer.ColorSerializer;
+import net.whimxiqal.journey.config.serializer.ComponentSerializer;
+import net.whimxiqal.journey.navigation.option.Color;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.serialize.SerializationException;
@@ -46,7 +48,9 @@ public class ConfigManager {
 
   public void initialize(Path path) throws IOException {
     configurationLoader = YamlConfigurationLoader.builder()
-        .defaultOptions(options -> options.serializers(builder -> builder.register(StorageMethod.class, new EnumSerializer<>(StorageMethod.class))))
+        .defaultOptions(options -> options.serializers(builder -> builder
+            .register(Color.class, new ColorSerializer())
+            .register(Component.class, new ComponentSerializer())))
         .indent(2)
         .nodeStyle(NodeStyle.BLOCK)
         .path(path)

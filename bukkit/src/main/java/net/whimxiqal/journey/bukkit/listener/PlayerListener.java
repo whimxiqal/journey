@@ -21,34 +21,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.navigator;
+package net.whimxiqal.journey.bukkit.listener;
 
-import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.bukkit.util.BukkitUtil;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 
-/**
- * Manage information about the traversal of locatables
- * within the game.
- */
-public interface Navigator {
-
-  /**
-   * Begin navigation, or restart if it's already been started.
-   */
-  void start();
+public class PlayerListener implements Listener {
 
   /**
-   * Should run when the journey is completed or
-   * the journey is otherwise left.
-   */
-  void stop();
-
-  /**
-   * Notify this {@link Navigator} that the given {@link Cell}
-   * has been visited. This may be called very often, so efficiency
-   * is important here.
+   * Handler for when players move throughout the world.
+   * This allows us to update the last known location so player journeys
+   * know which particles to show.
    *
-   * @param locatable the visited locatable
+   * @param event the event
    */
-  void visit(Cell locatable);
+  @EventHandler
+  public void onPlayerMove(PlayerMoveEvent event) {
+    Journey.get().locationManager().handlePlayerMoveEvent(event.getPlayer().getUniqueId(), BukkitUtil.toCell(event.getTo()));
+  }
+
+  @EventHandler
+  public void onPlayerJoin(PlayerJoinEvent event) {
+    Journey.get().cachedDataProvider().personalWaypointCache().update(event.getPlayer().getUniqueId(), true);
+  }
 
 }

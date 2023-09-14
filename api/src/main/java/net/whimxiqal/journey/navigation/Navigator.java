@@ -21,32 +21,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.search.listener;
+package net.whimxiqal.journey.navigation;
 
-import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.bukkit.util.BukkitUtil;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
+import java.util.Collection;
+import java.util.Collections;
+import net.whimxiqal.journey.Cell;
 
-public class PlayerListener implements Listener {
+/**
+ * Manage information about the traversal of locatables
+ * within the game.
+ */
+public interface Navigator {
 
   /**
-   * Handler for when players move throughout the world.
-   * This allows us to update the last known location so player journeys
-   * know which particles to show.
-   *
-   * @param event the event
+   * Begin navigation. This will only be called once.
    */
-  @EventHandler
-  public void onPlayerMove(PlayerMoveEvent event) {
-    Journey.get().locationManager().handlePlayerMoveEvent(event.getPlayer().getUniqueId(), BukkitUtil.cell(event.getTo()));
-  }
+  boolean start();
 
-  @EventHandler
-  public void onPlayerJoin(PlayerJoinEvent event) {
-    Journey.get().cachedDataProvider().personalWaypointCache().update(event.getPlayer().getUniqueId(), true);
+  boolean shouldStop();
+
+  /**
+   * Stop navigation. This will only be called once and after {@link #start()} is called.
+   */
+  void stop();
+
+  default Collection<String> pluginDependencies() {
+    return Collections.emptyList();
   }
 
 }
