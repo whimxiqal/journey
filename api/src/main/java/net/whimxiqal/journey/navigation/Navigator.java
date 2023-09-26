@@ -21,35 +21,45 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.navigation.journey;
+package net.whimxiqal.journey.navigation;
 
-import net.whimxiqal.journey.Cell;
+import java.util.Collection;
+import java.util.Collections;
+import net.whimxiqal.journey.Synchronous;
 
 /**
  * Manage information about the traversal of locatables
  * within the game.
  */
-public interface JourneySession extends Runnable {
+public interface Navigator {
 
   /**
-   * Notify this {@link JourneySession} that the given {@link Cell}
-   * has been visited. This may be called very often, so efficiency
-   * is important here.
-   *
-   * @param locatable the visited locatable
+   * Begin navigation. This will only be called once.
    */
-  void visit(Cell locatable);
+  @Synchronous
+  boolean start();
 
   /**
-   * Should run when the journey is completed or
-   * the journey is otherwise left.
+   * Whether this navigator should be stopped or not. This is called frequently.
+   *
+   * @return true if navigator should stop
+   */
+  boolean shouldStop();
+
+  /**
+   * Stop navigation.
+   * This will only be called once and after {@link #start()} is called.
    */
   void stop();
 
   /**
-   * Run the journey, or restart if it's already been started.
+   * A collection of ids of the plugins that this navigator depend on.
+   * This is used so that navigators may be stopped before their dependencies become unavailable.
+   *
+   * @return the plugin dependency ids
    */
-  @Override
-  void run();
+  default Collection<String> pluginDependencies() {
+    return Collections.emptyList();
+  }
 
 }

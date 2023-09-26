@@ -33,20 +33,36 @@ import org.bukkit.World;
 public interface JourneyBukkitApi {
 
   /**
-   * Convert the {@link World} to a domain identifier, which is used to identify
+   * Convert the Bukkit {@link World} to a domain identifier, which is used to identify
    * worlds in Journey.
    *
-   * @param world the Bukkit world
+   * @param world the world
    * @return the domain id
    */
   int toDomain(World world);
 
   /**
-   * Convert a {@link Location} to a {@link Cell}, which is just Journey's version of a location.
+   * Convert a domain identifier to a Bukkit {@link World}.
+   *
+   * @param domain the domain id
+   * @return the world
+   */
+  World toWorld(int domain);
+
+  /**
+   * Convert a Bukkit {@link Location} to a {@link Cell}, which is just Journey's version of a location.
    *
    * @param location the location
    * @return the cell
    */
   Cell toCell(Location location);
+
+  /**
+   * Convert a {@link Cell} to a Bukkit {@link Location}.
+   *
+   * @param cell the cell
+   * @return the location
+   */
+  Location toLocation(Cell cell);
 
 }
