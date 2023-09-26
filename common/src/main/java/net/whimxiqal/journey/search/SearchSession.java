@@ -52,6 +52,7 @@ import net.whimxiqal.journey.navigation.mode.FlyMode;
 import net.whimxiqal.journey.navigation.mode.JumpMode;
 import net.whimxiqal.journey.navigation.mode.SwimMode;
 import net.whimxiqal.journey.navigation.mode.WalkMode;
+import net.whimxiqal.journey.search.flag.FlagPair;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.SimpleTimer;
@@ -117,6 +118,12 @@ public abstract class SearchSession implements Describable {
    * Perform the titular search operation.
    */
   public final CompletableFuture<Result> search() {
+    for (FlagPair<?> flagPair : flags.flagPairs()) {
+      if (!flagPair.valid()) {
+        Journey.logger().error("Search session " + uuid + " had flag " + flagPair.flag().name() + " with invalid value: " + flagPair.printValue());
+        future.complete(new Result(ResultState.STOPPED_ERROR, null));
+      }
+    }
     Journey.logger().debug(this + ": scheduling search");
     // kick off the first portion
     Journey.get().proxy().schedulingManager().schedule(this::asyncSearch, true);
@@ -349,8 +356,8 @@ public abstract class SearchSession implements Describable {
     return permissions;
   }
 
-  public UUID getAgentUuid() {
-    return agent.uuid();
+  public JourneyAgent agent() {
+    return agent;
   }
 
   /**

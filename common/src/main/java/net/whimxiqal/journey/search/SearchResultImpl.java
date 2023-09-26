@@ -2,7 +2,7 @@ package net.whimxiqal.journey.search;
 
 import java.util.List;
 
-public record SearchResultImpl(Status status, List<SearchStep> steps) implements SearchResult {
+public record SearchResultImpl(Status status, List<? extends SearchStep> steps) implements SearchResult {
 
   @Override
   public Status status() {
@@ -10,7 +10,7 @@ public record SearchResultImpl(Status status, List<SearchStep> steps) implements
   }
 
   @Override
-  public List<SearchStep> path() {
+  public List<? extends SearchStep> path() {
     return steps;
   }
 }

@@ -42,9 +42,9 @@ import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.navigation.Itinerary;
-import net.whimxiqal.journey.navigation.journey.JourneySession;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
+import net.whimxiqal.journey.navigation.Navigator;
 import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.TimeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,39 +64,11 @@ public final class SearchManager {
   // Queued searches for each player to run after the currently-executing search stops
   private final HashMap<UUID, QueuedSearch> nextPlayerSearches = new HashMap<>();
 
-  // Current journeying-sessions for players that have a completed search
-  private final Map<UUID, PlayerJourneySession> playerJourneys = new HashMap<>();
-
-  // Task id for the task that updates players' locations
-  private UUID locationUpdateTaskId;
-
-  /**
-   * Store a journey. Stops the previously running journey if there was one.
-   *
-   * @param playerId the player id
-   * @param journey  the journey
-   */
-  public void putJourney(@NotNull UUID playerId, PlayerJourneySession journey) {
-    PlayerJourneySession oldJourney = this.playerJourneys.put(playerId, journey);
-    if (oldJourney != null) {
-      oldJourney.stop();
-    }
-  }
-
-  /**
-   * Get the journey.
-   *
-   * @param playerId the player id
-   * @return the journey, or null if it doesn't exist
-   */
-  @Nullable
-  public PlayerJourneySession getJourney(@NotNull UUID playerId) {
-    return playerJourneys.get(playerId);
-  }
+  private final Map<UUID, FlagSet> flagPreferences = new HashMap<>();
 
   /**
    * Start searching with the given search session, and register it with this manager to enforce
-   * that no more than one session is executing per player and also to store the {@link JourneySession}
+   * that no more than one session is executing per player and also to store the {@link Navigator}
    * if it completes successfully.
    *
    * @param session the session
@@ -276,12 +248,6 @@ public final class SearchManager {
     Journey.logger().debug("[Search Manager] Shutting down...");
     // cancel all searches
     playerSearches.values().forEach(session -> session.stop(false));
-    // stop all journeys
-    playerJourneys.values().forEach(JourneySession::stop);
-    if (locationUpdateTaskId != null) {
-      Journey.get().proxy().schedulingManager().cancelTask(locationUpdateTaskId);
-      locationUpdateTaskId = null;
-    }
 
     // now wait for all sessions to stop
     for (SearchSession canceledSession : playerSearches.values()) {

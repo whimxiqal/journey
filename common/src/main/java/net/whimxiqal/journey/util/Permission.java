@@ -56,7 +56,13 @@ public enum Permission {
   FLAG_ANIMATE("journey.flag.animate"),
   FLAG_FLY("journey.flag.fly"),
   FLAG_DOOR("journey.flag.door"),
-  FLAG_DIG("journey.flag.dig");
+  FLAG_DIG("journey.flag.dig"),
+  FLAG_NAVIGATOR("journey.flag.navigator"),
+  FLAG_NAVIGATOR_TRAIL("journey.flag.navigator.trail"),
+  FLAG_NAVIGATOR_TRAIL_PARTICLE_OPTION("journey.flag.navigator.trail.particle"),
+  FLAG_NAVIGATOR_TRAIL_WIDTH_OPTION("journey.flag.navigator.trail.width"),
+  FLAG_NAVIGATOR_TRAIL_DENSITY_OPTION("journey.flag.navigator.trail.density"),
+  FLAG_PLAYER("journey.flag.player");
 
   public static final String JOURNEY_PATH_PERMISSION_PREFIX = "journey.path";
   private final String path;
@@ -76,6 +82,13 @@ public enum Permission {
 
   public String path() {
     return path;
+  }
+
+  public String path(String... extensions) {
+    if (extensions.length == 0) {
+      return path;
+    }
+    return path + "." + String.join(".", extensions);
   }
 
 }
