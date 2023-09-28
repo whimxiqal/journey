@@ -23,42 +23,54 @@
 
 package net.whimxiqal.journey.search.flag;
 
-import java.util.Arrays;
+import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Function;
 import net.whimxiqal.journey.config.Settings;
-import net.whimxiqal.journey.util.TimeUtil;
+import net.whimxiqal.journey.navigation.NavigatorDetails;
+import net.whimxiqal.journey.util.Permission;
 
 public final class Flags {
 
-  public static final Flag<Integer> TIMEOUT = Flag.of("timeout",
-      (Function<Integer, String>) TimeUtil::toSimpleTime,
+  public static final IntegerFlag TIMEOUT = new SecondsFlag("timeout",
       Settings.DEFAULT_SEARCH_TIMEOUT::getValue,
-      Integer.class);
-  public static final Flag<Integer> ANIMATE = Flag.of("animate",
-      value -> value == 0 ? "-" : TimeUtil.toSimpleTimeMilliseconds(value),
-      () -> 0,
-      Integer.class);
-  public static final Flag<Boolean> DIG = Flag.of("dig", Object::toString, Settings.DEFAULT_DIG_FLAG::getValue, Boolean.class);
-  public static final Flag<Boolean> DOOR = Flag.of("door", Object::toString, Settings.DEFAULT_DOORS_FLAG::getValue, Boolean.class);
-  public static final Flag<Boolean> FLY = Flag.of("fly", Object::toString, Settings.DEFAULT_FLY_FLAG::getValue, Boolean.class);
-
-  public static final List<Flag<?>> allFlags = new LinkedList<>();
+      Permission.FLAG_TIMEOUT.path(),
+      0, 24 * 60 * 60 /* a day */,
+      0, 5, 10, 30, 60,
+      2 * 60 /* two minutes */,
+      5 * 60 /* five minutes */);
+  public static final Flag<Integer> ANIMATE = new MillisecondsFlag("animate", () -> 0,
+      Permission.FLAG_ANIMATE.path(),
+      0, 30000 /* 30 seconds, there's no reason this has to be this high */,
+      0, 5, 20, 100, 1000 /* 1 second */, 10000 /* 10 seconds */);
+  public static final Flag<Boolean> DIG = new BooleanFlag("dig",
+      Settings.DEFAULT_DIG_FLAG::getValue,
+      Permission.FLAG_DIG.path());
+  public static final Flag<Boolean> DOOR = new BooleanFlag("door",
+      Settings.DEFAULT_DOORS_FLAG::getValue,
+      Permission.FLAG_DOOR.path());
+  public static final Flag<Boolean> FLY = new BooleanFlag("fly",
+      Settings.DEFAULT_FLY_FLAG::getValue,
+      Permission.FLAG_FLY.path());
+  public static final Flag<NavigatorDetails> NAVIGATOR = new NavigatorDetailsFlag("navigator",
+      () -> NavigatorDetails.of(Settings.DEFAULT_NAVIGATOR.getValue()),
+      Permission.FLAG_NAVIGATOR.path());
+  public static final List<Flag<?>> ALL_FLAGS = new LinkedList<>();
 
   static {
-    Arrays.stream(Flags.class.getDeclaredFields())
-        .map(field -> {
-          try {
-            return field.get(null);
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
-          }
-        })
-        .filter(object -> object instanceof Flag<?>)
-        .map(object -> ((Flag<?>) object))
-        .forEach(allFlags::add);
+    for (Field field : Flags.class.getDeclaredFields()) {
+      Object obj;
+      try {
+        obj = field.get(null);
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+        continue;
+      }
+      if (!(obj instanceof Flag<?> flag)) {
+        continue;
+      }
+      ALL_FLAGS.add(flag);
+    }
   }
 
   private Flags() {

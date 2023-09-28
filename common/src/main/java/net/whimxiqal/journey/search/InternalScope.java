@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Destination;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.VirtualMap;
@@ -66,6 +67,7 @@ public class InternalScope {
       Map<String, SearchSession> sessionMap = new HashMap<>(sessions.apply(player).getAll());
       for (Map.Entry<String, ? extends Destination> destination : scope.destinations(player).getAll().entrySet()) {
         SearchSession session = new DestinationGoalSearchSession(player, playerLocation.get(), destination.getValue().location(), false, true);
+        session.setFlags(Journey.get().searchManager().getFlagPreferences(player.uuid(), false));
         session.setName(destination.getValue().name());
         session.setDescription(destination.getValue().description());
         destination.getValue().permission().ifPresent(perm -> Permission.journeyPathExtend(perm).forEach(session::addPermission));
@@ -98,6 +100,15 @@ public class InternalScope {
 
   public List<String> allPermissions() {
     return wrappedScope().permission().map(Permission::journeyPathExtend).orElse(Collections.emptyList());
+  }
+
+  public boolean hasAnyDescendantSessions(JourneyPlayer player) {
+    if (sessions(player).size() > 0) {
+      return true;
+    }
+    return subScopes(player).getAll().entrySet()
+        .stream()
+        .anyMatch(entry -> entry.getValue().hasAnyDescendantSessions(player));
   }
 
 }

@@ -23,6 +23,10 @@
 
 package net.whimxiqal.journey.search.flag;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +35,7 @@ import net.whimxiqal.journey.search.SearchFlag;
 
 public class FlagSet {
 
-  private final Map<Flag<?>, Object> flags = new ConcurrentHashMap<>();
+  private final Map<String, FlagPair<?>> flags = new ConcurrentHashMap<>();
 
   public static FlagSet from(SearchFlag<?>[] flags) {
     FlagSet set = new FlagSet();
@@ -45,7 +49,11 @@ public class FlagSet {
   }
 
   public <T> void addFlag(Flag<T> flag, T value) {
-    this.flags.put(flag, value);
+    if (flag.defaultValue().equals(value)) {
+      flags.remove(flag.name());  // remove and let default handling get this value
+    } else {
+      flags.put(flag.name(), new FlagPair<>(flag, value));
+    }
   }
 
   public void addFlags(FlagSet other) {
@@ -54,24 +62,31 @@ public class FlagSet {
 
   @SuppressWarnings("unchecked")
   public <T> T getValueFor(Flag<T> flag) {
-    Object value = flags.get(flag);
+    FlagPair<?> value = flags.get(flag.name());
     if (value == null) {
       return flag.defaultValue();
     }
-    return (T) value;
+    return ((FlagPair<T>) value).value();
   }
 
   public <T> String printValueFor(Flag<T> flag) {
     return flag.printValue(getValueFor(flag));
   }
 
-  @SuppressWarnings("unchecked")
-  public void forEach(BiConsumer<Flag<?>, Optional<String>> consumer) {
-    flags.forEach((key, value) -> consumer.accept(key, Optional.of(((Flag<Object>) key).printValue(value))));
+  public List<FlagPair<?>> flagPairs() {
+    return new ArrayList<>(flags.values());
   }
 
   @Override
   public String toString() {
     return "FlagSet{" + flags + "}";
+  }
+
+  public boolean isEmpty() {
+    return flags.isEmpty();
+  }
+
+  public <T> boolean contains(Flag<T> flag) {
+    return flags.containsKey(flag.name());
   }
 }

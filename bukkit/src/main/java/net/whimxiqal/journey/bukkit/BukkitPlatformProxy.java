@@ -23,8 +23,13 @@
 
 package net.whimxiqal.journey.bukkit;
 
+import com.destroystokyo.paper.ParticleBuilder;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,24 +43,20 @@ import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyBlock;
 import net.whimxiqal.journey.bukkit.chunk.BukkitSessionJourneyChunk;
 import net.whimxiqal.journey.bukkit.gui.JourneyGui;
-import net.whimxiqal.journey.bukkit.music.Song;
-import net.whimxiqal.journey.bukkit.navigation.mode.FlyRayTraceMode;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.math.Vector;
-import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
-import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
+import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
-import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.BStatsUtil;
+import net.whimxiqal.journey.navigation.option.Color;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.CustomChart;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
@@ -67,8 +68,9 @@ public class BukkitPlatformProxy implements PlatformProxy {
 
   private final BlockData animationBlockData = Material.WHITE_STAINED_GLASS.createBlockData();
 
-
   private final Metrics metrics;
+  private List<String> cachedParticleTypeList;
+  private Map<String, Particle> cachedParticleTypeMap;
 
   public BukkitPlatformProxy() {
     metrics = new Metrics(JourneyBukkit.get(), BStatsUtil.BSTATS_ID);
@@ -92,47 +94,28 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public void playSuccess(UUID playerUuid) {
-    Song.SUCCESS_CHORD.play(Bukkit.getPlayer(playerUuid));
-  }
-
-  @Override
-  public void spawnDestinationParticle(UUID playerUuid, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-    Player player = Bukkit.getPlayer(playerUuid);
-    if (player == null || !player.getWorld().equals(BukkitUtil.getWorld(domain))) {
-      return;
-    }
-    player.spawnParticle(Particle.SPELL_WITCH, x, y, z, count, offsetX, offsetY, offsetZ, 0);
-  }
-
-  @Override
-  public void spawnModeParticle(UUID playerUuid, ModeType type, int domain, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ) {
-    Particle particle;
-    if (type == ModeType.FLY) {
-      particle = Particle.WAX_OFF;
-    } else if (type == ModeType.DIG) {
-      particle = Particle.CRIT;
-      count *= 5;
-    } else {
-      particle = Particle.GLOW;
-    }
-
+  public void spawnParticle(UUID playerUuid, String particleName, Color color, int domain, double x, double y, double z) {
     Player player = Bukkit.getPlayer(playerUuid);
     World world = BukkitUtil.getWorld(domain);
     if (player == null || !player.getWorld().equals(world)) {
       return;
     }
-    player.spawnParticle(particle, x, y, z, count, offsetX, offsetY, offsetZ, 0);
-
-    // Check if we need to "hint" where the trail is because the water obscures the particle
-    if (world.getBlockAt(Location.locToBlock(x), Location.locToBlock(y), Location.locToBlock(z)).isLiquid()
-        && !world.getBlockAt(Location.locToBlock(x), Location.locToBlock(y + 1), Location.locToBlock(z)).isLiquid()) {
-      world.spawnParticle(particle, x, y, z, count, offsetX, offsetY, offsetZ);
+    ensureParticleTypeCache();
+    Particle particle = cachedParticleTypeMap.get(particleName);
+    if (particle == null) {
+      return;
     }
+    ParticleBuilder builder = particle.builder()
+        .receivers(player)
+        .location(world, x, y, z);
+    if (particle == Particle.REDSTONE) {
+      builder.color(color.red(), color.green(), color.blue());
+    }
+    builder.spawn();
   }
 
   @Override
-  public Collection<InternalJourneyPlayer> onlinePlayers() {
+  public List<InternalJourneyPlayer> onlinePlayers() {
     return Bukkit.getOnlinePlayers().stream().map(BukkitJourneyPlayer::new).collect(Collectors.toList());
   }
 
@@ -148,7 +131,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
 
   @Override
   public Optional<Cell> entityCellLocation(UUID entityUuid) {
-    return Optional.ofNullable(Bukkit.getEntity(entityUuid)).map(entity -> BukkitUtil.cell(entity.getLocation()));
+    return Optional.ofNullable(Bukkit.getEntity(entityUuid)).map(entity -> BukkitUtil.toCell(entity.getLocation()));
   }
 
   @Override
@@ -158,13 +141,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
 
   @Override
   public void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination) {
-    Player player = Bukkit.getPlayer(agent.uuid());
-    if (player == null) {
-      return;
-    }
-    if (player.getAllowFlight() && flags.getValueFor(Flags.FLY)) {
-      searchSession.addMode(new FlyRayTraceMode(destination));
-    }
+    // no op
   }
 
   @Override
@@ -173,8 +150,8 @@ public class BukkitPlatformProxy implements PlatformProxy {
     if (player == null) {
       return;
     }
-    if (BukkitUtil.cell(player.getLocation()).equals(location)
-        || BukkitUtil.cell(player.getLocation().add(0, 1, 0)).equals(location)) {
+    if (BukkitUtil.toCell(player.getLocation()).equals(location)
+        || BukkitUtil.toCell(player.getLocation().add(0, 1, 0)).equals(location)) {
       return;
     }
     showBlock(player, location, animationBlockData);
@@ -193,7 +170,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
 
   private void showBlock(Player player, Cell cell, BlockData blockData) {
     if (BukkitUtil.getWorld(cell) == player.getWorld()
-        && cell.distanceToSquared(BukkitUtil.cell(player.getLocation())) < 10000 /* 100 blocks away, ignore */) {
+        && cell.distanceToSquared(BukkitUtil.toCell(player.getLocation())) < 10000 /* 100 blocks away, ignore */) {
       player.sendBlockChange(BukkitUtil.toLocation(cell), blockData);
     }
   }
@@ -206,8 +183,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
   @Override
   public boolean sendGui(JourneyPlayer player) {
     JourneyGui journeyGui = new JourneyGui(player);
-    journeyGui.open();
-    return true;
+    return journeyGui.open();
   }
 
   @Override
@@ -223,5 +199,32 @@ public class BukkitPlatformProxy implements PlatformProxy {
       domains.computeIfAbsent(key.namespace(), k -> new HashMap<>()).put(key.getKey(), BukkitUtil.getDomain(world));
     }
     return domains;
+  }
+
+  @Override
+  public List<String> particleTypes() {
+    ensureParticleTypeCache();
+    return cachedParticleTypeList;
+  }
+
+  @Override
+  public boolean isValidParticleType(String particleType) {
+    ensureParticleTypeCache();
+    return cachedParticleTypeMap.containsKey(particleType.toLowerCase(Locale.ENGLISH));
+  }
+
+  private void ensureParticleTypeCache() {
+    if (cachedParticleTypeList != null) {
+      return;
+    }
+    List<String> particleNames = new ArrayList<>(Particle.values().length);
+    cachedParticleTypeMap = new HashMap<>();
+    for (Particle particle : Particle.values()) {
+      String name = particle.name().toLowerCase(Locale.ENGLISH);
+      particleNames.add(name);
+      cachedParticleTypeMap.put(name, particle);
+    }
+    Collections.sort(particleNames);
+    cachedParticleTypeList = Collections.unmodifiableList(particleNames);
   }
 }

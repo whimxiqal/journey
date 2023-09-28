@@ -4,7 +4,7 @@ plugins {
 
 defaultTasks 'updateLicensesMain', 'build'
 
-static def suffix(String apiVersion) {
+static String suffix(String apiVersion) {
     def journeyEnv = System.getenv('JOURNEY_ENV')
     int commitsSinceMajorVersion
     def tagInfo = 'git describe --tags'.execute().text.trim()
@@ -19,7 +19,7 @@ static def suffix(String apiVersion) {
     } else {
         // Non-production
         StringBuilder builder = new StringBuilder()
-        if (tagInfo.startsWith(apiVersion)) {
+        if (tagInfo.matches("v.*") && tagInfo.substring(1).startsWith(apiVersion)) {
             // We are working on the current major/minor version
             String numberOfDevCommits = 'git rev-list HEAD --not origin/main --count'.execute().text.trim()
             if (!numberOfDevCommits.isEmpty()) {
@@ -43,11 +43,11 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'org.cadixdev.licenser'
 
-    project.ext.publish = false
+    project.ext.publish = true
     project.ext.snapshot = true
 
     project.ext.majorVersion = '1'
-    project.ext.minorVersion = '1'
+    project.ext.minorVersion = '2'
 
     project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
     project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
@@ -56,8 +56,8 @@ subprojects {
     version = project.ext.fullVersion
     group = 'net.whimxiqal.journey'
 
-    sourceCompatibility = 16
-    targetCompatibility = 16
+    sourceCompatibility = 17
+    targetCompatibility = 17
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
@@ -76,10 +76,8 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven {
-            name = 'sonatype-snapshots'
-            url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-        }
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     }
 
     test {

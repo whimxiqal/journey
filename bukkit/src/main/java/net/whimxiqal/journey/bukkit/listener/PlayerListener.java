@@ -21,7 +21,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit.search.listener;
+package net.whimxiqal.journey.bukkit.listener;
 
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
@@ -41,7 +41,7 @@ public class PlayerListener implements Listener {
    */
   @EventHandler
   public void onPlayerMove(PlayerMoveEvent event) {
-    Journey.get().locationManager().handlePlayerMoveEvent(event.getPlayer().getUniqueId(), BukkitUtil.cell(event.getTo()));
+    Journey.get().locationManager().handlePlayerMoveEvent(event.getPlayer().getUniqueId(), BukkitUtil.toCell(event.getTo()));
   }
 
   @EventHandler

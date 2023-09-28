@@ -26,11 +26,13 @@ package net.whimxiqal.journey.command;
 import java.util.Collections;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.common.JourneyLexer;
 import net.whimxiqal.journey.common.JourneyParser;
-import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.data.Waypoint;
+import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.message.Messages;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.mantle.common.CommandSource;
@@ -38,7 +40,6 @@ import net.whimxiqal.mantle.common.connector.CommandConnector;
 import net.whimxiqal.mantle.common.connector.CommandRoot;
 import net.whimxiqal.mantle.common.connector.IdentifierInfo;
 import net.whimxiqal.mantle.common.parameter.Parameter;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 public class JourneyConnectorProvider {
 
@@ -53,7 +54,7 @@ public class JourneyConnectorProvider {
             .description(Component.text("Journey to destinations"))
             .build())
         .identifierInfo(IdentifierInfo.builder(JourneyParser.RULE_identifier, JourneyParser.IdentifierContext.class)
-            .extractor(ctx -> ctx.ident().stream().map(ParseTree::getText).collect(Collectors.joining(" ")))
+            .standardExtractor(JourneyParser.IdentifierContext::ident)
             .addIgnoredCompletionToken(JourneyLexer.SINGLE_QUOTE)
             .addIgnoredCompletionToken(JourneyLexer.DOUBLE_QUOTE)
             .addParameter(Parameter.builder("waypoint")
@@ -75,10 +76,21 @@ public class JourneyConnectorProvider {
             .addParameter(Parameter.builder("scope")
                 .options(ctx -> ScopeUtil.options(InternalJourneyPlayer.from(ctx.source())))
                 .build())
+            .addParameter(Parameter.builder("navigator")
+                .options(ctx -> Journey.get().navigatorManager().navigators())
+                .build())
+            .addParameter(Parameter.builder("navigator-options")
+                .options(ctx -> {
+                  String navigatorType = ctx.identifiers().get("navigator", 0);
+                  return Journey.get().navigatorManager().provideNavigatorOptionsSuggestions(ctx.source(), navigatorType, ctx.identifiers().get(ctx.identifiers().getAll().size()));
+                })
+                .build())
             .registerCompletion(JourneyParser.RULE_waypoint, 0, "waypoint")
             .registerCompletion(JourneyParser.RULE_serverWaypoint, 0, "server-waypoint")
             .registerCompletion(JourneyParser.RULE_journeytoTarget, 0, "scope")
             .registerCompletion(JourneyParser.RULE_player, 0, "player")
+            .registerCompletion(JourneyParser.RULE_navigatorFlag, 0, "navigator")
+            .registerCompletion(JourneyParser.RULE_navigatorFlag, 1, "navigator-options")
             .build())
         // RULE_waypoint is handled in executor
         .addPermission(JourneyParser.RULE_setwaypoint, Permission.EDIT_PERSONAL.path())
@@ -103,6 +115,7 @@ public class JourneyConnectorProvider {
         .addPermission(JourneyParser.RULE_flyFlag, Permission.FLAG_FLY.path())
         .addPermission(JourneyParser.RULE_doorFlag, Permission.FLAG_DOOR.path())
         .addPermission(JourneyParser.RULE_digFlag, Permission.FLAG_DIG.path())
+        .addPermission(JourneyParser.RULE_navigatorFlag, Permission.FLAG_NAVIGATOR.path())
         .lexer(JourneyLexer.class)
         .parser(JourneyParser.class)
         .executor(new JourneyExecutor())
