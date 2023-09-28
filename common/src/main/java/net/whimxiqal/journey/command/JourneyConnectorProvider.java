@@ -113,6 +113,13 @@ public class JourneyConnectorProvider {
             JourneyParser.RULE_waypoint,
             JourneyParser.RULE_player,
             JourneyParser.RULE_serverSetWaypoint)
+        .setSyntaxErrorFunction((invalid, options) -> {
+          if (options == null) {
+            return Messages.COMMAND_INVALID_INPUT.resolve(Formatter.ERROR, invalid);
+          } else {
+            return Messages.COMMAND_INVALID_INPUT_EXPECTED.resolve(Formatter.ERROR, invalid, options);
+          }
+        })
         .build();
   }
 

@@ -26,7 +26,6 @@ package net.whimxiqal.journey.manager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,10 +36,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.whimxiqal.journey.Cell;
-import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.message.Messages;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.navigation.Navigator;
 import net.whimxiqal.journey.search.SearchSession;
@@ -109,7 +107,7 @@ public final class SearchManager {
    * A helper method that may be called again for the purposes of re-queueing the request
    * if another search is still executing, and we must wait for it to stop
    *
-   * @param session  the session we wish to run
+   * @param session the session we wish to run
    */
   private void doLaunchSearch(SearchSession session, CompletableFuture<SearchSession.Result> future) {
     Journey.get().statsManager().incrementSearches();
@@ -127,21 +125,21 @@ public final class SearchManager {
     } catch (Exception e) {
       // the initialize function can cause unknown errors because it uses registered functions from the API,
       //  so we want to handle other dev's bugs gracefully
-      audience.sendMessage(Formatter.error("An internal error occurred"));
+      Messages.COMMAND_INTERNAL_ERROR.sendTo(audience, Formatter.ERROR);
       e.printStackTrace();
       playerSearches.remove(caller);
       return;
     }
 
     AtomicReference<TextComponent> hoverText = new AtomicReference<>(Component.text("Search Parameters").color(Formatter.THEME));
-    Flags.allFlags.forEach(flag -> hoverText.set(hoverText.get()
+    Flags.ALL_FLAGS.forEach(flag -> hoverText.set(hoverText.get()
         .append(Component.newline())
         .append(Component.text(flag.name() + ": ").color(Formatter.DARK))
         .append(Component.text(session.flags().printValueFor(flag)).color(Formatter.GOLD))));
 
     audience.sendMessage(Component.text()
         .append(Formatter.prefix())
-        .append(Formatter.hover(Component.text("Searching...").color(Formatter.INFO), hoverText.get())));
+        .append(Formatter.hover(Messages.COMMAND_SEARCH_SEARCHING.resolve(Formatter.INFO), hoverText.get())));
 
     session.search().thenAccept(result -> {
       if (result == null) {
@@ -158,7 +156,7 @@ public final class SearchManager {
             Itinerary itinerary = result.itinerary();
             if (itinerary != null) {
               audience.sendMessage(Formatter.prefix()
-                  .append(Component.text("Your search completed! ").color(Formatter.SUCCESS))
+                  .append(Component.text(Messages.COMMAND_SEARCH_SUCCESS.resolve() + " ").color(Formatter.SUCCESS))
                   .append(Component.text("[").color(Formatter.DARK)
                       .append(Component.text("stats").color(Formatter.DULL).decorate(TextDecoration.ITALIC))
                       .append(Component.text("]").color(Formatter.DARK))
@@ -183,18 +181,16 @@ public final class SearchManager {
                                       .color(Formatter.ACCENT)))
                               .build()))));
 
-              PlayerJourneySession journey = new PlayerJourneySession(session.getAgentUuid(), session, itinerary);
-              // Save the journey
-              putJourney(session.getAgentUuid(), journey);
-              journey.run();
+              Journey.get().navigatorManager().stopNavigators(session.agent().uuid());
+              Journey.get().navigatorManager().startNavigating(session.agent(), itinerary.steps(), session.flags().getValueFor(Flags.NAVIGATOR));
             } else {
-              // itinerary is null, so we have no JourneySession to start
-              audience.sendMessage(Formatter.success("Search complete!"));
+              // itinerary is null, so we have no Navigator to start
+              Messages.COMMAND_SEARCH_SUCCESS.sendTo(audience, Formatter.SUCCESS);
             }
           }
-          case STOPPED_CANCELED -> audience.sendMessage(Formatter.error("Search canceled"));
-          case STOPPED_FAILED -> audience.sendMessage(Formatter.error("Search failed"));
-          case STOPPED_ERROR -> audience.sendMessage(Formatter.error("Search failed due to an internal error"));
+          case STOPPED_CANCELED -> Messages.COMMAND_SEARCH_CANCELED.sendTo(audience, Formatter.ERROR);
+          case STOPPED_FAILED -> Messages.COMMAND_SEARCH_FAILED.sendTo(audience, Formatter.WARN);
+          case STOPPED_ERROR -> Messages.COMMAND_SEARCH_ERROR.sendTo(audience, Formatter.ERROR);
           default -> throw new RuntimeException();  // programmer error, should never finish the search with this state
         }
 

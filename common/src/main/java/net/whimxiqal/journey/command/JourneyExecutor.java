@@ -32,6 +32,8 @@ import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.message.Messages;
+import net.whimxiqal.journey.navigation.NavigatorDetails;
 import net.whimxiqal.journey.common.JourneyBaseVisitor;
 import net.whimxiqal.journey.common.JourneyParser;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
@@ -41,7 +43,6 @@ import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.manager.SearchManager;
 import net.whimxiqal.journey.message.Formatter;
 import net.whimxiqal.journey.message.Pager;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.scope.ScopedSessionResult;
 import net.whimxiqal.journey.search.DestinationGoalSearchSession;
@@ -60,6 +61,7 @@ import net.whimxiqal.mantle.common.CommandSource;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 public class JourneyExecutor implements CommandExecutor {
 
@@ -83,7 +85,7 @@ public class JourneyExecutor implements CommandExecutor {
         if (result != null) {
           return result;
         }
-        src.audience().sendMessage(Formatter.WELCOME);
+        src.audience().sendMessage(Formatter.welcome());
         return CommandResult.success();
       }
 
@@ -98,7 +100,7 @@ public class JourneyExecutor implements CommandExecutor {
         }
         boolean sent = Journey.get().proxy().platform().sendGui(InternalJourneyPlayer.from(src));
         if (!sent) {
-          src.audience().sendMessage(Formatter.error("The GUI is not implemented on this version"));
+          Messages.COMMAND_GUI_ERROR.sendTo(src.audience(), Formatter.ERROR);
           return CommandResult.failure();
         }
         return CommandResult.success();
@@ -106,28 +108,31 @@ public class JourneyExecutor implements CommandExecutor {
 
       @Override
       public CommandResult visitJourneytoTarget(JourneyParser.JourneytoTargetContext ctx) {
-        visitChildren(ctx);  // populate flags
-        String scopedText = String.join(":", cmd.identifiers().getAll());
+        CommandResult result = visitChildren(ctx);  // populate flags
+        if (result != null && result.type() == CommandResult.Type.FAILURE) {
+          return result;
+        }
+        String scopedText = String.join(":", cmd.identifiers().get(0));
 
-        ScopedSessionResult result = ScopeUtil.session(InternalJourneyPlayer.from(src), scopedText);
-        switch (result.type()) {
+        ScopedSessionResult scopedSessionResult = ScopeUtil.session(InternalJourneyPlayer.from(src), scopedText);
+        switch (scopedSessionResult.type()) {
           case EXISTS:
-            SearchSession session = result.session().get();
+            SearchSession session = scopedSessionResult.session().get();
             session.setFlags(flags);
             Journey.get().searchManager().launchIngameSearch(session);
             return CommandResult.success();
           case AMBIGUOUS:
-            src.audience().sendMessage(Formatter.error("That name is ambiguous between scopes ___ and ___",
-                result.ambiguousItem().get().scope1, result.ambiguousItem().get().scope2));
+            Messages.COMMAND_SCOPES_AMBIGUOUS.sendTo(src.audience(), Formatter.ERROR, scopedText,
+                scopedSessionResult.ambiguousItem().get().scope1, scopedSessionResult.ambiguousItem().get().scope2);
             return CommandResult.failure();
           case NO_SCOPE:
-            src.audience().sendMessage(Formatter.error("Could not find a scope named ___",
-                result.missing().get()));
+            Messages.COMMAND_SCOPES_NO_SCOPE.sendTo(src.audience(), Formatter.ERROR,
+                scopedSessionResult.missing().get());
           case NONE:
-            src.audience().sendMessage(Formatter.error("Could not find anything with that name"));
+            Messages.COMMAND_SCOPES_NONE.sendTo(src.audience(), Formatter.ERROR, cmd.identifiers().get(0));
             return CommandResult.failure();
           case NO_PERMISSION:
-            src.audience().sendMessage(Formatter.error("You do not have permission to go there"));
+            Messages.COMMAND_NO_PERMISSION_VALUE.sendTo(src.audience(), Formatter.ERROR, cmd.identifiers().get(0));
             return CommandResult.failure();
           default:
             return CommandResult.failure();  // should never happen
@@ -138,10 +143,10 @@ public class JourneyExecutor implements CommandExecutor {
       public CommandResult visitDebug(JourneyParser.DebugContext ctx) {
         Component message;
         if (Journey.logger().level() == CommonLogger.LogLevel.DEBUG) {
-          message = Formatter.success("Debug mode ___.", "disabled");
+          message = Messages.COMMAND_ADMIN_DEBUG_MODE_DISABLED.resolve(Formatter.SUCCESS);
           Journey.logger().setLevel(CommonLogger.LogLevel.INFO);
         } else {
-          message = Formatter.success("Debug mode ___.", "enabled");
+          message = Messages.COMMAND_ADMIN_DEBUG_MODE_ENABLED.resolve(Formatter.SUCCESS);
           Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
         }
         src.audience().sendMessage(message);
@@ -155,7 +160,7 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitCachePortals(JourneyParser.CachePortalsContext ctx) {
         if (ctx.clear != null) {
-          Journey.get().netherManager().reset().thenRun(() -> src.audience().sendMessage(Formatter.success("Cleared cached portals.")));
+          Journey.get().netherManager().reset().thenRun(() -> Messages.COMMAND_ADMIN_PORTAL_CACHE_CLEAR.sendTo(src.audience(), Formatter.SUCCESS));
           return CommandResult.success();
         }
         return CommandResult.failure();
@@ -164,7 +169,7 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitCachePaths(JourneyParser.CachePathsContext ctx) {
         if (ctx.build != null) {
-          src.audience().sendMessage(Formatter.success("Building path cache... See console for progress."));
+          Messages.COMMAND_ADMIN_PATH_CACHE_BUILD.sendTo(src.audience(), Formatter.SUCCESS);
           SearchSession.Caller callerType;
           UUID searcherUuid = null;
           switch (src.type()) {
@@ -183,7 +188,7 @@ public class JourneyExecutor implements CommandExecutor {
         } else if (ctx.clear != null) {
           Journey.get().proxy().schedulingManager().schedule(() -> {
             Journey.get().proxy().dataManager().pathRecordManager().truncate();
-            src.audience().sendMessage(Formatter.success("Cleared cached paths."));
+            Messages.COMMAND_ADMIN_PATH_CACHE_CLEAR.sendTo(src.audience(), Formatter.SUCCESS);
           }, true);
           return CommandResult.success();
         }
@@ -196,7 +201,7 @@ public class JourneyExecutor implements CommandExecutor {
         if (page.isEmpty()) {
           return CommandResult.failure();
         }
-        Journey.get().proxy().schedulingManager().schedule(() -> Pager.of(Formatter.info("Known Nether Portals"),
+        Journey.get().proxy().schedulingManager().schedule(() -> Pager.of(Messages.COMMAND_ADMIN_NETHER_PORTAL_LIST_HEADER.resolve(Formatter.INFO),
                 Journey.get().proxy().dataManager()
                     .netherPortalManager()
                     .getAllTunnels(TunnelType.NETHER),
@@ -209,38 +214,33 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitSetwaypoint(JourneyParser.SetwaypointContext ctx) {
         if (src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+          Messages.COMMAND_ONLY_PLAYERS.sendTo(src.audience(), Formatter.ERROR);
           return CommandResult.failure();
         }
         visitChildren(ctx);
         String name = cmd.identifiers().get(0);
         if (Validator.isInvalidDataName(name)) {
-          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, name);
           return CommandResult.failure();
         }
 
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
         if (location.isEmpty()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
+          // This should never happen
           return CommandResult.failure();
         }
         PersonalWaypointManager personalWaypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
 
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          String existingName = personalWaypointManager.getName(src.uuid(), location.get());
-          if (existingName != null) {
-            src.audience().sendMessage(Formatter.error("Waypoint ___ already exists at this location", existingName));
-            return;
-          }
-
-          if (personalWaypointManager.hasWaypoint(src.uuid(), name)) {
-            src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", ctx.name.getText()));
+          Cell existingWaypoint = personalWaypointManager.getWaypoint(src.uuid(), name);
+          if (existingWaypoint != null) {
+            Messages.COMMAND_WAYPOINT_PERSONAL_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, name);
             return;
           }
 
           personalWaypointManager.add(src.uuid(), location.get(), name);
           Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
-          src.audience().sendMessage(Formatter.success("Set waypoint ___", name));
+          Messages.COMMAND_WAYPOINT_PERSONAL_SET.sendTo(src.audience(), Formatter.SUCCESS, name, Formatter.cell(location.get()));
         }, true);
         return CommandResult.success();
       }
@@ -258,12 +258,13 @@ public class JourneyExecutor implements CommandExecutor {
               .getAll(src.uuid(), false));
 
           if (waypoints.isEmpty()) {
-            src.audience().sendMessage(Formatter.warn("You have no saved waypoints yet!"));
+            Messages.COMMAND_WAYPOINT_PERSONAL_LIST_EMPTY.sendTo(src.audience(), Formatter.WARN);
             return;
           }
 
           waypoints.sort(Comparator.naturalOrder());
-          Pager.of(Formatter.info("Your Waypoints"), waypoints,
+          Pager.of(Messages.COMMAND_WAYPOINT_PERSONAL_LIST_HEADER.resolve(Formatter.INFO),
+                  waypoints,
                   waypoint -> Component.text(waypoint.name()).color(Formatter.GOLD),
                   waypoint -> Formatter.cell(waypoint.location()))
               .sendPage(src.audience(), page.get());
@@ -280,27 +281,33 @@ public class JourneyExecutor implements CommandExecutor {
         }
 
         String playerName = cmd.identifiers().get(0);
-        Optional<UUID> maybePlayer = Journey.get().proxy().platform().onlinePlayer(playerName).map(InternalJourneyPlayer::uuid);
+        Optional<InternalJourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(playerName);
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          UUID playerUuid = maybePlayer.orElse(Request.requestPlayerUuid(playerName));
-          if (playerUuid == null) {
-            src.audience().sendMessage(Formatter.error("A problem occurred trying to access information for " + playerName));
+          Request.PlayerResponse player;
+          if (maybePlayer.isPresent()) {
+            player = new Request.PlayerResponse(maybePlayer.get().uuid(), maybePlayer.get().name());
           } else {
-            List<Waypoint> waypoints = new ArrayList<>(Journey.get().proxy().dataManager()
-                .personalWaypointManager()
-                .getAll(playerUuid, false));
-
-            if (waypoints.isEmpty()) {
-              src.audience().sendMessage(Formatter.warn("That player has no saved waypoints yet!"));
+            player = Request.requestPlayerUuid(playerName);
+            if (player == null) {
+              Messages.COMMAND_PLAYER_REMOTE_CALL_ERROR.sendTo(src.audience(), Formatter.ERROR, playerName);
               return;
             }
-
-            waypoints.sort(Comparator.naturalOrder());
-            Pager.of(Formatter.info(playerName + "'s Waypoints"), waypoints,
-                    waypoint -> Component.text(waypoint.name()).color(Formatter.GOLD),
-                    waypoint -> Formatter.cell(waypoint.location()))
-                .sendPage(src.audience(), page.get());
           }
+          List<Waypoint> waypoints = new ArrayList<>(Journey.get().proxy().dataManager()
+              .personalWaypointManager()
+              .getAll(player.uuid(), false));
+
+          if (waypoints.isEmpty()) {
+            Messages.COMMAND_WAYPOINT_PLAYER_LIST_EMPTY.sendTo(src.audience(), Formatter.WARN, player.name());
+            return;
+          }
+
+          waypoints.sort(Comparator.naturalOrder());
+          Pager.of(Messages.COMMAND_WAYPOINT_PLAYER_LIST_HEADER.resolve(Formatter.INFO, player.name()),
+                  waypoints,
+                  waypoint -> Component.text(waypoint.name()).color(Formatter.GOLD),
+                  waypoint -> Formatter.cell(waypoint.location()))
+              .sendPage(src.audience(), page.get());
         }, true);
         return CommandResult.success();
       }
@@ -322,14 +329,15 @@ public class JourneyExecutor implements CommandExecutor {
       private void personalWaypointSearch(String name) {
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
         if (location.isEmpty()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
+          // Should never happen
+          Messages.COMMAND_SELF_LOCATION_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR);
           return;
         }
         Journey.get().proxy().schedulingManager().schedule(() -> {
           Cell endLocation = Journey.get().proxy().dataManager().personalWaypointManager().getWaypoint(src.uuid(), name);
 
           if (endLocation == null) {
-            src.audience().sendMessage(Formatter.error("Could not find a waypoint called ___", name));
+            Messages.COMMAND_WAYPOINT_PERSONAL_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, name);
             return;
           }
 
@@ -341,14 +349,15 @@ public class JourneyExecutor implements CommandExecutor {
       private void publicWaypointSearch(String name) {
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
         if (location.isEmpty()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
+          // should never happen
+          Messages.COMMAND_SELF_LOCATION_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR);
           return;
         }
         Journey.get().proxy().schedulingManager().schedule(() -> {
           Cell endLocation = Journey.get().proxy().dataManager().publicWaypointManager().getWaypoint(name);
 
           if (endLocation == null) {
-            src.audience().sendMessage(Formatter.error("Could not find a public waypoint called ___", name));
+            Messages.COMMAND_WAYPOINT_SERVER_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, name);
             return;
           }
 
@@ -370,12 +379,13 @@ public class JourneyExecutor implements CommandExecutor {
         PersonalWaypointManager waypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
         String name = cmd.identifiers().get(0);
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          if (waypointManager.hasWaypoint(src.uuid(), name)) {
+          Cell waypoint = waypointManager.getWaypoint(src.uuid(), name);
+          if (waypoint != null) {
             waypointManager.remove(src.uuid(), name);
             Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
-            src.audience().sendMessage(Formatter.success("Waypoint ___ has been removed", name));
+            Messages.COMMAND_WAYPOINT_PERSONAL_UNSET.sendTo(src.audience(), Formatter.SUCCESS, name, Formatter.cell(waypoint));
           } else {
-            src.audience().sendMessage(Formatter.error("Waypoint ___ could not be found", name));
+            Messages.COMMAND_WAYPOINT_PERSONAL_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, name);
           }
         }, true);
         return CommandResult.success();
@@ -384,33 +394,38 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitRenameWaypoint(JourneyParser.RenameWaypointContext ctx) {
         if (src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+          Messages.COMMAND_ONLY_PLAYERS.sendTo(src.audience(), Formatter.ERROR);
           return CommandResult.failure();
         }
         visitChildren(ctx);
         String name = cmd.identifiers().get(0);
         if (Validator.isInvalidDataName(name)) {
-          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, name);
           return CommandResult.failure();
         }
 
         String newName = cmd.identifiers().get(1);
         if (Validator.isInvalidDataName(newName)) {
-          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, newName);
           return CommandResult.failure();
         }
 
         PersonalWaypointManager personalWaypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
-
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          if (personalWaypointManager.hasWaypoint(src.uuid(), newName)) {
-            src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", ctx.newname.getText()));
+          Cell waypoint = personalWaypointManager.getWaypoint(src.uuid(), newName);
+          if (waypoint != null) {
+            Messages.COMMAND_WAYPOINT_PERSONAL_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, newName);
+            return;
+          }
+          waypoint = personalWaypointManager.getWaypoint(src.uuid(), name);
+          if (waypoint == null) {
+            Messages.COMMAND_WAYPOINT_PERSONAL_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, name);
             return;
           }
 
           personalWaypointManager.renameWaypoint(src.uuid(), name, newName);
           Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
-          src.audience().sendMessage(Formatter.success("Renamed waypoint ___ to ___", name, newName));
+          Messages.COMMAND_WAYPOINT_PERSONAL_RENAME.sendTo(src.audience(), Formatter.SUCCESS, name, newName, Formatter.cell(waypoint));
         }, true);
         return CommandResult.success();
       }
@@ -426,23 +441,23 @@ public class JourneyExecutor implements CommandExecutor {
         if (notAllowed(Permission.PATH_PLAYER_ENTITY, true)) {
           return CommandResult.failure();
         }
-        Optional<InternalJourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(cmd.identifiers().get(0));
+        Optional<InternalJourneyPlayer> maybePlayer = Journey.get().proxy().platform().onlinePlayer(ctx.user.getText());
         if (maybePlayer.isEmpty()) {
-          src.audience().sendMessage(Formatter.noPlayer(ctx.user.getText()));
+          Messages.COMMAND_PLAYER_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, ctx.user.getText());
           return CommandResult.failure();
         }
         if (maybePlayer.get().uuid().equals(src.uuid())) {
-          src.audience().sendMessage(Formatter.error("You may not travel to yourself"));
+          Messages.COMMAND_PLAYER_SELF.sendTo(src.audience(), Formatter.ERROR);
           return CommandResult.failure();
         }
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
         if (location.isEmpty()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
+          // Should never happen
           return CommandResult.failure();
         }
         Optional<Cell> otherLocation = Journey.get().proxy().platform().entityCellLocation(maybePlayer.get().uuid());
         if (otherLocation.isEmpty()) {
-          src.audience().sendMessage(Formatter.error("The other player's location could not be found"));
+          // Should never happen
           return CommandResult.failure();
         }
         DestinationGoalSearchSession session = new DestinationGoalSearchSession(maybePlayer.get(), location.get(), otherLocation.get(), false, false);
@@ -465,11 +480,11 @@ public class JourneyExecutor implements CommandExecutor {
 
         // Async call for the player uuid
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          UUID uuid = Request.requestPlayerUuid(cmd.identifiers().get(0));
-          if (uuid == null) {
-            src.audience().sendMessage(Formatter.error("A problem occurred trying to access that player's information"));
+          Request.PlayerResponse response = Request.requestPlayerUuid(cmd.identifiers().get(0));
+          if (response == null) {
+            Messages.COMMAND_PLAYER_REMOTE_CALL_ERROR.sendTo(src.audience(), Formatter.ERROR, playerName);
           } else {
-            visitPlayerWaypoint(playerName, uuid, waypoint);
+            visitPlayerWaypoint(response.name(), response.uuid(), waypoint);
           }
         }, true);
         return CommandResult.success();
@@ -477,19 +492,15 @@ public class JourneyExecutor implements CommandExecutor {
 
       private void visitPlayerWaypoint(String playerName, UUID dstPlayer, String waypoint) {
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
-
         if (location.isEmpty()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
+          // should never happen
           return;
         }
         Journey.get().proxy().schedulingManager().schedule(() -> {
           PersonalWaypointManager manager = Journey.get().proxy().dataManager().personalWaypointManager();
-          if (!manager.hasWaypoint(dstPlayer, waypoint)) {
-            src.audience().sendMessage(Formatter.error("Player ___ has no waypoint ___", playerName, waypoint));
-            return;
-          }
-          if (!manager.isPublic(dstPlayer, waypoint) && !dstPlayer.equals(src.uuid())) {
-            src.audience().sendMessage(Formatter.error("Player ___ has waypoint ___ set as private", playerName, waypoint));
+          Cell waypointLocation = manager.getWaypoint(dstPlayer, waypoint);
+          if (waypointLocation == null || (!manager.isPublic(dstPlayer, waypoint) && !dstPlayer.equals(src.uuid()))) {
+            Messages.COMMAND_WAYPOINT_PLAYER_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, playerName, waypoint);
             return;
           }
 
@@ -502,40 +513,33 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitServerSetWaypoint(JourneyParser.ServerSetWaypointContext ctx) {
         if (src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+          Messages.COMMAND_ONLY_PLAYERS.sendTo(src.audience(), Formatter.ERROR);
           return CommandResult.failure();
         }
         visitChildren(ctx);
         String name = cmd.identifiers().get(0);
         if (Validator.isInvalidDataName(name)) {
-          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, name);
           return CommandResult.failure();
         }
 
         Optional<Cell> location = Journey.get().proxy().platform().entityCellLocation(src.uuid());
-
         if (location.isEmpty()) {
-          src.audience().sendMessage(Formatter.error("Your location could not be found"));
+          // should never happen
           return CommandResult.failure();
         }
 
         Journey.get().proxy().schedulingManager().schedule(() -> {
           PublicWaypointManager publicWaypointManager = Journey.get().proxy().dataManager().publicWaypointManager();
-
-          String existingName = publicWaypointManager.getName(location.get());
-          if (existingName != null) {
-            src.audience().sendMessage(Formatter.error("Waypoint ___ already exists at this location", existingName));
-            return;
-          }
-
-          if (publicWaypointManager.hasWaypoint(name)) {
-            src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", ctx.name.getText()));
+          Cell waypoint = publicWaypointManager.getWaypoint(name);
+          if (waypoint != null) {
+            Messages.COMMAND_WAYPOINT_SERVER_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, name);
             return;
           }
 
           publicWaypointManager.add(location.get(), name);
           Journey.get().cachedDataProvider().publicWaypointCache().update(true);
-          src.audience().sendMessage(Formatter.success("Set waypoint ___", name));
+          Messages.COMMAND_WAYPOINT_SERVER_SET.sendTo(src.audience(), Formatter.SUCCESS, name, Formatter.cell(location.get()));
         }, true);
         return CommandResult.success();
       }
@@ -551,12 +555,12 @@ public class JourneyExecutor implements CommandExecutor {
           List<Waypoint> waypoints = new ArrayList<>(Journey.get().proxy().dataManager().publicWaypointManager().getAll());
 
           if (waypoints.isEmpty()) {
-            src.audience().sendMessage(Formatter.warn("There are no saved public waypoints yet!"));
+            Messages.COMMAND_WAYPOINT_SERVER_LIST_EMPTY.sendTo(src.audience(), Formatter.WARN);
             return;
           }
 
           waypoints.sort(Comparator.naturalOrder());
-          Pager.of(Formatter.info("Server Waypoints"),
+          Pager.of(Messages.COMMAND_WAYPOINT_SERVER_LIST_HEADER.resolve(Formatter.INFO),
                   waypoints,
                   waypoint -> Component.text(waypoint.name()).color(Formatter.GOLD),
                   waypoint -> Formatter.cell(waypoint.location()))
@@ -584,13 +588,14 @@ public class JourneyExecutor implements CommandExecutor {
       public CommandResult visitServerUnsetWaypoint(JourneyParser.ServerUnsetWaypointContext ctx) {
         PublicWaypointManager waypointManager = Journey.get().proxy().dataManager().publicWaypointManager();
         String name = cmd.identifiers().get(0);
-        if (waypointManager.hasWaypoint(name)) {
+        Cell waypoint = waypointManager.getWaypoint(name);
+        if (waypoint != null) {
           waypointManager.remove(name);
           Journey.get().cachedDataProvider().publicWaypointCache().update(true);
-          src.audience().sendMessage(Formatter.success("Waypoint ___ has been removed", name));
+          Messages.COMMAND_WAYPOINT_SERVER_UNSET.sendTo(src.audience(), Formatter.SUCCESS, name, Formatter.cell(waypoint));
           return CommandResult.success();
         } else {
-          src.audience().sendMessage(Formatter.error("Waypoint ___ could not be found", name));
+          Messages.COMMAND_WAYPOINT_SERVER_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, name);
           return CommandResult.failure();
         }
       }
@@ -600,26 +605,33 @@ public class JourneyExecutor implements CommandExecutor {
         visitChildren(ctx);
         String name = cmd.identifiers().get(0);
         if (Validator.isInvalidDataName(name)) {
-          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, name);
           return CommandResult.failure();
         }
 
         String newName = cmd.identifiers().get(1);
         if (Validator.isInvalidDataName(newName)) {
-          src.audience().sendMessage(Formatter.error("That name is invalid"));
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, newName);
           return CommandResult.failure();
         }
 
         PublicWaypointManager publicWaypointManager = Journey.get().proxy().dataManager().publicWaypointManager();
+        Journey.get().proxy().schedulingManager().schedule(() -> {
+          Cell waypoint = publicWaypointManager.getWaypoint(newName);
+          if (waypoint != null) {
+            Messages.COMMAND_WAYPOINT_SERVER_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, newName);
+            return;
+          }
+          waypoint = publicWaypointManager.getWaypoint(name);
+          if (waypoint == null) {
+            Messages.COMMAND_WAYPOINT_SERVER_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, name);
+            return;
+          }
 
-        if (publicWaypointManager.hasWaypoint(newName)) {
-          src.audience().sendMessage(Formatter.error("A waypoint called ___ already exists", newName));
-          return CommandResult.failure();
-        }
-
-        publicWaypointManager.renameWaypoint(name, newName);
-        Journey.get().cachedDataProvider().publicWaypointCache().update(true);
-        src.audience().sendMessage(Formatter.success("Renamed waypoint ___ to ___", name, newName));
+          publicWaypointManager.renameWaypoint(name, newName);
+          Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
+          Messages.COMMAND_WAYPOINT_SERVER_RENAME.sendTo(src.audience(), Formatter.SUCCESS, name, newName, Formatter.cell(waypoint));
+        }, true);
         return CommandResult.success();
       }
 
@@ -630,25 +642,24 @@ public class JourneyExecutor implements CommandExecutor {
           case PLAYER -> searcherUuid = src.uuid();
           case CONSOLE -> searcherUuid = SearchManager.CONSOLE_UUID;
           default -> {
-            src.audience().sendMessage(Formatter.error("You may not execute this command"));
-            return CommandResult.failure();
+            Messages.COMMAND_INTERNAL_ERROR.sendTo(src.audience(), Formatter.ERROR);
+            throw new IllegalStateException("Found non-Player/Console source in visitCancel");
           }
         }
         boolean canceled = false;
         SearchSession session = Journey.get().searchManager().getSearch(searcherUuid);
         if (session != null) {
           session.stop(true);
-          src.audience().sendMessage(Formatter.info("Your search is being canceled"));
+          Messages.COMMAND_SEARCH_CANCEL_START.sendTo(src.audience(), Formatter.INFO);
           canceled = true;
         }
-        PlayerJourneySession journey = Journey.get().searchManager().getJourney(searcherUuid);
-        if (journey != null && journey.running()) {
-          journey.stop();
-          src.audience().sendMessage(Formatter.info("Your path has been hidden"));
+        int navigatorsStopped = Journey.get().navigatorManager().stopNavigators(searcherUuid);
+        if (navigatorsStopped > 0) {
+          Messages.COMMAND_NAVIGATION_CANCELED.sendTo(src.audience(), Formatter.INFO);
           canceled = true;
         }
         if (!canceled) {
-          src.audience().sendMessage(Formatter.error("You have nothing to cancel"));
+          Messages.COMMAND_SEARCH_NOTHING_TO_CANCEL.sendTo(src.audience(), Formatter.ERROR);
           return CommandResult.failure();
         }
         return CommandResult.success();
@@ -657,7 +668,7 @@ public class JourneyExecutor implements CommandExecutor {
       @Override
       public CommandResult visitPublicWaypoint(JourneyParser.PublicWaypointContext ctx) {
         if (src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+          Messages.COMMAND_ONLY_PLAYERS.sendTo(src.audience(), Formatter.ERROR);
           return CommandResult.failure();
         }
 
@@ -665,31 +676,38 @@ public class JourneyExecutor implements CommandExecutor {
 
         PersonalWaypointManager personalWaypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          if (!personalWaypointManager.hasWaypoint(src.uuid(), name)) {
-            src.audience().sendMessage(Formatter.error("No waypoint ___ exists", name));
+          Cell waypoint = personalWaypointManager.getWaypoint(src.uuid(), name);
+          if (waypoint == null) {
+            Messages.COMMAND_WAYPOINT_PERSONAL_NOT_FOUND.sendTo(src.audience(), Formatter.ERROR, name);
             return;
           }
 
           boolean setTrue = ctx.TRUE() != null;
           boolean setFalse = ctx.FALSE() != null;
           boolean isPublic = personalWaypointManager.isPublic(src.uuid(), name);
-          boolean result;
-          if (setTrue || setFalse) {
-            // only one of setTrue and setFalse may be true
-            if (setTrue == isPublic) {
-              src.audience().sendMessage(Formatter.warn("Waypoint ___ already has public status ___", name, setTrue ? "true" : "false"));
+          // only one of setTrue and setFalse may be true
+          if (setTrue) {
+            if (isPublic) {
+              Messages.COMMAND_WAYPOINT_PERSONAL_ALREADY_PUBLIC.sendTo(src.audience(), Formatter.WARN, name);
               return;
-            } else {
-              personalWaypointManager.setPublic(src.uuid(), name, setTrue);
-              Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
-              result = setTrue;
             }
-          } else {
-            personalWaypointManager.setPublic(src.uuid(), name, !isPublic);
+            personalWaypointManager.setPublic(src.uuid(), name, true);
             Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
-            result = !isPublic;
+            Messages.COMMAND_WAYPOINT_PERSONAL_SET_PUBLIC.sendTo(src.audience(), Formatter.SUCCESS, name);
+          } else {
+            // setFalse
+            if (!setFalse) {
+              Messages.COMMAND_INTERNAL_ERROR.sendTo(src.audience(), Formatter.ERROR);
+              throw new IllegalStateException("Found ctx.TRUE() and ctx.FALSE() both null in visitPublicWaypoint");
+            }
+            if (!isPublic) {
+              Messages.COMMAND_WAYPOINT_PERSONAL_ALREADY_PRIVATE.sendTo(src.audience(), Formatter.WARN, name);
+              return;
+            }
+            personalWaypointManager.setPublic(src.uuid(), name, false);
+            Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
+            Messages.COMMAND_WAYPOINT_PERSONAL_SET_PRIVATE.sendTo(src.audience(), Formatter.SUCCESS, name);
           }
-          src.audience().sendMessage(Formatter.success("Waypoint ___ has been set with public status ___", name, result ? "true" : "false"));
         }, true);
         return CommandResult.success();
       }
@@ -700,8 +718,14 @@ public class JourneyExecutor implements CommandExecutor {
           if (notAllowed(Permission.ADMIN_RELOAD, false)) {
             return CommandResult.failure();
           }
-          Journey.get().proxy().configManager().load();
-          src.audience().sendMessage(Formatter.success("Reloaded config"));
+          try {
+            Journey.get().configManager().load();
+          } catch (SerializationException e) {
+            Messages.COMMAND_INTERNAL_ERROR.sendTo(src.audience(), Formatter.ERROR);
+            e.printStackTrace();
+            return CommandResult.failure();
+          }
+          Messages.COMMAND_ADMIN_CONFIG_RELOADED.sendTo(src.audience(), Formatter.SUCCESS);
           return CommandResult.success();
         }
         return super.visitAdmin(ctx);
@@ -716,7 +740,7 @@ public class JourneyExecutor implements CommandExecutor {
           try {
             timeout = Integer.parseUnsignedInt(ctx.timeout.getText());
           } catch (NumberFormatException e) {
-            src.audience().sendMessage(Formatter.error("Your animation timeout parameter could not be parsed"));
+            Messages.COMMAND_SEARCH_FLAG_PARSE_ERROR.sendTo(src.audience(), Formatter.ERROR, ctx.timeout.getText(), "-timeout");
             return CommandResult.failure();
           }
         }
@@ -733,7 +757,7 @@ public class JourneyExecutor implements CommandExecutor {
           try {
             delay = Integer.parseUnsignedInt(ctx.delay.getText());
           } catch (NumberFormatException e) {
-            src.audience().sendMessage(Formatter.error("Your animation timeout parameter could not be parsed"));
+            Messages.COMMAND_SEARCH_FLAG_PARSE_ERROR.sendTo(src.audience(), Formatter.ERROR, ctx.delay.getText(), "-animate");
             return CommandResult.failure();
           }
         }
@@ -777,13 +801,25 @@ public class JourneyExecutor implements CommandExecutor {
         return super.visitDigFlag(ctx);
       }
 
+      @Override
+      public CommandResult visitNavigatorFlag(JourneyParser.NavigatorFlagContext ctx) {
+        NavigatorDetails navigatorDetails = Journey.get().navigatorManager().parseNavigatorFlagDefinition(src,
+            cmd.identifiers().get("navigator", 0),
+            cmd.identifiers().get("navigator-options", 0));
+        if (navigatorDetails == null) {
+          return CommandResult.failure();
+        }
+        flags.addFlag(Flags.NAVIGATOR, navigatorDetails);
+        return super.visitNavigatorFlag(ctx);
+      }
+
       private boolean notAllowed(@Nullable Permission permission, boolean onlyPlayer) {
         if (onlyPlayer && src.type() != CommandSource.Type.PLAYER) {
-          src.audience().sendMessage(Formatter.error("Only players may execute this command"));
+          Messages.COMMAND_ONLY_PLAYERS.sendTo(src.audience(), Formatter.ERROR);
           return true;
         }
         if (permission != null && !src.hasPermission(permission.path())) {
-          src.audience().sendMessage(Formatter.formattedMessage(Formatter.ERROR, "You do not have permission to execute this command", false));
+          Messages.COMMAND_NO_PERMISSION.sendTo(src.audience(), Formatter.ERROR);
           return true;
         }
         return false;
@@ -796,7 +832,7 @@ public class JourneyExecutor implements CommandExecutor {
           try {
             return Optional.of(Integer.parseUnsignedInt(pageToken.getText()));
           } catch (NumberFormatException e) {
-            src.audience().sendMessage(Formatter.error("Page number is invalid"));
+            Messages.COMMAND_PAGING_INVALID_PAGE.sendTo(src.audience(), Formatter.ERROR, pageToken.getText());
             return Optional.empty();
           }
         }
