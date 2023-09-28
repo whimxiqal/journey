@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+version = '1.2.0'
+
+jar {
+    from '../LICENSE.txt'
+    archiveBaseName.set("JourneyCitizens")
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'paper'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype-snapshots'
+        url = 'https://s01.oss.sonatype.org/content/repositories/snapshots'
+    }
+    maven {
+        name = 'citizens-repo'
+        url = 'https://maven.citizensnpcs.co/repo'
+    }
+}
+
+dependencies {
+    implementation project(':api')
+    implementation project(':bukkit-api')
+    implementation 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
+    implementation('net.citizensnpcs:citizens-main:2.0.32-SNAPSHOT') {
+        exclude group: '*', module: '*'
+    }
+    implementation 'net.kyori:adventure-api:4.13.0'
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}

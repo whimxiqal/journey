@@ -4,37 +4,31 @@ plugins {
 
 defaultTasks 'updateLicensesMain', 'build'
 
-static String suffix(String apiVersion) {
+static String fullVersion() {
     def journeyEnv = System.getenv('JOURNEY_ENV')
-    int commitsSinceMajorVersion
     def tagInfo = 'git describe --tags'.execute().text.trim()
-    if (!tagInfo.contains('-')) {
-        commitsSinceMajorVersion = 0
-    } else {
-        commitsSinceMajorVersion = Integer.parseInt((String) tagInfo.split("-")[1])
+    if (!tagInfo.matches("v.*")) {
+        return tagInfo
     }
     if (journeyEnv != null && journeyEnv == 'PROD') {
+        return tagInfo.substring(1)
         // Production build
-        return '.' + commitsSinceMajorVersion
     } else {
-        // Non-production
         StringBuilder builder = new StringBuilder()
-        if (tagInfo.matches("v.*") && tagInfo.substring(1).startsWith(apiVersion)) {
-            // We are working on the current major/minor version
-            String numberOfDevCommits = 'git rev-list HEAD --not origin/main --count'.execute().text.trim()
-            if (!numberOfDevCommits.isEmpty()) {
-                // subtract dev commit count so we get accurate version from main branch
-                commitsSinceMajorVersion -= Integer.parseInt(numberOfDevCommits)
-            }
-            builder.append('.').append(commitsSinceMajorVersion)
+        if (!tagInfo.contains('-')) {
+            builder.append(tagInfo)
+            builder.append('-dev')
+            return builder.toString()
         } else {
-            // We are working on a newer version, so there are no patch commits
-            builder.append('.0')
+            def tagInfoTokens = tagInfo.substring(1).split("-")
+            // Non-production
+            builder.append(tagInfoTokens[0])
+            builder.append('-dev-')
+            builder.append(tagInfoTokens[1])
+            builder.append('-')
+            builder.append(tagInfoTokens[2])
+            return builder.toString()
         }
-        builder.append('-')
-        builder.append('dev')
-        builder.append('-').append((String) 'git rev-parse --short HEAD'.execute().text.trim())
-        return builder.toString()
     }
 }
 
@@ -52,7 +46,7 @@ subprojects {
     project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
     project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
     project.ext.apiFullVersion = project.ext.apiVersion + project.ext.snapshotVersion
-    project.ext.fullVersion = project.ext.apiVersion + suffix(project.ext.apiVersion)
+    project.ext.fullVersion = fullVersion()
     version = project.ext.fullVersion
     group = 'net.whimxiqal.journey'
 

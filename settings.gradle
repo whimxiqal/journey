@@ -5,3 +5,11 @@ include (
         'bukkit-api',
         'bukkit',
 )
+include 'integrations'
+include 'integrations:essentials'
+findProject(':integrations:essentials')?.name = 'essentials'
+include 'integrations:notquests'
+findProject(':integrations:notquests')?.name = 'notquests'
+include 'integrations:citizens'
+findProject(':integrations:citizens')?.name = 'citizens'
+

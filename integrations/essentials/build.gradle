@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+}
+
+version = '1.2.0'
+
+jar {
+    from '../LICENSE.txt'
+    archiveBaseName.set("JourneyEssentials")
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'paper'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+    maven {
+        name = 'essentialsx'
+        url = 'https://repo.essentialsx.net/releases/'
+    }
+    maven {
+        name = 'codemc'
+        url = 'https://repo.codemc.io/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype-snapshots'
+        url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
+
+dependencies {
+    compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
+    compileOnly 'net.whimxiqal.journey:core-api:1.2-SNAPSHOT'
+    compileOnly 'net.whimxiqal.journey:bukkit-api:1.2-SNAPSHOT'
+    compileOnly 'net.essentialsx:EssentialsX:2.19.7'
+    compileOnly 'net.essentialsx:EssentialsXSpawn:2.19.7'
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}

@@ -1,11 +1,17 @@
-name: Continuous Integration (General)
+name: Continuous Integration (Main)
 
 on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - 'main'
       - 'release/*'
       - 'feature/*'
+
 jobs:
   gradle_validation:
     name: Gradle Validation
@@ -39,11 +45,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Get all tags
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Set Production Build Environment
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: export JOURNEY_ENV="PROD"
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
@@ -60,3 +74,6 @@ jobs:
           name: jars
           path: |
             bukkit/build/libs/Journey-Bukkit-*.jar
+            integrations/citizens/build/libs/JourneyCitizens-*.jar
+            integrations/essentials/build/libs/JourneyEssentials-*.jar
+            integrations/notquests/build/libs/JourneyNotQuests-*.jar

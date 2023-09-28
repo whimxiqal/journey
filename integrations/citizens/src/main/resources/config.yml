@@ -1,0 +1,22 @@
+# The NPC Journey Navigator
+npc-navigator:
+
+  # The maximum number of NPCs to keep in rotation to use as Journey "Guides"
+  max-npcs: 128
+
+  # Default values for in-game options
+  default-options:
+
+    # Guides' default entity type
+    entity-type: fox
+
+    # Guides' default name
+    name: Guide
+
+  # The spawn particle to use when spawning/despawning Guides.
+  # Leave blank to use no particle.
+  spawn-particle: redstone
+
+  # The color of the particle to use when spawning/despawning Guides.
+  # This only works if spawn-particle = redstone.
+  spawn-particle-color: ffffff
