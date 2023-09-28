@@ -23,19 +23,71 @@
 
 package net.whimxiqal.journey.config;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.config.serializer.ColorSerializer;
+import net.whimxiqal.journey.config.serializer.ComponentSerializer;
+import net.whimxiqal.journey.config.struct.ConfigFillPhase;
+import net.whimxiqal.journey.config.struct.ConfigItemsRule;
+import net.whimxiqal.journey.config.struct.ConfigItemType;
+import net.whimxiqal.journey.config.struct.ConfigStaticButton;
+import net.whimxiqal.journey.navigation.option.Color;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.loader.ConfigurationLoader;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.yaml.NodeStyle;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
+
 /**
  * An interface for determining the operation of a configuration manager.
  */
-public interface ConfigManager {
+public class ConfigManager {
 
-  /**
-   * Save all configuration values stored in memory to the config file.
-   */
-  void save();
+  private ConfigurationLoader<CommentedConfigurationNode> configurationLoader;
+
+  public void initialize(Path path) throws IOException {
+    configurationLoader = YamlConfigurationLoader.builder()
+        .defaultOptions(options -> options.serializers(builder ->
+            builder.register(Color.class, new ColorSerializer())
+                .register(Component.class, new ComponentSerializer())
+                .register(ConfigItemType.class, new ConfigItemType.Deserializer())
+                .register(ConfigStaticButton.class, new ConfigStaticButton.Deserializer())
+                .register(ConfigFillPhase.class, new ConfigFillPhase.Deserializer())
+                .register(ConfigItemsRule.class, new ConfigItemsRule.Deserializer())
+        )).indent(2)
+        .nodeStyle(NodeStyle.BLOCK)
+        .path(path)
+        .build();
+    File file = path.toFile();
+    if (!file.exists()) {
+      URL resourceUrl = getClass().getClassLoader().getResource("config.yml");
+      if (resourceUrl == null) {
+        throw new RuntimeException("Couldn't get config.yml resource");
+      }
+      Files.copy(resourceUrl.openConnection().getInputStream(), path);
+    }
+    load();
+  }
 
   /**
    * Load all config values from the config file to memory.
    */
-  void load();
+  public void load() throws SerializationException {
+    CommentedConfigurationNode root;
+    try {
+      root = configurationLoader.load();
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+    for (Map.Entry<String, Setting<?>> entry : Settings.ALL_SETTINGS.entrySet()) {
+      entry.getValue().load(root);
+    }
+  }
 
 }

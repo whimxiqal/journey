@@ -23,7 +23,9 @@
 
 package net.whimxiqal.journey;
 
+import java.io.IOException;
 import net.whimxiqal.journey.chunk.CentralChunkCache;
+import net.whimxiqal.journey.config.ConfigManager;
 import net.whimxiqal.journey.config.Settings;
 import net.whimxiqal.journey.data.DataVersion;
 import net.whimxiqal.journey.data.cache.CachedDataProvider;
@@ -31,6 +33,8 @@ import net.whimxiqal.journey.manager.AnimationManager;
 import net.whimxiqal.journey.manager.DistributedWorkManager;
 import net.whimxiqal.journey.manager.DomainManager;
 import net.whimxiqal.journey.manager.LocationManager;
+import net.whimxiqal.journey.message.MessageManager;
+import net.whimxiqal.journey.navigation.NavigationManager;
 import net.whimxiqal.journey.manager.NetherManager;
 import net.whimxiqal.journey.manager.PlayerManager;
 import net.whimxiqal.journey.manager.SearchManager;
@@ -44,9 +48,11 @@ public final class Journey {
 
   public static final String NAME = "Journey";
   private static Journey instance;
+  private final ConfigManager configManager = new ConfigManager();
   private final PlayerManager playerManager = new PlayerManager();
   private final NetherManager netherManager = new NetherManager();
   private final SearchManager searchManager = new SearchManager();
+  private final NavigationManager navigationManager = new NavigationManager();
   private final LocationManager locationManager = new LocationManager();
   private final ScopeManager scopeManager = new ScopeManager();
   private final TunnelManager tunnelManager = new TunnelManager();
@@ -55,6 +61,7 @@ public final class Journey {
   private final CentralChunkCache centralChunkCache = new CentralChunkCache();
   private final AnimationManager animationManager = new AnimationManager();
   private final CachedDataProvider cachedDataProvider = new CachedDataProvider();
+  private final MessageManager messageManager = new MessageManager();
   private DistributedWorkManager workManager;
   private Proxy proxy;
 
@@ -97,10 +104,20 @@ public final class Journey {
   public boolean init() {
     JourneyApiSupplier.set(new JourneyApiImpl());
 
-    Settings.validate();  // Settings should already have been loaded from config by now
+    // load settings first
+    try {
+      configManager.initialize(proxy.configPath());
+    } catch (IOException e) {
+      logger().error("There was an error trying to read the config");
+      e.printStackTrace();
+      return false;
+    }
+
+    messageManager.initialize();
     proxy.initialize();
     netherManager.initialize();
-    searchManager.initialize();
+    navigationManager.initialize();
+    locationManager.initialize();
     scopeManager.initialize();
     statsManager.initialize();
     BStatsUtil.register(proxy.platform().bStatsChartConsumer());
@@ -124,6 +141,8 @@ public final class Journey {
 
     // shutdown search manager and wait for all ongoing searches to cancel and complete
     searchManager.shutdown();
+    navigationManager.shutdown();
+    locationManager.shutdown();
 
     statsManager.shutdown();
     animationManager.shutdown();
@@ -131,7 +150,11 @@ public final class Journey {
     proxy.shutdown();
   }
 
-  public PlayerManager deathManager() {
+  public ConfigManager configManager() {
+    return configManager;
+  }
+
+  public PlayerManager playerManager() {
     assertSynchronous();
     return playerManager;
   }
@@ -144,6 +167,11 @@ public final class Journey {
   public SearchManager searchManager() {
     assertSynchronous();
     return searchManager;
+  }
+
+  public NavigationManager navigatorManager() {
+    assertSynchronous();
+    return navigationManager;
   }
 
   public LocationManager locationManager() {
@@ -178,6 +206,10 @@ public final class Journey {
   }
   public CachedDataProvider cachedDataProvider() {
     return cachedDataProvider;
+  }
+
+  public MessageManager messageManager() {
+    return messageManager;
   }
 
   public DistributedWorkManager workManager() {

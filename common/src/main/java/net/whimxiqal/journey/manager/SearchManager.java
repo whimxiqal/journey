@@ -219,29 +219,28 @@ public final class SearchManager {
     return playerSearches.get(callerId);
   }
 
-  public void initialize() {
-    // task for updating player locations lazily
-    locationUpdateTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
-      for (UUID journeyingPlayer : playerJourneys.keySet()) {
-        Optional<InternalJourneyPlayer> player = Journey.get().proxy()
-            .platform()
-            .onlinePlayer(journeyingPlayer);
-        if (player.isEmpty()) {
-          continue;
-        }
-        Optional<Cell> location = player.get().location();
-        if (location.isEmpty()) {
-          continue;
-        }
-        try {
-          Journey.get().locationManager().tryUpdateLocation(journeyingPlayer, location.get());
-        } catch (ExecutionException | InterruptedException e) {
-          Journey.logger().error("Internal error trying to update the cached location of player " + player.get().uuid());
-          e.printStackTrace();
-          // just log and continue
-        }
+  /**
+   * Get the caller's flag preferences. If "persistent" is set, then the returned flag set will be stored
+   * in memory for future retrieval. If the flag set is just used for reading, don't set "persistent" so that
+   * it needn't be saved in memory. Must be called on main thread.
+   *
+   * @param callerId   the caller
+   * @param persistent whether to keep the returned flag set in memory or not, so that edits affect the stored set
+   * @return the flag set of preferences
+   */
+  public @NotNull FlagSet getFlagPreferences(UUID callerId, boolean persistent) {
+    FlagSet flagSet = flagPreferences.get(callerId);
+    if (flagSet == null) {
+      flagSet = new FlagSet();
+      if (persistent) {
+        flagPreferences.put(callerId, flagSet);
       }
-    }, false, 5);
+      return flagSet;
+    }
+    if (flagSet.isEmpty() && !persistent) {
+      flagPreferences.remove(callerId);  // don't need this, clean up memory
+    }
+    return flagSet;
   }
 
   public void shutdown() {

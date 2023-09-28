@@ -37,7 +37,7 @@ public class ProxyImpl implements Proxy {
   private CommonLogger logger;
   private Path dataFolder;
   private AudienceProvider audienceProvider;
-  private ConfigManager configManager;
+  private Path configPath;
   private SchedulingManager schedulingManager;
   private DataManager dataManager = new DataManagerImpl();  // default data manager
   private PlatformProxy platformProxy;
@@ -70,13 +70,13 @@ public class ProxyImpl implements Proxy {
     return audienceProvider;
   }
 
-  public void configManager(ConfigManager configManager) {
-    this.configManager = configManager;
+  public void configPath(Path configPath) {
+    this.configPath = configPath;
   }
 
   @Override
-  public ConfigManager configManager() {
-    return configManager;
+  public Path configPath  () {
+    return configPath;
   }
 
   public void schedulingManager(SchedulingManager schedulingManager) {

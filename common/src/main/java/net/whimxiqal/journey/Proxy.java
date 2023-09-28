@@ -25,7 +25,6 @@ package net.whimxiqal.journey;
 
 import java.nio.file.Path;
 import net.kyori.adventure.platform.AudienceProvider;
-import net.whimxiqal.journey.config.ConfigManager;
 import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.navigation.PlatformProxy;
@@ -39,7 +38,7 @@ public interface Proxy {
 
   AudienceProvider audienceProvider();
 
-  ConfigManager configManager();
+  Path configPath();
 
   SchedulingManager schedulingManager();
 

@@ -1,0 +1,426 @@
+#######################################################################################################################
+#                                               Journey by whimxiqal                                                  #
+#                                                    config.yml                                                       #
+#                                                                                                                     #
+# Docs                |   https://journey.whimxiqal.net/                                                              #
+# Configuration Docs  |   https://journey.whimxiqal.net/docs/admin/config                                             #
+# Issue Tracker       |   https://github.com/whimxiqal/journey/issues                                                 #
+# Discord             |   https://discord.gg/Yqh6qxNsq3                                                               #
+#                                                                                                                     #
+#   These settings will not automatically be populated with new config parameters, so please refer to the wiki for    #
+# any new parameters after updating to a new version. Most parameters may be reloaded on the server with the command  #
+# "/journey admin reload", but changes to some settings may only be observed with a server restart.                   #
+#######################################################################################################################
+
+# =================================================================================================================== #
+#                                                   SEARCH SETTINGS                                                   #
+# =================================================================================================================== #
+search:
+
+  # Settings for altering the default search flags
+  flag:
+
+    # =============================================================================================================== #
+    #   The default value for the TIMEOUT search flag (in seconds).
+    #
+    #   The timeout flag determines how long the search will execute before internally canceling and failing.
+    # If set to 0, then no timeout will occur.
+    #
+    #   - default = 30
+    #   - range   = [0, 86400]
+    default-timeout: 30
+
+    # =============================================================================================================== #
+    #   The default value for the FLY search flag.
+    #
+    #   The fly flag determines whether a search will consider flight as a possible movement mode,
+    # but only if the player already has the ability to fly.
+    #
+    #   - default = true
+    default-fly: true
+
+    # =============================================================================================================== #
+    #   The default value for the DOOR search flag.
+    #
+    #   The door flag determines whether iron doors will be ignored in the search algorithm. Otherwise,
+    # Journey will attempt to determine whether an obstructive iron door may be opened by the player.
+    #
+    #   - default = true
+    default-door: true
+
+    # =============================================================================================================== #
+    #   The default value for the DIG search flag.
+    #
+    #   The dig flag determines whether players should be able to dig through blocks to get to the destination.
+    #
+    #   - default = false
+    default-dig: false
+
+    # =============================================================================================================== #
+    #   The default value for the NAVIGATOR search flag.
+    #
+    #   The navigator flag determines the id of the navigator that should execute to navigate the player to
+    # the destination.
+    #
+    #   - default = trail
+    default-navigator: trail
+
+  # ================================================================================================================= #
+  #   The maximum number of blocks a single local path search can discover before failing
+  #
+  #   Increasing this value increases the memory strain on the server but lets the search algorithm discover more
+  # blocks towards the destination. If searches are regularly hitting this limit, don't immediately raise the value
+  # because the searches may be failing just because the destination isn't reachable according to Journey. The
+  # default is probably good for any server.
+  #
+  #   - default = 100000
+  #   - range   = [1000, 10'000'000]
+  max-path-block-count: 100000
+
+  # Settings for altering the behavior of chunk generation during searches
+  chunk-gen:
+
+    # =============================================================================================================== #
+    #   Allow searches to generate chunks
+    #
+    #   Some servers have a set amount of chunks they would like to generate, so Journey will only generate chunks
+    # for searches if allowed. Otherwise, un-generated chunks are treated like barriers.
+    #
+    #   - default = false
+    allow: false
+
+  # ================================================================================================================= #
+  #   The maximum number of local path searches that can occur at any one time
+  #
+  #   This is not the maximum number of searches, but rather the number of local path search algorithms that are
+  # executing, which are the algorithms that take the most memory. One search may require multiple local path
+  # searches to finish, like if a player would use a nether portal or teleport. This parameter should be adjusted
+  # to limit memory usage.
+  #
+  #   - default = 16
+  #   - range   = [1, MAX_INTEGER]
+  max-searches: 16
+
+# =================================================================================================================== #
+#                                                 NAVIGATION SETTINGS                                                 #
+# =================================================================================================================== #
+navigation:
+
+  # Behavior for completing navigation
+  completion:
+
+    # =============================================================================================================== #
+    #   The message to send the player in chat when they finish navigating. Empty string means nothing will send.
+    #
+    #   - default = ""
+    message: ""
+
+    # =============================================================================================================== #
+    #   The title to show to the player when they finish navigating. Empty string means nothing will appear.
+    #
+    #   - default = ""
+    title: ""
+
+    # =============================================================================================================== #
+    #   The subtitle to show to the player when they finish navigating. Empty string means nothing will appear.
+    #
+    #   - default = ""
+    subtitle: ""
+
+  # Behavior for trail navigators
+  trail:
+
+    # =============================================================================================================== #
+    #   The types of particles that illuminate the path during navigation. Each particle type is used equally in the
+    # illumination of the trail. For example, if the particles are [redstone, glow], then half of the particles would
+    # be redstone dust and half of the particles will be glow particles.
+    #
+    #   - default = [redstone, glow]
+    particle:
+      - redstone
+      - glow
+
+    # =============================================================================================================== #
+    #   The colors of the particles. This only applies for redstone particles.
+    #
+    #   The colors must be an RGB color in hexadecimal format. For example, "ffffff" is white and "ff0000" is
+    # pure red.
+    #
+    #   - default = [ac15db]
+    color:
+      - ac15db
+
+    # =============================================================================================================== #
+    #   The width of the trail, in blocks.
+    #
+    #   - default = 1.0
+    width: 1.0
+
+    # =============================================================================================================== #
+    #   The density of the trail, which is proportional to the number of particles spawned per cubic block in the
+    # trail per tick. The greater the density, the more particles that will spawn in the same amount of time, so the
+    # the trail will appear fuller.
+    #
+    #   - default = 5.0
+    density: 5.0
+
+# =================================================================================================================== #
+#                                                   STORAGE SETTINGS                                                  #
+# =================================================================================================================== #
+storage:
+  # ================================================================================================================= #
+  #   Storage type
+  #
+  #   Options are:
+  #     - SQLite
+  #     - MySQL
+  #
+  #   - default = SQLite
+  type: SQLite
+
+  # ================================================================================================================= #
+  #   Settings for authentication to a remote database
+  #
+  #   Setting these values are only needed if type is a remote type, like MySQL.
+  auth:
+    address: my.address
+    database: my_database
+    username: username
+    password: p@ssword
+
+  # Settings for altering the path cache, which is the collection of completed paths for speedy re-calculation
+  cache:
+
+    # =============================================================================================================== #
+    #   The maximum total number of cells (block locations) allowed to be stored in the cache
+    #
+    #   This does not affect the number of paths, per se, but indirectly affects it because every path has one
+    # or more cells. Tune this value to your storage capacity. Increasing this value will speed up your searches
+    # over time because more paths will be cached. Decreasing this value will save storage space.
+    #
+    #   - default = 500,000
+    #   - range   = [1, MAX_INTEGER]
+    max-cells: 500000
+
+# =================================================================================================================== #
+#                                                     GUI SETTINGS                                                    #
+# =================================================================================================================== #
+# Messages should be formatted as Minimessages: https://docs.advntr.dev/minimessage/format.html                       #
+# Special tags:                                                                                                       #
+#   - <prefix> = Standard Journey prefix "[*]"                                                                        #
+#   - <theme> = Journey color theme (purple)                                                                          #
+# =================================================================================================================== #
+gui:
+
+  # ================================================================================================================= #
+  #   Title above the home screen.
+  #
+  #   - default     = <prefix><theme>{default}
+  #   - "{default}" = placeholder for standard home title in current language
+  home-screen-title: <prefix><theme>{default}
+
+  # ================================================================================================================= #
+  #   Title above all screens for specific scopes.
+  #
+  #   - default     = <prefix><theme>{scope}
+  #   - "{scope}" = placeholder for the readable name of the scope
+  scope-screen-title: "<prefix><theme>{scope}"
+
+  # ================================================================================================================= #
+  #   Title above the screen for editing flag preferences.
+  #
+  #   - default     = <prefix><theme>{default}
+  #   - "{default}" = placeholder for standard flag preferences title in current language
+  flag-preferences-screen-title: "<prefix><theme>{default}"
+
+  # ================================================================================================================= #
+  #   Rows in the GUI, which is really just a normal Minecraft inventory.
+  #
+  #   - default = 6
+  #   - range   = [1, 6]
+  rows: 6
+
+  # ================================================================================================================= #
+  #   Whether buttons in the GUI should make a button noise.
+  #
+  #   - default = true
+  play-sound: true
+
+  # ================================================================================================================= #
+  #   A list of "fill phases" that determine how to fill the GUI with items for background decoration. Each fill
+  # phase will execute in order, so you are allowed to make subsequent phases overlap if that creates your desired
+  # effect. Each item has the following details:
+  #   - item    = the item with which to fill. See GUI SETTINGS above for information about specifying an item.
+  #   - top     = whether the top of the GUI should be filled with the item
+  #   - bottom  = whether the bottom of the GUI should be filled with the item
+  #   - border  = whether just the borders of the GUI should be filled with the item (top, bottom, left, and right)
+  #   - all     = whether the entire GUI should be filled with the item
+  #
+  #   - default = {item: black_stained_glass_pane, top: true, bottom: true}
+  fill:
+    - item: black_stained_glass_pane
+      top: true
+      bottom: true
+#     border:
+#     all:
+#   - item:
+#     ...
+
+  # ================================================================================================================= #
+  #   Section for editing the appearance and placement of specific buttons in the GUI. See GUI SETTINGS above
+  # for information about how to specify a button.
+  #
+  #   For each button, the placeholder "{default}" would be replaced by the standard translation for its name.
+  buttons:
+
+    # =============================================================================================================== #
+    #   The "Home" button to get back to the home screen.
+    home:
+      row: 1
+      column: 1
+      item:
+        name: "{default}"
+        type: player_head
+        texture-data: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGYxN2E2YTlhZmFhN2IwN2U0MjE4ZmU1NTVmMjgyM2IwMjg0Y2Q2OWI0OWI2OWI5N2ZhZTY3ZWIyOTc2M2IifX19
+
+    # =============================================================================================================== #
+    #   The "Back" button to go back one screen.
+    back:
+      row: 1
+      column: 2
+      item:
+        name: "{default}"
+        type: dark_oak_boat
+
+    # =============================================================================================================== #
+    #   The button to open the flag preferences editor.
+    flag-editor-open:
+      row: 1
+      column: 9
+      item:
+        name: "{default}"
+        type: player_head
+        texture-data: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2Y2NmY3ZjAzMTI1Y2Y1NDczMzY5NmYzNjMyZjBkOWU2NDcwYmFhYjg0OTg0N2VhNWVhMmQ3OTE1NmFkMGY0MCJ9fX0=
+
+    # =============================================================================================================== #
+    #   The button to close the flag preferences editor.
+    flag-editor-close:
+      row: 1
+      column: 9
+      item:
+        name: "{default}"
+        type: player_head
+        texture-data: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzFhOTEyZTMzMmZjMDAxMGJlYmQwZjkzYTE0ZDhlM2VhNjVkMTMwMTEwMGNlYTNmYzVhZTcxOTkwZDk4NTgwNyJ9fX0=
+
+    # =============================================================================================================== #
+    #   The button to go to the previous page, if the screen has more than a page's worth of content.
+    page-previous:
+      row: 6
+      column: 2
+      item:
+        name: <gray>{default}
+        type: paper
+
+    # =============================================================================================================== #
+    #   The button to go to the next page, if the screen has more than a page's worth of content.
+    page-next:
+      row: 6
+      column: 8
+      item:
+        name: <gray>{default}
+        type: paper
+
+  # ================================================================================================================= #
+  #   The items used as the buttons in the GUI for the main content, like scopes and destinations.
+  # Each setting here should have a list of phases, each with a rule and a list of items. The rules should be defined
+  # as a regular expression (https://en.wikipedia.org/wiki/Regular_expression).
+  # For every piece of content, the phases will be evaluated in series until one of the regular expressions are
+  # matched. Then, a random item from the list will be selected for the button.
+  #
+  #   To make sure that at least phase rule is selected for every piece of content, the last phase should have the
+  # rule ".*", which matches any string.
+  content:
+
+    # =============================================================================================================== #
+    #   The evaluation phases for scope content
+    scopes:
+      - rule: .*
+        items:
+          - blue_stained_glass
+          - brown_stained_glass
+          - cyan_stained_glass
+          - gray_stained_glass
+          - green_stained_glass
+          - light_blue_stained_glass
+          - light_gray_stained_glass
+          - lime_stained_glass
+          - magenta_stained_glass
+          - orange_stained_glass
+          - pink_stained_glass
+          - purple_stained_glass
+          - red_stained_glass
+          - white_stained_glass
+          - yellow_stained_glass
+
+    # =============================================================================================================== #
+    #   The evaluation phases for destination content
+    destinations:
+      - rule: .*
+        items:
+          - black_terracotta
+          - brown_terracotta
+          - cyan_terracotta
+          - gray_terracotta
+          - green_terracotta
+          - light_blue_terracotta
+          - light_gray_terracotta
+          - lime_terracotta
+          - magenta_terracotta
+          - orange_terracotta
+          - pink_terracotta
+          - purple_terracotta
+          - red_terracotta
+          - white_terracotta
+          - yellow_terracotta
+
+    # =============================================================================================================== #
+    #   The evaluation phases for flag content
+    flags:
+      - rule: .*
+        items:
+          - stone_button
+          - polished_blackstone_button
+          - oak_button
+          - spruce_button
+          - birch_button
+          - jungle_button
+          - acacia_button
+          - dark_oak_button
+          - crimson_button
+          - warped_button
+
+# =================================================================================================================== #
+#                                                    EXTRA SETTINGS                                                   #
+# =================================================================================================================== #
+extra:
+
+  # ================================================================================================================= #
+  #   The language code for the desired language.
+  #
+  #   - default = en (English)
+  #   - supported languages
+  #     - en (English)
+  #     - de (German)
+  #     - zh_CN (Simplified Chinese)
+  #     - zh_TW (Traditional Chinese)
+  language: en
+
+  # ================================================================================================================= #
+  #   Whether the server, on startup, should send a request and log in console whether there is a more recent version
+  # of Journey available to download.
+  check-latest-version-on-startup: true
+
+  # ================================================================================================================= #
+  #   Whether the server, on startup, should send a series of requests and log in console whether there exist any
+  # plugins that may integrate Journey with other plugins already downloaded on this server.
+  find-integrations-on-startup: true
