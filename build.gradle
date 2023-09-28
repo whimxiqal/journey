@@ -43,7 +43,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'org.cadixdev.licenser'
 
-    project.ext.publish = true
+    project.ext.publish = false
     project.ext.snapshot = true
 
     project.ext.majorVersion = '1'
