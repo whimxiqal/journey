@@ -54,11 +54,6 @@ public class TestPublicWaypointManager implements PublicWaypointManager {
   }
 
   @Override
-  public @Nullable String getName(@NotNull Cell cell) throws DataAccessException {
-    return waypoints.stream().filter(waypoint -> waypoint.location().equals(cell)).map(Waypoint::name).findFirst().orElse(null);
-  }
-
-  @Override
   public @Nullable Cell getWaypoint(@NotNull String name) throws DataAccessException {
     return waypoints.stream().filter(waypoint -> waypoint.name().equals(name)).map(Waypoint::location).findFirst().orElse(null);
   }

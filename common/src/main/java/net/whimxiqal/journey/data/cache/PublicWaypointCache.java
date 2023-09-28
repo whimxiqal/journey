@@ -83,11 +83,6 @@ public class PublicWaypointCache implements PublicWaypointProvider {
   }
 
   @Override
-  public @Nullable String getName(@NotNull Cell cell) throws DataAccessException {
-    throw new UnsupportedOperationException("This operation isn't implemented");
-  }
-
-  @Override
   public @Nullable Cell getWaypoint(@NotNull String name) throws DataAccessException {
     throw new UnsupportedOperationException("This operation isn't implemented");
   }

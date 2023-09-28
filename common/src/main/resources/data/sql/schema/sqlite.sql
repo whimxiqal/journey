@@ -16,7 +16,6 @@ CREATE TABLE journey_waypoints (
 );
 CREATE INDEX journey_waypoints_player_uuid_idx ON journey_waypoints (player_uuid);
 CREATE INDEX journey_waypoints_name_id_idx ON journey_waypoints (name_id);
-CREATE INDEX journey_waypoints_location_idx ON journey_waypoints (domain_id, x, y, z);
 
 -- Journey Path Cache
 
