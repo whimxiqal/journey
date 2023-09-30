@@ -137,9 +137,7 @@ public final class SearchManager {
         .append(Component.text(flag.name() + ": ").color(Formatter.DARK))
         .append(Component.text(session.flags().printValueFor(flag)).color(Formatter.GOLD))));
 
-    audience.sendMessage(Component.text()
-        .append(Formatter.prefix())
-        .append(Formatter.hover(Messages.COMMAND_SEARCH_SEARCHING.resolve(Formatter.INFO), hoverText.get())));
+    audience.sendMessage(Formatter.hover(Messages.COMMAND_SEARCH_SEARCHING.resolve(Formatter.INFO), hoverText.get()));
 
     session.search().thenAccept(result -> {
       if (result == null) {

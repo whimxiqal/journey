@@ -205,10 +205,18 @@ storage:
 # =================================================================================================================== #
 #                                                     GUI SETTINGS                                                    #
 # =================================================================================================================== #
-# Messages should be formatted as Minimessages: https://docs.advntr.dev/minimessage/format.html                       #
-# Special tags:                                                                                                       #
+# Messages should be formatted as Minimessages: https://docs.advntr.dev/minimessage/format.html. Special tags:        #
 #   - <prefix> = Standard Journey prefix "[*]"                                                                        #
 #   - <theme> = Journey color theme (purple)                                                                          #
+#                                                                                                                     #
+# Items can be formatted in two ways.                                                                                 #
+#   1. An item id. This will just create an item stack with a single item of the item id.                             #
+#   2. An object with a series of values:                                                                             #
+#     - "name": The name of the item stack (Minimessage)                                                              #
+#     - "lore": A list of lore lines (Minimessages)                                                                   #
+#     - "type": (required) The item type, i.e. "cobblestone"                                                          #
+#     - "enchantments": A map of enchantments, keyed by enchantment name and value is the level of enchantment        #
+#     - "texture_data": The texture data to apply to the item stack, but only works for item type "player_head"       #
 # =================================================================================================================== #
 gui:
 

@@ -33,7 +33,6 @@ import net.citizensnpcs.trait.Gravity;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.bukkit.JourneyBukkitApi;
 import net.whimxiqal.journey.bukkit.JourneyBukkitApiProvider;
-import net.whimxiqal.journey.search.ModeType;
 import net.whimxiqal.journey.search.SearchStep;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -44,6 +43,7 @@ import org.bukkit.util.Vector;
 
 public class GuideBehavior extends BehaviorGoalAdapter {
   private static final int NAVIGATION_TARGET_MIN_DISTANCE_SQUARED = 25;
+  private static final int NAVIGATION_TARGET_MAX_DISTANCE_SQUARED = 64;
   private static final int AGENT_DISTANCE_PROGRESS_THRESHOLD_SQUARED = 64;
   private static final int COMPLETION_THRESHOLD_SQUARED = 9;
   private final JourneyBukkitApi journeyBukkitApi;
@@ -146,14 +146,18 @@ public class GuideBehavior extends BehaviorGoalAdapter {
 
     // get the next best target to navigate to
     SearchStep target = path.get(currentPathIndex);
-//    updateEntityType(npc, target.mode());
     while (npcCell.distanceToSquared(target.location()) <= NAVIGATION_TARGET_MIN_DISTANCE_SQUARED && currentPathIndex < path.size() - 1) {
       currentPathIndex++;
-      ModeType previousModeType = target.mode();
       target = path.get(currentPathIndex);
     }
 
     Location targetLocation = journeyBukkitApi.toLocation(target.location()).toCenterLocation();
+    if (npcCell.distanceToSquared(target.location()) > NAVIGATION_TARGET_MAX_DISTANCE_SQUARED) {
+      // oops, this is too far. Just teleport.
+      npc.teleport(targetLocation, PlayerTeleportEvent.TeleportCause.PLUGIN);
+      return BehaviorStatus.SUCCESS;
+    }
+
     npc.getNavigator().setTarget(targetLocation);
     return BehaviorStatus.SUCCESS;
   }
@@ -169,7 +173,7 @@ public class GuideBehavior extends BehaviorGoalAdapter {
         || done
         || !npc.getNavigator().isNavigating()  // we want to set the navigator
         || agentTooFarWay(npc.getEntity(), agent)  // we want to sit and wait for the user to get close again
-        || atDestination(npc.getEntity());  // we want to sit and wait for the user to reach the destination too
+        || atDestination(npc.getEntity());
   }
 
   private boolean agentTooFarWay(Entity npc, Entity agent) {

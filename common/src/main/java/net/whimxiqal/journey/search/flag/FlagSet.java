@@ -24,13 +24,9 @@
 package net.whimxiqal.journey.search.flag;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import net.whimxiqal.journey.search.SearchFlag;
 
 public class FlagSet {
@@ -49,11 +45,7 @@ public class FlagSet {
   }
 
   public <T> void addFlag(Flag<T> flag, T value) {
-    if (flag.defaultValue().equals(value)) {
-      flags.remove(flag.name());  // remove and let default handling get this value
-    } else {
-      flags.put(flag.name(), new FlagPair<>(flag, value));
-    }
+    flags.put(flag.name(), new FlagPair<>(flag, value));
   }
 
   public void addFlags(FlagSet other) {

@@ -24,6 +24,7 @@
 package net.whimxiqal.journey.integration.citizens;
 
 import java.io.IOException;
+import net.citizensnpcs.api.ai.event.NavigationCancelEvent;
 import net.citizensnpcs.api.event.CitizensEnableEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,5 +40,10 @@ public class CitizensEventListener implements Listener {
       JourneyCitizens.logger().severe("Exception thrown trying to load known NPC guides");
       throw new RuntimeException(e);
     }
+  }
+
+  @EventHandler
+  public void onNavigationCancel(NavigationCancelEvent event) {
+    JourneyCitizens.logger().info("Got NavigationCancelEvent: " + event.getCancelReason());
   }
 }

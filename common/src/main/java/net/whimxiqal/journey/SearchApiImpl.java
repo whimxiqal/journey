@@ -36,7 +36,7 @@ public class SearchApiImpl implements SearchApi {
     DestinationGoalSearchSession session = new DestinationGoalSearchSession(null, SearchSession.Caller.PLUGIN, agent,
         origin, destination,
         false, false);
-    session.setFlags(FlagSet.from(flags));
+    session.addFlags(FlagSet.from(flags));
     session.initialize();  // sets the modes and tunnels (must be run on main thread)
     session.search().thenAccept(result -> {
       switch (result.state()) {
@@ -99,7 +99,7 @@ public class SearchApiImpl implements SearchApi {
     DestinationGoalSearchSession session = new DestinationGoalSearchSession(null, SearchSession.Caller.PLUGIN, player.get(),
         playerLocation.get(), destination,
         false, false);
-    session.setFlags(FlagSet.from(flags));
+    session.addFlags(FlagSet.from(flags));
     session.initialize();  // sets the modes and tunnels (must be run on main thread)
     session.search().thenAccept(result -> {
       switch (result.state()) {

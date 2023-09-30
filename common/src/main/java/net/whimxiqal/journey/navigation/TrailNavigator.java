@@ -45,8 +45,6 @@ public class TrailNavigator implements Navigator {
   public static final String TRAIL_NAVIGATOR_ID = "trail";
   private static final double CACHED_JOURNEY_STEPS_LENGTH = 128;  // length of all journey steps to cache for showing their particles
   private static final int TICKS_PER_PARTICLE_CYCLE = 3;
-  private static final int PARTICLE_CYCLE_COUNT = 1;
-  private static final float PARTICLE_SPAWN_DENSITY = 0.8f;
   public static final String OPTION_ID_PARTICLE = "particle";
   public static final NavigatorOption<List<String>> OPTION_PARTICLE = NavigatorOption
       .builder(OPTION_ID_PARTICLE, (Class<List<String>>) (Object) List.class)
@@ -127,7 +125,9 @@ public class TrailNavigator implements Navigator {
       final int firstStepIndex = Math.max(1, progress.currentStepIndex());
       int stepIndex = firstStepIndex;
       double illuminatedDistance = 0;
-      while (illuminatedDistance <= CACHED_JOURNEY_STEPS_LENGTH && stepIndex < steps.size()) {
+      while (illuminatedDistance <= CACHED_JOURNEY_STEPS_LENGTH
+          && stepIndex < steps.size()
+          && steps.get(stepIndex - 1).location().domain() == steps.get(stepIndex).location().domain()) {
         NavigationStep step = new NavigationStep(steps.get(stepIndex - 1).location(), steps.get(stepIndex).location());
         double stepProgress = stepIndex == firstStepIndex ? progress.currentStepProgress() : 0;
         illuminateStep(step, stepProgress);

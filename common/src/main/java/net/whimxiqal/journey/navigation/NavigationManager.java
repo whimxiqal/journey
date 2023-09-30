@@ -26,6 +26,7 @@ import net.whimxiqal.journey.navigation.option.ParseNavigatorOptionException;
 import net.whimxiqal.journey.search.SearchStep;
 import net.whimxiqal.journey.util.Permission;
 import net.whimxiqal.mantle.common.CommandSource;
+import org.jetbrains.annotations.Nullable;
 
 public class NavigationManager {
 
@@ -74,12 +75,10 @@ public class NavigationManager {
   }
 
   public CompletableFuture<NavigationResult> startNavigating(JourneyAgent agent, List<? extends SearchStep> path, NavigatorDetails details) throws IllegalArgumentException {
-    Journey.logger().info("startNavigating: " + details);
     NavigatorFactory factory = navigatorFactories.get(details.navigatorType());
     if (factory == null) {
       throw new IllegalArgumentException("Unknown navigator type: " + details.navigatorType());
     }
-    Journey.logger().info("startNavigating: factory: " + factory.navigatorType());
     NavigatorOptionValuesImpl optionValues = new NavigatorOptionValuesImpl(factory.options(), details.options());
     NavigationSession session = new NavigationSession(agent, path, optionValues);
     Navigator navigator = factory.navigator(agent, session, optionValues);
@@ -89,6 +88,7 @@ public class NavigationManager {
     } else {
       session.resultFuture().complete(NavigationResult.FAILED_START);
     }
+    agent.location().ifPresent(cell -> updateLocation(agent.uuid(), cell));  // visit first cell to get kicked off
     return session.resultFuture();
   }
 
@@ -119,7 +119,7 @@ public class NavigationManager {
     }
   }
 
-  public NavigatorDetails parseNavigatorFlagDefinition(CommandSource src, String navigatorType, String options) throws IllegalArgumentException {
+  public NavigatorDetails parseNavigatorFlagDefinition(CommandSource src, String navigatorType, @Nullable String options) throws IllegalArgumentException {
     NavigatorFactory factory = navigatorFactories.get(navigatorType);
     if (factory == null) {
       Messages.COMMAND_NAVIGATION_NO_NAVIGATOR.sendTo(src.audience(), Formatter.ERROR, navigatorType);
@@ -129,6 +129,9 @@ public class NavigationManager {
     if (permission.isPresent() && !src.hasPermission(permission.get())) {
       Messages.COMMAND_NAVIGATION_NO_NAVIGATOR_PERMISSION.sendTo(src.audience(), Formatter.ERROR, navigatorType);
       return null;
+    }
+    if (options == null) {
+      return NavigatorDetails.of(navigatorType);
     }
     Matcher matcher = NAVIGATOR_OPTIONS_PATTERN.matcher(options);
     if (!matcher.matches()) {
@@ -203,7 +206,7 @@ public class NavigationManager {
     Matcher matcher = NAVIGATOR_DEFINITION_PARTIAL_OPTION.matcher(partialOptions);
     if (matcher.matches()) {
       String prefix = matcher.group(1);
-      String partialOption = matcher.group(3);
+      String partialOption = matcher.group(2);
       for (Map.Entry<String, NavigatorOption<?>> entry : factory.options().entrySet()) {
         if (entry.getValue().permission().map(perm -> !src.hasPermission(perm)).orElse(false)) {
           continue;
@@ -221,13 +224,13 @@ public class NavigationManager {
     // Check if source is typing a navigator option value
     matcher = NAVIGATOR_DEFINITION_PARTIAL_VALUE.matcher(partialOptions);
     if (matcher.matches()) {
-      String option = matcher.group(3);
+      String option = matcher.group(2);
       NavigatorOption<?> optionInfo = factory.options().get(option);
       if (optionInfo == null) {
         return suggestions;  // no suggestions
       }
       String prefix = matcher.group(1);
-      String partialValue = matcher.group(4);
+      String partialValue = matcher.group(3);
       for (String optionSuggestion : optionInfo.valueSuggestions()) {
         String suggestionLower = optionSuggestion.toLowerCase(Locale.ENGLISH);
         if (suggestionLower.equals(partialValue)) {

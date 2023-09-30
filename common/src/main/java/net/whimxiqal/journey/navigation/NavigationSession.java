@@ -1,6 +1,5 @@
 package net.whimxiqal.journey.navigation;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.text.Component;
@@ -17,7 +16,6 @@ public class NavigationSession implements NavigationProgress {
   private static final int NAVIGATION_LOOKAHEAD = 64;
   private final JourneyAgent agent;
   private final List<? extends SearchStep> steps;
-  private final LinkedList<StepPrompt> prompts = new LinkedList<>();
   private final NavigatorOptionValues optionValues;
   private final CompletableFuture<NavigationResult> resultFuture;
   private NavigationStep currentNavigationStep;
@@ -44,12 +42,7 @@ public class NavigationSession implements NavigationProgress {
     if (Component.IS_NOT_EMPTY.test(title) || Component.IS_NOT_EMPTY.test(subtitle)) {
       agent.audience().showTitle(Title.title(title, subtitle));
     }
-  }
-
-  private void runPrompts() {
-    while (!prompts.isEmpty() && prompts.getFirst().stepIndex <= this.currentStepIndex) {
-      prompts.pop().prompt.run();
-    }
+    resultFuture.complete(NavigationResult.COMPLETED);
   }
 
   public boolean visit(Cell location) {
@@ -93,32 +86,25 @@ public class NavigationSession implements NavigationProgress {
       currentStepProgress = 0;
       currentNavigationStep = new NavigationStep(steps.get(previousStepIndex).location(),
           steps.get(currentStepIndex).location());
-      runPrompts();
+      steps.get(currentStepIndex).prompt();
     } while (true);
 
     if (originalStepIndex == currentStepIndex && originalStepProgress == currentStepProgress) {
       // we haven't made any progress this step, so let's try the more calculation-intensive
       // block-by-block search to see if the player has walked into a future location
-      boolean foundLocation = false;
-      int i = currentStepIndex;
-      for (; i < Math.min(steps.size(), currentStepIndex + NAVIGATION_LOOKAHEAD); i++) {
-        if (location.equals(steps.get(currentStepIndex).location())) {
-          currentStepIndex = i;
-          currentStepProgress = 0;
-          currentNavigationStep = null;
-          runPrompts();
-          break;
+      for (int i = currentStepIndex; i < Math.min(steps.size(), currentStepIndex + NAVIGATION_LOOKAHEAD); i++) {
+        SearchStep step = steps.get(currentStepIndex);
+        if (!location.equals(step.location())) {
+          continue;
         }
+        currentStepIndex = i;
+        currentStepProgress = 0;
+        currentNavigationStep = null;
+        step.prompt();
+        break;
       }
     }
     return false;
-  }
-
-  public void addStepPrompt(int stepIndex, Runnable prompt) {
-    if (!prompts.isEmpty() && prompts.getLast().stepIndex >= stepIndex) {
-      throw new IllegalArgumentException("Step prompts must be added in order of step index");
-    }
-    this.prompts.add(new StepPrompt(stepIndex, prompt));
   }
 
   @Override
@@ -142,15 +128,6 @@ public class NavigationSession implements NavigationProgress {
 
   public CompletableFuture<NavigationResult> resultFuture() {
     return resultFuture;
-  }
-
-  private enum State {
-    IDLE,  // hasn't run yet at all
-    RUNNING, // is currently running
-    STOPPED_COMPLETE, // has finished running successfully
-  }
-
-  private record StepPrompt(int stepIndex, Runnable prompt) {
   }
 
 }

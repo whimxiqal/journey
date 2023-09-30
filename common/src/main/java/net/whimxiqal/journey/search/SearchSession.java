@@ -259,7 +259,7 @@ public abstract class SearchSession implements Describable {
     return callerType;
   }
 
-  public void setFlags(FlagSet other) {
+  public void addFlags(FlagSet other) {
     this.flags.addFlags(other);
   }
 

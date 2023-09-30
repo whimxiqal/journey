@@ -81,7 +81,7 @@ public class Path implements Serializable {
   }
 
   public static Path fromTunnel(Tunnel tunnel) {
-    return new Path(tunnel.origin(), Collections.singletonList(new Step(tunnel.destination(), 0, ModeType.TUNNEL)),
+    return new Path(tunnel.origin(), Collections.singletonList(new Step(tunnel.destination(), 0, ModeType.TUNNEL, tunnel::prompt)),
         tunnel.cost(), tunnel::prompt, tunnel::testCompletion);
   }
 
@@ -174,10 +174,6 @@ public class Path implements Serializable {
    */
   public int domain() {
     return getDestination().domain();
-  }
-
-  public void runPrompt() {
-    prompt.run();
   }
 
   @Override

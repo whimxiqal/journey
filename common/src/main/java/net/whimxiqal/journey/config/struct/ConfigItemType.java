@@ -31,10 +31,14 @@ public record ConfigItemType(String name, List<String> description,
         // we don't have a complicated item, it's just simply a material type
         return ConfigItemType.of(string);
       }
+      String itemType = node.node("type").getString();
+      if (itemType == null) {
+        throw new SerializationException("Type is required for an item");
+      }
       // complicated type, check all sub-values
       return new ConfigItemType(node.node("name").getString(""),
           node.node("lore").getList(String.class),
-          node.node("type").getString("air"),
+          itemType,
           node.node("enchantments").childrenMap()
               .entrySet()
               .stream()

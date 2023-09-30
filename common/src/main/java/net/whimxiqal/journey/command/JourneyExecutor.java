@@ -48,6 +48,7 @@ import net.whimxiqal.journey.scope.ScopedSessionResult;
 import net.whimxiqal.journey.search.DestinationGoalSearchSession;
 import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.SearchSession;
+import net.whimxiqal.journey.search.flag.FlagPair;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.CommonLogger;
@@ -118,7 +119,10 @@ public class JourneyExecutor implements CommandExecutor {
         switch (scopedSessionResult.type()) {
           case EXISTS:
             SearchSession session = scopedSessionResult.session().get();
-            session.setFlags(flags);
+            session.addFlags(flags);
+            for (FlagPair<?> flagPair : flags.flagPairs()) {
+              Journey.logger().info("Flag pair just added: " + flagPair.flag().name() + ", " + flagPair.value());
+            }
             Journey.get().searchManager().launchIngameSearch(session);
             return CommandResult.success();
           case AMBIGUOUS:
@@ -369,7 +373,8 @@ public class JourneyExecutor implements CommandExecutor {
       private void destinationSearch(Cell startLocation, Cell endLocation) {
         InternalJourneyPlayer player = InternalJourneyPlayer.from(src);
         DestinationGoalSearchSession session = new DestinationGoalSearchSession(player, startLocation, endLocation, false, true);
-        session.setFlags(flags);
+        session.addFlags(Journey.get().searchManager().getFlagPreferences(player.uuid(), false));
+        session.addFlags(flags);
 
         Journey.get().searchManager().launchIngameSearch(session);
       }
@@ -805,11 +810,12 @@ public class JourneyExecutor implements CommandExecutor {
       public CommandResult visitNavigatorFlag(JourneyParser.NavigatorFlagContext ctx) {
         NavigatorDetails navigatorDetails = Journey.get().navigatorManager().parseNavigatorFlagDefinition(src,
             cmd.identifiers().get("navigator", 0),
-            cmd.identifiers().get("navigator-options", 0));
+            ctx.options == null ? null : cmd.identifiers().get("navigator-options", 0));
         if (navigatorDetails == null) {
           return CommandResult.failure();
         }
         flags.addFlag(Flags.NAVIGATOR, navigatorDetails);
+        Journey.logger().info("Added flag navigator: " + navigatorDetails.navigatorType());
         return super.visitNavigatorFlag(ctx);
       }
 

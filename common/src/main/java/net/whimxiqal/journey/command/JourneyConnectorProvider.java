@@ -82,7 +82,7 @@ public class JourneyConnectorProvider {
             .addParameter(Parameter.builder("navigator-options")
                 .options(ctx -> {
                   String navigatorType = ctx.identifiers().get("navigator", 0);
-                  return Journey.get().navigatorManager().provideNavigatorOptionsSuggestions(ctx.source(), navigatorType, ctx.identifiers().get(ctx.identifiers().getAll().size()));
+                  return Journey.get().navigatorManager().provideNavigatorOptionsSuggestions(ctx.source(), navigatorType, ctx.identifiers().get(ctx.identifiers().getAll().size() - 1));
                 })
                 .build())
             .registerCompletion(JourneyParser.RULE_waypoint, 0, "waypoint")

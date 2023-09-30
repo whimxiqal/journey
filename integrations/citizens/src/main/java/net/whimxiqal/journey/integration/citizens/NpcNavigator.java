@@ -158,6 +158,7 @@ public class NpcNavigator implements Navigator {
     }
 
     EntityType preferredEntityType = optionValues.value(NpcNavigatorOptions.ENTITY_TYPE);
+    JourneyCitizens.logger().info("Entity type: " + preferredEntityType);
     NPC npc;
     try {
       npc = JourneyCitizens.get().guideStore().issueGuide(preferredEntityType, optionValues.value(NpcNavigatorOptions.NAME));

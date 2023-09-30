@@ -1,4 +1,4 @@
-name: Continuous Integration (Main)
+name: Continuous Integration
 
 on:
   push:
@@ -68,12 +68,16 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
+      - name: Move Artifacts to Root
+        shell: bash
+        run: cp $(find ./ -wholename '*/build/libs/*.jar') ./
+
       - name: Upload all artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: jars
+          name: journey-artifacts
           path: |
-            bukkit/build/libs/Journey-Bukkit-*.jar
-            integrations/citizens/build/libs/JourneyCitizens-*.jar
-            integrations/essentials/build/libs/JourneyEssentials-*.jar
-            integrations/notquests/build/libs/JourneyNotQuests-*.jar
+            Journey-Bukkit-*.jar
+            JourneyCitizens-*.jar
+            JourneyEssentials-*.jar
+            JourneyNotQuests-*.jar

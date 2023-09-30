@@ -39,7 +39,7 @@ animateFlag: FLAG_ANIMATE (delay=ID)?;
 flyFlag: FLAG_FLY (TRUE | FALSE)?;
 doorFlag: FLAG_DOOR (TRUE | FALSE)?;
 digFlag: FLAG_DIG (TRUE | FALSE)?;
-navigatorFlag: FLAG_NAVIGATOR navigator=identifier (OPEN_BRACE options=identifier CLOSED_BRACE);
+navigatorFlag: FLAG_NAVIGATOR navigator=identifier (OPEN_BRACE options=identifier CLOSED_BRACE)?;
 
 ADMIN: 'admin';
 BUILD: 'build';

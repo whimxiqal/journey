@@ -73,7 +73,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
     session.initialize();
     lastSessionUuid = session.uuid();
     Assertions.assertEquals(ResultState.IDLE, session.getState());
-    session.setFlags(flags);
+    session.addFlags(flags);
     Future<SearchSession.Result> future = TestSchedulingManager.runOnMainThread(() -> Journey.get().searchManager().launchIngameSearch(session));
     SearchSession.Result result = future.get();
     Assertions.assertEquals(expectedResult, result.state(), "Expected state of session search was incorrect");
