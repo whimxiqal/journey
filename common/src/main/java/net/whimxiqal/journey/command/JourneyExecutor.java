@@ -32,8 +32,6 @@ import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.message.Messages;
-import net.whimxiqal.journey.navigation.NavigatorDetails;
 import net.whimxiqal.journey.common.JourneyBaseVisitor;
 import net.whimxiqal.journey.common.JourneyParser;
 import net.whimxiqal.journey.data.PersonalWaypointManager;
@@ -42,13 +40,14 @@ import net.whimxiqal.journey.data.TunnelType;
 import net.whimxiqal.journey.data.Waypoint;
 import net.whimxiqal.journey.manager.SearchManager;
 import net.whimxiqal.journey.message.Formatter;
+import net.whimxiqal.journey.message.Messages;
 import net.whimxiqal.journey.message.Pager;
+import net.whimxiqal.journey.navigation.NavigatorDetails;
 import net.whimxiqal.journey.scope.ScopeUtil;
 import net.whimxiqal.journey.scope.ScopedSessionResult;
 import net.whimxiqal.journey.search.DestinationGoalSearchSession;
 import net.whimxiqal.journey.search.EverythingSearch;
 import net.whimxiqal.journey.search.SearchSession;
-import net.whimxiqal.journey.search.flag.FlagPair;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
 import net.whimxiqal.journey.util.CommonLogger;
@@ -120,9 +119,6 @@ public class JourneyExecutor implements CommandExecutor {
           case EXISTS:
             SearchSession session = scopedSessionResult.session().get();
             session.addFlags(flags);
-            for (FlagPair<?> flagPair : flags.flagPairs()) {
-              Journey.logger().info("Flag pair just added: " + flagPair.flag().name() + ", " + flagPair.value());
-            }
             Journey.get().searchManager().launchIngameSearch(session);
             return CommandResult.success();
           case AMBIGUOUS:
@@ -815,7 +811,6 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
         flags.addFlag(Flags.NAVIGATOR, navigatorDetails);
-        Journey.logger().info("Added flag navigator: " + navigatorDetails.navigatorType());
         return super.visitNavigatorFlag(ctx);
       }
 

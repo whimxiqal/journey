@@ -31,16 +31,13 @@ public class MessageManager {
 
   public void initialize() {
     final Locale languageLocale = Settings.EXTRA_LANGUAGE.getValue();
-    Journey.logger().info("language locale: " + languageLocale.toLanguageTag());
     ResourceBundle bundle;
     boolean found = true;
     try {
       bundle = ResourceBundle.getBundle("messages", languageLocale);
-      Journey.logger().info("bundle locale: " + bundle.getLocale().toLanguageTag());
     } catch (MissingResourceException e) {
       found = false;
       bundle = ResourceBundle.getBundle("messages", Settings.EXTRA_LANGUAGE.getDefaultValue());
-      Journey.logger().info("default bundle locale: " + bundle.getLocale().toLanguageTag());
     }
     for (Enumeration<String> keys = bundle.getKeys(); keys.hasMoreElements(); ) {
       String key = keys.nextElement();
