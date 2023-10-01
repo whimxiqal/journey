@@ -35,25 +35,25 @@ public enum ModeType {
   /**
    * No movement.
    */
-  NONE(0),
-  WALK(1),
-  JUMP(2),
-  SWIM(3),
-  FLY(4),
-  BOAT(5),
+  NONE("none", 0),
+  WALK("walk", 1),
+  JUMP("jump", 2),
+  SWIM("swim", 3),
+  FLY("fly", 4),
+  BOAT("boat", 5),
   // RAIL(6),
   // BUILD(7),
   /**
    * Moving through doors, either open or closed.
    */
-  DOOR(8),
-  CLIMB(9),
-  DIG(10),
+  DOOR("door", 8),
+  CLIMB("climb", 9),
+  DIG("dig", 10),
   /**
    * Entering through {@link net.whimxiqal.journey.Tunnel}s, like teleporting or going through
    * Nether portals.
    */
-  TUNNEL(11);
+  TUNNEL("tunnel", 11);
 
   private static final Map<Integer, ModeType> MODE_TYPE_MAP = new HashMap<>();
 
@@ -63,9 +63,11 @@ public enum ModeType {
     }
   }
 
+  private final String stringId;
   private final int id;
 
-  ModeType(int id) {
+  ModeType(String stringId, int id) {
+    this.stringId = stringId;
     this.id = id;
   }
 
@@ -86,6 +88,16 @@ public enum ModeType {
    */
   public int id() {
     return id;
+  }
+
+  /**
+   * The permanent string id of the mode type, which can be used for identification.
+   * Use {@link #id()} for a serialization id.
+   *
+   * @return the string id
+   */
+  public String stringId() {
+    return stringId;
   }
 
   @Override

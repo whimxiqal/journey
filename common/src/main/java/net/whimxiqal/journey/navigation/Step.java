@@ -37,11 +37,20 @@ public class Step implements Serializable, SearchStep {
   private final Cell location;
   private final double length;
   private final ModeType modeType;
+  private final Runnable prompt;
 
   public Step(@NotNull Cell location, double length, @NotNull ModeType modeType) {
     this.location = location;
     this.length = length;
     this.modeType = modeType;
+    this.prompt = null;
+  }
+
+  public Step(@NotNull Cell location, double length, @NotNull ModeType modeType, Runnable prompt) {
+    this.location = location;
+    this.length = length;
+    this.modeType = modeType;
+    this.prompt = prompt;
   }
 
   public Cell location() {
@@ -55,6 +64,13 @@ public class Step implements Serializable, SearchStep {
   @Override
   public ModeType mode() {
     return modeType;
+  }
+
+  @Override
+  public void prompt() {
+    if (prompt != null) {
+      prompt.run();
+    }
   }
 
   @Override

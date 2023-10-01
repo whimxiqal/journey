@@ -30,24 +30,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BooleanSetting extends Setting<Boolean> {
 
-  BooleanSetting(@NotNull String path, @NotNull Boolean defaultValue) {
-    super(path, defaultValue, Boolean.class);
-  }
-
-  @Override
-  public Boolean parseValue(@NotNull String string) {
-    return Boolean.parseBoolean(string);
-  }
-
-  @Override
-  @NotNull
-  public String printValue() {
-    return getValue().toString();
-  }
-
-  @Override
-  public boolean isValid() {
-    return true;
+  BooleanSetting(@NotNull String path, @NotNull Boolean defaultValue, boolean reloadable) {
+    super(path, defaultValue, Boolean.class, reloadable);
   }
 
 }

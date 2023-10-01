@@ -30,37 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PublicWaypointProvider {
 
-
-  /**
-   * Check if a saved cell exists at this location.
-   *
-   * @param cell the cell location
-   * @return true if the cell exists
-   */
-  default boolean hasWaypoint(@NotNull Cell cell) throws DataAccessException {
-    return getName(cell) != null;
-  }
-
-  /**
-   * Check if a saved cell exists with this name.
-   *
-   * @param name the cell name
-   * @return true if the cell exists
-   */
-  default boolean hasWaypoint(@NotNull String name) throws DataAccessException {
-    return getWaypoint(name) != null;
-  }
-
-
-  /**
-   * Get the name of a saved location.
-   *
-   * @param cell the saved location
-   * @return the cell's name, or null if it doesn't exist
-   */
-  @Nullable
-  String getName(@NotNull Cell cell) throws DataAccessException;
-
   /**
    * Get a specific cell by its given name.
    *

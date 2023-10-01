@@ -24,8 +24,11 @@
 package net.whimxiqal.journey.config;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 /**
  * A setting that holds an enum value.
@@ -36,8 +39,8 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
 
   final Map<String, E> capitalNameToEnum;
 
-  EnumSetting(@NotNull String path, @NotNull E defaultValue, @NotNull Class<E> clazz) {
-    super(path, defaultValue, clazz);
+  EnumSetting(@NotNull String path, @NotNull E defaultValue, @NotNull Class<E> clazz, boolean reloadable) {
+    super(path, defaultValue, clazz, reloadable);
     HashMap<String, E> nameMap = new HashMap<>();
     for (E enumConstant : clazz.getEnumConstants()) {
       nameMap.put(enumConstant.name().toUpperCase(), enumConstant);
@@ -46,18 +49,26 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
   }
 
   @Override
-  public E parseValue(@NotNull String string) {
-    return capitalNameToEnum.get(string.toUpperCase());
+  public E deserialize(CommentedConfigurationNode node) throws SerializationException {
+    String value = node.getString();
+    if (value == null) {
+      throw new SerializationException("Value was null");
+    }
+    try {
+      return Enum.valueOf(clazz, value.toUpperCase(Locale.ENGLISH));
+    } catch (IllegalArgumentException e) {
+      throw new SerializationException(e);
+    }
   }
 
   @Override
   @NotNull
-  public String printValue() {
-    return getValue().name().toLowerCase();
+  public String printValue(E value) {
+    return value.name().toLowerCase();
   }
 
   @Override
-  public boolean isValid() {
+  public boolean valid(E value) {
     return value != null;
   }
 }

@@ -57,7 +57,7 @@ public final class ScopeUtil {
     return new InternalScope(Scope.builder()
         .destinations(player -> {
           Map<String, Destination> destinations = new HashMap<>();
-          Journey.get().deathManager().getDeathLocation(player.uuid()).ifPresent(location ->
+          Journey.get().playerManager().getDeathLocation(player.uuid()).ifPresent(location ->
               destinations.put("death", Destination.builder(location).permission(Permission.PATH_DEATH.path()).build()));
           return VirtualMap.of(destinations);
         })

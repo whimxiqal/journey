@@ -33,7 +33,7 @@ public class DeathListener implements Listener {
 
   @EventHandler
   public void onDeath(PlayerDeathEvent event) {
-    Journey.get().deathManager().setDeathLocation(event.getEntity().getUniqueId(), BukkitUtil.cell(event.getEntity().getLocation()));
+    Journey.get().playerManager().setDeathLocation(event.getEntity().getUniqueId(), BukkitUtil.toCell(event.getEntity().getLocation()));
   }
 
 }

@@ -24,8 +24,11 @@
 package net.whimxiqal.journey.config;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import net.whimxiqal.journey.Journey;
 import org.jetbrains.annotations.NotNull;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
 
 /**
  * A setting, generally used as a key-value pair from a configuration file.
@@ -33,22 +36,27 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param <T> the data type stored in the setting
  */
-public abstract class Setting<T> {
+public class Setting<T> {
 
   protected final Class<T> clazz;
   protected final String path;
+  protected final String[] pathTokens;
   protected final T defaultValue;
-  protected T value;
+  private final boolean reloadable;
+  protected final AtomicReference<T> value;
   protected boolean initialized = false;
+  protected boolean loaded = false;  // true if loaded from config, otherwise could have just been set from default
 
-  Setting(@NotNull String path, @NotNull T defaultValue, @NotNull Class<T> clazz) {
+  Setting(@NotNull String path, @NotNull T defaultValue, @NotNull Class<T> clazz, boolean reloadable) {
     if (!clazz.isInstance(defaultValue)) {
       throw new IllegalArgumentException("The value must match the class type");
     }
     this.path = Objects.requireNonNull(path);
+    this.pathTokens = path.split("\\.");
     this.defaultValue = Objects.requireNonNull(defaultValue);
-    this.value = defaultValue;
+    this.value = new AtomicReference<>(defaultValue);
     this.clazz = clazz;
+    this.reloadable = reloadable;
   }
 
   /**
@@ -57,7 +65,7 @@ public abstract class Setting<T> {
    * @return the path
    */
   @NotNull
-  public String getPath() {
+  public final String getPath() {
     return path;
   }
 
@@ -67,7 +75,7 @@ public abstract class Setting<T> {
    * @return the default value
    */
   @NotNull
-  public T getDefaultValue() {
+  public final T getDefaultValue() {
     return clazz.cast(defaultValue);
   }
 
@@ -77,13 +85,11 @@ public abstract class Setting<T> {
    * @return the setting value
    */
   @NotNull
-  public T getValue() {
+  public final T getValue() {
     if (!initialized) {
-      Journey.get().proxy().logger().info("Using default value for config setting at " + path);
-      value = getDefaultValue();
-      initialized = true;
+      throw new RuntimeException("Setting " + path + " was not initialized");
     }
-    return value;
+    return value.get();
   }
 
   /**
@@ -91,18 +97,10 @@ public abstract class Setting<T> {
    *
    * @param value the value
    */
-  public void setValue(@NotNull T value) {
-    this.value = Objects.requireNonNull(value);
+  public final void setValue(@NotNull T value) {
+    this.value.set(Objects.requireNonNull(value));
     this.initialized = true;
   }
-
-  /**
-   * Parse a string into a value accepted by this setting.
-   *
-   * @param string the serialized value string
-   * @return the value
-   */
-  public abstract T parseValue(@NotNull String string);
 
   /**
    * Print the value stored in this setting into a serialized format.
@@ -110,12 +108,72 @@ public abstract class Setting<T> {
    * @return the string (serialized) form of the value
    */
   @NotNull
-  public abstract String printValue();
+  public String printValue(T value) {
+    return value.toString();
+  }
 
-  public abstract boolean isValid();
+  public final String printValue() {
+    if (!initialized) {
+      throw new RuntimeException("Setting " + path + " was not initialized");
+    }
+    return printValue(value.get());
+  }
 
-  public final void setToDefault() {
-    setValue(getDefaultValue());
+  public final void load(CommentedConfigurationNode root) throws SerializationException {
+    CommentedConfigurationNode node = root.node((Object[]) pathTokens);
+    if (node.virtual()) {
+      // don't print out value if it is too long
+      T def = getDefaultValue();
+      String defPrinted = printValue(def);
+      Journey.logger().warn(String.format("Setting %s was not set in your config file. Using default%s", path, (defPrinted.length() > 64 ? "" : ": " + defPrinted)));
+      this.value.set(def);
+      this.initialized = true;
+      return;
+    }
+
+    T originalValue = this.value.get();
+    T loadedValue = deserialize(node);
+    if (!valid(loadedValue)) {
+      T def = getDefaultValue();
+      String defPrinted = printValue(def);
+      Journey.logger().warn(String.format("Setting %s has invalid value %s. Using default%s",
+          path, printValue(), (defPrinted.length() > 20 ? "" : ": " + defPrinted)));
+      this.value.set(def);
+      this.initialized = true;
+      return;
+    }
+
+    if (this.initialized && !originalValue.equals(loadedValue) && !reloadable) {
+      Journey.logger().warn(String.format("Saw setting %s was reloaded from config, but the server must be restarted to observe its effect", path));
+      return;
+    }
+
+    this.value.set(loadedValue);
+    this.loaded = true;
+    this.initialized = true;
+  }
+
+  protected T deserialize(CommentedConfigurationNode node) throws SerializationException {
+    return node.get(this.clazz, getDefaultValue());
+  }
+
+  public final boolean valid() {
+    if (!initialized) {
+      return false;
+    }
+    return valid(value.get());
+  }
+
+  public final boolean wasLoaded() {
+    return loaded;
+  }
+
+  public final boolean reloadable() {
+    return reloadable;
+  }
+
+  public boolean valid(T value) {
+    return true;
   }
 
 }

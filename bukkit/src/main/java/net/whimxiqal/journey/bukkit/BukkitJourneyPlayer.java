@@ -39,7 +39,7 @@ public class BukkitJourneyPlayer extends InternalJourneyPlayer {
 
   @Override
   public Optional<Cell> location() {
-    return Optional.ofNullable(Bukkit.getPlayer(uuid)).map(player -> BukkitUtil.cell(player.getLocation()));
+    return Optional.ofNullable(Bukkit.getPlayer(uuid)).map(player -> BukkitUtil.toCell(player.getLocation()));
   }
 
   @Override

@@ -27,8 +27,6 @@ import net.whimxiqal.journey.bukkit.JourneyBukkit;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import lombok.Value;
-import lombok.experimental.Accessors;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
@@ -87,13 +85,7 @@ public class Song {
   /**
    * A single sound (note) that can be strung together into a {@link Song}.
    */
-  @Value
-  @Accessors(fluent = true)
-  public static class Note {
-    Sound sound;
-    float pitch;
-    int delay;
-    float volume;
+  public record Note(Sound sound, float pitch, int delay, float volume) {
   }
 
 }

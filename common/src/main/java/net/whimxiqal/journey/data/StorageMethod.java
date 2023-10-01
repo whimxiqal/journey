@@ -28,7 +28,17 @@ package net.whimxiqal.journey.data;
  */
 public enum StorageMethod {
 
-  MYSQL,
-  SQLITE
+  MYSQL("MySQL"),
+  SQLITE("SQLite");
 
+  private final String readable;
+
+  StorageMethod(String readable) {
+    this.readable = readable;
+  }
+
+  @Override
+  public String toString() {
+    return readable;
+  }
 }

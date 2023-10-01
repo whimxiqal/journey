@@ -25,19 +25,25 @@ package net.whimxiqal.journey.schematic;
 
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.event.platform.PlatformsRegisteredEvent;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.TestProxy;
+import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Mode;
+import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.navigation.mode.JumpMode;
 import net.whimxiqal.journey.navigation.mode.WalkMode;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
@@ -123,7 +129,23 @@ public class SchematicSearchTests {
     WorldEdit.getInstance().getEventBus().post(new PlatformsRegisteredEvent());
 
     Journey.create();
-    TestProxy proxy = new TestProxy(new SchematicPlatformProxy(loader));
+    PlatformProxy schematicPlatformProxy = Mockito.mock(PlatformProxy.class, Mockito.RETURNS_DEFAULTS);
+    Mockito.when(schematicPlatformProxy.toChunk(Mockito.any(), Mockito.anyBoolean())).then((invocation) ->
+        CompletableFuture.completedFuture(new SchematicChunk(invocation.getArgument(0), loader.get())));
+    Mockito.when(schematicPlatformProxy.toBlock(Mockito.any())).then((invocation) -> {
+      Cell cell = invocation.getArgument(0);
+      return new SchematicBlock(cell, loader.get().getBlock(BlockVector3.at(cell.blockX(), cell.blockY(), cell.blockZ())).getBlockType());
+    });
+    Mockito.when(schematicPlatformProxy.onlinePlayer(Mockito.<UUID>any())).then((invocation) -> {
+      UUID uuid = invocation.getArgument(0);
+      if (uuid.equals(SchematicSearchTests.PLAYER.uuid())) {
+        return Optional.of(SchematicSearchTests.PLAYER);
+      } else {
+        return Optional.empty();
+      }
+    });
+    Mockito.when(schematicPlatformProxy.bStatsChartConsumer()).thenReturn(chart -> {});
+    TestProxy proxy = new TestProxy(schematicPlatformProxy);
     Journey.get().registerProxy(proxy);
 
     if (DEBUG) {

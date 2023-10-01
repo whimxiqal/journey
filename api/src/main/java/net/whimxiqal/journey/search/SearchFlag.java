@@ -7,16 +7,16 @@ package net.whimxiqal.journey.search;
  */
 public class SearchFlag<T> {
 
-  private final Type type;
-  private final T value;
+  protected final SearchFlag.Type type;
+  protected final T value;
 
   private SearchFlag(Type type, T value) {
+    this.type = type;
+    this.value = value;
     if (!type.clazz.isInstance(value)) {
       throw new IllegalArgumentException("Flag with type " + type.name()
           + " was given incompatible value type: " + value.getClass().getSimpleName());
     }
-    this.type = type;
-    this.value = value;
   }
 
   /**
@@ -36,7 +36,7 @@ public class SearchFlag<T> {
    *
    * @return the type of flag
    */
-  public Type type() {
+  public SearchFlag.Type type() {
     return type;
   }
 
@@ -72,5 +72,4 @@ public class SearchFlag<T> {
       this.clazz = clazz;
     }
   }
-
 }

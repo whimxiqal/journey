@@ -41,7 +41,7 @@ public class NetherListener implements Listener {
    */
   @EventHandler(priority = EventPriority.LOW)
   public void onEntityPortal(EntityPortalEvent e) {
-    Journey.get().netherManager().lookForPortal(BukkitUtil.cell(e.getFrom()), () -> BukkitUtil.cell(e.getEntity().getLocation()));
+    Journey.get().netherManager().lookForPortal(BukkitUtil.toCell(e.getFrom()), () -> BukkitUtil.toCell(e.getEntity().getLocation()));
   }
 
   /**
@@ -52,7 +52,7 @@ public class NetherListener implements Listener {
    */
   @EventHandler(priority = EventPriority.LOW)
   public void onPlayerPortal(PlayerPortalEvent e) {
-    Journey.get().netherManager().lookForPortal(BukkitUtil.cell(e.getFrom()), () -> BukkitUtil.cell(e.getPlayer().getLocation()));
+    Journey.get().netherManager().lookForPortal(BukkitUtil.toCell(e.getFrom()), () -> BukkitUtil.toCell(e.getPlayer().getLocation()));
   }
 
 }

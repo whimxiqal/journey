@@ -21,4 +21,9 @@ public interface SearchStep {
    */
   ModeType mode();
 
+  /**
+   * Execute a prompt for a navigating agent to inform them how to traverse this step.
+   */
+  void prompt();
+
 }

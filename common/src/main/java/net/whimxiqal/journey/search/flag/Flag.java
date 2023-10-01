@@ -23,56 +23,66 @@
 
 package net.whimxiqal.journey.search.flag;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Flag<T> {
 
   private final String name;
-  private final Function<T, String> printer;
   private final Supplier<T> defaultValue;
+  private final String permission;
   private final Class<T> clazz;
 
-  private Flag(String name, Function<T, String> printer, Supplier<T> defaultValue, Class<T> clazz) {
+  public Flag(String name, Supplier<T> defaultValue, String permission, Class<T> clazz) {
     this.name = Objects.requireNonNull(name);
-    this.printer = printer;
     this.defaultValue = defaultValue;
+    this.permission = permission;
     this.clazz = clazz;
   }
 
-  public static <T> Flag<T> of(String name, Function<T, String> printer, Supplier<T> defaultValue, Class<T> clazz) {
-    return new Flag<>(name, printer, defaultValue, clazz);
-  }
-
-  public String name() {
+  public final String name() {
     return name;
   }
 
   public String printValue(T val) {
-    return printer.apply(val);
+    return val.toString();
   }
 
-  public Class<T> getValueClass() {
-    return clazz;
-  }
-
-  public T defaultValue() {
+  public final T defaultValue() {
     return defaultValue.get();
   }
 
+  public final String permission() {
+    return permission;
+  }
+
+  public boolean valid(T value) {
+    return true;
+  }
+
+  /**
+   * Suggested values for the user to set on this flag.
+   *
+   * @return list of suggested values
+   */
+  public List<? extends T> suggestedValues() {
+    return Collections.emptyList();
+  }
+
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return this.name.hashCode();
   }
 
   @Override
-  public boolean equals(Object obj) {
+  public final boolean equals(Object obj) {
     return (obj instanceof Flag) && ((Flag) obj).name.equals(this.name);
   }
 
   @Override
   public String toString() {
-    return "Flag:" + name;
+    return "Flag[" + name + "]";
   }
 }

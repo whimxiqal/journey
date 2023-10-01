@@ -25,12 +25,13 @@ package net.whimxiqal.journey.manager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.chunk.BlockProvider;
-import net.whimxiqal.journey.navigation.journey.PlayerJourneySession;
 
 public class LocationManager {
   public static final long VISITATION_TIMEOUT_MS = 10;  // Any visits with 10 ms
@@ -39,6 +40,8 @@ public class LocationManager {
   // If this contains a player uuid, then consider them at the world's surface. The boolean value is whether this is outdated info or not.
   private final Map<UUID, AtSurfaceInfo> atSurface = new HashMap<>();
   private long lastVisitTime = 0;
+  // Task id for the task that updates players' locations
+  private UUID locationUpdateTaskId;
 
   /**
    * Attempt to update the cache with given player's location. The update will not go through
@@ -101,10 +104,7 @@ public class LocationManager {
       return;
     }
     if (updatedLocation) {
-      PlayerJourneySession playerJourney = Journey.get().searchManager().getJourney(playerUuid);
-      if (playerJourney != null) {
-        playerJourney.visit(location);
-      }
+      Journey.get().navigatorManager().updateLocation(playerUuid, location);
     }
   }
 
@@ -115,6 +115,39 @@ public class LocationManager {
     AtSurfaceInfo(boolean atSurface) {
       this.atSurface = atSurface;
       this.stale = false;
+    }
+  }
+
+  public void initialize() {
+    // task for updating player locations lazily
+    locationUpdateTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
+      for (UUID navigatingPlayers : Journey.get().navigatorManager().navigatingAgents()) {
+        Optional<InternalJourneyPlayer> player = Journey.get().proxy()
+            .platform()
+            .onlinePlayer(navigatingPlayers);
+        if (player.isEmpty()) {
+          continue;
+        }
+        Optional<Cell> location = player.get().location();
+        if (location.isEmpty()) {
+          continue;
+        }
+        try {
+          tryUpdateLocation(navigatingPlayers, location.get());
+        } catch (ExecutionException | InterruptedException e) {
+          Journey.logger().error("Internal error trying to update the cached location of player " + player.get().uuid());
+          e.printStackTrace();
+          // just log and continue
+        }
+      }
+    }, false, 5);
+  }
+
+  public void shutdown() {
+    Journey.logger().debug("[Location Manager] Shutting down...");
+    if (locationUpdateTaskId != null) {
+      Journey.get().proxy().schedulingManager().cancelTask(locationUpdateTaskId);
+      locationUpdateTaskId = null;
     }
   }
 

@@ -1,0 +1,8 @@
+name: JourneyEssentials
+version: '${version}'
+main: net.whimxiqal.journey.integration.essentials.JourneyEssentials
+api-version: 1.17
+depend: [ Journey, Essentials ]
+softdepend: [ EssentialsSpawn ]
+authors: [ whimxiqal ]
+description: Integrates Journey with Essentials
