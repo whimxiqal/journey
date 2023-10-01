@@ -55,7 +55,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Set Production Build Environment
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
         shell: bash
         run: export JOURNEY_ENV="PROD"
 
