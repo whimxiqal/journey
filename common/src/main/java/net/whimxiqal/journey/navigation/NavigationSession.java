@@ -57,8 +57,20 @@ public class NavigationSession implements NavigationProgress {
     Vector vector = new Vector(location.blockX(), location.blockY(), location.blockZ());
     do {
       if (currentNavigationStep == null) {
-        currentNavigationStep = new NavigationStep(steps.get(Math.max(0, currentStepIndex - 1)).location(),
-            steps.get(currentStepIndex).location());
+        SearchStep previousStep = steps.get(Math.max(0, currentStepIndex - 1));
+        SearchStep curStep = steps.get(currentStepIndex);
+        if (previousStep.location().domain() != curStep.location().domain()) {
+          // The next step is into a different domain
+          if (location.domain() != curStep.location().domain()) {
+            // We haven't reached the new domain yet, break
+            break;
+          }
+          // we have entered the new domain, continue
+          currentStepIndex++;
+          steps.get(currentStepIndex).prompt();
+          continue;
+        }
+        currentNavigationStep = new NavigationStep(previousStep.location(), curStep.location());
       }
 
       // Check progress along current step
@@ -81,11 +93,9 @@ public class NavigationSession implements NavigationProgress {
         return false;
       }
       // move on to next step
-      int previousStepIndex = currentStepIndex;
       currentStepIndex++;
       currentStepProgress = 0;
-      currentNavigationStep = new NavigationStep(steps.get(previousStepIndex).location(),
-          steps.get(currentStepIndex).location());
+      currentNavigationStep = null;
       steps.get(currentStepIndex).prompt();
     } while (true);
 

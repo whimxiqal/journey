@@ -13,6 +13,9 @@ public class NavigationStep {
   private final Cell destination;
 
   public NavigationStep(Cell origin, Cell destination) {
+    if (origin.domain() != destination.domain()) {
+      throw new IllegalArgumentException("Origin and destination must have the same domain");
+    }
     this.domain = origin.domain();
     this.startVector = new Vector(origin.blockX(), origin.blockY(), origin.blockZ());
     this.path = new Vector(destination.blockX() - origin.blockX(),
