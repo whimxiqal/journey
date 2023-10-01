@@ -35,9 +35,9 @@ public final class Messages {
   public static final MessageTemplate_0 COMMAND_ADMIN_PATH_CACHE_CLEAR = new MessageTemplate_0("journey.command.admin.path-cache.clear");
   public static final MessageTemplate_0 COMMAND_ADMIN_PORTAL_CACHE_CLEAR = new MessageTemplate_0("journey.command.admin.portal-cache.clear");
   public static final MessageTemplate_0 COMMAND_GUI_ERROR = new MessageTemplate_0("journey.command.gui-error");
+  public static final MessageTemplate_0 COMMAND_INCOMPLETE = new MessageTemplate_0("journey.command.incomplete");
   public static final MessageTemplate_0 COMMAND_INTERNAL_ERROR = new MessageTemplate_0("journey.command.internal-error");
   public static final MessageTemplate_1 COMMAND_INVALID_INPUT = new MessageTemplate_1("journey.command.invalid-input");
-  public static final MessageTemplate_2 COMMAND_INVALID_INPUT_EXPECTED = new MessageTemplate_2("journey.command.invalid-input-expected");
   public static final MessageTemplate_0 COMMAND_NAVIGATION_CANCELED = new MessageTemplate_0("journey.command.navigation.canceled");
   public static final MessageTemplate_1 COMMAND_NAVIGATION_INVALID_OPTION = new MessageTemplate_1("journey.command.navigation.invalid-option");
   public static final MessageTemplate_2 COMMAND_NAVIGATION_INVALID_OPTIONS = new MessageTemplate_2("journey.command.navigation.invalid-options");

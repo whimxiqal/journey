@@ -64,4 +64,9 @@ public class CitizensScope implements Scope {
   public Optional<String> permission() {
     return Optional.of(NPC_SCOPE);
   }
+
+  @Override
+  public boolean isStrict() {
+    return true;
+  }
 }
