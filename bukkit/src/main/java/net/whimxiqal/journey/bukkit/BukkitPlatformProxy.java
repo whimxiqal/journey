@@ -53,7 +53,7 @@ import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.util.BStatsUtil;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.CustomChart;
 import org.bukkit.Bukkit;

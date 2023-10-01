@@ -36,7 +36,7 @@ import net.whimxiqal.journey.config.struct.ConfigFillPhase;
 import net.whimxiqal.journey.config.struct.ConfigItemsRule;
 import net.whimxiqal.journey.config.struct.ConfigItemType;
 import net.whimxiqal.journey.config.struct.ConfigStaticButton;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.serialize.SerializationException;

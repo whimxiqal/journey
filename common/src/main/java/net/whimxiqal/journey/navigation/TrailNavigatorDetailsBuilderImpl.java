@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 
 public class TrailNavigatorDetailsBuilderImpl extends NavigatorDetailsBuilderImpl<TrailNavigatorDetailsBuilderImpl> implements TrailNavigatorDetailsBuilder<TrailNavigatorDetailsBuilderImpl> {
 

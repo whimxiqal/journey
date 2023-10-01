@@ -2,7 +2,7 @@ package net.whimxiqal.journey.config.serializer;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 import net.whimxiqal.journey.util.ColorUtil;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;

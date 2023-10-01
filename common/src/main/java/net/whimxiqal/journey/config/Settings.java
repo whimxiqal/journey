@@ -36,7 +36,7 @@ import net.whimxiqal.journey.config.struct.ConfigItemsRule;
 import net.whimxiqal.journey.config.struct.ConfigStaticButton;
 import net.whimxiqal.journey.data.StorageMethod;
 import net.whimxiqal.journey.navigation.TrailNavigator;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 
 /**
  * An enumeration of all {@link Setting}s. No need to register anywhere, that's done dynamically.

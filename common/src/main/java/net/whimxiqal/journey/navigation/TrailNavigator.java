@@ -36,7 +36,7 @@ import net.whimxiqal.journey.navigation.option.NavigatorOption;
 import net.whimxiqal.journey.navigation.option.NavigatorOptionValues;
 import net.whimxiqal.journey.navigation.option.ParseNavigatorOptionException;
 import net.whimxiqal.journey.search.SearchStep;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 import net.whimxiqal.journey.util.ColorUtil;
 import net.whimxiqal.journey.util.Permission;
 

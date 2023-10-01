@@ -1,4 +1,4 @@
-package net.whimxiqal.journey.navigation.option;
+package net.whimxiqal.journey;
 
 /**
  * A simple color record.

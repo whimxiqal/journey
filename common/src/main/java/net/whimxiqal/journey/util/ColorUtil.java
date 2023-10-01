@@ -3,7 +3,7 @@ package net.whimxiqal.journey.util;
 import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 
 public final class ColorUtil {
 

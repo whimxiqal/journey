@@ -1,7 +1,7 @@
 package net.whimxiqal.journey.navigation;
 
 import java.util.Collection;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 
 /**
  * A builder for {@link NavigatorDetails} specifically for "trail navigators".

@@ -1,7 +1,7 @@
 package net.whimxiqal.journey.config;
 
 import java.util.List;
-import net.whimxiqal.journey.navigation.option.Color;
+import net.whimxiqal.journey.Color;
 import net.whimxiqal.journey.util.ColorUtil;
 import org.jetbrains.annotations.NotNull;
 
