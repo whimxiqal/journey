@@ -60,6 +60,7 @@ public enum Permission {
   FLAG_NAVIGATOR("journey.flag.navigator"),
   FLAG_NAVIGATOR_TRAIL("journey.flag.navigator.trail"),
   FLAG_NAVIGATOR_TRAIL_PARTICLE_OPTION("journey.flag.navigator.trail.particle"),
+  FLAG_NAVIGATOR_TRAIL_PARTICLE_OPTION("journey.flag.navigator.trail.color"),
   FLAG_NAVIGATOR_TRAIL_WIDTH_OPTION("journey.flag.navigator.trail.width"),
   FLAG_NAVIGATOR_TRAIL_DENSITY_OPTION("journey.flag.navigator.trail.density"),
   FLAG_PLAYER("journey.flag.player");

@@ -76,7 +76,7 @@ public class TrailNavigator implements Navigator {
         }
       })
       .defaultValue(Settings.DEFAULT_TRAIL_COLOR::getValue)
-      .permission(Permission.FLAG_NAVIGATOR_TRAIL_PARTICLE_OPTION.path())
+      .permission(Permission.FLAG_NAVIGATOR_TRAIL_COLOR_OPTION.path())
       .build();
   public static final String OPTION_ID_WIDTH = "width";
   public static final NavigatorOption<Double> OPTION_WIDTH = NavigatorOption
