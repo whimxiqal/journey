@@ -24,10 +24,10 @@
 package net.whimxiqal.journey;
 
 import java.nio.file.Path;
-import net.kyori.adventure.platform.AudienceProvider;
 import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.navigation.PlatformProxy;
+import net.whimxiqal.journey.proxy.AudienceProvider;
 import net.whimxiqal.journey.util.CommonLogger;
 
 public interface Proxy {
@@ -57,7 +57,6 @@ public interface Proxy {
 
   default void shutdown() {
     logger().shutdown();
-    audienceProvider().close();
 
     // shutdown scheduling manager last because most init/shutdown scripts need it
     schedulingManager().shutdown();

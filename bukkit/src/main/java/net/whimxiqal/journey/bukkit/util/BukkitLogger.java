@@ -24,8 +24,8 @@
 package net.whimxiqal.journey.bukkit.util;
 
 import java.util.logging.Logger;
-import net.whimxiqal.journey.util.CommonLogger;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
+import net.whimxiqal.journey.util.CommonLogger;
 
 /**
  * An implementation the simple common Journey logger.

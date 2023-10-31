@@ -1,0 +1,81 @@
+import org.spongepowered.gradle.plugin.config.PluginLoaders
+import org.spongepowered.plugin.metadata.model.PluginDependency
+
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'org.spongepowered.gradle.plugin' version '2.2.0'
+}
+
+repositories {
+    maven { url 'https://oss.sonatype.org/content/groups/public/' }
+    maven { url 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+sponge {
+    apiVersion '11.0.0-SNAPSHOT'
+    license 'MIT'
+    plugin("journey") {
+        loader {
+            name(PluginLoaders.JAVA_PLAIN)
+            version("1.0")
+        }
+        displayName("Journey")
+        version("0.0.0-BETA")
+        entrypoint("net.whimxiqal.journey.sponge.JourneySponge")
+        description("A GPS for Minecraft")
+        dependency("spongeapi") {
+            loadOrder(PluginDependency.LoadOrder.AFTER)
+            optional(false)
+        }
+        dependency("sqlite-loader") {
+            loadOrder(PluginDependency.LoadOrder.AFTER)
+            version("1.0-*")
+            optional(false)
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    implementation project(':sponge-api')
+
+    implementation 'org.bstats:bstats-sponge:3.0.2'
+    implementation 'net.whimxiqal.mantle:sponge9:0.1.0'
+    implementation 'org.xerial:sqlite-jdbc:3.43.2.1'
+}
+
+shadowJar {
+    archiveFileName = "Journey-Sponge-${project.version}.jar"
+
+    dependencies {
+        include(dependency('net.whimxiqal.journey:.*'))
+        include(dependency('net.whimxiqal.mantle:.*'))
+        include(dependency('org.antlr:antlr4-runtime'))
+        include(dependency('com.vmware.antlr4-c3:.*'))
+        include(dependency('org.bstats:.*'))
+        include(dependency('org.json:.*'))
+    }
+
+    relocate 'net.whimxiqal.mantle', 'net.whimxiqal.journey.libs.mantle'
+    relocate 'org.antlr', 'net.whimxiqal.journey.libs.antlr'
+    relocate 'com.vmware.antlr4c3', 'net.whimxiqal.journey.libs.c3'
+    relocate 'org.stringtemplate', 'net.whimxiqal.journey.libs.stringtemplate'
+    relocate 'org.bstats', 'net.whimxiqal.journey.libs.bstats'
+    relocate 'org.json', 'net.whimxiqal.journey.libs.json'
+}
+
+build {
+    jar.enabled = false
+    dependsOn 'shadowJar'
+}
+
+processResources {
+    // Rerun this every time to account for changed version
+    outputs.upToDateWhen {
+        false
+    }
+    filesMatching('plugin.yml') {
+        expand 'version': project.version
+    }
+}

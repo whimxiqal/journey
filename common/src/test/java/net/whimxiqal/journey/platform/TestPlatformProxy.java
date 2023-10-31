@@ -35,13 +35,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Color;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.chunk.ChunkId;
-import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
@@ -49,7 +49,6 @@ import net.whimxiqal.journey.proxy.TestJourneyBlock;
 import net.whimxiqal.journey.proxy.TestJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
-import net.whimxiqal.journey.Color;
 import org.bstats.charts.CustomChart;
 
 public class TestPlatformProxy implements PlatformProxy {
@@ -93,11 +92,6 @@ public class TestPlatformProxy implements PlatformProxy {
   @Override
   public Optional<Cell> entityCellLocation(UUID entityUuid) {
     return Optional.of(new Cell(0, 0, 0, WorldLoader.domain(0)));  // just say everything is at the origin
-  }
-
-  @Override
-  public Optional<Vector> entityVector(UUID entityUuid) {
-    return Optional.empty();
   }
 
   @Override

@@ -24,13 +24,12 @@
 package net.whimxiqal.journey;
 
 import java.nio.file.Path;
-import net.whimxiqal.journey.config.ConfigManager;
 import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.data.DataManagerImpl;
 import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.navigation.PlatformProxy;
+import net.whimxiqal.journey.proxy.AudienceProvider;
 import net.whimxiqal.journey.util.CommonLogger;
-import net.kyori.adventure.platform.AudienceProvider;
 
 public class ProxyImpl implements Proxy {
 
@@ -75,7 +74,7 @@ public class ProxyImpl implements Proxy {
   }
 
   @Override
-  public Path configPath  () {
+  public Path configPath() {
     return configPath;
   }
 

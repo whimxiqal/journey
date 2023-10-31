@@ -25,9 +25,7 @@ package net.whimxiqal.journey.bukkit;
 
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.platform.AudienceProvider;
-import net.kyori.adventure.text.flattener.ComponentFlattener;
+import net.whimxiqal.journey.proxy.AudienceProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -35,18 +33,8 @@ import org.jetbrains.annotations.NotNull;
 public class PaperAudiences implements AudienceProvider {
 
   @Override
-  public @NotNull Audience all() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public @NotNull Audience console() {
     return Bukkit.getConsoleSender();
-  }
-
-  @Override
-  public @NotNull Audience players() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -58,28 +46,4 @@ public class PaperAudiences implements AudienceProvider {
     return player;
   }
 
-  @Override
-  public @NotNull Audience permission(@NotNull String permission) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public @NotNull Audience world(@NotNull Key world) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public @NotNull Audience server(@NotNull String serverName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public @NotNull ComponentFlattener flattener() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void close() {
-    // ignore
-  }
 }

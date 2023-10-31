@@ -96,6 +96,7 @@ public final class NetherManager {
         .min(Comparator.comparingDouble(group ->
             group.tunnelLocation().distanceToSquared(origin)));
     if (originGroup.isEmpty()) {
+      Journey.logger().debug("[Nether Manager] Could not find a tunnel's origin nether portal near " + origin);
       return;  // We can't find the origin portal
     }
     lookForPortal(destination, originGroup.get(), 0);
@@ -117,11 +118,13 @@ public final class NetherManager {
           .stream()
           .findFirst();
       if (destinationGroup.isEmpty() || destinationGroup.get().blocks().isEmpty()) {
+        Journey.logger().debug("[Nether Manager] Could not find a tunnel's destination nether portal near " + resultantLocation.get());
         return;  // We can't find the destination portal
       }
 
       if (originGroup.tunnelLocation().domain() == destinationGroup.get().tunnelLocation().domain()) {
         // If they're in the same world, we have the same portal! We haven't actually teleported yet. Try again
+        Journey.logger().debug("[Nether Manager] Trying to find portal tunnel but server isn't yet in a different world. Trying again.");
         lookForPortal(resultantLocation, originGroup, count + 1);
         return;
       }
