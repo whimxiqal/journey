@@ -23,23 +23,23 @@
 
 package net.whimxiqal.journey.util;
 
-import java.util.function.Consumer;
 import net.whimxiqal.journey.Journey;
 import org.bstats.charts.CustomChart;
 import org.bstats.charts.SingleLineChart;
 
 public class BStatsUtil {
 
-  public static final int BSTATS_ID = 17665;
   public static final String SEARCHES_PER_HOUR_ID = "searches";
   public static final String BLOCKS_TRAVELLED_PER_HOUR_ID = "blocks_travelled";
 
   private BStatsUtil() {
   }
 
-  public static void register(Consumer<CustomChart> chartConsumer) {
-    chartConsumer.accept(new SingleLineChart(SEARCHES_PER_HOUR_ID, () -> Journey.get().statsManager().searches()));
-    chartConsumer.accept(new SingleLineChart(BLOCKS_TRAVELLED_PER_HOUR_ID, () -> Journey.get().statsManager().blocksTravelled()));
+  public static CustomChart[] charts() {
+    return new CustomChart[]{
+        new SingleLineChart(SEARCHES_PER_HOUR_ID, () -> Journey.get().statsManager().searches()),
+        new SingleLineChart(BLOCKS_TRAVELLED_PER_HOUR_ID, () -> Journey.get().statsManager().blocksTravelled())
+    };
   }
 
 }

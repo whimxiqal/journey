@@ -1,0 +1,57 @@
+import org.spongepowered.gradle.plugin.config.PluginLoaders
+import org.spongepowered.plugin.metadata.model.PluginDependency
+
+plugins {
+    id 'java'
+    id 'org.spongepowered.gradle.plugin' version '2.2.0'
+}
+
+version = "1.2.0"
+
+repositories {
+    maven { url 'https://www.jitpack.io' }
+}
+
+sponge {
+    apiVersion '11.0.0-SNAPSHOT'
+    license 'MIT'
+    plugin("journey-essentialss") {
+        loader {
+            name(PluginLoaders.JAVA_PLAIN)
+            version("1.0")
+        }
+        displayName("JourneyEssentialsS")
+        version(version.toString())
+        entrypoint("net.whimxiqal.journey.integration.essentialss.JourneyEssentialsS")
+        description("A plugin to connect Journey to EssentialsS")
+        dependency("spongeapi") {
+            loadOrder(PluginDependency.LoadOrder.AFTER)
+            optional(false)
+        }
+        dependency("journey") {
+            loadOrder(PluginDependency.LoadOrder.AFTER)
+            version("1.2.0")
+            optional(false)
+        }
+        dependency("essentials-s") {
+            loadOrder(PluginDependency.LoadOrder.AFTER)
+            version("0.0.8")
+            optional(false)
+        }
+    }
+}
+
+dependencies {
+    implementation project(':sponge-api')
+    implementation 'com.github.EssentialsS:EssentialsS:main-SNAPSHOT'
+}
+
+processResources {
+    // Rerun this every time to account for changed version
+    outputs.upToDateWhen {
+        false
+    }
+    filesMatching('plugin.yml') {
+        expand 'version': project.version
+    }
+}

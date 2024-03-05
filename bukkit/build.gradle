@@ -12,28 +12,8 @@ dependencies {
     implementation project(':common')
     implementation project(':bukkit-api')
 
-    compileOnly 'io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT'
-
-    // Tests
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
-    testImplementation 'com.google.guava:guava:31.0.1-jre'
-
-    // Annotations
-    shadow 'org.jetbrains:annotations:22.0.0'
-    testImplementation 'org.jetbrains:annotations:22.0.0'
-
-    // Lombok
-    shadow 'org.projectlombok:lombok:1.18.22'
-    testImplementation('org.projectlombok:lombok:1.18.22')
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
-
-    implementation 'org.bstats:bstats-bukkit:3.0.0'
-
+    implementation 'org.bstats:bstats-bukkit:3.0.1'
     implementation 'net.whimxiqal.mantle:paper:0.1.0-SNAPSHOT'
-
-    implementation "net.kyori:adventure-platform-api:4.1.2"
-
     implementation "dev.triumphteam:triumph-gui:3.1.2"
 }
 
@@ -45,7 +25,6 @@ shadowJar {
         include(dependency('net.whimxiqal.mantle:.*'))
         include(dependency('org.antlr:antlr4-runtime'))
         include(dependency('com.vmware.antlr4-c3:.*'))
-        include(dependency('net.kyori:adventure-platform.*'))
         include(dependency('org.bstats:.*'))
         include(dependency('dev.triumphteam:.*'))
         include(dependency('com.zaxxer:.*'))

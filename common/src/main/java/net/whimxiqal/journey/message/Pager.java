@@ -61,11 +61,6 @@ public class Pager {
         .collect(Collectors.toList()));
   }
 
-  public Pager add(Component line) {
-    this.components.add(line);
-    return this;
-  }
-
   /**
    * Send page to the audience.
    *
@@ -77,14 +72,16 @@ public class Pager {
     if (page < 1) {
       throw new IllegalArgumentException("Page must be greater than 0");
     }
-    page = Math.min(page, totalPages);
+    page = Math.min(page, totalPages);  // totalPages might be 0
     audience.sendMessage(header.append(Component.text(" % ").color(Formatter.DARK))
         .append(Component.text("page ").color(Formatter.DULL))
         .append(Formatter.accent(Integer.toString(page)))
         .append(Component.text(" / " + totalPages).color(Formatter.DULL)));
-    components.subList((page - 1) * MESSAGES_PER_PAGE,
-            Math.min(components.size(), page * MESSAGES_PER_PAGE))
-        .forEach(audience::sendMessage);
+    if (page > 0) {
+      components.subList((page - 1) * MESSAGES_PER_PAGE,
+              Math.min(components.size(), page * MESSAGES_PER_PAGE))
+          .forEach(audience::sendMessage);
+    }
   }
 
 }

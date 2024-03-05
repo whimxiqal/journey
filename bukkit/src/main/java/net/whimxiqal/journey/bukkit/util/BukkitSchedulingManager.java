@@ -26,8 +26,8 @@ package net.whimxiqal.journey.bukkit.util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.bukkit.JourneyBukkit;
+import net.whimxiqal.journey.manager.SchedulingManager;
 import org.bukkit.Bukkit;
 
 public class BukkitSchedulingManager implements SchedulingManager {

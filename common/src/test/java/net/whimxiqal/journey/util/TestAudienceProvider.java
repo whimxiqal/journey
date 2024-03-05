@@ -25,27 +25,15 @@ package net.whimxiqal.journey.util;
 
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.platform.AudienceProvider;
-import net.kyori.adventure.text.flattener.ComponentFlattener;
 import net.whimxiqal.journey.JourneyTestHarness;
+import net.whimxiqal.journey.proxy.AudienceProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class TestAudienceProvider implements AudienceProvider {
 
   @Override
-  public @NotNull Audience all() {
-    return Audience.empty();
-  }
-
-  @Override
   public @NotNull Audience console() {
     return new ConsoleAudience();
-  }
-
-  @Override
-  public @NotNull Audience players() {
-    return Audience.empty();
   }
 
   @Override
@@ -56,28 +44,4 @@ public class TestAudienceProvider implements AudienceProvider {
     return Audience.empty();
   }
 
-  @Override
-  public @NotNull Audience permission(@NotNull String permission) {
-    return Audience.empty();
-  }
-
-  @Override
-  public @NotNull Audience world(@NotNull Key world) {
-    return Audience.empty();
-  }
-
-  @Override
-  public @NotNull Audience server(@NotNull String serverName) {
-    return Audience.empty();
-  }
-
-  @Override
-  public @NotNull ComponentFlattener flattener() {
-    return ComponentFlattener.basic();
-  }
-
-  @Override
-  public void close() {
-    // do nothing
-  }
 }

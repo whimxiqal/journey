@@ -24,6 +24,7 @@
 package net.whimxiqal.journey;
 
 import java.io.IOException;
+import java.util.Arrays;
 import net.whimxiqal.journey.chunk.CentralChunkCache;
 import net.whimxiqal.journey.config.ConfigManager;
 import net.whimxiqal.journey.config.Settings;
@@ -120,7 +121,7 @@ public final class Journey {
     locationManager.initialize();
     scopeManager.initialize();
     statsManager.initialize();
-    BStatsUtil.register(proxy.platform().bStatsChartConsumer());
+    Arrays.stream(BStatsUtil.charts()).forEach(proxy.platform()::consumeChart);
     centralChunkCache.initialize();
     animationManager.initialize();
     cachedDataProvider.initialize();

@@ -25,6 +25,7 @@ package net.whimxiqal.journey.bukkit;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import net.whimxiqal.journey.AssetVersion;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
 import net.whimxiqal.journey.bukkit.listener.PluginDisableListener;
@@ -82,6 +83,7 @@ public final class JourneyBukkit extends JavaPlugin {
     proxy.schedulingManager(new BukkitSchedulingManager());
     proxy.platform(new BukkitPlatformProxy());
     proxy.version(getDescription().getVersion());
+    proxy.assetVersion(AssetVersion.MINECRAFT_17);
 
     // Initialize common Journey (after proxy is set up)
     boolean failed = false;

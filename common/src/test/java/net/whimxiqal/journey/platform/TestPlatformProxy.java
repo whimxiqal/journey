@@ -32,16 +32,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Color;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.chunk.ChunkId;
-import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.navigation.PlatformProxy;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
@@ -49,7 +48,6 @@ import net.whimxiqal.journey.proxy.TestJourneyBlock;
 import net.whimxiqal.journey.proxy.TestJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
-import net.whimxiqal.journey.Color;
 import org.bstats.charts.CustomChart;
 
 public class TestPlatformProxy implements PlatformProxy {
@@ -96,11 +94,6 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Optional<Vector> entityVector(UUID entityUuid) {
-    return Optional.empty();
-  }
-
-  @Override
   public void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination) {
     // do nothing extra here
   }
@@ -127,8 +120,8 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Consumer<CustomChart> bStatsChartConsumer() {
-    return chart -> {/* nothing */};
+  public void consumeChart(CustomChart chart) {
+    // do nothing
   }
 
   @Override

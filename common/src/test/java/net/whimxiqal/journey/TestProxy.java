@@ -26,12 +26,12 @@ package net.whimxiqal.journey;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import net.kyori.adventure.platform.AudienceProvider;
 import net.whimxiqal.journey.data.DataManager;
 import net.whimxiqal.journey.data.TestDataManager;
 import net.whimxiqal.journey.manager.SchedulingManager;
 import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.PlatformProxy;
+import net.whimxiqal.journey.proxy.AudienceProvider;
 import net.whimxiqal.journey.util.CommonLogger;
 import net.whimxiqal.journey.util.TestAudienceProvider;
 import net.whimxiqal.journey.util.TestLogger;
@@ -94,6 +94,11 @@ public class TestProxy implements Proxy {
   @Override
   public String version() {
     return "0";
+  }
+
+  @Override
+  public AssetVersion assetVersion() {
+    return AssetVersion.MINECRAFT_17;
   }
 
 }

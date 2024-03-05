@@ -31,18 +31,17 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Color;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.chunk.BlockProvider;
 import net.whimxiqal.journey.chunk.ChunkCacheBlockProvider;
 import net.whimxiqal.journey.chunk.ChunkId;
-import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
-import net.whimxiqal.journey.Color;
 import org.bstats.charts.CustomChart;
 
 /**
@@ -89,8 +88,6 @@ public interface PlatformProxy extends BlockProvider {
 
   Optional<Cell> entityCellLocation(UUID entityUuid);
 
-  Optional<Vector> entityVector(UUID entityUuid);
-
   void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination);
 
   void sendAnimationBlock(UUID player, Cell location);
@@ -101,7 +98,7 @@ public interface PlatformProxy extends BlockProvider {
 
   boolean sendGui(JourneyPlayer source);
 
-  Consumer<CustomChart> bStatsChartConsumer();
+  void consumeChart(CustomChart chart);
 
   Map<String, Map<String, Integer>> domainResourceKeys();
 
