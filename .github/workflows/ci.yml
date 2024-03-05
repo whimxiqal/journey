@@ -78,6 +78,7 @@ jobs:
           name: journey-artifacts
           path: |
             Journey-Bukkit-*.jar
+            Journey-Sponge-*.jar
             JourneyCitizens-*.jar
             JourneyEssentials-*.jar
             JourneyNotQuests-*.jar

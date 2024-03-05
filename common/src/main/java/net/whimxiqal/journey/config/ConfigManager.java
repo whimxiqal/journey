@@ -28,8 +28,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.AssetVersion;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.serializer.ColorSerializer;
 import net.whimxiqal.journey.config.serializer.ComponentSerializer;
 import net.whimxiqal.journey.config.struct.ConfigFillPhase;
@@ -70,8 +74,25 @@ public class ConfigManager {
         throw new RuntimeException("Couldn't get config.yml resource");
       }
       Files.copy(resourceUrl.openConnection().getInputStream(), path);
+      if (Journey.get().proxy().assetVersion() == AssetVersion.MINECRAFT_16_5) {
+        downgradeConfig(path);
+      }
     }
     load();
+  }
+
+  public static int downgradeConfig(Path path) throws IOException {
+    List<String> newLines = new LinkedList<>();
+    int skipped = 0;
+    for (String line : Files.readAllLines(path)) {
+      if (line.contains(" - glow")) {
+        skipped++;
+        continue;
+      }
+      newLines.add(line);
+    }
+    Files.write(path, newLines);
+    return skipped;
   }
 
   /**

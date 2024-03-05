@@ -48,6 +48,8 @@ public interface Proxy {
 
   String version();
 
+  AssetVersion assetVersion();
+
   default void initialize() {
     // initialize scheduling manager first because most init/shutdown scripts need it
     schedulingManager().initialize();

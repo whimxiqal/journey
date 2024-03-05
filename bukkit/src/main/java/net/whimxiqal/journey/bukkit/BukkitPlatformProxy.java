@@ -52,7 +52,6 @@ import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.proxy.UnavailableJourneyChunk;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
-import net.whimxiqal.journey.util.BStatsUtil;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.CustomChart;
 import org.bukkit.Bukkit;
@@ -65,14 +64,14 @@ import org.bukkit.entity.Player;
 
 public class BukkitPlatformProxy implements PlatformProxy {
 
+  public static final int BSTATS_ID = 17665;
   private final BlockData animationBlockData = Material.WHITE_STAINED_GLASS.createBlockData();
-
   private final Metrics metrics;
   private List<String> cachedParticleTypeList;
   private Map<String, Particle> cachedParticleTypeMap;
 
   public BukkitPlatformProxy() {
-    metrics = new Metrics(JourneyBukkit.get(), BStatsUtil.BSTATS_ID);
+    metrics = new Metrics(JourneyBukkit.get(), BSTATS_ID);
   }
 
   @Override
@@ -181,8 +180,8 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Consumer<CustomChart> bStatsChartConsumer() {
-    return metrics::addCustomChart;
+  public void consumeChart(CustomChart chart) {
+    metrics.addCustomChart(chart);
   }
 
   @Override

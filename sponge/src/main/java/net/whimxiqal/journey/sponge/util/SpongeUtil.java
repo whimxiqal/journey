@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import net.whimxiqal.journey.AssetVersion;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.math.Vector;
@@ -56,7 +57,10 @@ public final class SpongeUtil {
     if (isPassable(state)) {
       return true;
     }
-    return MaterialGroups.isVerticallySpecialPassable(state.type());
+    return switch (Journey.get().proxy().assetVersion()) {
+      case MINECRAFT_16_5 -> MaterialGroups_16_5.isVerticallySpecialPassable(state.type());
+      case MINECRAFT_17 -> MaterialGroups_17.isVerticallySpecialPassable(state.type());
+    };
   }
 
   /**
@@ -71,7 +75,10 @@ public final class SpongeUtil {
     if (isPassable(state)) {
       return true;
     }
-    return MaterialGroups.isLaterallySpecialPassable(state.type());
+    return switch (Journey.get().proxy().assetVersion()) {
+      case MINECRAFT_16_5 -> MaterialGroups_16_5.isLaterallySpecialPassable(state.type());
+      case MINECRAFT_17 -> MaterialGroups_17.isLaterallySpecialPassable(state.type());
+    };
   }
 
   /**
@@ -87,7 +94,10 @@ public final class SpongeUtil {
     if (state.type().equals(BlockTypes.IRON_DOOR.get()) && flagSet.getValueFor(Flags.DOOR)) {
       return true;
     }
-    return MaterialGroups.isLaterallySpecialPassable(state.type());
+    return switch (Journey.get().proxy().assetVersion()) {
+      case MINECRAFT_16_5 -> MaterialGroups_16_5.isLaterallySpecialPassable(state.type());
+      case MINECRAFT_17 -> MaterialGroups_17.isLaterallySpecialPassable(state.type());
+    };
   }
 
   /**
@@ -98,7 +108,12 @@ public final class SpongeUtil {
    */
   public static boolean isPassable(BlockState state) {
     // NOTE: snow is unhandled
-    return state.getOrElse(Keys.IS_PASSABLE, false);
+    return state.getOrElse(Keys.IS_PASSABLE, false)
+        // we force water to be non-passable for stupid reasons.
+        // At the moment, WALK mode lets us walk directly over water and SWIM mode lets us go through water.
+        // Together, this is pretty good, but ends up with a few weird effects.
+        // Eventually, I want to overhaul modes in general so I'll just do it the same way JourneyBukkit does it here.
+        && !state.type().equals(BlockTypes.WATER.get());
   }
 
   /**

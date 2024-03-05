@@ -96,4 +96,9 @@ public class TestProxy implements Proxy {
     return "0";
   }
 
+  @Override
+  public AssetVersion assetVersion() {
+    return AssetVersion.MINECRAFT_17;
+  }
+
 }

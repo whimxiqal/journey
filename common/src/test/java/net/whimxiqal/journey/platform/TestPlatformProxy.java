@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Color;
@@ -121,8 +120,8 @@ public class TestPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Consumer<CustomChart> bStatsChartConsumer() {
-    return chart -> {/* nothing */};
+  public void consumeChart(CustomChart chart) {
+    // do nothing
   }
 
   @Override

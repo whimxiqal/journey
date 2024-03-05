@@ -25,32 +25,43 @@ package net.whimxiqal.journey.sponge;
 
 import com.google.inject.Inject;
 import java.nio.file.Path;
+import net.whimxiqal.journey.AssetVersion;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.ProxyImpl;
-import net.whimxiqal.journey.command.JourneyConnectorProvider;
 import net.whimxiqal.journey.sponge.listener.DeathListener;
 import net.whimxiqal.journey.sponge.listener.NetherListener;
 import net.whimxiqal.journey.sponge.listener.PlayerListener;
 import net.whimxiqal.journey.sponge.util.SpongeLogger;
 import net.whimxiqal.journey.sponge.util.SpongeSchedulingManager;
-import net.whimxiqal.mantle.common.CommandRegistrar;
-import net.whimxiqal.mantle.sponge9.Sponge9RegistrarProvider;
 import org.apache.logging.log4j.Logger;
+import org.bstats.sponge.Metrics;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.command.Command;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.lifecycle.RegisterCommandEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent;
 import org.spongepowered.plugin.PluginContainer;
-import org.spongepowered.plugin.builtin.jvm.Plugin;
 
-@Plugin("journey")
-public final class JourneySponge {
+public class JourneySponge {
+
+  public static final int BSTATS_ID = 20197;
 
   private static JourneySponge instance;
+  protected PluginContainer pluginContainer;
+  private final Logger logger;
+  private final Path configDir;
+  private final Metrics metrics;
+
+  JourneySponge(Logger logger,
+                PluginContainer pluginContainer,
+                Path configDir,
+                Metrics.Factory metricsFactory) {
+    this.logger = logger;
+    this.pluginContainer = pluginContainer;
+    this.configDir = configDir;
+    this.metrics = metricsFactory.make(BSTATS_ID);
+  }
 
   /**
    * Get the instance that is currently run on the Spigot server.
@@ -61,18 +72,7 @@ public final class JourneySponge {
     return instance;
   }
 
-  @Inject
-  private Logger logger;
-
-  @Inject
-  private PluginContainer pluginContainer;
-
-  @Inject
-  @ConfigDir(sharedRoot = false)
-  private Path configDir;
-
-  @Listener
-  public void onStartedServer(final StartedEngineEvent<Server> event) {
+  public void onStartedServer(final StartedEngineEvent<Server> event, AssetVersion assetVersion) {
     instance = this;
     logger.info("Initializing Journey...");
 
@@ -92,8 +92,9 @@ public final class JourneySponge {
     proxy.audienceProvider(new SpongeAudiences());
     proxy.configPath(configDir.resolve("config.yml"));
     proxy.schedulingManager(new SpongeSchedulingManager());
-    proxy.platform(new SpongePlatformProxy());
+    proxy.platform(new SpongePlatformProxy(metrics));
     proxy.version(pluginContainer.metadata().version().toString());
+    proxy.assetVersion(assetVersion);
 
     // Initialize common Journey (after proxy is set up)
     boolean failed = false;
@@ -128,13 +129,6 @@ public final class JourneySponge {
 //              .map(Plugin::getName)
 //              .collect(Collectors.toSet()));
 //    }
-  }
-
-  @Listener
-  public void onRegisterCommand(RegisterCommandEvent<Command.Raw> event) {
-    // Register command
-    CommandRegistrar registrar = Sponge9RegistrarProvider.get(pluginContainer, event);
-    registrar.register(JourneyConnectorProvider.connector());
   }
 
   @Listener

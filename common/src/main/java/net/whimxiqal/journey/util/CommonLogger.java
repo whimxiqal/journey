@@ -34,7 +34,7 @@ import net.whimxiqal.journey.Journey;
  */
 public abstract class CommonLogger {
 
-  private static final int MAX_LOGS_PER_TICK = 100;
+  private static final int MAX_LOGS_PER_TICK = 1000;
   private final Queue<Message> messageQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<LogLevel> logLevel = new AtomicReference<>(LogLevel.INFO);
   private UUID messageTaskId;

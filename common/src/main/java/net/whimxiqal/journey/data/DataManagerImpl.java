@@ -32,6 +32,7 @@ import net.whimxiqal.journey.data.sql.SqlPublicWaypointManager;
 import net.whimxiqal.journey.data.sql.SqlTunnelDataManager;
 import net.whimxiqal.journey.data.sql.mysql.MySqlConnectionController;
 import net.whimxiqal.journey.data.sql.sqlite.SqliteConnectionController;
+import net.whimxiqal.journey.data.sql.sqlite.SqlitePathRecordManager;
 import net.whimxiqal.journey.data.version.DataVersionHandler;
 import net.whimxiqal.journey.data.version.MysqlDataVersionHandler;
 import net.whimxiqal.journey.data.version.SqliteDataVersionHandler;
@@ -62,7 +63,7 @@ public class DataManagerImpl implements DataManager {
           SqliteConnectionController sqliteController = new SqliteConnectionController(Journey.get().proxy().dataFolder().resolve(DATABASE_FILE_NAME).toString());
           personalWaypointManager = new SqlPersonalWaypointManager(sqliteController);
           publicWaypointManager = new SqlPublicWaypointManager(sqliteController);
-          pathRecordManager = new SqlPathRecordManager(sqliteController);
+          pathRecordManager = new SqlitePathRecordManager(sqliteController);  // our sqlite manager will not support records
           tunnelDataManager = new SqlTunnelDataManager(sqliteController);
           versionHandler = new SqliteDataVersionHandler(sqliteController);
         }

@@ -144,7 +144,6 @@ public class SchematicSearchTests {
         return Optional.empty();
       }
     });
-    Mockito.when(schematicPlatformProxy.bStatsChartConsumer()).thenReturn(chart -> {});
     TestProxy proxy = new TestProxy(schematicPlatformProxy);
     Journey.get().registerProxy(proxy);
 

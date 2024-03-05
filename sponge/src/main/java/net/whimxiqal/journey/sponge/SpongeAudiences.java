@@ -33,7 +33,7 @@ public class SpongeAudiences implements AudienceProvider {
 
   @Override
   public @NotNull Audience console() {
-    return Sponge.systemSubject();
+    return Sponge.game().systemSubject();
   }
 
   @Override

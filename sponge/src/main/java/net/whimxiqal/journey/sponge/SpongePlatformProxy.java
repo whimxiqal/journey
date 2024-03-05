@@ -49,6 +49,7 @@ import net.whimxiqal.journey.sponge.chunk.SpongeSessionJourneyChunk;
 import net.whimxiqal.journey.sponge.gui.SpongeJourneyGui;
 import net.whimxiqal.journey.sponge.util.SpongeUtil;
 import org.bstats.charts.CustomChart;
+import org.bstats.sponge.Metrics;
 import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockState;
@@ -68,6 +69,12 @@ import org.spongepowered.api.world.server.ServerWorld;
 import org.spongepowered.math.vector.Vector3d;
 
 public class SpongePlatformProxy implements PlatformProxy {
+
+  private final Metrics metrics;
+
+  public SpongePlatformProxy(Metrics metrics) {
+    this.metrics = metrics;
+  }
 
   @Override
   public CompletableFuture<JourneyChunk> toChunk(ChunkId chunkId, boolean generate) {
@@ -91,16 +98,23 @@ public class SpongePlatformProxy implements PlatformProxy {
 
   @Override
   public void spawnParticle(UUID playerUuid, String particleName, Color color, int domain, double x, double y, double z) {
-    Optional<RegistryEntry<ParticleType>> type = ParticleTypes.registry().findEntry(ResourceKey.minecraft(particleName));
-    if (type.isEmpty()) {
-      return;
+    ParticleType type;
+    if (particleName.equals("redstone")) {
+      // special case for backporting. Technically, all "redstone" should be "dust"
+      type = ParticleTypes.DUST.get();
+    } else {
+      Optional<RegistryEntry<ParticleType>> registryEntry = ParticleTypes.registry().findEntry(ResourceKey.minecraft(particleName));
+      if (registryEntry.isEmpty()) {
+        return;
+      }
+      type = registryEntry.get().value();
     }
     Optional<ServerPlayer> player = Sponge.server().player(playerUuid);
     if (player.isEmpty()) {
       return;
     }
-    ParticleEffect.Builder builder = ParticleEffect.builder().type(type.get().value());
-    if (type.get().value().equals(ParticleTypes.DUST.get())) {
+    ParticleEffect.Builder builder = ParticleEffect.builder().type(type);
+    if (type.equals(ParticleTypes.DUST.get())) {
       builder.option(ParticleOptions.COLOR, org.spongepowered.api.util.Color.ofRgb(color.red(), color.green(), color.blue()));
     }
     player.get().spawnParticles(builder.build(), Vector3d.from(x, y, z));
@@ -180,9 +194,8 @@ public class SpongePlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Consumer<CustomChart> bStatsChartConsumer() {
-    return chart -> {
-    };
+  public void consumeChart(CustomChart chart) {
+    metrics.addCustomChart(chart);
   }
 
   @Override

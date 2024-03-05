@@ -29,9 +29,9 @@ import org.spongepowered.api.block.BlockTypes;
 /**
  * A utility class to enumerate out groups of materials for classification purposes.
  */
-public final class MaterialGroups {
+public final class MaterialGroups_17 {
 
-  private MaterialGroups() {
+  private MaterialGroups_17() {
   }
 
   public static boolean isVerticallySpecialPassable(BlockType type) {
@@ -99,6 +99,14 @@ public final class MaterialGroups {
         || type.equals(BlockTypes.RED_SANDSTONE_WALL.get())
         || type.equals(BlockTypes.SANDSTONE_WALL.get())
         || type.equals(BlockTypes.STONE_BRICK_WALL.get());
+  }
+
+  public static boolean isClimbable(BlockType type) {
+    return type.equals(BlockTypes.LADDER.get())
+        || type.equals(BlockTypes.VINE.get())
+        || type.equals(BlockTypes.CAVE_VINES.get())
+        || type.equals(BlockTypes.TWISTING_VINES.get())
+        || type.equals(BlockTypes.WEEPING_VINES.get());
   }
 
 }

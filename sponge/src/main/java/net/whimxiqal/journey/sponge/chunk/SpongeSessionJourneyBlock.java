@@ -25,10 +25,12 @@ package net.whimxiqal.journey.sponge.chunk;
 
 import java.util.Optional;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyDoor;
 import net.whimxiqal.journey.search.flag.FlagSet;
-import net.whimxiqal.journey.sponge.util.MaterialGroups;
+import net.whimxiqal.journey.sponge.util.MaterialGroups_16_5;
+import net.whimxiqal.journey.sponge.util.MaterialGroups_17;
 import net.whimxiqal.journey.sponge.util.SpongeUtil;
 import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockTypes;
@@ -81,21 +83,28 @@ public record SpongeSessionJourneyBlock(Cell cell,
 
   @Override
   public boolean isClimbable() {
-    return state.type().equals(BlockTypes.LADDER.get())
-        || state.type().equals(BlockTypes.VINE.get())
-        || state.type().equals(BlockTypes.CAVE_VINES.get())
-        || state.type().equals(BlockTypes.TWISTING_VINES.get())
-        || state.type().equals(BlockTypes.WEEPING_VINES.get());
+    return switch (Journey.get().proxy().assetVersion()) {
+      case MINECRAFT_16_5 -> MaterialGroups_16_5.isClimbable(state.type());
+      case MINECRAFT_17 -> MaterialGroups_17.isClimbable(state.type());
+    };
   }
 
   @Override
   public boolean isPassable() {
-    return !MaterialGroups.isTwoBlocksTall(stateBelow.type()) && state.getOrElse(Keys.IS_PASSABLE, false);
+    boolean belowTwoBlocksTall = switch (Journey.get().proxy().assetVersion()) {
+      case MINECRAFT_16_5 -> MaterialGroups_16_5.isTwoBlocksTall(stateBelow.type());
+      case MINECRAFT_17 -> MaterialGroups_17.isTwoBlocksTall(stateBelow.type());
+    };
+    return !belowTwoBlocksTall && SpongeUtil.isPassable(state);
   }
 
   @Override
   public boolean isLaterallyPassable() {
-    return !MaterialGroups.isTwoBlocksTall(stateBelow.type()) && SpongeUtil.isLaterallyPassable(state, flagSet);
+    boolean belowTwoBlocksTall = switch (Journey.get().proxy().assetVersion()) {
+      case MINECRAFT_16_5 -> MaterialGroups_16_5.isTwoBlocksTall(stateBelow.type());
+      case MINECRAFT_17 -> MaterialGroups_17.isTwoBlocksTall(stateBelow.type());
+    };
+    return !belowTwoBlocksTall && SpongeUtil.isLaterallyPassable(state, flagSet);
   }
 
   @Override
@@ -120,7 +129,10 @@ public record SpongeSessionJourneyBlock(Cell cell,
 
   @Override
   public double height() {
-    return MaterialGroups.height(state.type());
+    return switch (Journey.get().proxy().assetVersion()) {
+      case MINECRAFT_16_5 -> MaterialGroups_16_5.height(state.type());
+      case MINECRAFT_17 -> MaterialGroups_17.height(state.type());
+    };
   }
 
   @Override

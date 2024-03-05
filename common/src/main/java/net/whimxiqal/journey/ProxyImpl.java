@@ -41,6 +41,7 @@ public class ProxyImpl implements Proxy {
   private DataManager dataManager = new DataManagerImpl();  // default data manager
   private PlatformProxy platformProxy;
   private String version;
+  private AssetVersion assetVersion;
 
   public void logger(CommonLogger logger) {
     this.logger = logger;
@@ -117,4 +118,12 @@ public class ProxyImpl implements Proxy {
     return version;
   }
 
+  public void assetVersion(AssetVersion assetVersion) {
+    this.assetVersion = assetVersion;
+  }
+
+  @Override
+  public AssetVersion assetVersion() {
+    return assetVersion;
+  }
 }

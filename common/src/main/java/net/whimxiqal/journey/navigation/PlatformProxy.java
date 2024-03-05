@@ -98,7 +98,7 @@ public interface PlatformProxy extends BlockProvider {
 
   boolean sendGui(JourneyPlayer source);
 
-  Consumer<CustomChart> bStatsChartConsumer();
+  void consumeChart(CustomChart chart);
 
   Map<String, Map<String, Integer>> domainResourceKeys();
 
