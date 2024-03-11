@@ -31,16 +31,18 @@ import net.whimxiqal.journey.proxy.JourneyBlock;
 import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.search.flag.FlagSet;
 
-public record SchematicChunk(ChunkId chunkId, Clipboard clipboard) implements JourneyChunk {
+public class SchematicChunk extends JourneyChunk {
 
-  @Override
-  public ChunkId id() {
-    return chunkId;
+  private final Clipboard clipboard;
+
+  public SchematicChunk(ChunkId id, Clipboard clipboard) {
+    super(id);
+    this.clipboard = clipboard;
   }
 
   @Override
-  public JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
-    Cell cell = JourneyChunk.toCell(chunkId, x, y, z);
+  public JourneyBlock realBlock(int x, int y, int z, FlagSet flagSet) {
+    Cell cell = toCell(x, y, z);
     return new SchematicBlock(cell, clipboard.getBlock(BlockVector3.at(cell.blockX(), cell.blockY(), cell.blockZ())).getBlockType());
   }
 }

@@ -27,16 +27,15 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.chunk.ChunkId;
 import net.whimxiqal.journey.search.flag.FlagSet;
 
-public record TestJourneyChunk(ChunkId chunkId) implements JourneyChunk {
+public class TestJourneyChunk extends JourneyChunk {
 
-  @Override
-  public ChunkId id() {
-    return chunkId;
+  public TestJourneyChunk(ChunkId id) {
+    super(id);
   }
 
   @Override
-  public JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
-    return new TestJourneyBlock(new Cell((chunkId.x() * 16) + x, y, chunkId.z() * 16 + z, chunkId.domain()));
+  public JourneyBlock realBlock(int x, int y, int z, FlagSet flagSet) {
+    return new TestJourneyBlock(new Cell((id().x() * 16) + x, y, id().z() * 16 + z, id().domain()));
   }
 
 }
