@@ -31,20 +31,25 @@ import net.whimxiqal.journey.search.flag.FlagSet;
  * Journey's representation of a Minecraft chunk.
  * Read-only and thread-safe.
  */
-public interface JourneyChunk {
+public abstract class JourneyChunk {
 
-  int CHUNK_SIDE_LENGTH = 16;
+  public static final int CHUNK_SIDE_LENGTH = 16;
+
+  private final ChunkId id;
+
+  public JourneyChunk(ChunkId id) {
+    this.id = id;
+  }
 
   /**
-   * Get a cell from the given chunk id and coordinates within the chunk
+   * Get a cell from the given= coordinates within this chunk
    *
-   * @param id the chunk id
    * @param x  the x coordinate within the chunk [0-16)
    * @param y  the y coordinate
    * @param z  the z coordinate within the chunk [0-16)
    * @return the cell
    */
-  static Cell toCell(ChunkId id, int x, int y, int z) {
+  protected final Cell toCell(int x, int y, int z) {
     return new Cell(id.x() * 16 + x, y, id.z() * 16 + z, id.domain());
   }
 
@@ -53,10 +58,21 @@ public interface JourneyChunk {
    *
    * @return the id
    */
-  ChunkId id();
+  public final ChunkId id() {
+    return this.id;
+  }
+
+  public final JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
+    if (y >= 256 || y < -128) {
+      return new AirJourneyBlock(toCell(x, y, z));
+    }
+    return realBlock(x, y, z, flagSet);
+  }
 
   /**
    * Get the block at the given coordinates within the chunk.
+   * "Real" signifies that it is within the boundaries of the world
+   * within which blocks may be placed/broken etc.
    *
    * @param x       the x coordinate [0-16)
    * @param y       the y coordinate
@@ -64,6 +80,6 @@ public interface JourneyChunk {
    * @param flagSet the set of flags that may modify world/block behavior
    * @return the block
    */
-  JourneyBlock block(int x, int y, int z, FlagSet flagSet);
+  protected abstract JourneyBlock realBlock(int x, int y, int z, FlagSet flagSet);
 
 }
