@@ -12,8 +12,6 @@ dependencies {
     implementation project(':common')
     implementation project(':bukkit-api')
 
-    compileOnly 'io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT'
-
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     testImplementation 'com.google.guava:guava:31.0.1-jre'
