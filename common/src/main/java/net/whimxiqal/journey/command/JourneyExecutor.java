@@ -461,9 +461,7 @@ public class JourneyExecutor implements CommandExecutor {
           // Should never happen
           return CommandResult.failure();
         }
-        DestinationGoalSearchSession session = new DestinationGoalSearchSession(maybePlayer.get(), location.get(), otherLocation.get(), false, false);
-
-        Journey.get().searchManager().launchIngameSearch(session);
+        destinationSearch(location.get(), otherLocation.get());
         return CommandResult.success();
       }
 
