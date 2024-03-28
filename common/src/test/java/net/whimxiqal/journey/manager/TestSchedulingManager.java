@@ -75,14 +75,14 @@ public class TestSchedulingManager implements SchedulingManager {
 
   public static <T> T runOnMainThread(Supplier<T> supplier) {
     CompletableFuture<T> future = new CompletableFuture<>();
-    AtomicBoolean error = new AtomicBoolean(false);
+    AtomicReference<Throwable> error = new AtomicReference<>();
     Journey.get().proxy().schedulingManager().schedule(() -> {
       T result = null;
       try {
         result = supplier.get();
       } catch (Throwable e) {
         e.printStackTrace();
-        error.set(true);
+        error.set(e);
       } finally {
         future.complete(result);
       }
@@ -93,7 +93,10 @@ public class TestSchedulingManager implements SchedulingManager {
     } catch (InterruptedException | ExecutionException e) {
       Assertions.fail(e);
     }
-    Assertions.assertFalse(error.get(), "There was an error on the main thread");
+    Throwable throwable = error.get();
+    if (throwable != null) {
+      Assertions.fail(throwable);
+    }
     return result;
   }
 

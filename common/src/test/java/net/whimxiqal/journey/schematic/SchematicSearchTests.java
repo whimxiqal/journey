@@ -29,6 +29,8 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +41,8 @@ import java.util.concurrent.TimeUnit;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
-import net.whimxiqal.journey.TestProxy;
-import net.whimxiqal.journey.chunk.ChunkId;
+import net.whimxiqal.journey.Proxy;
+import net.whimxiqal.journey.data.TestDataManager;
 import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.navigation.PlatformProxy;
@@ -51,6 +53,7 @@ import net.whimxiqal.journey.search.DestinationPathTrial;
 import net.whimxiqal.journey.search.ResultState;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.util.CommonLogger;
+import net.whimxiqal.journey.util.TestLogger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -111,12 +114,12 @@ public class SchematicSearchTests {
   }
 
   @BeforeAll
-  static void setUp() {
+  static void setUp() throws IOException {
     // Set up for tests
     setUp(SchematicSearchTests.TEST_LOADER);
   }
 
-  static void setUp(SchematicLoader loader) {
+  static void setUp(SchematicLoader loader) throws IOException {
     // ADD DIFFERENT SEARCH PATHS HERE
     searchParams.put("basic_uphill", new SearchParams("overworld1.schem",
         new Cell(-15, 64, -56, 0),
@@ -145,7 +148,13 @@ public class SchematicSearchTests {
       }
     });
     Mockito.when(schematicPlatformProxy.bStatsChartConsumer()).thenReturn(chart -> {});
-    TestProxy proxy = new TestProxy(schematicPlatformProxy);
+    Proxy proxy = Mockito.mock(Proxy.class);
+    Mockito.when(proxy.logger()).thenReturn(new TestLogger());
+    Mockito.when(proxy.schedulingManager()).thenReturn(new TestSchedulingManager());
+    Mockito.when(proxy.dataManager()).thenReturn(new TestDataManager());
+    Mockito.when(proxy.platform()).thenReturn(schematicPlatformProxy);
+    Mockito.when(proxy.configPath()).thenReturn(File.createTempFile("journey-config", "yml").toPath());
+    Mockito.when(proxy.messagesConfigPath()).thenReturn(File.createTempFile("journey-messages", "yml").toPath());
     Journey.get().registerProxy(proxy);
 
     if (DEBUG) {
@@ -270,7 +279,7 @@ public class SchematicSearchTests {
     /// Parameters End
 
     @Setup(Level.Iteration)
-    public void setUp() {
+    public void setUp() throws IOException {
       SchematicSearchTests.setUp(benchmarkLoader);
       SearchParams params = searchParams.get(BENCHMARKING_SEARCH_PARAM_ID);
       if (params == null) {

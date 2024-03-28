@@ -13,10 +13,6 @@ public class MessageTemplate_3 extends MessageTemplate {
     return super.resolve(color, Formatter.ACCENT, true, element1, element2, element3);
   }
 
-  public String resolve(String element1, String element2, String element3) {
-    return super.resolve(element1, element2, element3);
-  }
-
   public void sendTo(Audience audience, TextColor color, Object element1, Object element2, Object element3) {
     audience.sendMessage(resolve(color, element1, element2, element3));
   }

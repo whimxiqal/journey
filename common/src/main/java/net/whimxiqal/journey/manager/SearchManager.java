@@ -154,7 +154,8 @@ public final class SearchManager {
             Itinerary itinerary = result.itinerary();
             if (itinerary != null) {
               audience.sendMessage(Formatter.prefix()
-                  .append(Component.text(Messages.COMMAND_SEARCH_SUCCESS.resolve() + " ").color(Formatter.SUCCESS))
+                  .append(Messages.COMMAND_SEARCH_SUCCESS.resolve(Formatter.SUCCESS))
+                  .append(Component.space())
                   .append(Component.text("[").color(Formatter.DARK)
                       .append(Component.text("stats").color(Formatter.DULL).decorate(TextDecoration.ITALIC))
                       .append(Component.text("]").color(Formatter.DARK))
