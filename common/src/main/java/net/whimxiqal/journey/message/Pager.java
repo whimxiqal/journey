@@ -79,7 +79,8 @@ public class Pager {
     }
     page = Math.min(page, totalPages);
     audience.sendMessage(header.append(Component.text(" % ").color(Formatter.DARK))
-        .append(Component.text("page ").color(Formatter.DULL))
+            .append(Messages.COMMAND_PAGING_PAGE.resolve(Formatter.DULL))
+            .append(Component.space())
         .append(Formatter.accent(Integer.toString(page)))
         .append(Component.text(" / " + totalPages).color(Formatter.DULL)));
     components.subList((page - 1) * MESSAGES_PER_PAGE,
