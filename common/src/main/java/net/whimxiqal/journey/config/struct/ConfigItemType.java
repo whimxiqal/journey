@@ -6,21 +6,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.config.serializer.TypeDeserializer;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 
-public record ConfigItemType(String name, List<String> description,
+public record ConfigItemType(@Nullable String name, List<String> description,
                              String itemType, Map<String, Integer> enchantments,
                              String textureData) {
 
-  public static final ConfigItemType DEFAULT = new ConfigItemType("",
+  public static final ConfigItemType DEFAULT = new ConfigItemType(null,
       Collections.emptyList(),
       "air",
       Collections.emptyMap(),
       "");
 
   public static ConfigItemType of(String itemType) {
-    return new ConfigItemType("", Collections.emptyList(), itemType, Collections.emptyMap(), "");
+    return new ConfigItemType(null, Collections.emptyList(), itemType, Collections.emptyMap(), "");
   }
 
   public static class Deserializer extends TypeDeserializer<ConfigItemType> {

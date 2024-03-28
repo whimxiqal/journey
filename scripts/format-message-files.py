@@ -7,9 +7,11 @@ A script that automatically
 
 import os
 import re
+import yaml
 
-MESSAGES_PROPERTIES_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'common', 'src', 'main', 'resources')
+MESSAGES_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'common', 'src', 'main', 'resources')
 MESSAGES_PROPERTIES_FILE_NAME = 'messages_en.properties'
+MESSAGES_CONFIG_FILE_NAME = 'messages.yml'
 
 MESSAGES_JAVA_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'common', 'src', 'main', 'java', 'net', 'whimxiqal', 'journey', 'message', 'Messages.java')
 MESSAGES_JAVA_FILE_HEADER = """
@@ -31,19 +33,21 @@ MESSAGES_JAVA_FILE_FOOTER = """
 """
 LICENSE_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'LICENSE.txt')
 
-
-with open(os.path.join(MESSAGES_PROPERTIES_FOLDER, MESSAGES_PROPERTIES_FILE_NAME), 'r', encoding='utf-8') as messages_file:
+with open(os.path.join(MESSAGES_FOLDER, MESSAGES_PROPERTIES_FILE_NAME), 'r', encoding='utf-8') as messages_file:
     lines = messages_file.readlines()
 
 lines.sort(key=lambda line: line.split('=')[0])
 split_lines = [(line.rstrip('\n')).split('=') for line in lines if '=' in line]
 
 # Update property files: sort by key and add any missing keys to other files
-for file_name in os.listdir(MESSAGES_PROPERTIES_FOLDER):
+for file_name in os.listdir(MESSAGES_FOLDER):
     if not file_name.startswith('messages'):
         continue
 
-    full_path = os.path.join(MESSAGES_PROPERTIES_FOLDER, file_name)
+    if not file_name.endswith('properties'):
+        continue
+
+    full_path = os.path.join(MESSAGES_FOLDER, file_name)
     if not os.path.isfile(full_path):
         continue
 
@@ -60,8 +64,47 @@ for file_name in os.listdir(MESSAGES_PROPERTIES_FOLDER):
     with open(full_path, 'w', encoding='utf-8') as messages_file:
         messages_file.writelines(lines)
 
+# Write config file with commented lines
+full_path = os.path.join(MESSAGES_FOLDER, MESSAGES_CONFIG_FILE_NAME)
+with open(full_path, 'r', encoding='utf-8') as config_file:
+    # uncomment every commented line
+    lines = config_file.readlines()
+    uncommented_file = ""
+    for line in lines:
+        if line[0:2] == '# ':
+            uncommented_file += line[2:] + "\n"
+        elif not line:
+            pass
+        else:
+            raise Exception("messages.yml file is not populated with only comments")
+    yaml_load = yaml.load(uncommented_file, yaml.Loader)
 
+if yaml_load is None:
+    yaml_load = {}
 
+def ensure_item(path, value, _dict) -> dict:
+    if not path:
+        raise Exception("path is empty")
+    if len(path) == 1:
+        if path[0] in _dict:
+            # already exists, don't update
+            pass
+        else:
+            _dict[path[0]] = value
+    else:
+        if path[0] not in _dict:
+            _dict[path[0]] = {}
+        ensure_item(path[1:], value, _dict[path[0]])
+
+for tokens in split_lines:
+    ensure_item(tokens[0].split("."), tokens[1], yaml_load)
+
+yaml_dump = yaml.dump(yaml_load, width=float("inf"))
+commented_yaml_lines = ["# " + line + "\n" for line in yaml_dump.split('\n')][0:-1]  # drop the last line
+with open(full_path, 'w', encoding='utf-8') as config_file:
+    config_file.writelines(commented_yaml_lines)
+
+# Write Java Messages file
 java_lines = []
 for line in split_lines:
     param_count = len(re.findall(r'{[0-9]}', line[1]))

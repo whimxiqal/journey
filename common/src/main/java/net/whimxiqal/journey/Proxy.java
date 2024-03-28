@@ -39,6 +39,7 @@ public interface Proxy {
   AudienceProvider audienceProvider();
 
   Path configPath();
+  Path messagesConfigPath();
 
   SchedulingManager schedulingManager();
 

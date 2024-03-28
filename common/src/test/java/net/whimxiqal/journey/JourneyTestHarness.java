@@ -23,19 +23,25 @@
 
 package net.whimxiqal.journey;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.whimxiqal.journey.config.Settings;
+import net.whimxiqal.journey.data.TestDataManager;
 import net.whimxiqal.journey.manager.TestSchedulingManager;
 import net.whimxiqal.journey.navigation.Itinerary;
 import net.whimxiqal.journey.platform.TestJourneyPlayer;
 import net.whimxiqal.journey.platform.TestPlatformProxy;
 import net.whimxiqal.journey.platform.WorldLoader;
 import net.whimxiqal.journey.util.CommonLogger;
+import net.whimxiqal.journey.util.TestAudienceProvider;
+import net.whimxiqal.journey.util.TestLogger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.mockito.Mockito;
 
 public class JourneyTestHarness {
 
@@ -44,18 +50,25 @@ public class JourneyTestHarness {
   protected static final Map<UUID, Itinerary> SESSION_ITINERARIES = new HashMap<>();
 
   @BeforeAll
-  static void initializeHarness() {
+  static void initializeHarness() throws IOException {
     Settings.MAX_SEARCHES.setValue(10);
 
     Journey.create();
-    TestProxy proxy = new TestProxy(new TestPlatformProxy());
+    Proxy proxy = Mockito.mock(Proxy.class);
+    Mockito.when(proxy.logger()).thenReturn(new TestLogger());
+    Mockito.when(proxy.schedulingManager()).thenReturn(new TestSchedulingManager());
+    Mockito.when(proxy.dataManager()).thenReturn(new TestDataManager());
+    Mockito.when(proxy.platform()).thenReturn(new TestPlatformProxy());
+    Mockito.when(proxy.configPath()).thenReturn(File.createTempFile("journey-config", "yml").toPath());
+    Mockito.when(proxy.messagesConfigPath()).thenReturn(File.createTempFile("journey-messages", "yml").toPath());
+    Mockito.when(proxy.audienceProvider()).thenReturn(new TestAudienceProvider());
     Journey.get().registerProxy(proxy);
 
     if (DEBUG) {
       Journey.logger().setLevel(CommonLogger.LogLevel.DEBUG);
     }
 
-    proxy.schedulingManager.initialize();  // initialize early so that we can schedule on main thread
+    proxy.schedulingManager().initialize();  // initialize early so that we can schedule on main thread
     TestSchedulingManager.runOnMainThread(() -> {
       // journey initialization must happen on main thread
       if (!Journey.get().init()) {

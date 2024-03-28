@@ -106,12 +106,15 @@ public final class Settings {
   public static final Setting<StorageMethod> STORAGE_TYPE
       = new EnumSetting<>("storage.type", StorageMethod.SQLITE, StorageMethod.class, false);
 
+  @DeprecatedSetting
   public static final Setting<String> GUI_HOME_SCREEN_TITLE
       = new StringSetting("gui.home-screen-title", "<prefix><theme>{default}", true);
 
+  @DeprecatedSetting
   public static final Setting<String> GUI_SCOPE_SCREEN_TITLE
       = new StringSetting("gui.scope-screen-title", "<prefix><theme>{scope}", true);
 
+  @DeprecatedSetting
   public static final Setting<String> GUI_FLAG_PREFERENCES_SCREEN_TITLE
       = new StringSetting("gui.flag-preferences-screen-title", "<prefix><theme>{default}", true);
 
@@ -128,7 +131,7 @@ public final class Settings {
 
   public static final Setting<ConfigStaticButton> GUI_HOME_BUTTON = new Setting<>("gui.buttons.home",
       new ConfigStaticButton(1, 1,
-          new ConfigItemType("{default}",
+          new ConfigItemType(null,
               Collections.emptyList(),
               "player_head",
               Collections.emptyMap(),
@@ -137,7 +140,7 @@ public final class Settings {
 
   public static final Setting<ConfigStaticButton> GUI_BACK_BUTTON = new Setting<>("gui.buttons.back",
       new ConfigStaticButton(1, 2,
-          new ConfigItemType("{default}",
+          new ConfigItemType(null,
               Collections.emptyList(),
               "dark_oak_boat",
               Collections.emptyMap(),
@@ -146,7 +149,7 @@ public final class Settings {
 
   public static final Setting<ConfigStaticButton> GUI_OPEN_FLAG_EDITOR_BUTTON = new Setting<>("gui.buttons.flag-editor-open",
       new ConfigStaticButton(1, 9,
-          new ConfigItemType("{default}",
+          new ConfigItemType(null,
               Collections.emptyList(),
               "player_head",
               Collections.emptyMap(),
@@ -155,7 +158,7 @@ public final class Settings {
 
   public static final Setting<ConfigStaticButton> GUI_CLOSE_FLAG_EDITOR_BUTTON = new Setting<>("gui.buttons.flag-editor-close",
       new ConfigStaticButton(1, 9,
-          new ConfigItemType("{default}",
+          new ConfigItemType(null,
               Collections.emptyList(),
               "player_head",
               Collections.emptyMap(),
@@ -164,7 +167,7 @@ public final class Settings {
 
   public static final Setting<ConfigStaticButton> GUI_PREVIOUS_PAGE = new Setting<>("gui.buttons.page-previous",
       new ConfigStaticButton(6, 2,
-          new ConfigItemType("<gray>{default}",
+          new ConfigItemType(null,
               Collections.emptyList(),
               "paper",
               Collections.emptyMap(),
@@ -173,7 +176,7 @@ public final class Settings {
 
   public static final Setting<ConfigStaticButton> GUI_NEXT_PAGE = new Setting<>("gui.buttons.page-next",
       new ConfigStaticButton(6, 8,
-          new ConfigItemType("<gray>{default}",
+          new ConfigItemType(null,
               Collections.emptyList(),
               "paper",
               Collections.emptyMap(),
@@ -266,6 +269,10 @@ public final class Settings {
       Setting<?> previous = ALL_SETTINGS.put(setting.getPath(), setting);
       if (previous != null) {
         throw new IllegalStateException("Found two settings with the same path: " + setting.getPath());
+      }
+
+      if (field.getAnnotation(DeprecatedSetting.class) != null) {
+        setting.deprecated = true;
       }
     }
   }

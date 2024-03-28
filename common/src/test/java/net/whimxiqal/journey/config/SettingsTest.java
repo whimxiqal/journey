@@ -16,8 +16,10 @@ class SettingsTest extends JourneyTestHarness {
   void everySettingExistsInConfig() throws IOException {
     ConfigManager configManager = new ConfigManager();
     File configFile = File.createTempFile("journey-config", ".yml");
+    File messagesConfigFile = File.createTempFile("journey-messages", ".yml");
     Assertions.assertTrue(configFile.delete());
-    configManager.initialize(configFile.toPath());
+    Assertions.assertTrue(messagesConfigFile.delete());
+    configManager.initialize(configFile.toPath(), messagesConfigFile.toPath());
     for (Map.Entry<String, Setting<?>> settingEntry : Settings.ALL_SETTINGS.entrySet()) {
       Assertions.assertTrue(settingEntry.getValue().valid());
       Assertions.assertTrue(settingEntry.getValue().wasLoaded(), "Setting " + settingEntry.getKey() + " was not loaded from config");
@@ -39,8 +41,10 @@ class SettingsTest extends JourneyTestHarness {
   void reloadableSettings() throws IOException {
     ConfigManager configManager = new ConfigManager();
     File configFile = File.createTempFile("journey-config", ".yml");
+    File messagesConfigFile = File.createTempFile("journey-messages", ".yml");
     Assertions.assertTrue(configFile.delete());
-    configManager.initialize(configFile.toPath());
+    Assertions.assertTrue(messagesConfigFile.delete());
+    configManager.initialize(configFile.toPath(), messagesConfigFile.toPath());
 
     // only works if these two are reloadable as such
     Assertions.assertFalse(Settings.MAX_SEARCHES.reloadable());

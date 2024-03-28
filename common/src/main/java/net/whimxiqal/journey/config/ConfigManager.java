@@ -28,8 +28,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import net.kyori.adventure.text.Component;
+import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.serializer.ColorSerializer;
 import net.whimxiqal.journey.config.serializer.ComponentSerializer;
 import net.whimxiqal.journey.config.struct.ConfigFillPhase;
@@ -49,8 +53,9 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 public class ConfigManager {
 
   private ConfigurationLoader<CommentedConfigurationNode> configurationLoader;
+  private ConfigurationLoader<CommentedConfigurationNode> messageConfigurationLoader;
 
-  public void initialize(Path path) throws IOException {
+  public void initialize(Path path, Path messagesPath) throws IOException {
     configurationLoader = YamlConfigurationLoader.builder()
         .defaultOptions(options -> options.serializers(builder ->
             builder.register(Color.class, new ColorSerializer())
@@ -72,6 +77,23 @@ public class ConfigManager {
       Files.copy(resourceUrl.openConnection().getInputStream(), path);
     }
     load();
+
+    // messages
+    messageConfigurationLoader = YamlConfigurationLoader.builder()
+        .defaultOptions(options -> options.serializers(builder ->
+            builder.register(Component.class, new ComponentSerializer())))
+        .indent(2)
+        .nodeStyle(NodeStyle.BLOCK)
+        .path(messagesPath)
+        .build();
+    File messagesFile = messagesPath.toFile();
+    if (!messagesFile.exists()) {
+      URL resourceUrl = getClass().getClassLoader().getResource("messages.yml");
+      if (resourceUrl == null) {
+        throw new RuntimeException("Couldn't get messages.yml resource");
+      }
+      Files.copy(resourceUrl.openConnection().getInputStream(), messagesPath);
+    }
   }
 
   /**
@@ -88,6 +110,25 @@ public class ConfigManager {
     for (Map.Entry<String, Setting<?>> entry : Settings.ALL_SETTINGS.entrySet()) {
       entry.getValue().load(root);
     }
+  }
+
+  public Optional<String> loadMessage(String key) {
+    CommentedConfigurationNode root;
+    try {
+      root = messageConfigurationLoader.load();
+    } catch (IOException e) {
+      Journey.logger().error("Could not load message " + key + ": " + e.getMessage());
+      return Optional.empty();
+    }
+    List<String> path = Arrays.stream(key.split("\\.")).toList();
+    CommentedConfigurationNode node = root.node(path);
+    Journey.logger().info("loading node for key " + key + ". node: " + path);
+    if (node.virtual()) {
+      Journey.logger().info("Node is virtual");
+      return Optional.empty();
+    }
+    Journey.logger().info("Node is not virtual");
+    return Optional.ofNullable(node.getString());
   }
 
 }

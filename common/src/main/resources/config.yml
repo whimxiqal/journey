@@ -287,7 +287,6 @@ gui:
       row: 1
       column: 1
       item:
-        name: "{default}"
         type: player_head
         texture-data: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGYxN2E2YTlhZmFhN2IwN2U0MjE4ZmU1NTVmMjgyM2IwMjg0Y2Q2OWI0OWI2OWI5N2ZhZTY3ZWIyOTc2M2IifX19
 
@@ -297,7 +296,6 @@ gui:
       row: 1
       column: 2
       item:
-        name: "{default}"
         type: dark_oak_boat
 
     # =============================================================================================================== #
@@ -306,7 +304,6 @@ gui:
       row: 1
       column: 9
       item:
-        name: "{default}"
         type: player_head
         texture-data: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2Y2NmY3ZjAzMTI1Y2Y1NDczMzY5NmYzNjMyZjBkOWU2NDcwYmFhYjg0OTg0N2VhNWVhMmQ3OTE1NmFkMGY0MCJ9fX0=
 
@@ -316,7 +313,6 @@ gui:
       row: 1
       column: 9
       item:
-        name: "{default}"
         type: player_head
         texture-data: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzFhOTEyZTMzMmZjMDAxMGJlYmQwZjkzYTE0ZDhlM2VhNjVkMTMwMTEwMGNlYTNmYzVhZTcxOTkwZDk4NTgwNyJ9fX0=
 
@@ -326,7 +322,6 @@ gui:
       row: 6
       column: 2
       item:
-        name: <gray>{default}
         type: paper
 
     # =============================================================================================================== #
@@ -335,7 +330,6 @@ gui:
       row: 6
       column: 8
       item:
-        name: <gray>{default}
         type: paper
 
   # ================================================================================================================= #

@@ -41,7 +41,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextReplacementConfig;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyPlayer;
 import net.whimxiqal.journey.VirtualMap;
@@ -75,8 +74,6 @@ import org.jetbrains.annotations.Nullable;
 public class JourneyGui {
 
   private static final int MAX_SCOPE_ITEM_COUNT = 1000;
-  private static final Pattern SCOPE_PLACEHOLDER_PATTERN = Pattern.compile("\\{scope}");
-  private static final Pattern DEFAULT_PLACEHOLDER_PATTERN = Pattern.compile("\\{default}");
   private final JourneyPlayer player;
   private final InternalScope scope;
   private final JourneyGui previous;
@@ -97,15 +94,15 @@ public class JourneyGui {
     return items.get(Math.abs(determiner.hashCode()) % items.size());
   }
 
-  private boolean setStaticButton(BaseGui gui, ConfigStaticButton button, @Nullable String defaultPlaceholderReplacement, GuiAction<InventoryClickEvent> clickEvent) {
+  private boolean setStaticButton(BaseGui gui, ConfigStaticButton button, @Nullable Component defaultName, GuiAction<InventoryClickEvent> clickEvent) {
     ItemBuilder builder = toItemBuilder(button.itemType());
     if (builder == null) {
       return false;
     }
-    if (defaultPlaceholderReplacement != null) {
-      builder.name(MessageManager.miniMessage().deserialize(DEFAULT_PLACEHOLDER_PATTERN
-          .matcher(button.itemType().name())
-          .replaceAll(defaultPlaceholderReplacement)));
+    if (button.itemType().name() != null) {
+      builder.name(MessageManager.miniMessage().deserialize(button.itemType().name()));
+    } else if (defaultName != null) {
+      builder.name(defaultName);
     }
     gui.setItem(button.row(), button.column(), builder.asGuiItem(clickEvent));
     return true;
@@ -179,38 +176,30 @@ public class JourneyGui {
     Component title;
     if (editFlagOverlay) {
       // Flag Preferences Editor
-      title = MessageManager.miniMessage().deserialize(DEFAULT_PLACEHOLDER_PATTERN
-          .matcher(Settings.GUI_FLAG_PREFERENCES_SCREEN_TITLE.getValue())
-          .replaceAll((Messages.GUI_SCREEN_FLAG_EDITOR_TITLE.resolve())));
+      title = Messages.GUI_SCREEN_FLAG_EDITOR_TITLE.resolve(Formatter.THEME, Formatter.ACCENT, true);
     } else if (previous == null) {
       // Home screen
-      title = MessageManager.miniMessage().deserialize(DEFAULT_PLACEHOLDER_PATTERN
-          .matcher(Settings.GUI_HOME_SCREEN_TITLE.getValue())
-          .replaceAll(Messages.GUI_SCREEN_HOME_TITLE.resolve()));
+      title = Messages.GUI_SCREEN_HOME_TITLE.resolve(Formatter.THEME, Formatter.ACCENT, true);
     } else {
       // Scope screen
-      title = MessageManager.miniMessage().deserialize(Settings.GUI_SCOPE_SCREEN_TITLE.getValue())
-          .replaceText(TextReplacementConfig.builder()
-              .match(SCOPE_PLACEHOLDER_PATTERN)
-              .replacement(scope.wrappedScope().name())
-              .build());
+      title = Messages.GUI_SCREEN_SCOPE_TITLE.resolve(Formatter.THEME, Formatter.ACCENT, true, scope.wrappedScope().name());
     }
     PaginatedGui gui = Gui.paginated()
         .title(title)
         .rows(Settings.GUI_ROWS.getValue())
         .create();
     if (previous != null) {
-      if (!setStaticButton(gui, Settings.GUI_HOME_BUTTON.getValue(), Messages.GUI_SCREEN_HOME_TITLE.resolve(), event -> new JourneyGui(player).tryOpen()) ||
-          !setStaticButton(gui, Settings.GUI_BACK_BUTTON.getValue(), Messages.GUI_BUTTON_BACK_LABEL.resolve(), event -> previous.tryOpen())) {
+      if (!setStaticButton(gui, Settings.GUI_HOME_BUTTON.getValue(), Messages.GUI_SCREEN_HOME_TITLE.resolve(Formatter.DULL), event -> new JourneyGui(player).tryOpen()) ||
+          !setStaticButton(gui, Settings.GUI_BACK_BUTTON.getValue(), Messages.GUI_BUTTON_BACK_LABEL.resolve(Formatter.DULL), event -> previous.tryOpen())) {
         return false;
       }
     }
     if (editFlagOverlay) {
-      if (!setStaticButton(gui, Settings.GUI_CLOSE_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_CLOSE_LABEL.resolve(), event -> new JourneyGui(player, scope, previous, false).tryOpen())) {
+      if (!setStaticButton(gui, Settings.GUI_CLOSE_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_CLOSE_LABEL.resolve(Formatter.DULL), event -> new JourneyGui(player, scope, previous, false).tryOpen())) {
         return false;
       }
     } else {
-      if (!setStaticButton(gui, Settings.GUI_OPEN_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_OPEN_LABEL.resolve(), event -> new JourneyGui(player, scope, previous, true).tryOpen())) {
+      if (!setStaticButton(gui, Settings.GUI_OPEN_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_OPEN_LABEL.resolve(Formatter.DULL), event -> new JourneyGui(player, scope, previous, true).tryOpen())) {
         return false;
       }
     }
@@ -312,7 +301,7 @@ public class JourneyGui {
       return;  // don't set any buttons
     }
     if (currentPage < pages - 1) {
-      if (!setStaticButton(gui, Settings.GUI_NEXT_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_NEXT.resolve(), event -> {
+      if (!setStaticButton(gui, Settings.GUI_NEXT_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_NEXT.resolve(Formatter.DULL), event -> {
         gui.next();
         updatePageButtons(gui);
       })) {
@@ -321,7 +310,7 @@ public class JourneyGui {
       gui.update();
     }
     if (currentPage > 0) {
-      if (!setStaticButton(gui, Settings.GUI_PREVIOUS_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_PREVIOUS.resolve(), event -> {
+      if (!setStaticButton(gui, Settings.GUI_PREVIOUS_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_PREVIOUS.resolve(Formatter.DULL), event -> {
         gui.previous();
         updatePageButtons(gui);
       })) {

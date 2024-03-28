@@ -106,7 +106,7 @@ public final class Journey {
 
     // load settings first
     try {
-      configManager.initialize(proxy.configPath());
+      configManager.initialize(proxy.configPath(), proxy.messagesConfigPath());
     } catch (IOException e) {
       logger().error("There was an error trying to read the config");
       e.printStackTrace();

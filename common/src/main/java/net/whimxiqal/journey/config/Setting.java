@@ -43,6 +43,7 @@ public class Setting<T> {
   protected final String[] pathTokens;
   protected final T defaultValue;
   private final boolean reloadable;
+  protected boolean deprecated;
   protected final AtomicReference<T> value;
   protected boolean initialized = false;
   protected boolean loaded = false;  // true if loaded from config, otherwise could have just been set from default
@@ -129,6 +130,10 @@ public class Setting<T> {
       this.value.set(def);
       this.initialized = true;
       return;
+    }
+
+    if (deprecated) {
+      Journey.logger().warn(String.format("Setting %s has been deprecated. Please consult the documentation on how to update", path));
     }
 
     T originalValue = this.value.get();

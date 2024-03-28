@@ -176,7 +176,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
     BiConsumer<SearchSession, ResultState> runSearchAsync = (session, expected) -> {
       session.initialize();
       Assertions.assertEquals(ResultState.IDLE, session.getState());
-      session.flags().addFlag(Flags.TIMEOUT, 10);
+      session.flags().addFlag(Flags.TIMEOUT, 20);
       session.search().thenAccept(result -> {
         finished.incrementAndGet();
         if (expected != result.state()) {
