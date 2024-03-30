@@ -4,10 +4,10 @@ import net.whimxiqal.journey.JourneyApiProvider;
 import org.betonquest.betonquest.Instruction;
 import org.betonquest.betonquest.api.profiles.Profile;
 import org.betonquest.betonquest.api.quest.event.Event;
-import org.betonquest.betonquest.exceptions.QuestRuntimeException;
 
 public class JourneyQuestStopEvent implements Event {
 
+  @SuppressWarnings("unused")
   public JourneyQuestStopEvent(Instruction instruction) {
     // has no instruction
   }
