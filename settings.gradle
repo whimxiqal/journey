@@ -12,4 +12,6 @@ include 'integrations:notquests'
 findProject(':integrations:notquests')?.name = 'notquests'
 include 'integrations:citizens'
 findProject(':integrations:citizens')?.name = 'citizens'
+include 'integrations:betonquest'
+findProject(':integrations:betonquest')?.name = 'betonquest'
 
