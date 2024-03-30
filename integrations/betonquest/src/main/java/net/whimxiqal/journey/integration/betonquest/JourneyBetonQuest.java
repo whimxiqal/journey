@@ -16,6 +16,7 @@ public final class JourneyBetonQuest extends JavaPlugin {
     JourneyApi api = JourneyApiProvider.get();
     api.registerScope(getName(), "betonquest", new BetonQuestScope());
     BetonQuest.getInstance().registerNonStaticEvent("journey", JourneyQuestEvent::new);
+    BetonQuest.getInstance().registerNonStaticEvent("stopjourney", JourneyQuestStopEvent::new);
   }
 
 }
