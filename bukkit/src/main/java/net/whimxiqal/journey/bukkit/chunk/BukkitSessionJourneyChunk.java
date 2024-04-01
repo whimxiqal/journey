@@ -31,23 +31,17 @@ import net.whimxiqal.journey.proxy.JourneyChunk;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import org.bukkit.ChunkSnapshot;
 
-public class BukkitSessionJourneyChunk implements JourneyChunk {
+public class BukkitSessionJourneyChunk extends JourneyChunk {
 
-  private final ChunkId id;
   private final ChunkSnapshot chunk;
 
   public BukkitSessionJourneyChunk(ChunkSnapshot chunk, UUID worldUuid) {
-    this.id = new ChunkId(Journey.get().domainManager().domainIndex(worldUuid), chunk.getX(), chunk.getZ());
+    super(new ChunkId(Journey.get().domainManager().domainIndex(worldUuid), chunk.getX(), chunk.getZ()));
     this.chunk = chunk;
   }
 
   @Override
-  public ChunkId id() {
-    return id;
-  }
-
-  @Override
-  public JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
-    return new BukkitSessionJourneyBlock(JourneyChunk.toCell(id, x, y, z), chunk.getBlockData(x, y, z), chunk.getBlockData(x, y - 1, z), flagSet);
+  public JourneyBlock realBlock(int x, int y, int z, FlagSet flagSet) {
+    return new BukkitSessionJourneyBlock(toCell(x, y, z), chunk.getBlockData(x, y, z), chunk.getBlockData(x, y - 1, z), flagSet);
   }
 }
