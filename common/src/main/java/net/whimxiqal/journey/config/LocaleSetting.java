@@ -17,6 +17,7 @@ public class LocaleSetting extends Setting<Locale> {
     ALLOWED_LOCALES.add(Locale.GERMAN);
     ALLOWED_LOCALES.add(Locale.SIMPLIFIED_CHINESE);
     ALLOWED_LOCALES.add(Locale.TRADITIONAL_CHINESE);
+    ALLOWED_LOCALES.add(Locale.forLanguageTag("tr"));
   }
 
   LocaleSetting(@NotNull String path, @NotNull Locale defaultValue, boolean reloadable) {

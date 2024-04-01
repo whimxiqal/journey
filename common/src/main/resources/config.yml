@@ -421,6 +421,7 @@ extra:
   #     - de (German)
   #     - zh_CN (Simplified Chinese)
   #     - zh_TW (Traditional Chinese)
+  #     - tr (Turkish)
   language: en
 
   # ================================================================================================================= #
