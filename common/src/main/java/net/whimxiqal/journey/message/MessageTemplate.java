@@ -28,7 +28,7 @@ public abstract class MessageTemplate {
 
   public final Component resolve(TextColor primaryColor, TextColor accentColor, boolean prefix, Object... elements) {
     // Check existence in message.yml
-    Optional<String> configMessage = Journey.get().configManager().loadMessage(key);
+    Optional<String> configMessage = Journey.get().configManager().getMessage(key);
     if (configMessage.isPresent()) {
       return MessageManager.miniMessage().deserialize(configMessage.get(), TagResolver.resolver("param", ((argumentQueue, context) -> {
         if (!argumentQueue.hasNext()) {

@@ -29,11 +29,11 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
-import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.serializer.ColorSerializer;
 import net.whimxiqal.journey.config.serializer.ComponentSerializer;
 import net.whimxiqal.journey.config.struct.ConfigFillPhase;
@@ -42,6 +42,7 @@ import net.whimxiqal.journey.config.struct.ConfigItemType;
 import net.whimxiqal.journey.config.struct.ConfigStaticButton;
 import net.whimxiqal.journey.Color;
 import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.ConfigurationVisitor;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.yaml.NodeStyle;
@@ -54,6 +55,7 @@ public class ConfigManager {
 
   private ConfigurationLoader<CommentedConfigurationNode> configurationLoader;
   private ConfigurationLoader<CommentedConfigurationNode> messageConfigurationLoader;
+  private final Map<String, String> messages = new HashMap<>();
 
   public void initialize(Path path, Path messagesPath) throws IOException {
     configurationLoader = YamlConfigurationLoader.builder()
@@ -76,7 +78,6 @@ public class ConfigManager {
       }
       Files.copy(resourceUrl.openConnection().getInputStream(), path);
     }
-    load();
 
     // messages
     messageConfigurationLoader = YamlConfigurationLoader.builder()
@@ -94,6 +95,8 @@ public class ConfigManager {
       }
       Files.copy(resourceUrl.openConnection().getInputStream(), messagesPath);
     }
+
+    load();
   }
 
   /**
@@ -110,25 +113,30 @@ public class ConfigManager {
     for (Map.Entry<String, Setting<?>> entry : Settings.ALL_SETTINGS.entrySet()) {
       entry.getValue().load(root);
     }
-  }
 
-  public Optional<String> loadMessage(String key) {
-    CommentedConfigurationNode root;
     try {
       root = messageConfigurationLoader.load();
     } catch (IOException e) {
-      Journey.logger().error("Could not load message " + key + ": " + e.getMessage());
-      return Optional.empty();
+      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    List<String> path = Arrays.stream(key.split("\\.")).toList();
-    CommentedConfigurationNode node = root.node(path);
-    Journey.logger().info("loading node for key " + key + ". node: " + path);
-    if (node.virtual()) {
-      Journey.logger().info("Node is virtual");
-      return Optional.empty();
+
+    this.messages.clear();
+    try {
+      root.visit((ConfigurationVisitor.Stateless<Exception>) node -> {
+        if (node.virtual()) {
+          return;
+        }
+        String key = Arrays.stream(node.path().array()).map(Object::toString).collect(Collectors.joining("."));
+        this.messages.put(key, node.getString());
+      });
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-    Journey.logger().info("Node is not virtual");
-    return Optional.ofNullable(node.getString());
+  }
+
+  public Optional<String> getMessage(String key) {
+    return Optional.ofNullable(this.messages.get(key));
   }
 
 }
