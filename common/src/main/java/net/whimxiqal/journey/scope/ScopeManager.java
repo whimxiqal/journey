@@ -49,7 +49,7 @@ public class ScopeManager {
 
   public void registerDefault() {
     register(Journey.NAME, "personal", Scope.builder()
-        .name(Messages.GUI_SCOPE_PERSONAL_TITLE.resolve(Formatter.DULL))
+        .name(Messages.GUI_SCOPE_PERSONAL_TITLE.resolve(Formatter.DULL, null, false))
         .destinations(player -> VirtualMap.of(
             () -> Journey.get().cachedDataProvider().personalWaypointCache()
                 .getAll(player.uuid(), false)
@@ -59,7 +59,7 @@ public class ScopeManager {
         .permission(Permission.PATH_PERSONAL.path())
         .build());
     register(Journey.NAME, "server", Scope.builder()
-        .name(Messages.GUI_SCOPE_SERVER_TITLE.resolve(Formatter.DULL))
+        .name(Messages.GUI_SCOPE_SERVER_TITLE.resolve(Formatter.DULL, null, false))
         .destinations(player -> VirtualMap.of(
             () -> Journey.get().cachedDataProvider().publicWaypointCache().getAll()
                 .stream()
@@ -69,7 +69,7 @@ public class ScopeManager {
         .build());
     register(Journey.NAME, "player", Scope.builder()
         .name(Messages.GUI_SCOPE_PLAYERS_TITLE.resolve(Formatter.DULL))
-        .description(Messages.GUI_SCOPE_PLAYERS_DESCRIPTION.resolve(Formatter.DULL))
+        .description(Messages.GUI_SCOPE_PLAYERS_DESCRIPTION.resolve(Formatter.DULL, null, false))
         .subScopes(player -> VirtualMap.of(Journey.get().proxy().platform()
             .onlinePlayers()
             .stream()
@@ -95,7 +95,7 @@ public class ScopeManager {
                 .build()))))
         .build());
     register(Journey.NAME, "world", new InternalScope(Scope.builder()
-        .name(Messages.GUI_SCOPE_WORLDS_TITLE.resolve(Formatter.DULL))
+        .name(Messages.GUI_SCOPE_WORLDS_TITLE.resolve(Formatter.DULL, null, false))
         .build(),
         p1 -> VirtualMap.empty(),
         p1 -> VirtualMap.of(Journey.get().proxy().platform().domainResourceKeys()

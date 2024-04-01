@@ -37,7 +37,7 @@ public record ConfigItemType(@Nullable String name, List<String> description,
         throw new SerializationException("Type is required for an item");
       }
       // complicated type, check all sub-values
-      return new ConfigItemType(node.node("name").getString(""),
+      return new ConfigItemType(node.node("name").getString(),
           node.node("lore").getList(String.class),
           itemType,
           node.node("enchantments").childrenMap()
