@@ -37,7 +37,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -69,7 +68,6 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.jetbrains.annotations.Nullable;
 
 public class JourneyGui {
 
@@ -94,21 +92,17 @@ public class JourneyGui {
     return items.get(Math.abs(determiner.hashCode()) % items.size());
   }
 
-  private boolean setStaticButton(BaseGui gui, ConfigStaticButton button, @Nullable Component defaultName, GuiAction<InventoryClickEvent> clickEvent) {
-    ItemBuilder builder = toItemBuilder(button.itemType());
+  private boolean setStaticButton(BaseGui gui, ConfigStaticButton button, Component defaultName, GuiAction<InventoryClickEvent> clickEvent) {
+    ItemBuilder builder = toItemBuilder(button.itemType(), defaultName);
     if (builder == null) {
       return false;
     }
-    if (button.itemType().name() != null) {
-      builder.name(MessageManager.miniMessage().deserialize(button.itemType().name()));
-    } else if (defaultName != null) {
-      builder.name(defaultName);
-    }
+
     gui.setItem(button.row(), button.column(), builder.asGuiItem(clickEvent));
     return true;
   }
 
-  private ItemBuilder toItemBuilder(ConfigItemType itemType) {
+  private ItemBuilder toItemBuilder(ConfigItemType itemType, Component defaultName) {
     Material material = Registry.MATERIAL.get(NamespacedKey.minecraft(itemType.itemType()));
     if (material == null) {
       Journey.logger().error("Illegal material type in config: " + itemType.itemType());
@@ -137,9 +131,14 @@ public class JourneyGui {
       }
       stack.addUnsafeEnchantment(enchantment, entry.getValue());
     }
-    return ItemBuilder.from(stack)
-        .name(MessageManager.miniMessage().deserialize(itemType.name()))
-        .lore(itemType.description().stream().map(MessageManager.miniMessage()::deserialize).collect(Collectors.toList()));
+    ItemBuilder builder = ItemBuilder.from(stack);
+    if (itemType.name() != null) {
+      builder.name(MessageManager.miniMessage().deserialize(itemType.name()));
+    } else if (defaultName != null) {
+      builder.name(defaultName);
+    }
+    builder.lore(itemType.description().stream().map(MessageManager.miniMessage()::deserialize).collect(Collectors.toList()));
+    return builder;
   }
 
   private ItemBuilder getMatchedItemType(String name, Setting<List<ConfigItemsRule>> ruleSetting) {
@@ -162,7 +161,7 @@ public class JourneyGui {
         throw new RuntimeException("Default rules in value for " + Settings.GUI_CONTENT_FLAGS_RULE_LIST.getPath() + " did not match name " + name);
       }
     }
-    return toItemBuilder(pickRandom(items, name));
+    return toItemBuilder(pickRandom(items, name), Component.empty());
   }
 
   public void tryOpen() {
@@ -189,24 +188,24 @@ public class JourneyGui {
         .rows(Settings.GUI_ROWS.getValue())
         .create();
     if (previous != null) {
-      if (!setStaticButton(gui, Settings.GUI_HOME_BUTTON.getValue(), Messages.GUI_SCREEN_HOME_TITLE.resolve(Formatter.DULL), event -> new JourneyGui(player).tryOpen()) ||
-          !setStaticButton(gui, Settings.GUI_BACK_BUTTON.getValue(), Messages.GUI_BUTTON_BACK_LABEL.resolve(Formatter.DULL), event -> previous.tryOpen())) {
+      if (!setStaticButton(gui, Settings.GUI_HOME_BUTTON.getValue(), Messages.GUI_SCREEN_HOME_TITLE.resolve(Formatter.DULL, null, false), event -> new JourneyGui(player).tryOpen()) ||
+          !setStaticButton(gui, Settings.GUI_BACK_BUTTON.getValue(), Messages.GUI_BUTTON_BACK_LABEL.resolve(Formatter.DULL, null, false), event -> previous.tryOpen())) {
         return false;
       }
     }
     if (editFlagOverlay) {
-      if (!setStaticButton(gui, Settings.GUI_CLOSE_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_CLOSE_LABEL.resolve(Formatter.DULL), event -> new JourneyGui(player, scope, previous, false).tryOpen())) {
+      if (!setStaticButton(gui, Settings.GUI_CLOSE_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_CLOSE_LABEL.resolve(Formatter.DULL, null, false), event -> new JourneyGui(player, scope, previous, false).tryOpen())) {
         return false;
       }
     } else {
-      if (!setStaticButton(gui, Settings.GUI_OPEN_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_OPEN_LABEL.resolve(Formatter.DULL), event -> new JourneyGui(player, scope, previous, true).tryOpen())) {
+      if (!setStaticButton(gui, Settings.GUI_OPEN_FLAG_EDITOR_BUTTON.getValue(), Messages.GUI_BUTTON_FLAG_EDITOR_OPEN_LABEL.resolve(Formatter.DULL, null, false), event -> new JourneyGui(player, scope, previous, true).tryOpen())) {
         return false;
       }
     }
 
     // set fillers
     for (ConfigFillPhase fillPhase : Settings.GUI_FILL.getValue()) {
-      ItemBuilder builder = toItemBuilder(fillPhase.item());
+      ItemBuilder builder = toItemBuilder(fillPhase.item(), Component.empty());
       if (builder == null) {
         continue;
       }
@@ -301,7 +300,7 @@ public class JourneyGui {
       return;  // don't set any buttons
     }
     if (currentPage < pages - 1) {
-      if (!setStaticButton(gui, Settings.GUI_NEXT_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_NEXT.resolve(Formatter.DULL), event -> {
+      if (!setStaticButton(gui, Settings.GUI_NEXT_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_NEXT.resolve(Formatter.DULL, null, false), event -> {
         gui.next();
         updatePageButtons(gui);
       })) {
@@ -310,7 +309,7 @@ public class JourneyGui {
       gui.update();
     }
     if (currentPage > 0) {
-      if (!setStaticButton(gui, Settings.GUI_PREVIOUS_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_PREVIOUS.resolve(Formatter.DULL), event -> {
+      if (!setStaticButton(gui, Settings.GUI_PREVIOUS_PAGE.getValue(), Messages.GUI_BUTTON_PAGE_PREVIOUS.resolve(Formatter.DULL, null, false), event -> {
         gui.previous();
         updatePageButtons(gui);
       })) {

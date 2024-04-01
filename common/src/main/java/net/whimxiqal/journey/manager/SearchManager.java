@@ -153,8 +153,7 @@ public final class SearchManager {
           case STOPPED_SUCCESSFUL -> {
             Itinerary itinerary = result.itinerary();
             if (itinerary != null) {
-              audience.sendMessage(Formatter.prefix()
-                  .append(Messages.COMMAND_SEARCH_SUCCESS.resolve(Formatter.SUCCESS))
+              audience.sendMessage((Messages.COMMAND_SEARCH_SUCCESS.resolve(Formatter.SUCCESS))
                   .append(Component.space())
                   .append(Component.text("[").color(Formatter.DARK)
                       .append(Component.text("stats").color(Formatter.DULL).decorate(TextDecoration.ITALIC))

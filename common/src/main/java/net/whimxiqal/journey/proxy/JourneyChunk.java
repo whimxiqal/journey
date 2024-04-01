@@ -34,6 +34,8 @@ import net.whimxiqal.journey.search.flag.FlagSet;
 public abstract class JourneyChunk {
 
   public static final int CHUNK_SIDE_LENGTH = 16;
+  public static final int MAX_Y = 256;  // exclusive max Y boundary
+  public static final int MIN_Y = -64;  // inclusive min Y boundary
 
   private final ChunkId id;
 
@@ -63,7 +65,7 @@ public abstract class JourneyChunk {
   }
 
   public final JourneyBlock block(int x, int y, int z, FlagSet flagSet) {
-    if (y >= 256 || y < -128) {
+    if (y >= MAX_Y || y < MIN_Y) {
       return new AirJourneyBlock(toCell(x, y, z));
     }
     return realBlock(x, y, z, flagSet);
