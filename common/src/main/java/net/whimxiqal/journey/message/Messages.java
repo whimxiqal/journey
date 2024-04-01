@@ -105,6 +105,7 @@ public final class Messages {
   public static final MessageTemplate_0 GUI_SCOPE_WORLDS_TITLE = new MessageTemplate_0("journey.gui.scope.worlds.title");
   public static final MessageTemplate_0 GUI_SCREEN_FLAG_EDITOR_TITLE = new MessageTemplate_0("journey.gui.screen.flag-editor-title");
   public static final MessageTemplate_0 GUI_SCREEN_HOME_TITLE = new MessageTemplate_0("journey.gui.screen.home-title");
+  public static final MessageTemplate_1 GUI_SCREEN_SCOPE_TITLE = new MessageTemplate_1("journey.gui.screen.scope-title");
 
   private Messages() {
   }

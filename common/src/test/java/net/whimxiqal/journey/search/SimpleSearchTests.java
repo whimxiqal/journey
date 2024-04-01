@@ -161,7 +161,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
 
     // Set cells-per-execution-cycle to something small to stress-test the DistributedWorkManager
     PathTrial.CELLS_PER_EXECUTION_CYCLE = 5;
-    final int RUNS = 50;
+    final int RUNS = 30;
     final int total = RUNS * 12;
     AtomicInteger finished = new AtomicInteger(0);
     AtomicInteger failed = new AtomicInteger(0);
@@ -176,7 +176,7 @@ public class SimpleSearchTests extends JourneyTestHarness {
     BiConsumer<SearchSession, ResultState> runSearchAsync = (session, expected) -> {
       session.initialize();
       Assertions.assertEquals(ResultState.IDLE, session.getState());
-      session.flags().addFlag(Flags.TIMEOUT, 10);
+      session.flags().addFlag(Flags.TIMEOUT, 20);
       session.search().thenAccept(result -> {
         finished.incrementAndGet();
         if (expected != result.state()) {

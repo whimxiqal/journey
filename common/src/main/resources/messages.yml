@@ -1,0 +1,102 @@
+# journey:
+#   command:
+#     admin:
+#       config-reloaded: Reloaded config
+#       debug-mode-disabled: Debug mode disabled
+#       debug-mode-enabled: Debug mode enabled
+#       nether-portal-list-header: Registered Nether Portals
+#       path-cache:
+#         build: Generating path cache... See console for progress
+#         clear: Deleted all cached paths
+#       portal-cache:
+#         clear: Deleted all cached portals
+#     gui-error: An error occurred trying to open the GUI
+#     incomplete: Command incomplete
+#     internal-error: An internal error occurred
+#     invalid-input: Invalid input '<param:0>'
+#     navigation:
+#       canceled: Stopped navigation
+#       invalid-option: Option <param:0> is invalid, expecting '<key>:<value>'
+#       invalid-options: Options <param:0> for navigator <param:1> are invalid
+#       no-ingame-option: Option <param:0> is not allowed to be specified in-game
+#       no-navigator: There is no registered navigator called <param:0>
+#       no-navigator-permission: You do not have permission to use navigator <param:0>
+#       no-option-permission: You do not have permission to use option <param:0> for navigator <param:1>
+#       no-option-value-permission: You do not have permission to use value <param:0> for option <param:1>
+#       option-value-error: Error parsing value <param:0> for option <param:1>
+#       option-value-invalid: Value <param:0> is invalid for option <param:1>
+#       unknown-option: Navigator <param:0> does not have an option <param:1>
+#     no-permission: You do not have permission for that command
+#     no-permission-value: You do not have permission to use value <param:0>
+#     only-players: Only players may execute this command
+#     paging:
+#       invalid-page: Page number <param:0> is invalid
+#       page: page
+#     player:
+#       not-found: Player <param:0> not found
+#       remote-call-error: Could not get data for player <param:0>
+#       self: You may not choose yourself
+#     scopes:
+#       ambiguous: The expression <param:0> is ambiguous between scopes <param:1> and <param:2>
+#       no-scope: Could not find scope <param:0>
+#       none: Could not find any destination with expression <param:0>
+#     search:
+#       cancel-start: Canceling search
+#       canceled: Canceled search
+#       error: Search failed due to an internal error
+#       failed: Search failed
+#       flag:
+#         parse-error: Cannot parse flag parameter <param:0> for flag <param:1>
+#       nothing-to-cancel: You have nothing to cancel
+#       searching: Searching...
+#       success: Search complete!
+#     self-location-not-found: There was an issue getting your location, please try again
+#     waypoint:
+#       personal:
+#         already-exists: A waypoint called <param:0> already exists
+#         already-private: Waypoint <param:0> is already private
+#         already-public: Waypoint <param:0> is already public
+#         list-empty: You have no saved waypoints yet
+#         list-header: Your Waypoints
+#         not-found: Waypoint <param:0> not found
+#         rename: Renamed waypoint <param:0> to <param:1> at <param:2>
+#         set: Set waypoint <param:0> at <param:1>
+#         set-private: Waypoint <param:0> is now private
+#         set-public: Waypoint <param:0> is now public
+#         unset: Removed waypoint <param:0> at <param:1>
+#       player:
+#         list-empty: Player <param:0> has no saved waypoints yet
+#         list-header: '<param:0>''s Waypoints'
+#         not-found: Waypoint <param:0> not found for player <param:1>
+#       server:
+#         already-exists: A server waypoint called <param:0> already exists
+#         list-empty: There are no saved server waypoints yet
+#         list-header: Server Waypoints
+#         not-found: Server waypoint <param:0> not found
+#         rename: Renamed server waypoint <param:0> to <param:1> at <param:2>
+#         set: Set server waypoint <param:0> at <param:1>
+#         unset: Removed server waypoint <param:0> at <param:1>
+#   gui:
+#     button:
+#       back-label: Back
+#       flag-editor-close-label: Close Flag Editor
+#       flag-editor-open-label: Open Flag Editor
+#       page-next: Next Page
+#       page-previous: Previous Page
+#     scope:
+#       personal:
+#         title: My Waypoints
+#       players:
+#         description: Online players and their public personal waypoints
+#         title: Players
+#         to-entity-description: Navigate to player
+#         waypoints-description: This player's public waypoints
+#         waypoints-title: '<param:0>''s Waypoints'
+#       server:
+#         title: Server Waypoints
+#       worlds:
+#         title: Worlds
+#     screen:
+#       flag-editor-title: Flag Preferences Editor
+#       home-title: Home
+#       scope-title: '<param:0>'

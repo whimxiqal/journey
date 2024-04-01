@@ -13,10 +13,6 @@ public class MessageTemplate_0 extends MessageTemplate {
     return super.resolve(color, null, true);
   }
 
-  public String resolve() {
-    return super.resolve();
-  }
-
   public void sendTo(Audience audience, TextColor color) {
     audience.sendMessage(resolve(color));
   }

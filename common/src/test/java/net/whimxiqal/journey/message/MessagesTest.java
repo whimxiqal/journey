@@ -7,6 +7,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,9 +17,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.stream.Collectors;
 import net.whimxiqal.journey.config.LocaleSetting;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.spongepowered.configurate.yaml.internal.snakeyaml.Yaml;
 
 public class MessagesTest {
 
@@ -115,6 +118,32 @@ public class MessagesTest {
         Assertions.assertEquals(messageMap.get(template.key()).split("\\{[0-9]}", -1).length - 1, template.numElements(),
             "Locale " + locale.toLanguageTag() + ": template.numElements() did not return the number of '{[0-9]}' appeared in the template for key " + template.key());
       }
+    }
+  }
+
+  void assertMessageConfigLinesContainsKey(List<String> path, int index, Object obj) {
+    if (!(obj instanceof Map<?, ?>)) {
+      Assertions.fail("Obj " + obj + " is not a map: @ " + path.subList(0, index));
+    }
+    Map<String, ?> map = (Map<String, ?>) obj;
+    Assertions.assertTrue(map.containsKey(path.get(index)), "Loaded map does not contain path " + path.subList(0, index + 1));
+    if (index < path.size() - 1) {
+      assertMessageConfigLinesContainsKey(path, index + 1, map.get(path.get(index)));
+    }
+  }
+
+  @Test
+  void messageConfigFileComplete() throws IOException, URISyntaxException {
+    List<String> englishKeys = getEnglishKeys();
+    URL url = getClass().getClassLoader().getResource("messages.yml");
+    Assertions.assertNotNull(url, "Could not get resource for messages.yml");
+    String uncommentedConfig = Files.readAllLines(Path.of(url.toURI()), StandardCharsets.UTF_8)
+        .stream()
+        .map(s -> s.substring(2))
+        .collect(Collectors.joining("\n"));
+    Object loaded = new Yaml().load(uncommentedConfig);
+    for (String expectedKey : englishKeys) {
+      assertMessageConfigLinesContainsKey(Arrays.stream(expectedKey.split("\\.")).toList(), 0, loaded);
     }
   }
 

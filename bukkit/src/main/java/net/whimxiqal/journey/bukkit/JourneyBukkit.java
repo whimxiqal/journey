@@ -79,6 +79,7 @@ public final class JourneyBukkit extends JavaPlugin {
     proxy.dataFolder(this.getDataFolder().toPath());
     proxy.audienceProvider(new PaperAudiences());
     proxy.configPath(this.getDataFolder().toPath().resolve("config.yml"));
+    proxy.messagesConfigPath(this.getDataFolder().toPath().resolve("messages.yml"));
     proxy.schedulingManager(new BukkitSchedulingManager());
     proxy.platform(new BukkitPlatformProxy());
     proxy.version(getDescription().getVersion());
