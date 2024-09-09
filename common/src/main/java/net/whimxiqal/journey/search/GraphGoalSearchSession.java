@@ -34,6 +34,7 @@ import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.Tunnel;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An implementation of the {@link SearchSession} that uses a "reverse"
@@ -57,17 +58,20 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
   @Override
   public void asyncSearch() {
     state.getAndUpdate(current -> ResultState.RUNNING);
-    initSearch();
+    if (!initSearch()) {
+      state.getAndUpdate(current -> ResultState.STOPPED_FAILED);
+      complete(null);
+    }
     runSearchUnit();
   }
 
-  private void initSearch() {
+  private boolean initSearch() {
     synchronized (stateInfo) {
       super.timer.start();
 
       for (Tunnel tunnel : tunnels()) {
-        stateInfo.allDomains.add(tunnel.origin().domain());
-        stateInfo.allDomains.add(tunnel.destination().domain());
+        stateInfo.allDomains.add(tunnel.entrance().domain());
+        stateInfo.allDomains.add(tunnel.exit().domain());
       }
 
       // Prepare tunnel maps
@@ -78,8 +82,8 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
 
       // Fill tunnel maps
       for (Tunnel tunnel : tunnels()) {
-        stateInfo.tunnelsByOriginDomain.get(tunnel.origin().domain()).add(tunnel);
-        stateInfo.tunnelsByDestinationDomain.get(tunnel.destination().domain()).add(tunnel);
+        stateInfo.tunnelsByOriginDomain.get(tunnel.entrance().domain()).add(tunnel);
+        stateInfo.tunnelsByDestinationDomain.get(tunnel.exit().domain()).add(tunnel);
       }
 
       stateInfo.searchGraph = createSearchGraph();
@@ -101,8 +105,10 @@ public abstract class GraphGoalSearchSession<G extends SearchGraph> extends Sear
 
       initSearchExtra();
     }
+    return true;
   }
 
+  @Nullable
   abstract G createSearchGraph();
 
   protected void initSearchExtra() {

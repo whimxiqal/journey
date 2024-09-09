@@ -1,0 +1,8 @@
+name: JourneyMultiverse
+version: '${version}'
+main: net.whimxiqal.journey.integration.multiverse.JourneyMultiverse
+api-version: 1.20
+depend: [ Journey, Multiverse-Core ]
+softdepend: [ Multiverse-Portals, Multiverse-NetherPortals ]
+authors: [ whimxiqal ]
+description: Integrates Journey with Multiverse

@@ -23,13 +23,15 @@
 
 package net.whimxiqal.journey;
 
-public final class JourneyApiSupplier {
-
-  private JourneyApiSupplier() {
+public class TunnelBuilderFactoryImpl implements TunnelBuilderFactory {
+  @Override
+  public TunnelBuilder builder(Cell entrance, Cell exit) {
+    return new TunnelBuilderImpl(entrance, candidate -> candidate.equals(entrance), exit);
   }
 
-  public static void set(JourneyApi api) {
-    JourneyApiProvider.provide(api);
+  @Override
+  public TunnelBuilder boxEntranceBuilder(Cell entrance1, Cell entrance2, Cell exit) {
+    CellBox boxHelper = new CellBox(entrance1, entrance2);
+    return new TunnelBuilderImpl(boxHelper.center(), boxHelper::contains, exit);
   }
-
 }

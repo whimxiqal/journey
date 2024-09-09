@@ -24,51 +24,56 @@
 package net.whimxiqal.journey.search;
 
 import java.util.UUID;
+import java.util.function.Predicate;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.JourneyPlayer;
+import net.whimxiqal.journey.TargetFunction;
 import net.whimxiqal.journey.Tunnel;
 
 public class DestinationGoalSearchSession extends GraphGoalSearchSession<DestinationSearchGraph> {
 
-  protected final Cell destination;
-  private final boolean persistentDestination;
+  private final TargetFunction destination;
+  private final Predicate<Cell> satisfactionPredicate;
+  private final boolean stationaryDestination;
 
   public DestinationGoalSearchSession(UUID callerId, Caller callerType, JourneyAgent agent,
-                                      Cell origin, Cell destination,
-                                      boolean persistentOrigin, boolean persistentDestination) {
-    super(callerId, callerType, agent, origin, persistentOrigin);
+                                      Cell origin, TargetFunction destination,  Predicate<Cell> satisfactionPredicate,
+                                      boolean stationaryOrigin, boolean stationaryDestination) {
+    super(callerId, callerType, agent, origin, stationaryOrigin);
     this.destination = destination;
-    this.persistentDestination = persistentDestination;
+    this.satisfactionPredicate = satisfactionPredicate;
+    this.stationaryDestination = stationaryDestination;
   }
 
-  public DestinationGoalSearchSession(JourneyPlayer player, Cell origin, Cell destination, boolean persistentOrigin, boolean persistentDestination) {
-    this(player.uuid(), Caller.PLAYER, player, origin, destination, persistentOrigin, persistentDestination);
+  public DestinationGoalSearchSession(JourneyPlayer player, Cell origin,
+                                      TargetFunction destination, Predicate<Cell> satisfactionPredicate,
+                                      boolean stationaryOrigin, boolean stationaryDestination) {
+    this(player.uuid(), Caller.PLAYER, player, origin, destination, satisfactionPredicate, stationaryOrigin, stationaryDestination);
   }
 
   @Override
   DestinationSearchGraph createSearchGraph() {
-    return new DestinationSearchGraph(this, origin, destination);
+    return new DestinationSearchGraph(this, origin, destination, satisfactionPredicate);
   }
 
   @Override
   public void initialize() {
     super.initialize();
-    Journey.get().proxy().platform().prepareDestinationSearchSession(this, agent, flags, destination);
   }
 
   @Override
   protected void initSearchExtra() {
     if (origin.domain() == destination.domain()) {
-      stateInfo.searchGraph.addPathTrialOriginToDestination(modes(), persistentOrigin && persistentDestination);
+      stateInfo.searchGraph.addPathTrialOriginToDestination(modes(), persistentOrigin && stationaryDestination);
     }
 
     for (Integer domain : stateInfo.allDomains) {
       // Path trials from tunnel -> destination
       for (Tunnel pathTrialOriginTunnel : stateInfo.tunnelsByDestinationDomain.get(domain)) {
         if (domain.equals(destination.domain())) {
-          stateInfo.searchGraph.addPathTrialTunnelToDestination(pathTrialOriginTunnel, modes(), persistentDestination);
+          stateInfo.searchGraph.addPathTrialTunnelToDestination(pathTrialOriginTunnel, modes(), stationaryDestination);
         }
       }
     }

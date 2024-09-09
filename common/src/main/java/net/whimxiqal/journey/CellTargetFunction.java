@@ -23,42 +23,23 @@
 
 package net.whimxiqal.journey;
 
-import java.util.List;
-import java.util.Optional;
-import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.Nullable;
 
-class DestinationImpl implements Destination {
+public class CellTargetFunction implements TargetFunction {
 
-  private final Component name;
-  private final List<Component> description;
-  private final Cell location;
-  private final String permission;
+  private final Cell cell;
 
-  DestinationImpl(Component name, List<Component> description, Cell location, String permission) {
-    this.name = name;
-    this.description = description;
-    this.location = location;
-    this.permission = permission;
+  public CellTargetFunction(Cell cell) {
+    this.cell = cell;
   }
 
   @Override
-  public Component name() {
-    return name;
+  public @Nullable Cell target(Cell cell) {
+    return cell;
   }
 
   @Override
-  public List<Component> description() {
-    return description;
+  public int domain() {
+    return cell.domain();
   }
-
-  @Override
-  public Cell location() {
-    return location;
-  }
-
-  @Override
-  public Optional<String> permission() {
-    return Optional.ofNullable(permission);
-  }
-
 }

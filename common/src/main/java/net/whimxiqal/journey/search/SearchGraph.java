@@ -25,6 +25,7 @@ package net.whimxiqal.journey.search;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
@@ -49,10 +50,6 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathT
     this.originNode = Tunnel.builder(origin, origin).cost(0).build();
   }
 
-  protected Tunnel getOriginNode() {
-    return originNode;
-  }
-
   /**
    * Add a path trial to the search graph that supposedly goes
    * from the origin of the entire search to a tunnel.
@@ -62,9 +59,14 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathT
    * @param modes the mode types used to traverse the path
    */
   public void addPathTrialOriginToTunnel(Tunnel end, Collection<Mode> modes, boolean persistentOrigin) {
+    Cell destination = end.entrance();
+    if (destination == null) {
+      return;
+    }
     addPathTrial(session,
-        origin, end.origin(),
-        getOriginNode(), end,
+        origin, destination,
+        originNode, end,
+        end::isSatisfiedBy,
         modes, persistentOrigin);
   }
 
@@ -79,13 +81,19 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathT
    * @param modes the mode types used to traverse the path
    */
   public void addPathTrialTunnelToTunnel(Tunnel start, Tunnel end, Collection<Mode> modes) {
-    addPathTrial(session, start.destination(), end.origin(),
-        start, end, modes, true);
+    Cell destination = end.entrance();
+    if (destination == null) {
+      return;
+    }
+    addPathTrial(session, start.exit(), destination,
+        start, end,
+        end::isSatisfiedBy,
+        modes, true);
   }
 
   protected void addPathTrial(SearchSession session, Cell origin, Cell destination,
                               Tunnel originNode,
-                              Tunnel destinationNode,
+                              Tunnel destinationNode, Predicate<Cell> satisfactionPredicate,
                               Collection<Mode> modes, boolean saveOnComplete) {
     // First, try to access a cached path
     Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
@@ -94,7 +102,7 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathT
       if (Journey.get().proxy().dataManager()
           .pathRecordManager()
           .containsRecord(origin, destination, modeTypes)) {
-        addPathTrial(DestinationPathTrial.cached(session, origin, destination,
+        addPathTrial(DestinationPathTrial.cached(session, origin, destination, satisfactionPredicate,
                 modes,
                 Journey.get().proxy().dataManager()
                     .pathRecordManager()
@@ -106,7 +114,7 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathT
       e.printStackTrace();
     }
     if (!added) {
-      addPathTrial(DestinationPathTrial.approximate(session, origin, destination, modes, saveOnComplete), originNode, destinationNode);
+      addPathTrial(DestinationPathTrial.approximate(session, origin, destination, modes, satisfactionPredicate, saveOnComplete), originNode, destinationNode);
     }
   }
 

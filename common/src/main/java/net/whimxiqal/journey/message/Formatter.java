@@ -34,6 +34,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A utility class to store static fields and methods pertaining to
@@ -61,7 +62,7 @@ public final class Formatter {
         .append(Component.newline())
         .append(Component.text("   ✳ ").color(THEME))
         .append(Component.text("Journey").color(THEME).decorate(TextDecoration.UNDERLINED))
-        .append(Component.text(" (v" + Journey.get().proxy().version() + ")").color(DARK))
+        .append(Component.text(" (" + Journey.get().proxy().version() + ")").color(DARK))
         .append(Component.text(" ✳").color(THEME))
         .append(Component.newline())
         .append(Component.text("      by ").color(DULL))
@@ -123,7 +124,10 @@ public final class Formatter {
     return textBuilder.build();
   }
 
-  public static Component cell(Cell cell) {
+  public static Component cell(@Nullable Cell cell) {
+    if (cell == null) {
+      return Component.text("null").color(DULL);
+    }
     return Component.text()
         .append(Component.text("[x: ").color(DULL))
         .append(Component.text(cell.blockX()).color(ACCENT))

@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.CellTargetFunction;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.common.JourneyBaseVisitor;
@@ -205,8 +206,8 @@ public class JourneyExecutor implements CommandExecutor {
                 Journey.get().proxy().dataManager()
                     .netherPortalManager()
                     .getAllTunnels(TunnelType.NETHER),
-                tunnel -> Formatter.cell(tunnel.origin()),
-                tunnel -> Formatter.cell(tunnel.destination()))
+                tunnel -> Formatter.cell(tunnel.entrance()),
+                tunnel -> Formatter.cell(tunnel.exit()))
             .sendPage(src.audience(), page.get()), true);
         return CommandResult.success();
       }
@@ -366,9 +367,11 @@ public class JourneyExecutor implements CommandExecutor {
         }, true);
       }
 
-      private void destinationSearch(Cell startLocation, Cell endLocation) {
+      private void destinationSearch(Cell origin, Cell destination) {
         InternalJourneyPlayer player = InternalJourneyPlayer.from(src);
-        DestinationGoalSearchSession session = new DestinationGoalSearchSession(player, startLocation, endLocation, false, true);
+        DestinationGoalSearchSession session = new DestinationGoalSearchSession(player, origin,
+            new CellTargetFunction(destination), destination::equals,
+            false, true);
         session.addFlags(Journey.get().searchManager().getFlagPreferences(player.uuid(), false));
         session.addFlags(flags);
 

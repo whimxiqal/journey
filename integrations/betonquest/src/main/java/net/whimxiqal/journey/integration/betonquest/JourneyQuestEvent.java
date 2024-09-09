@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.integration.betonquest;
 
 import java.util.HashMap;
@@ -9,9 +32,7 @@ import java.util.regex.Pattern;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.whimxiqal.journey.JourneyApi;
-import net.whimxiqal.journey.JourneyApiProvider;
 import net.whimxiqal.journey.bukkit.JourneyBukkitApi;
-import net.whimxiqal.journey.bukkit.JourneyBukkitApiProvider;
 import net.whimxiqal.journey.navigation.NavigatorDetailsBuilder;
 import net.whimxiqal.journey.search.SearchFlag;
 import net.whimxiqal.journey.search.SearchFlags;
@@ -21,7 +42,7 @@ import org.betonquest.betonquest.api.profiles.Profile;
 import org.betonquest.betonquest.api.quest.event.Event;
 import org.betonquest.betonquest.exceptions.InstructionParseException;
 import org.betonquest.betonquest.exceptions.QuestRuntimeException;
-import org.betonquest.betonquest.utils.location.CompoundLocation;
+import org.betonquest.betonquest.instruction.variable.location.VariableLocation;
 import org.bukkit.Location;
 
 public class JourneyQuestEvent implements Event {
@@ -31,7 +52,7 @@ public class JourneyQuestEvent implements Event {
   private static final Pattern NAVIGATOR_FLAG_NAME_REGEX = Pattern.compile("navigator:([a-zA-Z-]+)");
 
   private static final PlainTextComponentSerializer TEXT_SERIALIZER = PlainTextComponentSerializer.builder().build();
-  private final CompoundLocation compoundLocation;
+  private final VariableLocation variableLocation;
   private final List<SearchFlag<?>> searchFlags = new LinkedList<>();
   private final Map<String, String> navigatorOptions = new HashMap<>();
   private Component successMessage;
@@ -40,7 +61,7 @@ public class JourneyQuestEvent implements Event {
 
   public JourneyQuestEvent(Instruction instruction) throws InstructionParseException {
     // first parameter is always location
-    this.compoundLocation = instruction.getLocation();
+    this.variableLocation = instruction.getLocation();
 
     String flag = "";
     while (instruction.hasNext()) {
@@ -116,24 +137,22 @@ public class JourneyQuestEvent implements Event {
 
   @Override
   public void execute(Profile profile) throws QuestRuntimeException {
-    Location location = this.compoundLocation.getLocation(profile);
-    JourneyApi journey = JourneyApiProvider.get();
-    JourneyBukkitApi journeyBukkit = JourneyBukkitApiProvider.get();
-    journey.searching().runPlayerDestinationSearch(profile.getPlayerUUID(), journeyBukkit.toCell(location), SearchFlags.of(searchFlags))
+    Location location = this.variableLocation.getValue(profile);
+    JourneyApi.get().searching().runPlayerDestinationSearch(profile.getPlayerUUID(), JourneyBukkitApi.get().toCell(location), SearchFlags.of(searchFlags))
         .thenAccept(result -> {
-          journey.navigating().stopNavigation(profile.getPlayerUUID()).thenAccept(stopResult -> {
+          JourneyApi.get().navigating().stopNavigation(profile.getPlayerUUID()).thenAccept(stopResult -> {
             if (result.status() == SearchResult.Status.SUCCESS) {
               if (successMessage != null && profile.getOnlineProfile().isPresent()) {
                 profile.getOnlineProfile().get().getPlayer().sendMessage(successMessage);
               }
               NavigatorDetailsBuilder<?> detailsBuilder;
               if (navigatorType == null) {
-                detailsBuilder = journey.navigating().trailNavigatorDetailsBuilder();
+                detailsBuilder = JourneyApi.get().navigating().trailNavigatorDetailsBuilder();
               } else {
-                detailsBuilder = journey.navigating().navigatorDetailsBuilder(navigatorType);
+                detailsBuilder = JourneyApi.get().navigating().navigatorDetailsBuilder(navigatorType);
                 navigatorOptions.forEach(detailsBuilder::setOption);
               }
-              journey.navigating().navigatePlayer(profile.getPlayerUUID(), result.path(), detailsBuilder.build());
+              JourneyApi.get().navigating().navigatePlayer(profile.getPlayerUUID(), result.path(), detailsBuilder.build());
             } else {
               if (failureMessage != null && profile.getOnlineProfile().isPresent()) {
                 profile.getOnlineProfile().get().getPlayer().sendMessage(failureMessage);

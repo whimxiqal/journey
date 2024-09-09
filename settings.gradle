@@ -14,4 +14,7 @@ include 'integrations:citizens'
 findProject(':integrations:citizens')?.name = 'citizens'
 include 'integrations:betonquest'
 findProject(':integrations:betonquest')?.name = 'betonquest'
+include 'command'
+include 'integrations:multiverse'
+findProject(':integrations:multiverse')?.name = 'multiverse'
 

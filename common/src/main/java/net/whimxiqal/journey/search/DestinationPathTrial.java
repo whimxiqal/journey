@@ -24,8 +24,8 @@
 package net.whimxiqal.journey.search;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import lombok.Getter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
@@ -42,15 +42,14 @@ import net.whimxiqal.journey.search.function.WeightedDistanceCostFunction;
  */
 public class DestinationPathTrial extends PathTrial {
 
-  public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
   public static final double COST_FUNCTION_WEIGHT = 1.7;
   private static boolean loggedMaxCacheHit = false;  // only log this message once
-  @Getter
   private final Cell destination;
 
   public DestinationPathTrial(SearchSession session,
                               Cell origin,
                               Cell destination,
+                              Predicate<Cell> satisfactionPredicate,
                               Collection<Mode> modes,
                               double length,
                               Path path,
@@ -59,14 +58,17 @@ public class DestinationPathTrial extends PathTrial {
                               boolean saveOnComplete) {
     super(session, origin, modes,
         new WeightedDistanceCostFunction(new EuclideanDistanceFunction(), destination, COST_FUNCTION_WEIGHT),
-        (blockProvider, node) -> node.getData().location().distanceToSquared(destination)
-            <= SUFFICIENT_COMPLETION_DISTANCE_SQUARED,
+        (blockProvider, node) -> satisfactionPredicate.test(node.getData().location()),
         length,
         path,
         state,
         fromCache,
         saveOnComplete);
     this.destination = destination;
+  }
+
+  public Cell getDestination() {
+    return destination;
   }
 
   /**
@@ -83,8 +85,9 @@ public class DestinationPathTrial extends PathTrial {
   public static DestinationPathTrial successful(SearchSession session,
                                                 Cell origin, Cell destination,
                                                 Collection<Mode> modes,
+                                                Predicate<Cell> satisfactionPredicate,
                                                 Path path) {
-    return new DestinationPathTrial(session, origin, destination,
+    return new DestinationPathTrial(session, origin, destination, satisfactionPredicate,
         modes,
         path.getCost(), path,
         ResultState.STOPPED_SUCCESSFUL, false, false);
@@ -100,9 +103,9 @@ public class DestinationPathTrial extends PathTrial {
    * @return the path trial
    */
   public static DestinationPathTrial failed(SearchSession session,
-                                            Cell origin, Cell destination,
+                                            Cell origin, Cell destination, Predicate<Cell> satisfactionPredicate,
                                             Collection<Mode> modes) {
-    return new DestinationPathTrial(session, origin, destination,
+    return new DestinationPathTrial(session, origin, destination,  satisfactionPredicate,
         modes,
         Double.MAX_VALUE, null,
         ResultState.STOPPED_FAILED, false, false);
@@ -121,9 +124,9 @@ public class DestinationPathTrial extends PathTrial {
    */
   public static DestinationPathTrial approximate(SearchSession session,
                                                  Cell origin, Cell destination,
-                                                 Collection<Mode> modes,
+                                                 Collection<Mode> modes, Predicate<Cell> satisfactionPredicate,
                                                  boolean saveOnComplete) {
-    return new DestinationPathTrial(session, origin, destination,
+    return new DestinationPathTrial(session, origin, destination, satisfactionPredicate,
         modes,
         new PlanarOrientedDistanceFunction().distance(origin, destination), null,
         ResultState.IDLE, false, saveOnComplete);
@@ -140,9 +143,10 @@ public class DestinationPathTrial extends PathTrial {
    */
   public static DestinationPathTrial cached(SearchSession session,
                                             Cell origin, Cell destination,
+                                            Predicate<Cell> satisfactionPredicate,
                                             Collection<Mode> modes,
                                             Path path) {
-    return new DestinationPathTrial(session, origin, destination,
+    return new DestinationPathTrial(session, origin, destination, satisfactionPredicate,
         modes,
         path.getCost(), path,
         ResultState.STOPPED_SUCCESSFUL,

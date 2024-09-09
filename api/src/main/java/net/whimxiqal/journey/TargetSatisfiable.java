@@ -21,18 +21,16 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit;
+package net.whimxiqal.journey;
 
-import net.whimxiqal.journey.bukkit.JourneyBukkitApi;
-import net.whimxiqal.journey.bukkit.JourneyBukkitApiProvider;
+public interface TargetSatisfiable {
 
-public final class JourneyBukkitApiSupplier {
-
-  private JourneyBukkitApiSupplier() {
-  }
-
-  public static void set(JourneyBukkitApi api) {
-    JourneyBukkitApiProvider.provide(api);
-  }
+  /**
+   * Determine whether a given location is at the destination.
+   *
+   * @param location the location to check
+   * @return true if destination is reached by being at the given location
+   */
+  boolean isSatisfiedBy(Cell location);
 
 }

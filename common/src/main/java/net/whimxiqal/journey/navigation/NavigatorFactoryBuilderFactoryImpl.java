@@ -21,34 +21,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.bukkit;
+package net.whimxiqal.journey.navigation;
 
-import java.util.NoSuchElementException;
+public class NavigatorFactoryBuilderFactoryImpl implements NavigatorFactoryBuilderFactory {
 
-/**
- * The static provider of a {@link JourneyBukkitApi}.
- */
-public final class JourneyBukkitApiProvider {
-
-  private static JourneyBukkitApi instance;
-
-  /**
-   * Getter for the {@link JourneyBukkitApi}.
-   *
-   * @return the Journey Bukkit API
-   */
-  public static JourneyBukkitApi get() {
-    if (instance == null) {
-      throw new NoSuchElementException("No JourneyBukkitApi has been set yet.");
-    }
-    return instance;
-  }
-
-  static void provide(JourneyBukkitApi instance) {
-    JourneyBukkitApiProvider.instance = instance;
-  }
-
-  private JourneyBukkitApiProvider() {
+  @Override
+  public NavigatorFactoryBuilder builder(String plugin, String navigatorType) {
+    return new NavigatorFactoryBuilderImpl(plugin, navigatorType);
   }
 
 }

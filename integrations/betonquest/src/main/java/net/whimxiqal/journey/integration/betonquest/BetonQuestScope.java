@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) whimxiqal
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package net.whimxiqal.journey.integration.betonquest;
 
 import java.util.HashMap;
@@ -10,7 +33,6 @@ import net.whimxiqal.journey.Scope;
 import net.whimxiqal.journey.ScopeBuilder;
 import net.whimxiqal.journey.VirtualMap;
 import net.whimxiqal.journey.bukkit.JourneyBukkitApi;
-import net.whimxiqal.journey.bukkit.JourneyBukkitApiProvider;
 import org.betonquest.betonquest.BetonQuest;
 import org.betonquest.betonquest.api.bukkit.config.custom.multi.MultiConfiguration;
 import org.betonquest.betonquest.api.config.quest.QuestPackage;
@@ -42,7 +64,6 @@ public class BetonQuestScope implements Scope {
             return VirtualMap.empty();
           }
 
-          JourneyBukkitApi journeyBukkit = JourneyBukkitApiProvider.get();
           Map<String, Scope> packageScopes = new HashMap<>();
           OnlineProfile profile = PlayerConverter.getID(bukkitPlayer);
           PlayerData playerData = BetonQuest.getInstance().getPlayerData(profile);
@@ -107,7 +128,7 @@ public class BetonQuestScope implements Scope {
                 JourneyBetonQuest.logger.warning("Could not parse location coordinates in a compass pointer in " + packName + " package: " + key + ": " + e.getMessage());
                 continue;
               }
-              packageScope.destinations(VirtualMap.ofSingleton(key, Destination.builder(new Cell(locX, locY, locZ, journeyBukkit.toDomain(world)))
+              packageScope.destinations(VirtualMap.ofSingleton(key, Destination.cellBuilder(new Cell(locX, locY, locZ, JourneyBukkitApi.get().toDomain(world)))
                   .name(Component.text(name))
                   .build()));
             }

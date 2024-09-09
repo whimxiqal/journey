@@ -23,22 +23,25 @@
 
 package net.whimxiqal.journey;
 
-import java.util.Collections;
-import net.kyori.adventure.text.Component;
+import java.util.ServiceLoader;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A named place.
  */
-public interface Destination extends Describable, Permissible {
+public interface Destination extends Describable, Permissible, TargetFunction, TargetSatisfiable {
 
-  /**
-   * Static constructor a builder.
-   *
-   * @param location the location
-   * @return the destination builder
-   */
-  static DestinationBuilder builder(Cell location) {
-    return new DestinationBuilder(location);
+  static DestinationBuilder cellBuilder(Cell location) {
+    return DestinationBuilderFactory.INSTANCE.cellDestinationBuilder(location);
+  }
+
+  static DestinationBuilder cellBuilder(CellSupplier location) {
+    return DestinationBuilderFactory.INSTANCE.cellDestinationBuilder(location);
+  }
+
+  static DestinationBuilder boxBuilder(Cell point1, Cell point2) {
+    return DestinationBuilderFactory.INSTANCE.boxDestinationBuilder(point1, point2);
   }
 
   /**
@@ -48,14 +51,21 @@ public interface Destination extends Describable, Permissible {
    * @return the unnamed destination
    */
   static Destination of(Cell location) {
-    return new DestinationImpl(Component.empty(), Collections.emptyList(), location, null);
+    return DestinationBuilderFactory.INSTANCE.cellDestinationBuilder(location).build();
   }
 
+
+  @Nullable
+  Cell target(Cell origin);
+
+
+  boolean isSatisfiedBy(Cell location);
+
   /**
-   * The physical location of the destination.
+   * Whether the destination is stationary most of the time.
    *
-   * @return the location
+   * @return stationary
    */
-  Cell location();
+  boolean stationary();
 
 }

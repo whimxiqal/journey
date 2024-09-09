@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.UUID;
 import net.whimxiqal.journey.Cell;
@@ -48,11 +49,13 @@ public final class WorldLoader {
   }
 
   public static int domain(int index) {
+    TestWorld world = Objects.requireNonNull(TestPlatformProxy.worlds.get(index));
     return Journey.get().domainManager().domainIndex(TestPlatformProxy.worlds.get(index).uuid);
   }
 
   public static void initWorlds() {
     Map<Character, Cell> pendingPorts = new HashMap<>();
+    TestPlatformProxy.worlds.clear();
 
     for (int resourceIdx = 0; resourceIdx < worldResources.length; resourceIdx++) {
       String resource = worldResources[resourceIdx];

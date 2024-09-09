@@ -1,5 +1,7 @@
 plugins {
     id 'java-library'
+    id 'journey.java-conventions'
+//    id 'org.cadixdev.licenser'
 }
 
 version = project.ext.apiFullVersion

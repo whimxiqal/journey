@@ -21,34 +21,43 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey;
+package net.whimxiqal.journey.integrations.multiverse;
 
-import java.util.NoSuchElementException;
+import com.onarandombox.MultiverseCore.MultiverseCore;
+import java.util.logging.Logger;
+import net.whimxiqal.journey.JourneyApi;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * The static provider of a {@link JourneyApi}.
- */
-public final class JourneyApiProvider {
+public class JourneyMultiverse extends JavaPlugin {
 
-  private static JourneyApi instance;
+  private static JourneyMultiverse instance;
+  private static Logger logger;
 
-  private JourneyApiProvider() {
-  }
-
-  /**
-   * Getter for the {@link JourneyApi}.
-   *
-   * @return the Journey API
-   */
-  public static JourneyApi get() {
-    if (instance == null) {
-      throw new NoSuchElementException("No JourneyApi has been set yet.");
-    }
+  public static JourneyMultiverse instance() {
     return instance;
   }
 
-  static void provide(JourneyApi instance) {
-    JourneyApiProvider.instance = instance;
+  public static Logger logger() {
+    return logger;
+  }
+
+  @Override
+  public void onEnable() {
+    JourneyMultiverse.instance = this;
+    JourneyMultiverse.logger = getLogger();
+
+    Plugin journey = getServer().getPluginManager().getPlugin("Journey");
+    if (journey == null) {
+      logger().severe("Could not find Journey");
+      Bukkit.getPluginManager().disablePlugin(this);
+      return;
+    }
+
+
+    JourneyApi.get().registerScope(getName(), "multiverse", new MultiverseScope());
+
   }
 
 }

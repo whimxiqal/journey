@@ -24,7 +24,11 @@
 package net.whimxiqal.journey.search;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Predicate;
 import net.whimxiqal.journey.Cell;
+import net.whimxiqal.journey.TargetFunction;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.navigation.Mode;
 import net.whimxiqal.journey.tools.AlternatingList;
@@ -32,17 +36,19 @@ import org.jetbrains.annotations.Nullable;
 
 public class DestinationSearchGraph extends SearchGraph {
 
-  private final Cell destination;
-  private final Tunnel destinationNode;
+  private final TargetFunction targetFunction;
+  private final Predicate<Cell> satisfactionPredicate;
+  private final Set<Tunnel> destinationNodes;
 
-  public DestinationSearchGraph(GraphGoalSearchSession<DestinationSearchGraph> session, Cell origin, Cell destination) {
+  public DestinationSearchGraph(GraphGoalSearchSession<DestinationSearchGraph> session, Cell origin, TargetFunction targetFunction, Predicate<Cell> satisfactionPredicate) {
     super(session, origin);
-    this.destination = destination;
-    this.destinationNode = Tunnel.builder(destination, destination).cost(0).build();
+    this.targetFunction = targetFunction;
+    this.satisfactionPredicate = satisfactionPredicate;
+    this.destinationNodes = new HashSet<>();
   }
 
-  private Tunnel getDestinationNode() {
-    return destinationNode;
+  private static Tunnel identity(Cell cell) {
+    return Tunnel.builder(cell, cell).cost(0).build();
   }
 
   /**
@@ -52,7 +58,15 @@ public class DestinationSearchGraph extends SearchGraph {
    * @param modes the mode types to supposedly get from the origin to the destination
    */
   public void addPathTrialOriginToDestination(Collection<Mode> modes, boolean persistentEnds) {
-    addPathTrial(session, origin, destination, getOriginNode(), getDestinationNode(), modes, persistentEnds);
+    Cell destination = targetFunction.target(origin);
+    if (destination == null || destination.domain() != origin.domain()) {
+      return;
+    }
+    Tunnel destinationNode = identity(destination);
+    destinationNodes.add(destinationNode);
+    addPathTrial(session, origin, destination,
+        originNode, destinationNode,
+        satisfactionPredicate, modes, persistentEnds);
   }
 
   /**
@@ -64,10 +78,16 @@ public class DestinationSearchGraph extends SearchGraph {
    * @param modes the mode types used to traverse the path
    */
   public void addPathTrialTunnelToDestination(Tunnel start, Collection<Mode> modes, boolean persistentDestination) {
+    Cell destination = targetFunction.target(origin);
+    if (destination == null || destination.domain() != origin.domain()) {
+      return;
+    }
+    Tunnel destinationNode = identity(destination);
+    destinationNodes.add(destinationNode);
     addPathTrial(session,
-        start.destination(), destination,
-        start, getDestinationNode(),
-        modes, persistentDestination);
+        start.exit(), destination,
+        start, destinationNode,
+        satisfactionPredicate, modes, persistentDestination);
   }
 
   /**
@@ -79,7 +99,9 @@ public class DestinationSearchGraph extends SearchGraph {
   @Nullable
   @Override
   public ItineraryTrial calculate(boolean mustUseCache) {
-    AlternatingList<Tunnel, DestinationPathTrial, Object> graphPath = findMinimumPath(originNode, destinationNode, trial -> !mustUseCache || trial.isFromCache());
+    AlternatingList<Tunnel, DestinationPathTrial, Object> graphPath = findMinimumPath(
+        originNode, destinationNodes::contains,
+        trial -> !mustUseCache || trial.isFromCache());
     if (graphPath == null) {
       return null;
     } else {

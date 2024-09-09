@@ -108,7 +108,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
     ParticleBuilder builder = particle.builder()
         .receivers(player)
         .location(world, x, y, z);
-    if (particle == Particle.REDSTONE) {
+    if (particle == Particle.DUST) {
       builder.color(color.red(), color.green(), color.blue());
     }
     builder.spawn();
@@ -137,11 +137,6 @@ public class BukkitPlatformProxy implements PlatformProxy {
   @Override
   public Optional<Vector> entityVector(UUID entityUuid) {
     return Optional.ofNullable(Bukkit.getEntity(entityUuid)).map(entity -> BukkitUtil.toLocalVector(entity.getLocation().toVector()));
-  }
-
-  @Override
-  public void prepareDestinationSearchSession(SearchSession searchSession, JourneyAgent agent, FlagSet flags, Cell destination) {
-    // no op
   }
 
   @Override
@@ -192,9 +187,10 @@ public class BukkitPlatformProxy implements PlatformProxy {
   }
 
   @Override
-  public Map<String, Map<String, Integer>> domainResourceKeys() {
-    Map<String, Map<String, Integer>> domains = new HashMap<>();
+  public Map<String, Map<String, DomainInfo>> domainResourceKeys() {
+    Map<String, Map<String, DomainInfo>> domains = new HashMap<>();
     for (World world : Bukkit.getWorlds()) {
+      world.getName();
       NamespacedKey key = world.getKey();
       domains.computeIfAbsent(key.namespace(), k -> new HashMap<>()).put(key.getKey(), BukkitUtil.getDomain(world));
     }

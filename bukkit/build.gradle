@@ -1,6 +1,7 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'journey.java-conventions'
+    id 'com.gradleup.shadow' version '8.3.0'
 }
 
 repositories {
@@ -14,7 +15,6 @@ dependencies {
 
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
-    testImplementation 'com.google.guava:guava:31.0.1-jre'
 
     // Annotations
     shadow 'org.jetbrains:annotations:22.0.0'
@@ -28,11 +28,11 @@ dependencies {
 
     implementation 'org.bstats:bstats-bukkit:3.0.0'
 
-    implementation 'net.whimxiqal.mantle:paper:0.1.0-SNAPSHOT'
+    implementation 'net.whimxiqal.mantle:paper:0.1.2-SNAPSHOT'
 
-    implementation "net.kyori:adventure-platform-api:4.1.2"
+//    implementation "net.kyori:adventure-platform-api:4.1.2"
 
-    implementation "dev.triumphteam:triumph-gui:3.1.2"
+    implementation "dev.triumphteam:triumph-gui:3.1.10"
 }
 
 shadowJar {
@@ -43,7 +43,10 @@ shadowJar {
         include(dependency('net.whimxiqal.mantle:.*'))
         include(dependency('org.antlr:antlr4-runtime'))
         include(dependency('com.vmware.antlr4-c3:.*'))
+        include(dependency('net.kyori:adventure.*'))
         include(dependency('net.kyori:adventure-platform.*'))
+        include(dependency('net.kyori:adventure-text-serializer-legacy.*'))
+        include(dependency('net.kyori:adventure-text-serializer-gson.*'))
         include(dependency('org.bstats:.*'))
         include(dependency('dev.triumphteam:.*'))
         include(dependency('com.zaxxer:.*'))
@@ -55,7 +58,9 @@ shadowJar {
     relocate 'org.antlr', 'net.whimxiqal.journey.libs.antlr'
     relocate 'com.vmware.antlr4c3', 'net.whimxiqal.journey.libs.c3'
     relocate 'org.stringtemplate', 'net.whimxiqal.journey.libs.stringtemplate'
-    relocate 'net.kyori.adventure.platform', 'net.whimxiqal.journey.libs.kyori'
+    relocate 'net.kyori.adventure.platform', 'net.whimxiqal.journey.libs.adventure.platform'
+    relocate 'net.kyori.adventure.text.serializer.legacy', 'net.whimxiqal.journey.libs.adventure.legacy'
+    relocate 'net.kyori.adventure.text.serializer.gson', 'net.whimxiqal.journey.libs.adventure.gson'
     relocate 'org.bstats', 'net.whimxiqal.journey.libs.bstats'
     relocate 'dev.triumphteam.gui', 'net.whimxiqal.journey.libs.gui'
     relocate 'com.zaxxer.hikari', 'net.whimxiqal.journey.libs.hikari'

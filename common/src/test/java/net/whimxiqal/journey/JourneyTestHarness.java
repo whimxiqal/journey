@@ -77,7 +77,7 @@ public class JourneyTestHarness {
       WorldLoader.initWorlds();
 
       TestPlatformProxy.onlinePlayers.add(new TestJourneyPlayer(PLAYER_UUID));
-      JourneyApiProvider.get().registerTunnels("Journey", player -> TestPlatformProxy.tunnels);
+      JourneyApi.get().registerTunnels("Journey", player -> TestPlatformProxy.tunnels);
     });
   }
 

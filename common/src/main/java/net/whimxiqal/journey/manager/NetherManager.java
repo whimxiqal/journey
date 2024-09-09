@@ -54,7 +54,7 @@ public final class NetherManager {
     Journey.get().proxy().dataManager()
         .netherPortalManager()
         .getAllTunnels(TunnelType.NETHER)
-        .forEach(tunnel -> portalConnections.put(tunnel.origin(), tunnel.destination()));
+        .forEach(tunnel -> portalConnections.put(tunnel.entrance(), tunnel.exit()));
     Journey.get().tunnelManager().register(player -> Journey.get().netherManager().makeTunnels());
   }
 
@@ -73,14 +73,14 @@ public final class NetherManager {
         linksVerified.add(tunnel);
       } else {
         // put new nether tunnel in list to send to async thread
-        tunnelsToRemove.add(new NetherTunnel(tunnel.origin(), tunnel.destination()));
+        tunnelsToRemove.add(new NetherTunnel(tunnel.entrance(), tunnel.exit()));
       }
     }
     if (!tunnelsToRemove.isEmpty()) {
       Journey.get().proxy().schedulingManager().schedule(() -> {
         for (NetherTunnel tunnel : tunnelsToRemove) {
-          portalConnections.remove(tunnel.origin(), tunnel.destination());
-          Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination(), TunnelType.NETHER);
+          portalConnections.remove(tunnel.entrance(), tunnel.exit());
+          Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(tunnel.entrance(), tunnel.exit(), TunnelType.NETHER);
         }
       }, true);
     }

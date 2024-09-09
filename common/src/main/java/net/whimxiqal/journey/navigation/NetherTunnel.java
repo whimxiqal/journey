@@ -23,9 +23,12 @@
 
 package net.whimxiqal.journey.navigation;
 
+import java.util.HashSet;
+import java.util.Set;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Tunnel;
 import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.manager.NetherManager;
 import net.whimxiqal.journey.tools.Verifiable;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,41 +38,45 @@ import org.jetbrains.annotations.NotNull;
 public final class NetherTunnel implements Tunnel, Verifiable {
 
   public static final int COST = 8;
-  private final Cell origin;
-  private final Cell destination;
+  private final Cell entrance;
+  private final Cell exit;
+  private final Set<Cell> allEntranceCells;
 
   /**
    * General constructor.
    *
-   * @param origin      the origin of the portal
-   * @param destination the destination of the portal
+   * @param entrance      the origin of the portal
+   * @param exit the destination of the portal
    */
-  public NetherTunnel(@NotNull final Cell origin, @NotNull final Cell destination) {
-    this.origin = origin;
-    this.destination = destination;
+  public NetherTunnel(@NotNull final Cell entrance, @NotNull final Cell exit) {
+    this.entrance = entrance;
+    this.exit = exit;
+    this.allEntranceCells = new HashSet<>();
+    for (NetherManager.PortalGroup portalGroup : Journey.get().netherManager().locateAll(entrance, 1)) {
+      allEntranceCells.addAll(portalGroup.blocks());
+    }
   }
 
   @Override
   public boolean verify() {
-    return Journey.get().netherManager().locateAll(origin, 1).size() > 0
-        && Journey.get().netherManager().locateAll(destination, 1).size() > 0;
+    return !allEntranceCells.isEmpty();
   }
 
   @Override
   public String toString() {
     return "NetherTunnel: "
-        + origin + " -> "
-        + destination;
+        + entrance + " -> "
+        + exit;
   }
 
   @Override
-  public Cell origin() {
-    return origin;
+  public Cell entrance() {
+    return entrance;
   }
 
   @Override
-  public Cell destination() {
-    return destination;
+  public Cell exit() {
+    return exit;
   }
 
   @Override
@@ -78,8 +85,7 @@ public final class NetherTunnel implements Tunnel, Verifiable {
   }
 
   @Override
-  public boolean testCompletion(Cell location) {
-    // TODO This should be "completed with" any of the portal blocks in this nether portal
-    return Tunnel.super.testCompletion(location);
+  public boolean isSatisfiedBy(Cell location) {
+    return allEntranceCells.contains(location);
   }
 }

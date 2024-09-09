@@ -26,4 +26,8 @@ package net.whimxiqal.journey.command;
 import net.whimxiqal.mantle.common.Logger;
 
 public class TestLogger implements Logger {
+  @Override
+  public void error(String s) {
+    System.out.println("[Error] " + s);
+  }
 }
