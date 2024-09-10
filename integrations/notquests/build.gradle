@@ -28,9 +28,8 @@ repositories {
 dependencies {
     implementation project(':api')
     implementation project(':bukkit-api')
-    compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
-    compileOnly 'com.github.AlessioGr.NotQuests:common:v5.14.0'
-    compileOnly 'com.github.AlessioGr.NotQuests:paper:v5.14.0:dev-all'
+    compileOnly 'com.github.AlessioGr.NotQuests:common:v5.15.0'
+    compileOnly 'com.github.AlessioGr.NotQuests:paper:v5.15.0:dev-all'
 }
 
 processResources {

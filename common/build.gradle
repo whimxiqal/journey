@@ -16,7 +16,7 @@ repositories {
 
 dependencies {
     api project(':api')
-    api 'net.whimxiqal.mantle:common:0.1.0'
+    api 'net.whimxiqal.mantle:common:0.2.0'
 
     antlr 'org.antlr:antlr4:4.12.0'
     implementation 'org.jetbrains:annotations:24.0.1'
@@ -36,10 +36,10 @@ dependencies {
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:1.36"
 
     // TODO remove
-    implementation 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
-    testImplementation 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+    implementation 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    testImplementation 'org.projectlombok:lombok:1.18.34'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
 }
 

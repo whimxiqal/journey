@@ -35,13 +35,13 @@ static String fullVersion() {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'org.cadixdev.licenser'
+//    apply plugin: 'org.cadixdev.licenser'
 
     project.ext.publish = false
     project.ext.snapshot = true
 
     project.ext.majorVersion = '1'
-    project.ext.minorVersion = '2'
+    project.ext.minorVersion = '3'
 
     project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
     project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
@@ -49,9 +49,6 @@ subprojects {
     project.ext.fullVersion = fullVersion()
     version = project.ext.fullVersion
     group = 'net.whimxiqal.journey'
-
-    sourceCompatibility = 17
-    targetCompatibility = 17
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
@@ -61,12 +58,12 @@ subprojects {
         from '../LICENSE.txt'
     }
 
-    license {
-        ignoreFailures = true
-        header = rootProject.file('LICENSE.txt')
-        include '**/*.java'
-        newLine = true
-    }
+//    license {
+//        ignoreFailures = true
+//        header = rootProject.file('LICENSE.txt')
+//        include '**/*.java'
+//        newLine = true
+//    }
 
     repositories {
         mavenCentral()
@@ -76,5 +73,11 @@ subprojects {
 
     test {
         useJUnitPlatform()
+    }
+
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
     }
 }
