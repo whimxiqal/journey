@@ -1,7 +1,7 @@
 # Journey
-![Journey logo](logo.png "Journey logo")
+<img src="logo.png" alt="Journey Logo" width="300"/>
 
-![Test/Build Status](https://img.shields.io/github/actions/workflow/status/whimxiqal/journey/build.yml?label=Test%2FBuild&style=for-the-badge "Test/build status")
+![Test/Build Status](https://img.shields.io/github/actions/workflow/status/whimxiqal/journey/build.yml?branch=main&label=Test%2FBuild&style=for-the-badge "Test/build status")
 ![Checkstyle Status](https://img.shields.io/github/actions/workflow/status/whimxiqal/journey/checkstyle.yml?label=Checkstyle&style=for-the-badge "Checkstyle status")
 
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/journey?style=for-the-badge "Modrinth downloads")](https://modrinth.com/plugin/journey)
