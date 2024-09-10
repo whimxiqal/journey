@@ -221,27 +221,6 @@ storage:
 gui:
 
   # ================================================================================================================= #
-  #   Title above the home screen.
-  #
-  #   - default     = <prefix><theme>{default}
-  #   - "{default}" = placeholder for standard home title in current language
-  home-screen-title: <prefix><theme>{default}
-
-  # ================================================================================================================= #
-  #   Title above all screens for specific scopes.
-  #
-  #   - default     = <prefix><theme>{scope}
-  #   - "{scope}" = placeholder for the readable name of the scope
-  scope-screen-title: "<prefix><theme>{scope}"
-
-  # ================================================================================================================= #
-  #   Title above the screen for editing flag preferences.
-  #
-  #   - default     = <prefix><theme>{default}
-  #   - "{default}" = placeholder for standard flag preferences title in current language
-  flag-preferences-screen-title: "<prefix><theme>{default}"
-
-  # ================================================================================================================= #
   #   Rows in the GUI, which is really just a normal Minecraft inventory.
   #
   #   - default = 6
