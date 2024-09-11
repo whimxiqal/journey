@@ -111,7 +111,6 @@ public final class MaterialGroups {
       case FIRE:
       case GLOW_BERRIES:
       case GLOW_LICHEN:
-      case GRASS:
       case GRAY_BANNER:
       case GRAY_WALL_BANNER:
       case GREEN_BANNER:
@@ -172,6 +171,7 @@ public final class MaterialGroups {
       case ROSE_BUSH:
       case SEAGRASS:
       case SEA_PICKLE:
+      case SHORT_GRASS:
       case SMALL_DRIPLEAF:
       case SPORE_BLOSSOM:
       case SPRUCE_PRESSURE_PLATE:

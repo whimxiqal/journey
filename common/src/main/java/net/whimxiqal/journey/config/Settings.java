@@ -106,18 +106,6 @@ public final class Settings {
   public static final Setting<StorageMethod> STORAGE_TYPE
       = new EnumSetting<>("storage.type", StorageMethod.SQLITE, StorageMethod.class, false);
 
-  @DeprecatedSetting
-  public static final Setting<String> GUI_HOME_SCREEN_TITLE
-      = new StringSetting("gui.home-screen-title", "<prefix><theme>{default}", true);
-
-  @DeprecatedSetting
-  public static final Setting<String> GUI_SCOPE_SCREEN_TITLE
-      = new StringSetting("gui.scope-screen-title", "<prefix><theme>{scope}", true);
-
-  @DeprecatedSetting
-  public static final Setting<String> GUI_FLAG_PREFERENCES_SCREEN_TITLE
-      = new StringSetting("gui.flag-preferences-screen-title", "<prefix><theme>{default}", true);
-
   public static final Setting<Integer> GUI_ROWS
       = new IntegerSetting("gui.rows", 6, true, 3, 6);
 

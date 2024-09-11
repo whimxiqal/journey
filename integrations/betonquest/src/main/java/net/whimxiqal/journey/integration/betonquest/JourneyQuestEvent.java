@@ -21,7 +21,7 @@ import org.betonquest.betonquest.api.profiles.Profile;
 import org.betonquest.betonquest.api.quest.event.Event;
 import org.betonquest.betonquest.exceptions.InstructionParseException;
 import org.betonquest.betonquest.exceptions.QuestRuntimeException;
-import org.betonquest.betonquest.utils.location.CompoundLocation;
+import org.betonquest.betonquest.instruction.variable.location.VariableLocation;
 import org.bukkit.Location;
 
 public class JourneyQuestEvent implements Event {
@@ -31,7 +31,7 @@ public class JourneyQuestEvent implements Event {
   private static final Pattern NAVIGATOR_FLAG_NAME_REGEX = Pattern.compile("navigator:([a-zA-Z-]+)");
 
   private static final PlainTextComponentSerializer TEXT_SERIALIZER = PlainTextComponentSerializer.builder().build();
-  private final CompoundLocation compoundLocation;
+  private final VariableLocation variableLocation;
   private final List<SearchFlag<?>> searchFlags = new LinkedList<>();
   private final Map<String, String> navigatorOptions = new HashMap<>();
   private Component successMessage;
@@ -40,7 +40,7 @@ public class JourneyQuestEvent implements Event {
 
   public JourneyQuestEvent(Instruction instruction) throws InstructionParseException {
     // first parameter is always location
-    this.compoundLocation = instruction.getLocation();
+    this.variableLocation = instruction.getLocation();
 
     String flag = "";
     while (instruction.hasNext()) {
@@ -116,7 +116,7 @@ public class JourneyQuestEvent implements Event {
 
   @Override
   public void execute(Profile profile) throws QuestRuntimeException {
-    Location location = this.compoundLocation.getLocation(profile);
+    Location location = this.variableLocation.getValue(profile);
     JourneyApi journey = JourneyApiProvider.get();
     JourneyBukkitApi journeyBukkit = JourneyBukkitApiProvider.get();
     journey.searching().runPlayerDestinationSearch(profile.getPlayerUUID(), journeyBukkit.toCell(location), SearchFlags.of(searchFlags))

@@ -30,11 +30,10 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
-    compileOnly 'net.whimxiqal.journey:core-api:1.2-SNAPSHOT'
-    compileOnly 'net.whimxiqal.journey:bukkit-api:1.2-SNAPSHOT'
-    compileOnly 'net.essentialsx:EssentialsX:2.19.7'
-    compileOnly 'net.essentialsx:EssentialsXSpawn:2.19.7'
+    implementation project(':api')
+    implementation project(':bukkit-api')
+    implementation 'net.essentialsx:EssentialsX:2.20.1'
+    implementation 'net.essentialsx:EssentialsXSpawn:2.20.1'
 }
 
 processResources {

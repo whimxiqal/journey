@@ -108,7 +108,7 @@ public class BukkitPlatformProxy implements PlatformProxy {
     ParticleBuilder builder = particle.builder()
         .receivers(player)
         .location(world, x, y, z);
-    if (particle == Particle.REDSTONE) {
+    if (particle == Particle.DUST) {
       builder.color(color.red(), color.green(), color.blue());
     }
     builder.spawn();
