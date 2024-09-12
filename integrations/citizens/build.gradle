@@ -28,8 +28,7 @@ repositories {
 dependencies {
     implementation project(':api')
     implementation project(':bukkit-api')
-    implementation 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
-    implementation('net.citizensnpcs:citizens-main:2.0.32-SNAPSHOT') {
+    implementation('net.citizensnpcs:citizens-main:2.0.35-SNAPSHOT') {
         exclude group: '*', module: '*'
     }
     implementation 'net.kyori:adventure-api:4.13.0'

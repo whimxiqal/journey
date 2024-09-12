@@ -244,8 +244,8 @@ public final class Request {
           return null;
         }
         return new RemoteJsonResponse(new JSONTokener(new InputStreamReader(httpsConnection.getInputStream())), secondsToWait);
-      } catch (IOException e) {
-        e.printStackTrace();
+      } catch (Exception e) {
+        Journey.logger().error("Error requesting build information from Modrinth: " + e.getMessage());
         return null;
       }
     }
@@ -262,8 +262,7 @@ public final class Request {
       try {
         body = obj.getString("body");
       } catch (JSONException e) {
-        Journey.logger().error("Error parsing Journey description from Modrinth");
-        e.printStackTrace();
+        Journey.logger().error("Error parsing Journey description from Modrinth: " + e.getMessage());
         return out;
       }
       Matcher matcher = PLUGIN_CREATOR_ENDORSEMENT_PATTERN.matcher(body);
@@ -504,7 +503,7 @@ public final class Request {
       future.complete(null);
     }
 
-    record RemoteJsonResponse(JSONTokener tokener, int secondsToWait) {
+    public record RemoteJsonResponse(JSONTokener tokener, int secondsToWait) {
     }
 
     private record IntegrationPluginVersion(String versionNumber, int downloads) {

@@ -15,8 +15,8 @@ npc-navigator:
 
   # The spawn particle to use when spawning/despawning Guides.
   # Leave blank to use no particle.
-  spawn-particle: redstone
+  spawn-particle: dust
 
   # The color of the particle to use when spawning/despawning Guides.
-  # This only works if spawn-particle = redstone.
+  # This only works if spawn-particle = dust.
   spawn-particle-color: ffffff

@@ -199,8 +199,14 @@ public class TrailNavigator implements Navigator {
         offVec1 = Math.sin(offAngle) * offRadius;
         offVec2 = Math.cos(offAngle) * offRadius;
 
+        // TODO 1.4.0 Remove backwards compatibility for 'redstone'
+        String particleType = trailParticles.get(random.nextInt(trailParticles.size()));
+        if (particleType.equals("redstone")) {
+          particleType = "dust";
+        }
+
         Journey.get().proxy().platform().spawnParticle(agent.uuid(),
-            trailParticles.get(random.nextInt(trailParticles.size())),
+            particleType,
             trailColors.get(random.nextInt(trailColors.size())),
             step.domain(),
             curX + (unitPath.x() * offPathVec) + (orthogonalUnit1.x() * offVec1) + (orthogonalUnit2.x() * offVec2),
