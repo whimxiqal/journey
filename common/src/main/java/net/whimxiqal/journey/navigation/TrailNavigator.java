@@ -25,6 +25,7 @@ package net.whimxiqal.journey.navigation;
 
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -54,7 +55,23 @@ public class TrailNavigator implements Navigator {
         }
         return Collections.singletonList(val);
       }) // Only support single values in lists for now
-      .defaultValue(Settings.DEFAULT_TRAIL_PARTICLE::getValue)
+      .defaultValue(() -> {
+        // TODO 1.4.0 Remove backwards compatibility for 'redstone'
+        List<String> defaultTrailParticles = new LinkedList<>();
+        for (String particle : Settings.DEFAULT_TRAIL_PARTICLE.getValue()) {
+            if (particle.equals("redstone")) {
+              defaultTrailParticles.add("dust");
+              Journey.logger().warn("Found deprecated particle type 'redstone' in config setting '" + Settings.DEFAULT_TRAIL_PARTICLE.getPath() + "'. Switch this to 'dust'.");
+              continue;
+            }
+            if (!Journey.get().proxy().platform().isValidParticleType(particle)) {
+              Journey.logger().warn("Found invalid particle type in config setting '" + Settings.DEFAULT_TRAIL_PARTICLE.getPath() + "': " + particle);
+              continue;
+            }
+            defaultTrailParticles.add(particle);
+        }
+        return defaultTrailParticles;
+      })
       .valueSuggestions(() -> Journey.get().proxy().platform().particleTypes())
       .permission(Permission.FLAG_NAVIGATOR_TRAIL_PARTICLE_OPTION.path())
       .valuePermission(particles -> {
@@ -199,14 +216,8 @@ public class TrailNavigator implements Navigator {
         offVec1 = Math.sin(offAngle) * offRadius;
         offVec2 = Math.cos(offAngle) * offRadius;
 
-        // TODO 1.4.0 Remove backwards compatibility for 'redstone'
-        String particleType = trailParticles.get(random.nextInt(trailParticles.size()));
-        if (particleType.equals("redstone")) {
-          particleType = "dust";
-        }
-
         Journey.get().proxy().platform().spawnParticle(agent.uuid(),
-            particleType,
+            trailParticles.get(random.nextInt(trailParticles.size())),
             trailColors.get(random.nextInt(trailColors.size())),
             step.domain(),
             curX + (unitPath.x() * offPathVec) + (orthogonalUnit1.x() * offVec1) + (orthogonalUnit2.x() * offVec2),
