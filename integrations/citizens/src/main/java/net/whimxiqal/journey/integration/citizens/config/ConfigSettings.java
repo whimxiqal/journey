@@ -62,7 +62,7 @@ public class ConfigSettings {
       String.class);
   public static final ConfigSetting<Particle> SPAWN_PARTICLE = new ConfigSetting<>(
       "npc-navigator.spawn-particle",
-      Particle.REDSTONE,
+      Particle.DUST,
       (config, thisSetting) -> {
         String stringValue = config.getString(thisSetting.path());
         if (stringValue == null) {

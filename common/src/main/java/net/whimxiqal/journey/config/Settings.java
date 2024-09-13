@@ -68,7 +68,7 @@ public final class Settings {
       = new ComponentSetting("navigation.completion.subtitle", Component.empty(), true);
 
   public static final Setting<List<String>> DEFAULT_TRAIL_PARTICLE
-      = new StringListSetting("navigation.trail.particle", List.of("glow", "redstone"), true);
+      = new StringListSetting("navigation.trail.particle", List.of("glow", "dust"), true);
 
   public static final Setting<List<Color>> DEFAULT_TRAIL_COLOR
       = new ColorListSetting("navigation.trail.color", List.of(new Color(172, 21, 219)), true);

@@ -16,7 +16,7 @@ static String fullVersion() {
     } else {
         StringBuilder builder = new StringBuilder()
         if (!tagInfo.contains('-')) {
-            builder.append(tagInfo)
+            builder.append(tagInfo.substring(1))
             builder.append('-dev')
             return builder.toString()
         } else {

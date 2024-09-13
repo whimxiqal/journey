@@ -49,16 +49,14 @@ public class GuideBehavior extends BehaviorGoalAdapter {
   private final JourneyBukkitApi journeyBukkitApi;
   private final NpcNavigator navigator;
   private final List<? extends SearchStep> path;
-  private final EntityType preferredEntityType;
   private boolean done;
   private boolean idle;
   private int currentPathIndex;
 
-  public GuideBehavior(NpcNavigator navigator, List<? extends SearchStep> path, EntityType preferredEntityType, int currentPathIndex) {
+  public GuideBehavior(NpcNavigator navigator, List<? extends SearchStep> path, int currentPathIndex) {
     this.journeyBukkitApi = JourneyBukkitApiProvider.get();
     this.navigator = navigator;
     this.path = path;
-    this.preferredEntityType = preferredEntityType;
     this.done = false;
     this.idle = false;
     this.currentPathIndex = currentPathIndex;
@@ -96,8 +94,8 @@ public class GuideBehavior extends BehaviorGoalAdapter {
     }
 
     if (done) {
-      performIdleBehavior(npc, agent, false);
-      if (!journeyBukkitApi.toCell(npc.getEntity().getLocation()).equals(path.get(path.size() - 1).location())) {
+      performIdleBehavior(npc, agent);
+      if (!journeyBukkitApi.toCell(npc.getEntity().getLocation()).equals(path.getLast().location())) {
         // somehow we got off the destination, re-teleport there
         npc.teleport(destination(), PlayerTeleportEvent.TeleportCause.PLUGIN);
       }
@@ -110,12 +108,12 @@ public class GuideBehavior extends BehaviorGoalAdapter {
       npc.teleport(destination(), PlayerTeleportEvent.TeleportCause.PLUGIN);
       npc.data().set(NPC.Metadata.FLYABLE, false);
       Gravity gravityTrait = npc.getOrAddTrait(Gravity.class);
-      gravityTrait.setEnabled(false /* false means not no-gravity, for some ridiculous reason */);
+      gravityTrait.setHasGravity(true);
       gravityTrait.run();
       if (npc.getNavigator().isNavigating()) {
         npc.getNavigator().cancelNavigation(CancelReason.PLUGIN);
       }
-      performIdleBehavior(npc, agent, true);
+      performIdleBehavior(npc, agent);
       return BehaviorStatus.RUNNING;
     }
 
@@ -127,7 +125,7 @@ public class GuideBehavior extends BehaviorGoalAdapter {
         npc.getNavigator().cancelNavigation(CancelReason.PLUGIN);
       }
       npc.getEntity().setVelocity(new Vector(0, 0, 0));
-      performIdleBehavior(npc, agent, idle);
+      performIdleBehavior(npc, agent);
       idle = true;
       return BehaviorStatus.RUNNING;
     }
@@ -189,10 +187,10 @@ public class GuideBehavior extends BehaviorGoalAdapter {
   }
 
   private Location destination() {
-    return journeyBukkitApi.toLocation(path.get(path.size() - 1).location()).toCenterLocation();
+    return journeyBukkitApi.toLocation(path.getLast().location()).toCenterLocation();
   }
 
-  private void performIdleBehavior(NPC npc, Entity agent, boolean firstCall) {
+  private void performIdleBehavior(NPC npc, Entity agent) {
     npc.faceLocation(agent.getLocation());
   }
 

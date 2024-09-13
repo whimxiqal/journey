@@ -132,16 +132,16 @@ navigation:
 
     # =============================================================================================================== #
     #   The types of particles that illuminate the path during navigation. Each particle type is used equally in the
-    # illumination of the trail. For example, if the particles are [redstone, glow], then half of the particles would
-    # be redstone dust and half of the particles will be glow particles.
+    # illumination of the trail. For example, if the particles are [dust, glow], then half of the particles would
+    # be dust particles and half of the particles will be glow particles.
     #
-    #   - default = [redstone, glow]
+    #   - default = [dust, glow]
     particle:
-      - redstone
+      - dust
       - glow
 
     # =============================================================================================================== #
-    #   The colors of the particles. This only applies for redstone particles.
+    #   The colors of the particles. This only applies for particles that support Color.
     #
     #   The colors must be an RGB color in hexadecimal format. For example, "ffffff" is white and "ff0000" is
     # pure red.
@@ -159,7 +159,7 @@ navigation:
     # =============================================================================================================== #
     #   The density of the trail, which is proportional to the number of particles spawned per cubic block in the
     # trail per tick. The greater the density, the more particles that will spawn in the same amount of time, so the
-    # the trail will appear fuller.
+    # trail will appear fuller.
     #
     #   - default = 5.0
     density: 5.0

@@ -37,7 +37,7 @@ public interface TrailNavigatorDetailsBuilder<B extends TrailNavigatorDetailsBui
 
   /**
    * Set the color of the particles.
-   * Colors will only appear on redstone particles.
+   * Colors will only appear on dust particles.
    *
    * @param red   the red component of the color
    * @param green the green component of the color
@@ -48,7 +48,7 @@ public interface TrailNavigatorDetailsBuilder<B extends TrailNavigatorDetailsBui
 
   /**
    * Set the color of the particles.
-   * Colors will only appear on redstone particles.
+   * Colors will only appear on dust particles.
    *
    * @param color the color
    * @return the builder, for chaining
@@ -57,7 +57,7 @@ public interface TrailNavigatorDetailsBuilder<B extends TrailNavigatorDetailsBui
 
   /**
    * Set multiple colors of the particles. Each particle will use a random color from the collection.
-   * Colors will only appear on redstone particles.
+   * Colors will only appear on dust particles.
    *
    * @param colors the colors
    * @return the builder, for chaining

@@ -66,7 +66,7 @@ public class NpcNavigator implements Navigator {
       EntityType.ZOMBIE,
       EntityType.SLIME,
       EntityType.GHAST,
-      EntityType.PIG_ZOMBIE,
+      EntityType.ZOMBIFIED_PIGLIN,
       EntityType.ENDERMAN,
       EntityType.CAVE_SPIDER,
       EntityType.SILVERFISH,
@@ -81,8 +81,8 @@ public class NpcNavigator implements Navigator {
       EntityType.COW,
       EntityType.CHICKEN,
       EntityType.WOLF,
-      EntityType.MUSHROOM_COW,
-      EntityType.SNOWMAN,
+      EntityType.MOOSHROOM,
+      EntityType.SNOW_GOLEM,
       EntityType.OCELOT,
       EntityType.IRON_GOLEM,
       EntityType.HORSE,
@@ -128,7 +128,7 @@ public class NpcNavigator implements Navigator {
     particle.builder()
         .location(location)
         .offset(0.5, 0.5, 0.5)
-        .color(particle == Particle.REDSTONE ? ConfigSettings.SPAWN_PARTICLE_COLOR.load() : null, 3)
+        .color(particle == Particle.DUST ? ConfigSettings.SPAWN_PARTICLE_COLOR.load() : null, 3)
         .count(15)
         .spawn();
   }
@@ -175,7 +175,7 @@ public class NpcNavigator implements Navigator {
     spawnEntitySpawnParticles(spawnLocation);
 
     npcId = npc.getId();
-    npc.getDefaultGoalController().addGoal(new GuideBehavior(this, progress.steps(), preferredEntityType, spawnLocationIndex), 1000);
+    npc.getDefaultGoalController().addGoal(new GuideBehavior(this, progress.steps(), spawnLocationIndex), 1000);
 
     return true;
   }
