@@ -1,0 +1,11 @@
+plugins {
+    id 'groovy-gradle-plugin'
+}
+
+repositories {
+    gradlePluginPortal()
+}
+
+dependencies {
+    implementation 'org.cadixdev.licenser:org.cadixdev.licenser.gradle.plugin:0.6.1'
+}

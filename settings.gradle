@@ -1,17 +1,13 @@
 rootProject.name = 'journey'
-include (
-        'api',
-        'common',
-        'bukkit-api',
-        'bukkit',
-)
-include 'integrations'
-include 'integrations:essentials'
-findProject(':integrations:essentials')?.name = 'essentials'
-include 'integrations:notquests'
-findProject(':integrations:notquests')?.name = 'notquests'
-include 'integrations:citizens'
-findProject(':integrations:citizens')?.name = 'citizens'
+include 'api'
+include 'bukkit-api'
+include 'bukkit'
+include 'common'
+include 'command'
 include 'integrations:betonquest'
-findProject(':integrations:betonquest')?.name = 'betonquest'
+include 'integrations:citizens'
+include 'integrations:essentials'
+include 'integrations:notquests'
+include 'command:main'
+findProject(':command:main')?.name = 'main'
 

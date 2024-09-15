@@ -1,6 +1,6 @@
 plugins {
     id 'java-library'
-    id 'antlr'
+    id 'journey.java-conventions'
 }
 
 repositories {
@@ -16,9 +16,9 @@ repositories {
 
 dependencies {
     api project(':api')
+    api project(':command')
     api 'net.whimxiqal.mantle:common:0.2.0'
 
-    antlr 'org.antlr:antlr4:4.12.0'
     implementation 'org.jetbrains:annotations:24.0.1'
     implementation 'net.kyori:adventure-api:4.14.0'
     implementation 'net.kyori:adventure-platform-api:4.3.0'
@@ -40,9 +40,4 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
     testImplementation 'org.projectlombok:lombok:1.18.34'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
-
-}
-
-generateGrammarSource {
-    arguments += ["-visitor", "-lib", "src/main/antlr/net/whimxiqal/journey/common", "-package", "net.whimxiqal.journey.common"]
 }

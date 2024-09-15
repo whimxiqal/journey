@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'org.cadixdev.licenser'
+}
+
+static String fullVersion() {
+    def journeyEnv = System.getenv('JOURNEY_ENV')
+    def tagInfo = 'git describe --tags'.execute().text.trim()
+    if (!tagInfo.matches("v.*")) {
+        return tagInfo
+    }
+    if (journeyEnv != null && journeyEnv == 'PROD') {
+        return tagInfo.substring(1)
+        // Production build
+    } else {
+        StringBuilder builder = new StringBuilder()
+        if (!tagInfo.contains('-')) {
+            builder.append(tagInfo)
+            builder.append('-dev')
+            return builder.toString()
+        } else {
+            def tagInfoTokens = tagInfo.substring(1).split("-")
+            // Non-production
+            builder.append(tagInfoTokens[0])
+            builder.append('-dev-')
+            builder.append(tagInfoTokens[1])
+            builder.append('-')
+            builder.append(tagInfoTokens[2])
+            return builder.toString()
+        }
+    }
+}
+
+project.ext.publish = false
+project.ext.snapshot = true
+
+project.ext.majorVersion = '1'
+project.ext.minorVersion = '3'
+
+project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
+project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
+project.ext.apiFullVersion = project.ext.apiVersion + project.ext.snapshotVersion
+project.ext.fullVersion = fullVersion()
+version = project.ext.fullVersion
+group = 'net.whimxiqal.journey'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    from '../LICENSE.txt'
+}
+
+license {
+    header = rootProject.file('LICENSE.txt')
+    include '**/*.java'
+    newLine = true
+    ignoreFailures = true
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
