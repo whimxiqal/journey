@@ -8,6 +8,3 @@ include 'integrations:betonquest'
 include 'integrations:citizens'
 include 'integrations:essentials'
 include 'integrations:notquests'
-include 'command:main'
-findProject(':command:main')?.name = 'main'
-
