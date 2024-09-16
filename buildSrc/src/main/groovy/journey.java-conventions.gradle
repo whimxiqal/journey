@@ -10,7 +10,7 @@ project.ext.snapshot = true
 // *************************
 
 def journeyEnv = System.getenv('JOURNEY_ENV')
-def tagInfo = 'git describe --tags --match="v[0-9]*"'.execute().text.trim()
+def tagInfo = 'git describe --tags --match=v[0-9]*'.execute().text.trim()
 println('git describe --tags')
 println('git describe --tags'.execute().text.trim())
 println('git describe --tags --match=v[0-9]* HEAD')
