@@ -21,34 +21,3 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.whimxiqal.journey.stats;
-
-import java.util.UUID;
-import net.whimxiqal.journey.Journey;
-
-public class StatsManager {
-
-  private static final int UPDATE_PERIOD = 20 * 60 * 10;  // 10 minutes
-  private UUID task;
-
-  public void initialize() {
-    if (task != null) {
-      throw new IllegalStateException("We're already initialized");
-    }
-    task = Journey.get().proxy().schedulingManager().scheduleRepeat(this::store, false, UPDATE_PERIOD);
-  }
-
-  private void store() {
-    Statistics.SEARCHES.store();
-    Statistics.BLOCKS_TRAVELLED.store();
-  }
-
-  public void shutdown() {
-    Journey.logger().debug("[Stats Manager] Shutting down...");
-    if (task != null) {
-      Journey.get().proxy().schedulingManager().cancelTask(task);
-      task = null;
-    }
-  }
-
-}

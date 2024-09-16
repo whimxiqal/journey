@@ -23,32 +23,20 @@
 
 package net.whimxiqal.journey.stats;
 
-import java.util.UUID;
-import net.whimxiqal.journey.Journey;
+public final class Statistics {
 
-public class StatsManager {
+  private static final int MS_PER_HOUR = 1000 * 60 * 60;
 
-  private static final int UPDATE_PERIOD = 20 * 60 * 10;  // 10 minutes
-  private UUID task;
+  /**
+   * Number of searches per hour
+   */
+  public final static RateStatistic SEARCHES = new RateStatistic(MS_PER_HOUR);
 
-  public void initialize() {
-    if (task != null) {
-      throw new IllegalStateException("We're already initialized");
-    }
-    task = Journey.get().proxy().schedulingManager().scheduleRepeat(this::store, false, UPDATE_PERIOD);
+  /**
+   * Number of blocks travelled along a path per hour
+   */
+  public final static RateStatistic BLOCKS_TRAVELLED = new RateStatistic(MS_PER_HOUR);
+
+  private Statistics() {
   }
-
-  private void store() {
-    Statistics.SEARCHES.store();
-    Statistics.BLOCKS_TRAVELLED.store();
-  }
-
-  public void shutdown() {
-    Journey.logger().debug("[Stats Manager] Shutting down...");
-    if (task != null) {
-      Journey.get().proxy().schedulingManager().cancelTask(task);
-      task = null;
-    }
-  }
-
 }

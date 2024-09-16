@@ -23,32 +23,35 @@
 
 package net.whimxiqal.journey.stats;
 
-import java.util.UUID;
-import net.whimxiqal.journey.Journey;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class StatsManager {
+class RateStatisticTest {
 
-  private static final int UPDATE_PERIOD = 20 * 60 * 10;  // 10 minutes
-  private UUID task;
+  @Test
+  void testStatistic() throws InterruptedException {
+    RateStatistic stat = new RateStatistic(100);  // one second
+    stat.add(10.0);
+    Assertions.assertEquals(0.0, stat.getInPeriod());
+    stat.store();
+    Assertions.assertEquals(10.0, stat.getInPeriod());
+    stat.add(20.0);
+    stat.store();
+    Assertions.assertEquals(30.0, stat.getInPeriod());
+    TimeUnit.MILLISECONDS.sleep(50);
 
-  public void initialize() {
-    if (task != null) {
-      throw new IllegalStateException("We're already initialized");
-    }
-    task = Journey.get().proxy().schedulingManager().scheduleRepeat(this::store, false, UPDATE_PERIOD);
-  }
+    stat.add(2.0);
+    stat.add(3.0);
+    Assertions.assertEquals(30.0, stat.getInPeriod());
+    stat.store();
+    Assertions.assertEquals(35.0, stat.getInPeriod());
+    TimeUnit.MILLISECONDS.sleep(50);
 
-  private void store() {
-    Statistics.SEARCHES.store();
-    Statistics.BLOCKS_TRAVELLED.store();
-  }
+    Assertions.assertEquals(5.0, stat.getInPeriod());
+    TimeUnit.MILLISECONDS.sleep(50);
 
-  public void shutdown() {
-    Journey.logger().debug("[Stats Manager] Shutting down...");
-    if (task != null) {
-      Journey.get().proxy().schedulingManager().cancelTask(task);
-      task = null;
-    }
+    Assertions.assertEquals(0.0, stat.getInPeriod());
   }
 
 }

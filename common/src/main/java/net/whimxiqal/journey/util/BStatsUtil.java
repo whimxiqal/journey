@@ -24,7 +24,7 @@
 package net.whimxiqal.journey.util;
 
 import java.util.function.Consumer;
-import net.whimxiqal.journey.Journey;
+import net.whimxiqal.journey.stats.Statistics;
 import org.bstats.charts.CustomChart;
 import org.bstats.charts.SingleLineChart;
 
@@ -38,8 +38,8 @@ public class BStatsUtil {
   }
 
   public static void register(Consumer<CustomChart> chartConsumer) {
-    chartConsumer.accept(new SingleLineChart(SEARCHES_PER_HOUR_ID, () -> Journey.get().statsManager().searches()));
-    chartConsumer.accept(new SingleLineChart(BLOCKS_TRAVELLED_PER_HOUR_ID, () -> Journey.get().statsManager().blocksTravelled()));
+    chartConsumer.accept(new SingleLineChart(SEARCHES_PER_HOUR_ID, Statistics.SEARCHES::getIntInPeriod));
+    chartConsumer.accept(new SingleLineChart(BLOCKS_TRAVELLED_PER_HOUR_ID, Statistics.BLOCKS_TRAVELLED::getIntInPeriod));
   }
 
 }

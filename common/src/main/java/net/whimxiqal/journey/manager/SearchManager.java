@@ -44,6 +44,7 @@ import net.whimxiqal.journey.navigation.Navigator;
 import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
+import net.whimxiqal.journey.stats.Statistics;
 import net.whimxiqal.journey.util.TimeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ public final class SearchManager {
    * @param session the session we wish to run
    */
   private void doLaunchSearch(SearchSession session, CompletableFuture<SearchSession.Result> future) {
-    Journey.get().statsManager().incrementSearches();
+    Statistics.SEARCHES.add(1);
     UUID caller = Objects.requireNonNull(session.getCallerId());  // launches here in the search manager must have caller ids
     playerSearches.put(caller, session);
 
