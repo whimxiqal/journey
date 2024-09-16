@@ -47,7 +47,6 @@ license {
     header = rootProject.file('LICENSE.txt')
     include '**/*.java'
     newLine = true
-    ignoreFailures = true  // TODO remove and add license headers
 }
 
 repositories {
