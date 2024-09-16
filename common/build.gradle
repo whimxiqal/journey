@@ -4,29 +4,22 @@ plugins {
 }
 
 repositories {
-    maven {
-        name = 'sonatype-snapshots'
-        url = 'https://oss.sonatype.org/content/repositories/snapshots/'
-    }
-    maven {
-        name = 'enginehub'
-        url = 'https://maven.enginehub.org/repo/'
-    }
+    maven { url = 'https://maven.enginehub.org/repo/' }
 }
 
 dependencies {
-    api project(':api')
-    api project(':command')
-    api 'net.whimxiqal.mantle:common:0.2.0'
+    implementation project(':api')
+    implementation project(':command')
+    implementation 'net.whimxiqal.mantle:common:0.2.0'
 
-    implementation 'org.jetbrains:annotations:24.0.1'
-    implementation 'net.kyori:adventure-api:4.14.0'
-    implementation 'net.kyori:adventure-platform-api:4.3.0'
-    implementation 'net.kyori:adventure-text-serializer-plain:4.14.0'
-    api 'net.kyori:adventure-text-minimessage:4.14.0'
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+    implementation 'net.kyori:adventure-api:4.17.0'
+    implementation 'net.kyori:adventure-platform-api:4.3.4'
+    implementation 'net.kyori:adventure-text-serializer-plain:4.17.0'
+    implementation 'net.kyori:adventure-text-minimessage:4.17.0'
     implementation 'org.bstats:bstats-bukkit:3.0.1'
     implementation 'com.zaxxer:HikariCP:5.0.1'
-    implementation 'org.json:json:20230227'
+    implementation 'org.json:json:20231013'
     implementation 'org.spongepowered:configurate-yaml:4.2.0-SNAPSHOT'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'

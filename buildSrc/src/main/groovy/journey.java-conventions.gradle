@@ -3,45 +3,35 @@ plugins {
     id 'org.cadixdev.licenser'
 }
 
-static String fullVersion() {
-    def journeyEnv = System.getenv('JOURNEY_ENV')
-    def tagInfo = 'git describe --tags'.execute().text.trim()
-    if (!tagInfo.matches("v.*")) {
-        return tagInfo
-    }
-    if (journeyEnv != null && journeyEnv == 'PROD') {
-        return tagInfo.substring(1)
-        // Production build
+// *** PUBLISHING CONFIG ***
+project.ext.publish = false
+project.ext.snapshot = true
+// *************************
+
+def journeyEnv = System.getenv('JOURNEY_ENV')
+def tagInfo = 'git describe --tags --match="v[0-9]*"'.execute().text.trim()
+assert tagInfo.matches("v.*")
+if (journeyEnv != null && journeyEnv == 'PROD') {
+    // Production build
+    version = project.ext.apiVersion
+} else {
+    // Development build
+    if (!tagInfo.contains('-')) {
+        project.ext.apiVersion = tagInfo.substring(1)
+        version = project.ext.apiVersion + '-dev'
     } else {
         StringBuilder builder = new StringBuilder()
-        if (!tagInfo.contains('-')) {
-            builder.append(tagInfo)
-            builder.append('-dev')
-            return builder.toString()
-        } else {
-            def tagInfoTokens = tagInfo.substring(1).split("-")
-            // Non-production
-            builder.append(tagInfoTokens[0])
-            builder.append('-dev-')
-            builder.append(tagInfoTokens[1])
-            builder.append('-')
-            builder.append(tagInfoTokens[2])
-            return builder.toString()
-        }
+        def tagInfoTokens = tagInfo.substring(1).split("-")
+        project.ext.apiVersion = tagInfoTokens[0]
+        builder.append(project.ext.apiVersion as String)
+        builder.append('-dev-')
+        builder.append(tagInfoTokens[1])
+        builder.append('-')
+        builder.append(tagInfoTokens[2])
+        version = builder.toString()
     }
 }
 
-project.ext.publish = true
-project.ext.snapshot = true
-
-project.ext.majorVersion = '1'
-project.ext.minorVersion = '3'
-
-project.ext.snapshotVersion = project.ext.snapshot ? "-SNAPSHOT" : ""
-project.ext.apiVersion = project.ext.majorVersion + '.' + project.ext.minorVersion
-project.ext.apiFullVersion = project.ext.apiVersion + project.ext.snapshotVersion
-project.ext.fullVersion = fullVersion()
-version = project.ext.fullVersion
 group = 'net.whimxiqal.journey'
 
 tasks.withType(JavaCompile).configureEach {
@@ -61,8 +51,6 @@ license {
 
 repositories {
     mavenCentral()
-    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
 test {
@@ -74,3 +62,16 @@ java {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
+
+// EXTENSIONS
+interface JourneyApiExtension {
+    Property<String> getApiName()
+    Property<String> getApiDescription()
+    Property<String> getArtifactId()
+}
+project.extensions.create('journeyApiExtension', JourneyApiExtension)
+
+interface JourneyPaperPluginExtension {
+    Property<String> getPluginName()
+}
+project.extensions.create('journeyPaperPlugin', JourneyPaperPluginExtension)

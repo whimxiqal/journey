@@ -1,16 +1,15 @@
 plugins {
     id 'maven-publish'
     id 'signing'
-    id 'PublishPluginExtension'
 }
 
 if (project.ext.publish) {
     assert project.hasProperty('ossrhToken')
     assert project.hasProperty('ossrhTokenPassword')
 
-    def journeyPublishExtension = extensions.getByName('journeyPublishExtension')
+    def journeyApiExtension = extensions.getByName('journeyApiExtension')
     javadoc {
-        title = journeyPublishExtension.apiName.get() + ' (v' + project.ext.apiVersion + ')'
+        title = journeyApiExtension.apiName.get() + ' (v' + project.ext.apiVersion + ')'
         options.encoding = 'UTF-8'
         options.charSet = 'UTF-8'
         options.links(
@@ -47,8 +46,8 @@ if (project.ext.publish) {
         publications {
             mavenJava(MavenPublication) {
                 groupId = 'net.whimxiqal.journey'
-                artifactId = journeyPublishExtension.artifactId.get()
-                version = project.ext.apiFullVersion
+                artifactId = journeyApiExtension.artifactId.get()
+                version = project.ext.apiVersion + (project.ext.snapshot ? '-SNAPSHOT' : '')
                 from components.java
                 artifact sourcesJar
                 artifact javadocJar
@@ -61,8 +60,8 @@ if (project.ext.publish) {
                     }
                 }
                 pom {
-                    name = journeyPublishExtension.apiName.get()
-                    description = journeyPublishExtension.apiDescription.get()
+                    name = journeyApiExtension.apiName.get()
+                    description = journeyApiExtension.apiDescription.get()
                     url = 'https://github.com/whimxiqal/journey'
                     licenses {
                         license {

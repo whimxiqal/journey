@@ -1,7 +1,0 @@
-interface PublishPluginExtension {
-    Property<String> getApiName()
-    Property<String> getApiDescription()
-    Property<String> getArtifactId()
-}
-
-project.extensions.create('journeyPublishExtension', PublishPluginExtension)

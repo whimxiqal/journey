@@ -1,0 +1,18 @@
+def journeyPaperPluginExtension = extensions.getByName('journeyPaperPlugin')
+
+jar {
+    from '../LICENSE.txt'
+    archiveBaseName.set(journeyPaperPluginExtension.pluginName.get() as String)
+}
+
+processResources {
+    outputs.upToDateWhen {
+        false
+    }
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}

@@ -1,21 +1,18 @@
 plugins {
     id 'java-library'
     id 'journey.java-conventions'
-    id 'PublishPluginExtension'
-    id 'PublishPlugin' apply false
+    id 'journey-api-conventions' apply false
 }
 
-version = project.ext.apiFullVersion
-
-dependencies {
-    implementation 'org.jetbrains:annotations:22.0.0'
-    api 'net.kyori:adventure-api:4.11.0'
-}
-
-configure(journeyPublishExtension) {
+configure(journeyApiExtension) {
     apiName = 'Journey Core API'
     apiDescription = 'The Core API for Journey'
     artifactId = 'core-api'
 }
 
-apply plugin: 'PublishPlugin'
+apply plugin: 'journey-api-conventions'
+
+dependencies {
+    api 'org.jetbrains:annotations:24.1.0'
+    api 'net.kyori:adventure-api:4.17.0'
+}
