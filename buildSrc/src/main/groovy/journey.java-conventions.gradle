@@ -11,6 +11,9 @@ project.ext.snapshot = true
 
 def journeyEnv = System.getenv('JOURNEY_ENV')
 def tagInfo = 'git describe --tags --match="v[0-9]*"'.execute().text.trim()
+println('git tag'.execute().text.trim())
+println('git describe --tags'.execute().text.trim())
+println('git describe --tags --match="v[0-9]*"'.execute().text.trim())
 assert tagInfo.matches("v.*")
 if (journeyEnv != null && journeyEnv == 'PROD') {
     // Production build
