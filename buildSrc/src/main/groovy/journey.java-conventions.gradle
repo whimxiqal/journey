@@ -1,0 +1,83 @@
+plugins {
+    id 'java'
+    id 'org.cadixdev.licenser'
+    id 'checkstyle'
+}
+
+// *** PUBLISHING CONFIG ***
+project.ext.publish = false
+project.ext.snapshot = true
+// *************************
+
+def journeyEnv = System.getenv('JOURNEY_ENV')
+def tagInfo = 'git describe --tags --match=v[0-9]*'.execute().text.trim()
+assert tagInfo.matches("v.*")
+if (journeyEnv != null && journeyEnv == 'PROD') {
+    // Production build
+    version = project.ext.apiVersion
+} else {
+    // Development build
+    if (!tagInfo.contains('-')) {
+        project.ext.apiVersion = tagInfo.substring(1)
+        version = project.ext.apiVersion + '-dev'
+    } else {
+        StringBuilder builder = new StringBuilder()
+        def tagInfoTokens = tagInfo.substring(1).split("-")
+        project.ext.apiVersion = tagInfoTokens[0]
+        builder.append(project.ext.apiVersion as String)
+        builder.append('-dev-')
+        builder.append(tagInfoTokens[1])
+        builder.append('-')
+        builder.append(tagInfoTokens[2])
+        version = builder.toString()
+    }
+}
+
+group = 'net.whimxiqal.journey'
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    from '../LICENSE.txt'
+}
+
+license {
+    header = rootProject.file('LICENSE.txt')
+    include '**/*.java'
+    newLine = true
+    ignoreFailures = true  // TODO remove and add license headers
+}
+
+repositories {
+    mavenCentral()
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+checkstyle {
+    ignoreFailures = false
+    maxWarnings = 0
+}
+
+// EXTENSIONS
+interface JourneyApiExtension {
+    Property<String> getApiName()
+    Property<String> getApiDescription()
+    Property<String> getArtifactId()
+}
+project.extensions.create('journeyApiExtension', JourneyApiExtension)
+
+interface JourneyPaperPluginExtension {
+    Property<String> getPluginName()
+}
+project.extensions.create('journeyPaperPlugin', JourneyPaperPluginExtension)

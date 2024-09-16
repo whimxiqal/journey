@@ -1,39 +1,45 @@
 plugins {
     id 'java'
+    id 'journey.java-conventions'
+    id 'journey-paper-plugin-conventions' apply false
     id 'com.gradleup.shadow' version '8.3.0'
 }
 
+configure(journeyPaperPlugin) {
+    pluginName = 'Journey-Bukkit'
+}
+
+apply plugin: 'journey-paper-plugin-conventions'
+
 repositories {
-    maven { url 'https://oss.sonatype.org/content/groups/public/' }
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
 }
 
 dependencies {
-    implementation project(':common')
+    implementation project(':api')
     implementation project(':bukkit-api')
-
-    // Tests
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
-
-    // Annotations
-    shadow 'org.jetbrains:annotations:24.1.0'
-    testImplementation 'org.jetbrains:annotations:24.1.0'
-
-    // Lombok
-    shadow 'org.projectlombok:lombok:1.18.34'
-    testImplementation('org.projectlombok:lombok:1.18.34')
-    annotationProcessor 'org.projectlombok:lombok:1.18.34'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
-
-    implementation 'org.bstats:bstats-bukkit:3.0.2'
-
+    implementation project(':command')
+    implementation project(':common')
+    implementation 'net.whimxiqal.mantle:common:0.2.0'
     implementation 'net.whimxiqal.mantle:paper:0.2.0'
+    implementation 'io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT'
+    implementation 'org.bstats:bstats-bukkit:3.0.2'
+    implementation 'dev.triumphteam:triumph-gui:3.1.10'
+    shadow 'org.jetbrains:annotations:24.1.0'
 
-    implementation "dev.triumphteam:triumph-gui:3.1.10"
+    // TODO remove lombok
+    shadow 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 }
 
+build {
+    jar.enabled = false
+    dependsOn 'shadowJar'
+}
+
+def journeyPaperPluginExtension = extensions.getByType(JourneyPaperPluginExtension)
 shadowJar {
-    archiveFileName = "Journey-Bukkit-${project.version}.jar"
+    archiveFileName = journeyPaperPluginExtension.pluginName.get() + "-${project.version}.jar"
 
     dependencies {
         include(dependency('net.whimxiqal.journey:.*'))
@@ -63,19 +69,4 @@ shadowJar {
     relocate 'com.zaxxer.hikari', 'net.whimxiqal.journey.libs.hikari'
     relocate 'org.json', 'net.whimxiqal.journey.libs.json'
     relocate 'org.spongepowered', 'net.whimxiqal.journey.libs.spongepowered'
-}
-
-build {
-    jar.enabled = false
-    dependsOn 'shadowJar'
-}
-
-processResources {
-    // Rerun this every time to account for changed version
-    outputs.upToDateWhen {
-        false
-    }
-    filesMatching('plugin.yml') {
-        expand 'version': project.version
-    }
 }

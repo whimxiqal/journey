@@ -1,46 +1,26 @@
 plugins {
     id 'java'
+    id 'journey.java-conventions'
+    id 'journey-paper-plugin-conventions' apply false
 }
 
 version = '1.2.0'
 
-jar {
-    from '../LICENSE.txt'
-    archiveBaseName.set("JourneyEssentials")
+configure(journeyPaperPlugin) {
+    pluginName = 'JourneyEssentials'
 }
 
+apply plugin: 'journey-paper-plugin-conventions'
+
 repositories {
-    mavenCentral()
-    maven {
-        name = 'paper'
-        url = 'https://repo.papermc.io/repository/maven-public/'
-    }
-    maven {
-        name = 'essentialsx'
-        url = 'https://repo.essentialsx.net/releases/'
-    }
-    maven {
-        name = 'codemc'
-        url = 'https://repo.codemc.io/repository/maven-public/'
-    }
-    maven {
-        name = 'sonatype-snapshots'
-        url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-    }
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://repo.essentialsx.net/releases/' }
 }
 
 dependencies {
     implementation project(':api')
     implementation project(':bukkit-api')
+    implementation 'io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT'
     implementation 'net.essentialsx:EssentialsX:2.20.1'
     implementation 'net.essentialsx:EssentialsXSpawn:2.20.1'
-}
-
-processResources {
-    def props = [version: version]
-    inputs.properties props
-    filteringCharset 'UTF-8'
-    filesMatching('plugin.yml') {
-        expand props
-    }
 }
