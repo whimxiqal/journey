@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'org.cadixdev.licenser'
+    id 'checkstyle'
 }
 
 // *** PUBLISHING CONFIG ***
@@ -61,6 +62,11 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
+}
+
+checkstyle {
+    ignoreFailures = false
+    maxWarnings = 0
 }
 
 // EXTENSIONS
