@@ -32,6 +32,7 @@ import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.math.Vector;
 import net.whimxiqal.journey.navigation.option.NavigatorOptionValues;
 import net.whimxiqal.journey.search.SearchStep;
+import net.whimxiqal.journey.stats.Statistics;
 
 public class NavigationSession implements NavigationProgress {
 
@@ -116,6 +117,7 @@ public class NavigationSession implements NavigationProgress {
         return false;
       }
       // move on to next step
+      Statistics.BLOCKS_TRAVELLED.add(currentNavigationStep.length());
       currentStepIndex++;
       currentStepProgress = 0;
       currentNavigationStep = null;
@@ -130,10 +132,19 @@ public class NavigationSession implements NavigationProgress {
         if (!location.equals(step.location())) {
           continue;
         }
+
+        // Add total blocks skipped here for statistics
+        double totalLength = currentNavigationStep.length();
+        for (int j = currentStepIndex + 1; j <= i; j++) {
+          totalLength += steps.get(j - 1).location().distanceTo(steps.get(j).location());
+        }
+        Statistics.BLOCKS_TRAVELLED.add(totalLength);
+
         currentStepIndex = i;
         currentStepProgress = 0;
         currentNavigationStep = null;
         step.prompt();
+
         break;
       }
     }
