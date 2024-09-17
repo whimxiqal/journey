@@ -31,7 +31,7 @@ class RateStatisticTest {
 
   @Test
   void testStatistic() throws InterruptedException {
-    RateStatistic stat = new RateStatistic(100);  // one second
+    RateStatistic stat = new RateStatistic(1000);  // one second
     stat.add(10.0);
     Assertions.assertEquals(0.0, stat.getInPeriod());
     stat.store();
@@ -39,17 +39,17 @@ class RateStatisticTest {
     stat.add(20.0);
     stat.store();
     Assertions.assertEquals(30.0, stat.getInPeriod());
-    TimeUnit.MILLISECONDS.sleep(50);
+    TimeUnit.MILLISECONDS.sleep(500);
 
     stat.add(2.0);
     stat.add(3.0);
     Assertions.assertEquals(30.0, stat.getInPeriod());
     stat.store();
     Assertions.assertEquals(35.0, stat.getInPeriod());
-    TimeUnit.MILLISECONDS.sleep(50);
+    TimeUnit.MILLISECONDS.sleep(500);
 
     Assertions.assertEquals(5.0, stat.getInPeriod());
-    TimeUnit.MILLISECONDS.sleep(50);
+    TimeUnit.MILLISECONDS.sleep(500);
 
     Assertions.assertEquals(0.0, stat.getInPeriod());
   }
