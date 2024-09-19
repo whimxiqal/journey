@@ -35,8 +35,6 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import lombok.Getter;
-import lombok.Setter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.chunk.BlockProvider;
@@ -71,30 +69,22 @@ public class PathTrial implements WorkItem {
    * Left un-final for testing.
    */
   public static double CELLS_PER_EXECUTION_CYCLE = 1000;
-  @Getter
   protected final Cell origin;
   protected final ChunkCacheBlockProvider chunkCache;
   protected final Queue<Node> upcoming;
-  @Getter
   protected final CostFunction costFunction;
   protected final SearchSession session;
-  @Getter
   private final int domain;
   private final Completer completer;
-  @Getter
   private final List<Mode> modes = new LinkedList<>();
   private final boolean saveOnComplete;
   private final CompletableFuture<TrialResult> future = new CompletableFuture<>();
   protected final Map<Cell, Node> visited = new HashMap<>();
   private final int maxCellCount = Settings.MAX_PATH_BLOCK_COUNT.getValue();
   protected long startExecutionTime = -1;
-  @Getter
   protected ResultState state;
-  @Getter
   protected boolean fromCache;
-  @Getter
   private double length;
-  @Getter
   private Path path;
   // Search State
   private boolean firstCycle = true;
@@ -143,6 +133,34 @@ public class PathTrial implements WorkItem {
     this.saveOnComplete = saveOnComplete;
     this.chunkCache = new ChunkCacheBlockProvider(MAX_CACHED_CHUNKS_PER_SEARCH, session.flags());
     this.upcoming = new PriorityQueue<>(Comparator.comparingDouble(node -> costFunction.apply(node.data.location(),  node.score)));
+  }
+
+  public Cell getOrigin() {
+    return origin;
+  }
+
+  public int getDomain() {
+    return domain;
+  }
+
+  public List<Mode> getModes() {
+    return modes;
+  }
+
+  public ResultState getState() {
+    return state;
+  }
+
+  public boolean isFromCache() {
+    return fromCache;
+  }
+
+  public double getLength() {
+    return length;
+  }
+
+  public Path getPath() {
+    return path;
   }
 
   private void resultFail() {
@@ -397,18 +415,12 @@ public class PathTrial implements WorkItem {
    * A single node representing a possible movement during traversal.
    */
   public static class Node {
-    @Getter
-    @Setter
     private Step data;
-    @Getter
-    @Setter
     private Node previous;
     /**
      * The value to store how far away this node is from the original node.
      * So, how far it is to traverse the space from the origin until this node is reached.
      */
-    @Getter
-    @Setter
     private double score;
 
     /**
@@ -424,6 +436,29 @@ public class PathTrial implements WorkItem {
       this.score = score;
     }
 
+    public Step getData() {
+      return data;
+    }
+
+    public void setData(Step data) {
+      this.data = data;
+    }
+
+    public Node getPrevious() {
+      return previous;
+    }
+
+    public void setPrevious(Node previous) {
+      this.previous = previous;
+    }
+
+    public double getScore() {
+      return score;
+    }
+
+    public void setScore(double score) {
+      this.score = score;
+    }
   }
 
 
