@@ -23,35 +23,36 @@
 
 package net.whimxiqal.journey.stats;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class RateStatisticTest {
 
   @Test
-  void testStatistic() throws InterruptedException {
-    RateStatistic stat = new RateStatistic(1000);  // one second
+  void testStatistic() {
+    AtomicReference<Long> currentTime = new AtomicReference<>(0L);
+    RateStatistic stat = new RateStatistic(1000, currentTime::get);  // one second
     stat.add(10.0);
-    Assertions.assertEquals(0.0, stat.getInPeriod());
+    Assertions.assertEquals(0.0, stat.getInPeriod());  // 0 ms
     stat.store();
-    Assertions.assertEquals(10.0, stat.getInPeriod());
+    Assertions.assertEquals(10.0, stat.getInPeriod());  // 0 ms
     stat.add(20.0);
     stat.store();
-    Assertions.assertEquals(30.0, stat.getInPeriod());
-    TimeUnit.MILLISECONDS.sleep(500);
+    Assertions.assertEquals(30.0, stat.getInPeriod());  // 0 ms
+    currentTime.set(500L);
 
     stat.add(2.0);
     stat.add(3.0);
-    Assertions.assertEquals(30.0, stat.getInPeriod());
+    Assertions.assertEquals(30.0, stat.getInPeriod());  // 500 ms
     stat.store();
-    Assertions.assertEquals(35.0, stat.getInPeriod());
-    TimeUnit.MILLISECONDS.sleep(500);
+    Assertions.assertEquals(35.0, stat.getInPeriod());  // 500 ms
+    currentTime.set(1000L);
 
-    Assertions.assertEquals(5.0, stat.getInPeriod());
-    TimeUnit.MILLISECONDS.sleep(500);
+    Assertions.assertEquals(5.0, stat.getInPeriod());  // 1000 ms
+    currentTime.set(1500L);
 
-    Assertions.assertEquals(0.0, stat.getInPeriod());
+    Assertions.assertEquals(0.0, stat.getInPeriod());  // 1500 ms
   }
 
 }

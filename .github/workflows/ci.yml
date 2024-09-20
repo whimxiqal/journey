@@ -37,7 +37,7 @@ jobs:
       - name: Move Artifacts to Root
         shell: bash
         run: cp $(find ./ -wholename '*/build/libs/*.jar') ./
-      - name: Upload all artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: journey-artifacts
@@ -47,3 +47,11 @@ jobs:
             JourneyEssentials-*.jar
             JourneyNotQuests-*.jar
             JourneyBetonQuest-*.jar
+      - name: Upload Reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/reports/
+            **/build/test-results/

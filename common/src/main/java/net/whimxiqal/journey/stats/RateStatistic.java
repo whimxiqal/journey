@@ -26,11 +26,13 @@ package net.whimxiqal.journey.stats;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class RateStatistic {
   private final long periodMs;
   private final Queue<Node> queue = new LinkedList<>();
   private final AtomicReference<Double> accumulator = new AtomicReference<>();
+  private final Supplier<Long> currentTime;
   private double queueSum;
 
   private record Node(double data, long timestamp) {
@@ -41,20 +43,25 @@ public class RateStatistic {
    *
    * @param periodMs the period of time to take before data is rolled off
    */
-  public RateStatistic(long periodMs) {
+  public RateStatistic(long periodMs, Supplier<Long> currentTime) {
     this.periodMs = periodMs;
+    this.currentTime = currentTime;
     accumulator.set(0.0);
   }
 
+  public RateStatistic(long periodMs) {
+    this(periodMs, System::currentTimeMillis);
+  }
+
   private void prune(long now) {
-    while (!queue.isEmpty() && now - queue.peek().timestamp > periodMs) {
+    while (!queue.isEmpty() && now - queue.peek().timestamp >= periodMs) {
       Node node = queue.remove();
       queueSum -= node.data;
     }
   }
 
   public void store() {
-    long now = System.currentTimeMillis();
+    long now = currentTime.get();
     prune(now);
     double accumulated = accumulator.getAndSet(0.0);
     queue.add(new Node(accumulated, now));
@@ -66,7 +73,7 @@ public class RateStatistic {
   }
 
   public double getInPeriod() {
-    prune(System.currentTimeMillis());
+    prune(currentTime.get());
     return queueSum;
   }
 

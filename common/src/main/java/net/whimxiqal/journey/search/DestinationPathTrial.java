@@ -25,7 +25,6 @@ package net.whimxiqal.journey.search;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
-import lombok.Getter;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.config.Settings;
@@ -45,7 +44,6 @@ public class DestinationPathTrial extends PathTrial {
   public static final double SUFFICIENT_COMPLETION_DISTANCE_SQUARED = 0;
   public static final double COST_FUNCTION_WEIGHT = 1.7;
   private static boolean loggedMaxCacheHit = false;  // only log this message once
-  @Getter
   private final Cell destination;
 
   public DestinationPathTrial(SearchSession session,
@@ -67,6 +65,10 @@ public class DestinationPathTrial extends PathTrial {
         fromCache,
         saveOnComplete);
     this.destination = destination;
+  }
+
+  public Cell getDestination() {
+    return destination;
   }
 
   /**
