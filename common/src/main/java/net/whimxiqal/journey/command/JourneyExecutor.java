@@ -218,9 +218,14 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
         visitChildren(ctx);
-        String name = cmd.identifiers().get(0);
-        if (Validator.isInvalidDataName(name)) {
-          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, name);
+        String nameId = cmd.identifiers().get(0);
+        if (Validator.isInvalidDataName(nameId)) {
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, nameId);
+          return CommandResult.failure();
+        }
+        String displayName = cmd.identifiers().getAll().size() > 1 ? cmd.identifiers().get(1) : nameId;
+        if (Validator.isInvalidDisplayName(displayName)) {
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, displayName);
           return CommandResult.failure();
         }
 
@@ -232,15 +237,15 @@ public class JourneyExecutor implements CommandExecutor {
         PersonalWaypointManager personalWaypointManager = Journey.get().proxy().dataManager().personalWaypointManager();
 
         Journey.get().proxy().schedulingManager().schedule(() -> {
-          Cell existingWaypoint = personalWaypointManager.getWaypoint(src.uuid(), name);
+          Cell existingWaypoint = personalWaypointManager.getWaypoint(src.uuid(), nameId);
           if (existingWaypoint != null) {
-            Messages.COMMAND_WAYPOINT_PERSONAL_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, name);
+            Messages.COMMAND_WAYPOINT_PERSONAL_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, nameId);
             return;
           }
 
-          personalWaypointManager.add(src.uuid(), location.get(), name);
+          personalWaypointManager.add(src.uuid(), location.get(), nameId, displayName);
           Journey.get().cachedDataProvider().personalWaypointCache().update(src.uuid(), true);
-          Messages.COMMAND_WAYPOINT_PERSONAL_SET.sendTo(src.audience(), Formatter.SUCCESS, name, Formatter.cell(location.get()));
+          Messages.COMMAND_WAYPOINT_PERSONAL_SET.sendTo(src.audience(), Formatter.SUCCESS, displayName, Formatter.cell(location.get()));
         }, true);
         return CommandResult.success();
       }
@@ -516,9 +521,14 @@ public class JourneyExecutor implements CommandExecutor {
           return CommandResult.failure();
         }
         visitChildren(ctx);
-        String name = cmd.identifiers().get(0);
-        if (Validator.isInvalidDataName(name)) {
-          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, name);
+        String nameId = cmd.identifiers().get(0);
+        if (Validator.isInvalidDataName(nameId)) {
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, nameId);
+          return CommandResult.failure();
+        }
+        String displayName = cmd.identifiers().getAll().size() > 1 ? cmd.identifiers().get(1) : nameId;
+        if (Validator.isInvalidDisplayName(displayName)) {
+          Messages.COMMAND_INVALID_INPUT.sendTo(src.audience(), Formatter.ERROR, displayName);
           return CommandResult.failure();
         }
 
@@ -530,15 +540,15 @@ public class JourneyExecutor implements CommandExecutor {
 
         Journey.get().proxy().schedulingManager().schedule(() -> {
           PublicWaypointManager publicWaypointManager = Journey.get().proxy().dataManager().publicWaypointManager();
-          Cell waypoint = publicWaypointManager.getWaypoint(name);
+          Cell waypoint = publicWaypointManager.getWaypoint(nameId);
           if (waypoint != null) {
-            Messages.COMMAND_WAYPOINT_SERVER_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, name);
+            Messages.COMMAND_WAYPOINT_SERVER_ALREADY_EXISTS.sendTo(src.audience(), Formatter.ERROR, nameId);
             return;
           }
 
-          publicWaypointManager.add(location.get(), name);
+          publicWaypointManager.add(location.get(), nameId, displayName);
           Journey.get().cachedDataProvider().publicWaypointCache().update(true);
-          Messages.COMMAND_WAYPOINT_SERVER_SET.sendTo(src.audience(), Formatter.SUCCESS, name, Formatter.cell(location.get()));
+          Messages.COMMAND_WAYPOINT_SERVER_SET.sendTo(src.audience(), Formatter.SUCCESS, displayName, Formatter.cell(location.get()));
         }, true);
         return CommandResult.success();
       }
@@ -719,6 +729,7 @@ public class JourneyExecutor implements CommandExecutor {
           }
           try {
             Journey.get().configManager().load();
+            Journey.get().netherManager().reloadFromDatabase();
           } catch (SerializationException e) {
             Messages.COMMAND_INTERNAL_ERROR.sendTo(src.audience(), Formatter.ERROR);
             e.printStackTrace();

@@ -58,6 +58,8 @@ import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.Flag;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -124,7 +126,9 @@ public class JourneyGui {
       stack.setItemMeta(meta);
     }
     for (Map.Entry<String, Integer> entry : itemType.enchantments().entrySet()) {
-      Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(entry.getKey()));
+      Enchantment enchantment = RegistryAccess.registryAccess()
+          .getRegistry(RegistryKey.ENCHANTMENT)
+          .get(NamespacedKey.minecraft(entry.getKey()));
       if (enchantment == null) {
         Journey.logger().error("Illegal enchantment type in config: " + entry.getKey());
         continue;

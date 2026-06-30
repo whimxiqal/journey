@@ -42,6 +42,16 @@ public interface PublicWaypointManager extends PublicWaypointProvider {
       throws IllegalArgumentException, DataAccessException;
 
   /**
+   * Add a server waypoint with a machine id and separate display label.
+   *
+   * @param cell        the cell to add
+   * @param nameId      the machine id used for lookup and storage
+   * @param displayName the friendly label shown to players
+   */
+  void add(@NotNull Cell cell, @NotNull String nameId, @NotNull String displayName)
+      throws IllegalArgumentException, DataAccessException;
+
+  /**
    * Remove a cell. Name is irrelevant. Does nothing if cell isn't saved.
    *
    * @param cell the cell location

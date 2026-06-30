@@ -5,6 +5,13 @@ plugins {
 defaultTasks 'updateLicensesMain', 'build'
 
 static String fullVersion() {
+    def whimcVersionFile = new File('whimc.version')
+    if (whimcVersionFile.exists()) {
+        def whimcVersion = whimcVersionFile.text.trim()
+        if (!whimcVersion.isEmpty()) {
+            return whimcVersion
+        }
+    }
     def journeyEnv = System.getenv('JOURNEY_ENV')
     def tagInfo = 'git describe --tags'.execute().text.trim()
     if (!tagInfo.matches("v.*")) {
@@ -52,6 +59,7 @@ subprojects {
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
+        options.compilerArgs += ['-Xlint:deprecation']
     }
 
     jar {

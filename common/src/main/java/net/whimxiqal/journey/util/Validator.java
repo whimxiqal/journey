@@ -50,4 +50,18 @@ public final class Validator {
     return !Pattern.matches(VALID_DATA_REGEX, name);
   }
 
+  /**
+   * Check if the display label for a waypoint is invalid.
+   * Display names allow a wider character set than machine ids.
+   *
+   * @param name the display name to check
+   * @return true if it is invalid
+   */
+  public static boolean isInvalidDisplayName(String name) {
+    if (name.isBlank() || name.equalsIgnoreCase("help")) {
+      return true;
+    }
+    return name.length() > 255;
+  }
+
 }

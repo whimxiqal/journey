@@ -9,7 +9,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:22.0.0'
 
     // Kyori Adventure
-    api 'net.kyori:adventure-api:4.11.0'
+    api 'net.kyori:adventure-api:4.26.1'
 }
 
 if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword') && project.ext.publish) {

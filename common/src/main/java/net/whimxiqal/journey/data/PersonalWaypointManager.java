@@ -49,6 +49,19 @@ public interface PersonalWaypointManager extends PersonalWaypointProvider {
            @NotNull String name) throws IllegalArgumentException, DataAccessException;
 
   /**
+   * Add a player waypoint with a machine id and separate display label.
+   *
+   * @param playerUuid  the player's uuid
+   * @param cell        the cell to add
+   * @param nameId      the machine id used for lookup and storage
+   * @param displayName the friendly label shown to players
+   */
+  void add(@NotNull UUID playerUuid,
+           @NotNull Cell cell,
+           @NotNull String nameId,
+           @NotNull String displayName) throws IllegalArgumentException, DataAccessException;
+
+  /**
    * Remove a player and a cell from the database. Name is irrelevant.
    * Does nothing if this combination does not exist.
    *

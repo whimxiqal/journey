@@ -51,19 +51,15 @@ public class ScopeManager {
     register(Journey.NAME, "personal", Scope.builder()
         .name(Messages.GUI_SCOPE_PERSONAL_TITLE.resolve(Formatter.DULL, null, false))
         .destinations(player -> VirtualMap.of(
-            () -> Journey.get().cachedDataProvider().personalWaypointCache()
-                .getAll(player.uuid(), false)
-                .stream()
-                .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
+            () -> waypointDestinations(Journey.get().cachedDataProvider().personalWaypointCache()
+                .getAll(player.uuid(), false)),
             Journey.get().cachedDataProvider().personalWaypointCache().getCount(player.uuid(), false)))
         .permission(Permission.PATH_PERSONAL.path())
         .build());
     register(Journey.NAME, "server", Scope.builder()
         .name(Messages.GUI_SCOPE_SERVER_TITLE.resolve(Formatter.DULL, null, false))
         .destinations(player -> VirtualMap.of(
-            () -> Journey.get().cachedDataProvider().publicWaypointCache().getAll()
-                .stream()
-                .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
+            () -> waypointDestinations(Journey.get().cachedDataProvider().publicWaypointCache().getAll()),
             Journey.get().cachedDataProvider().publicWaypointCache().getCount()))
         .permission(Permission.PATH_SERVER.path())
         .build());
@@ -85,10 +81,8 @@ public class ScopeManager {
                     .description(Messages.GUI_SCOPE_PLAYERS_WAYPOINTS_DESCRIPTION.resolve(Formatter.DULL))
                     .permission(Permission.PATH_PLAYER_WAYPOINTS.path())
                     .destinations(VirtualMap.of(
-                        () -> Journey.get().cachedDataProvider().personalWaypointCache()
-                            .getAll(p.uuid(), true)
-                            .stream()
-                            .collect(Collectors.toMap(Waypoint::name, waypoint -> Destination.of(waypoint.location()))),
+                        () -> waypointDestinations(Journey.get().cachedDataProvider().personalWaypointCache()
+                            .getAll(p.uuid(), true)),
                         Journey.get().cachedDataProvider().personalWaypointCache().getCount(p.uuid(), true)))
                     .build()))
                 .strict()  // to access any player destinations, you must at least scope to the player
@@ -140,5 +134,17 @@ public class ScopeManager {
 
   public void initialize() {
     registerDefault();
+  }
+
+  private static Map<String, Destination> waypointDestinations(java.util.List<Waypoint> waypoints) {
+    Map<String, Destination> destinations = new HashMap<>();
+    for (Waypoint waypoint : waypoints) {
+      Destination destination = Destination.of(waypoint.location());
+      destinations.put(waypoint.name(), destination);
+      if (!waypoint.nameId().equalsIgnoreCase(waypoint.name())) {
+        destinations.put(waypoint.nameId(), destination);
+      }
+    }
+    return destinations;
   }
 }

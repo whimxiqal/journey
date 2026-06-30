@@ -31,7 +31,7 @@ dependencies {
     implementation('net.citizensnpcs:citizens-main:2.0.35-SNAPSHOT') {
         exclude group: '*', module: '*'
     }
-    implementation 'net.kyori:adventure-api:4.13.0'
+    implementation 'net.kyori:adventure-api:4.26.1'
 }
 
 processResources {

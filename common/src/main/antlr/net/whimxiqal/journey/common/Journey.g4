@@ -3,7 +3,7 @@ grammar Journey;
 journey: JOURNEY (setwaypoint | listwaypoints | waypoint | player | server | admin | cancel)? EOF;
 journeyto: JOURNEY_TO journeytoTarget? EOF;
 
-setwaypoint: SET_WAYPOINT name=identifier+;
+setwaypoint: SET_WAYPOINT id=identifier label=identifier?;
 listwaypoints: LIST_WAYPOINTS (listwaypointsMine | listwaypointsPlayer);
 listwaypointsMine: page=ID?;
 listwaypointsPlayer: player user=identifier page=ID?;
@@ -16,7 +16,7 @@ player: PLAYER user=identifier (playerWaypoint)?;
 playerWaypoint: name=identifier;
 
 server: SERVER (serverSetWaypoint | serverListWaypoints | serverWaypoint);
-serverSetWaypoint: SET_WAYPOINT name=identifier;
+serverSetWaypoint: SET_WAYPOINT id=identifier label=identifier?;
 serverListWaypoints: LIST_WAYPOINTS page=ID?;
 serverWaypoint: WAYPOINT name=identifier (serverUnsetWaypoint | serverRenameWaypoint | flagSet)?;
 serverUnsetWaypoint: UNSET;
@@ -104,7 +104,7 @@ ident: ID
         | TRUE
         | UNSET
         | WAYPOINT;
-ID: [a-zA-Z0-9\-_:,.]+;
+ID: [a-zA-Z0-9_\-_:,.]+;
 SINGLE_QUOTE: '\'';
 DOUBLE_QUOTE: '"';
 WS : [ \t\r\n]+ -> channel(HIDDEN); // skip spaces, tabs, newlines

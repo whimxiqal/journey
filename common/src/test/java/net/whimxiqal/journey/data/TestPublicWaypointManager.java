@@ -35,7 +35,13 @@ public class TestPublicWaypointManager implements PublicWaypointManager {
 
   @Override
   public void add(@NotNull Cell cell, @NotNull String name) throws IllegalArgumentException, DataAccessException {
-    waypoints.add(new Waypoint(name, cell, true));
+    add(cell, name, name);
+  }
+
+  @Override
+  public void add(@NotNull Cell cell, @NotNull String nameId, @NotNull String displayName)
+      throws IllegalArgumentException, DataAccessException {
+    waypoints.add(new Waypoint(nameId, displayName, cell, true));
   }
 
   @Override
@@ -45,7 +51,7 @@ public class TestPublicWaypointManager implements PublicWaypointManager {
 
   @Override
   public void remove(@NotNull String name) throws DataAccessException {
-    waypoints.removeIf(waypoint -> waypoint.name().equals(name));
+    waypoints.removeIf(waypoint -> waypoint.nameId().equalsIgnoreCase(name) || waypoint.name().equalsIgnoreCase(name));
   }
 
   @Override
@@ -55,7 +61,9 @@ public class TestPublicWaypointManager implements PublicWaypointManager {
 
   @Override
   public @Nullable Cell getWaypoint(@NotNull String name) throws DataAccessException {
-    return waypoints.stream().filter(waypoint -> waypoint.name().equals(name)).map(Waypoint::location).findFirst().orElse(null);
+    return waypoints.stream()
+        .filter(waypoint -> waypoint.nameId().equalsIgnoreCase(name) || waypoint.name().equalsIgnoreCase(name))
+        .findFirst().map(Waypoint::location).orElse(null);
   }
 
   @Override

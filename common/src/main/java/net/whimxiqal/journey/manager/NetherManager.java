@@ -50,12 +50,21 @@ public final class NetherManager {
   private final Map<Cell, Cell> portalConnections = new ConcurrentHashMap<>();
 
   public void initialize() {
-    // Calls to the db directly
+    reloadFromDatabase();
+    Journey.get().tunnelManager().register(player -> Journey.get().netherManager().makeTunnels());
+  }
+
+  /**
+   * Reload persisted portal links from the database into memory.
+   * Pathfinding uses this cache, not the database directly — call after editing journey_tunnels.
+   */
+  public void reloadFromDatabase() {
+    portalConnections.clear();
     Journey.get().proxy().dataManager()
         .netherPortalManager()
         .getAllTunnels(TunnelType.NETHER)
         .forEach(tunnel -> portalConnections.put(tunnel.origin(), tunnel.destination()));
-    Journey.get().tunnelManager().register(player -> Journey.get().netherManager().makeTunnels());
+    Journey.logger().info("[Nether Manager] Loaded " + portalConnections.size() + " portal tunnel(s) from database");
   }
 
   /**
@@ -64,27 +73,14 @@ public final class NetherManager {
    * @return all nether tunnels
    */
   public Collection<NetherTunnel> makeTunnels() {
-    List<NetherTunnel> linksUnverified = portalConnections.entrySet().stream()
+    List<NetherTunnel> tunnels = portalConnections.entrySet().stream()
         .map(entry -> new NetherTunnel(entry.getKey(), entry.getValue())).toList();
-    List<NetherTunnel> linksVerified = new LinkedList<>();
-    List<NetherTunnel> tunnelsToRemove = new LinkedList<>();
-    for (NetherTunnel tunnel : linksUnverified) {
-      if (tunnel.verify()) {
-        linksVerified.add(tunnel);
-      } else {
-        // put new nether tunnel in list to send to async thread
-        tunnelsToRemove.add(new NetherTunnel(tunnel.origin(), tunnel.destination()));
-      }
+    long unverified = tunnels.stream().filter(tunnel -> !tunnel.verify()).count();
+    if (unverified > 0) {
+      Journey.logger().debug("[Nether Manager] Using " + unverified
+          + " persisted portal tunnel(s) that could not be verified in-world");
     }
-    if (!tunnelsToRemove.isEmpty()) {
-      Journey.get().proxy().schedulingManager().schedule(() -> {
-        for (NetherTunnel tunnel : tunnelsToRemove) {
-          portalConnections.remove(tunnel.origin(), tunnel.destination());
-          Journey.get().proxy().dataManager().netherPortalManager().removeTunnels(tunnel.origin(), tunnel.destination(), TunnelType.NETHER);
-        }
-      }, true);
-    }
-    return linksVerified;
+    return tunnels;
   }
 
   public void lookForPortal(Cell origin, Supplier<Cell> destination) {
@@ -99,6 +95,27 @@ public final class NetherManager {
       return;  // We can't find the origin portal
     }
     lookForPortal(destination, originGroup.get(), 0);
+  }
+
+  /**
+   * Record a cross-world teleport link using exact cells, without requiring portal blocks.
+   * Used for custom portal plugins that teleport players without nether/end portal blocks.
+   */
+  public void recordTeleportLink(Cell origin, Cell destination) {
+    if (origin.domain() == destination.domain()) {
+      return;
+    }
+    Journey.get().proxy().schedulingManager().schedule(() -> {
+      Cell existing = portalConnections.get(origin);
+      if (destination.equals(existing)) {
+        return;
+      }
+      portalConnections.put(origin, destination);
+      Journey.get().proxy().dataManager().netherPortalManager()
+          .addTunnel(origin, destination, NetherTunnel.COST, TunnelType.NETHER);
+      Journey.logger().debug("[Nether Manager] Recorded cross-world teleport link: "
+          + origin + " -> " + destination);
+    }, true);
   }
 
   private void lookForPortal(Supplier<Cell> resultantLocation, PortalGroup originGroup, int count) {
@@ -264,7 +281,7 @@ public final class NetherManager {
    * @return A PortalGroup of all the found Portal blocks. Otherwise, returns null.
    */
   private PortalGroup getPortalBlocks(Cell cell) {
-    if (!Journey.get().proxy().platform().toBlock(cell).isNetherPortal()) {
+    if (!Journey.get().proxy().platform().toBlock(cell).isPortal()) {
       return null;
     }
 
@@ -277,7 +294,7 @@ public final class NetherManager {
       for (int j = -1; j <= 1; j++) {
         for (int k = -1; k <= 1; k++) {
           Cell offset = new Cell(cell.blockX() + i, cell.blockY() + j, cell.blockZ() + k, cell.domain());
-          if (Journey.get().proxy().platform().toBlock(offset).isNetherPortal() && group.add(offset)) {
+          if (Journey.get().proxy().platform().toBlock(offset).isPortal() && group.add(offset)) {
             portalBlock(group, offset);
           }
         }
@@ -313,7 +330,7 @@ public final class NetherManager {
      */
     public boolean add(Cell cell) {
       // Check to see if the block is a Portal block.
-      if (!Journey.get().proxy().platform().toBlock(cell).isNetherPortal()) {
+      if (!Journey.get().proxy().platform().toBlock(cell).isPortal()) {
         return false;
       }
 

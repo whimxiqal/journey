@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.config.Settings;
@@ -135,24 +136,96 @@ public class TrailNavigator implements Navigator {
   public boolean start() {
     // Set up illumination scheduled task for showing the paths
     illuminationTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
-      // Illuminate destination of path
       List<? extends SearchStep> steps = progress.steps();
+      if (steps.size() < 2) {
+        return;
+      }
 
-      // Illuminate the rest of the path
-      final int firstStepIndex = Math.max(1, progress.currentStepIndex());
-      int stepIndex = firstStepIndex;
+      int playerDomain = agent.location()
+          .map(Cell::domain)
+          .orElse(steps.get(0).location().domain());
+
+      int stepIndex = 1;
+      double stepProgress = 0;
+      boolean foundSegment = false;
+      if (agent.location().isPresent()) {
+        Vector agentVector = toBlockVector(agent.location().get());
+        for (int i = 1; i < steps.size(); i++) {
+          Cell from = steps.get(i - 1).location();
+          Cell to = steps.get(i).location();
+          if (from.domain() != to.domain()) {
+            if (from.domain() == playerDomain) {
+              break;
+            }
+            continue;
+          }
+          if (from.domain() != playerDomain) {
+            continue;
+          }
+          NavigationStep segment = new NavigationStep(from, to);
+          if (segment.length() < 0.001) {
+            continue;
+          }
+          double projection = agentVector.subtract(segment.startVector())
+              .projectionOnto(segment.path());
+          if (projection <= segment.length() + 0.5) {
+            stepIndex = i;
+            stepProgress = Math.min(1, Math.max(0, projection / segment.length()));
+            foundSegment = true;
+            break;
+          }
+        }
+      }
+      if (!foundSegment) {
+        stepIndex = Math.max(1, progress.currentStepIndex());
+        stepProgress = stepIndex == progress.currentStepIndex() && progress.currentStepIndex() > 0
+            ? sanitizeProgress(progress.currentStepProgress())
+            : 0;
+        while (stepIndex < steps.size() && stepProgress >= 1) {
+          stepIndex++;
+          stepProgress = 0;
+        }
+      }
+
       double illuminatedDistance = 0;
-      while (illuminatedDistance <= CACHED_JOURNEY_STEPS_LENGTH
-          && stepIndex < steps.size()
-          && steps.get(stepIndex - 1).location().domain() == steps.get(stepIndex).location().domain()) {
-        NavigationStep step = new NavigationStep(steps.get(stepIndex - 1).location(), steps.get(stepIndex).location());
-        double stepProgress = stepIndex == firstStepIndex ? progress.currentStepProgress() : 0;
+      while (illuminatedDistance <= CACHED_JOURNEY_STEPS_LENGTH && stepIndex < steps.size()) {
+        Cell from = steps.get(stepIndex - 1).location();
+        Cell to = steps.get(stepIndex).location();
+        if (from.domain() != to.domain()) {
+          if (from.domain() == playerDomain) {
+            break;
+          }
+          stepIndex++;
+          continue;
+        }
+        if (from.domain() != playerDomain) {
+          stepIndex++;
+          continue;
+        }
+        NavigationStep step = new NavigationStep(from, to);
+        if (step.length() < 0.001) {
+          stepIndex++;
+          stepProgress = 0;
+          continue;
+        }
         illuminateStep(step, stepProgress);
         illuminatedDistance += step.length() * (1 - stepProgress);
+        stepProgress = 0;
         stepIndex++;
       }
     }, false, TICKS_PER_PARTICLE_CYCLE);
     return true;
+  }
+
+  private static Vector toBlockVector(Cell cell) {
+    return new Vector(cell.blockX(), cell.blockY(), cell.blockZ());
+  }
+
+  private static double sanitizeProgress(double progress) {
+    if (Double.isNaN(progress) || Double.isInfinite(progress)) {
+      return 0;
+    }
+    return Math.min(1, Math.max(0, progress));
   }
 
   @Override
