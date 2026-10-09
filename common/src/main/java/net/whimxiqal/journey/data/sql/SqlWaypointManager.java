@@ -197,11 +197,19 @@ public abstract class SqlWaypointManager extends SqlManager {
   @Nullable
   protected Cell getWaypoint(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
-      Cell waypoint = getWaypointByNameId(playerUuid, name.toLowerCase(), connection);
+      Cell waypoint = getWaypointByNameId(playerUuid, name.toLowerCase(Locale.ENGLISH), connection);
       if (waypoint != null) {
         return waypoint;
       }
-      return getWaypointByDisplayName(playerUuid, name, connection);
+      waypoint = getWaypointByDisplayName(playerUuid, name, connection);
+      if (waypoint != null) {
+        return waypoint;
+      }
+      String fuzzyNameId = getNameIdByNormalizedKey(playerUuid, name, connection);
+      if (fuzzyNameId == null) {
+        return null;
+      }
+      return getWaypointByNameId(playerUuid, fuzzyNameId, connection);
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
@@ -211,11 +219,15 @@ public abstract class SqlWaypointManager extends SqlManager {
   @Nullable
   protected String resolveNameId(@Nullable UUID playerUuid, @NotNull String name) throws DataAccessException {
     try (Connection connection = getConnectionController().establishConnection()) {
-      String nameId = getNameIdByNameId(playerUuid, name.toLowerCase(), connection);
+      String nameId = getNameIdByNameId(playerUuid, name.toLowerCase(Locale.ENGLISH), connection);
       if (nameId != null) {
         return nameId;
       }
-      return getNameIdByDisplayName(playerUuid, name, connection);
+      nameId = getNameIdByDisplayName(playerUuid, name, connection);
+      if (nameId != null) {
+        return nameId;
+      }
+      return getNameIdByNormalizedKey(playerUuid, name, connection);
     } catch (SQLException e) {
       e.printStackTrace();
       throw new DataAccessException();
@@ -296,6 +308,52 @@ public abstract class SqlWaypointManager extends SqlManager {
     ResultSet resultSet = statement.executeQuery();
     if (resultSet.next()) {
       return resultSet.getString("name_id");
+    }
+    return null;
+  }
+
+  /**
+   * Match a query to a waypoint after normalizing spaces, dashes, and punctuation to underscores.
+   * Prefer display-label matches, then name_id matches, then a unique name_id suffix match
+   * (so {@code sunken_forest} can resolve {@code poi-sunken_forest}).
+   */
+  @Nullable
+  private String getNameIdByNormalizedKey(@Nullable UUID playerUuid,
+                                          @NotNull String name,
+                                          @NotNull Connection connection) throws SQLException {
+    String needle = Validator.normalizeWaypointKey(name);
+    if (needle.isEmpty()) {
+      return null;
+    }
+
+    String displayMatch = null;
+    String idMatch = null;
+    String suffixMatch = null;
+    int suffixMatches = 0;
+
+    for (Waypoint waypoint : getWaypoints(playerUuid, connection, false)) {
+      String normalizedDisplay = Validator.normalizeWaypointKey(waypoint.name());
+      if (normalizedDisplay.equals(needle)) {
+        displayMatch = waypoint.nameId();
+        break;
+      }
+      String normalizedId = Validator.normalizeWaypointKey(waypoint.nameId());
+      if (normalizedId.equals(needle)) {
+        idMatch = waypoint.nameId();
+      } else if (normalizedId.endsWith("_" + needle)) {
+        suffixMatch = waypoint.nameId();
+        suffixMatches++;
+      }
+    }
+
+    if (displayMatch != null) {
+      return displayMatch;
+    }
+    if (idMatch != null) {
+      return idMatch;
+    }
+    if (suffixMatches == 1) {
+      return suffixMatch;
     }
     return null;
   }

@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.util;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -31,6 +32,12 @@ import java.util.regex.Pattern;
 public final class Validator {
 
   private static final String VALID_DATA_REGEX = "^[a-zA-Z0-9 -_]{1,30}$";
+  /**
+   * Characters allowed in chat/command scope destination keys (must be storable in Journey identifiers).
+   * Notably excludes punctuation like '?' that display labels sometimes contain.
+   */
+  private static final Pattern SAFE_SCOPE_KEY = Pattern.compile("^[a-zA-Z0-9 _\\-:,.]+$");
+  private static final Pattern NON_ALNUM = Pattern.compile("[^a-z0-9]+");
 
   private Validator() {
   }
@@ -62,6 +69,34 @@ public final class Validator {
       return true;
     }
     return name.length() > 255;
+  }
+
+  /**
+   * Normalize a waypoint name for fuzzy matching: lowercase, collapse spaces/dashes/punctuation
+   * to underscores. So {@code "Sunken Forest?"}, {@code "sunken-forest"}, and
+   * {@code "sunken_forest"} all become {@code "sunken_forest"}.
+   */
+  public static String normalizeWaypointKey(String name) {
+    if (name == null || name.isBlank()) {
+      return "";
+    }
+    String normalized = NON_ALNUM.matcher(name.toLowerCase(Locale.ENGLISH)).replaceAll("_");
+    int start = 0;
+    int end = normalized.length();
+    while (start < end && normalized.charAt(start) == '_') {
+      start++;
+    }
+    while (end > start && normalized.charAt(end - 1) == '_') {
+      end--;
+    }
+    return normalized.substring(start, end);
+  }
+
+  /**
+   * Whether a string is safe to use as a Journey scope / chat-click destination key.
+   */
+  public static boolean isSafeScopeKey(String key) {
+    return key != null && !key.isBlank() && SAFE_SCOPE_KEY.matcher(key).matches() && !isInvalidDataName(key);
   }
 
 }

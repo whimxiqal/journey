@@ -140,9 +140,15 @@ public class ScopeManager {
     Map<String, Destination> destinations = new HashMap<>();
     for (Waypoint waypoint : waypoints) {
       Destination destination = Destination.of(waypoint.location());
-      destinations.put(waypoint.name(), destination);
-      if (!waypoint.nameId().equalsIgnoreCase(waypoint.name())) {
-        destinations.put(waypoint.nameId(), destination);
+      // Prefer machine ids in chat suggestions; display labels may contain punctuation
+      // (e.g. '?') that the command parser cannot accept.
+      destinations.put(waypoint.nameId(), destination);
+      if (!waypoint.nameId().equalsIgnoreCase(waypoint.name()) && Validator.isSafeScopeKey(waypoint.name())) {
+        destinations.put(waypoint.name(), destination);
+      }
+      String slug = Validator.normalizeWaypointKey(waypoint.name());
+      if (!slug.isEmpty() && !destinations.containsKey(slug)) {
+        destinations.put(slug, destination);
       }
     }
     return destinations;
