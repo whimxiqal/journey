@@ -1,4 +1,7 @@
 # Journey
+
+> Journey has been archived and has been reimagined from scratch as Cobblestone under the CobblestoneMC project. Check it out here: https://github.com/CobblestoneMC/cobblestone
+
 <img src="logo.png" alt="Journey Logo" width="300"/>
 
 ![Test/Build Status](https://img.shields.io/github/actions/workflow/status/whimxiqal/journey/build.yml?branch=main&label=Test%2FBuild&style=for-the-badge "Test/build status")
