@@ -39,7 +39,13 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
 
   @Override
   public void add(@NotNull UUID playerUuid, @NotNull Cell cell, @NotNull String name) throws IllegalArgumentException, DataAccessException {
-    waypoints.computeIfAbsent(playerUuid, k -> new LinkedList<>()).add(new Waypoint(name, cell, true));
+    add(playerUuid, cell, name, name);
+  }
+
+  @Override
+  public void add(@NotNull UUID playerUuid, @NotNull Cell cell, @NotNull String nameId, @NotNull String displayName)
+      throws IllegalArgumentException, DataAccessException {
+    waypoints.computeIfAbsent(playerUuid, k -> new LinkedList<>()).add(new Waypoint(nameId, displayName, cell, true));
   }
 
   @Override
@@ -62,7 +68,7 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
     if (waypoints == null) {
       return;
     }
-    waypoints.removeIf(waypoint -> waypoint.name().equals(name));
+    waypoints.removeIf(waypoint -> waypoint.nameId().equalsIgnoreCase(name) || waypoint.name().equalsIgnoreCase(name));
   }
 
   @Override
@@ -76,7 +82,9 @@ public class TestPersonalWaypointManager implements PersonalWaypointManager {
     if (waypoints == null) {
       return null;
     }
-    return waypoints.stream().filter(waypoint -> waypoint.name().equals(name)).findFirst().map(Waypoint::location).orElse(null);
+    return waypoints.stream()
+        .filter(waypoint -> waypoint.nameId().equalsIgnoreCase(name) || waypoint.name().equalsIgnoreCase(name))
+        .findFirst().map(Waypoint::location).orElse(null);
   }
 
   @Override

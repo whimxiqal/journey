@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyAgent;
 import net.whimxiqal.journey.config.Settings;
@@ -45,6 +46,12 @@ public class TrailNavigator implements Navigator {
 
   public static final String TRAIL_NAVIGATOR_ID = "trail";
   private static final double CACHED_JOURNEY_STEPS_LENGTH = 128;  // length of all journey steps to cache for showing their particles
+  /**
+   * Prefer the nearest path segment to the player, but only snap onto it when they are this close.
+   * Farther away, fall back to {@link NavigationProgress} so we do not illuminate a distant stretch
+   * the client will never render (long QRF routes often leave the player laterally off early segments).
+   */
+  private static final double MAX_SEGMENT_SNAP_DISTANCE_SQUARED = 48 * 48;
   private static final int TICKS_PER_PARTICLE_CYCLE = 3;
   public static final String OPTION_ID_PARTICLE = "particle";
   public static final NavigatorOption<List<String>> OPTION_PARTICLE = NavigatorOption
@@ -135,24 +142,114 @@ public class TrailNavigator implements Navigator {
   public boolean start() {
     // Set up illumination scheduled task for showing the paths
     illuminationTaskId = Journey.get().proxy().schedulingManager().scheduleRepeat(() -> {
-      // Illuminate destination of path
       List<? extends SearchStep> steps = progress.steps();
+      if (steps.size() < 2) {
+        return;
+      }
 
-      // Illuminate the rest of the path
-      final int firstStepIndex = Math.max(1, progress.currentStepIndex());
-      int stepIndex = firstStepIndex;
+      int playerDomain = agent.location()
+          .map(Cell::domain)
+          .orElse(steps.get(0).location().domain());
+
+      int stepIndex = 1;
+      double stepProgress = 0;
+      boolean foundSegment = false;
+      if (agent.location().isPresent()) {
+        Vector agentVector = toBlockVector(agent.location().get());
+        int bestStepIndex = -1;
+        double bestDistanceSquared = Double.MAX_VALUE;
+        double bestStepProgress = 0;
+        for (int i = 1; i < steps.size(); i++) {
+          Cell from = steps.get(i - 1).location();
+          Cell to = steps.get(i).location();
+          if (from.domain() != to.domain()) {
+            if (from.domain() == playerDomain) {
+              // Do not consider later worlds until the player leaves this one
+              break;
+            }
+            continue;
+          }
+          if (from.domain() != playerDomain) {
+            continue;
+          }
+          NavigationStep segment = new NavigationStep(from, to);
+          if (segment.length() < 0.001) {
+            continue;
+          }
+          Vector relative = agentVector.subtract(segment.startVector());
+          double projection = relative.projectionOnto(segment.path());
+          double clamped = Math.min(segment.length(), Math.max(0, projection));
+          Vector unitPath = segment.path().unit();
+          Vector closest = new Vector(
+              segment.startVector().x() + unitPath.x() * clamped,
+              segment.startVector().y() + unitPath.y() * clamped,
+              segment.startVector().z() + unitPath.z() * clamped);
+          double dx = agentVector.x() - closest.x();
+          double dy = agentVector.y() - closest.y();
+          double dz = agentVector.z() - closest.z();
+          double distanceSquared = dx * dx + dy * dy + dz * dz;
+          if (distanceSquared < bestDistanceSquared) {
+            bestDistanceSquared = distanceSquared;
+            bestStepIndex = i;
+            bestStepProgress = clamped / segment.length();
+          }
+        }
+        if (bestStepIndex >= 0 && bestDistanceSquared <= MAX_SEGMENT_SNAP_DISTANCE_SQUARED) {
+          stepIndex = bestStepIndex;
+          stepProgress = bestStepProgress;
+          foundSegment = true;
+        }
+      }
+      if (!foundSegment) {
+        stepIndex = Math.max(1, progress.currentStepIndex());
+        stepProgress = stepIndex == progress.currentStepIndex() && progress.currentStepIndex() > 0
+            ? sanitizeProgress(progress.currentStepProgress())
+            : 0;
+        while (stepIndex < steps.size() && stepProgress >= 1) {
+          stepIndex++;
+          stepProgress = 0;
+        }
+      }
+
       double illuminatedDistance = 0;
-      while (illuminatedDistance <= CACHED_JOURNEY_STEPS_LENGTH
-          && stepIndex < steps.size()
-          && steps.get(stepIndex - 1).location().domain() == steps.get(stepIndex).location().domain()) {
-        NavigationStep step = new NavigationStep(steps.get(stepIndex - 1).location(), steps.get(stepIndex).location());
-        double stepProgress = stepIndex == firstStepIndex ? progress.currentStepProgress() : 0;
+      while (illuminatedDistance <= CACHED_JOURNEY_STEPS_LENGTH && stepIndex < steps.size()) {
+        Cell from = steps.get(stepIndex - 1).location();
+        Cell to = steps.get(stepIndex).location();
+        if (from.domain() != to.domain()) {
+          if (from.domain() == playerDomain) {
+            break;
+          }
+          stepIndex++;
+          continue;
+        }
+        if (from.domain() != playerDomain) {
+          stepIndex++;
+          continue;
+        }
+        NavigationStep step = new NavigationStep(from, to);
+        if (step.length() < 0.001) {
+          stepIndex++;
+          stepProgress = 0;
+          continue;
+        }
         illuminateStep(step, stepProgress);
         illuminatedDistance += step.length() * (1 - stepProgress);
+        stepProgress = 0;
         stepIndex++;
       }
     }, false, TICKS_PER_PARTICLE_CYCLE);
     return true;
+  }
+
+  private static Vector toBlockVector(Cell cell) {
+    return new Vector(cell.blockX(), cell.blockY(), cell.blockZ());
+  }
+
+  private static double sanitizeProgress(double progress) {
+    if (Double.isNaN(progress) || Double.isInfinite(progress)) {
+      return 0;
+    }
+    return Math.min(1, Math.max(0, progress));
   }
 
   @Override

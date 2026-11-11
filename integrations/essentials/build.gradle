@@ -32,8 +32,12 @@ repositories {
 dependencies {
     implementation project(':api')
     implementation project(':bukkit-api')
-    implementation 'net.essentialsx:EssentialsX:2.20.1'
-    implementation 'net.essentialsx:EssentialsXSpawn:2.20.1'
+    implementation('net.essentialsx:EssentialsX:2.20.1') {
+        exclude group: 'org.spigotmc', module: 'spigot-api'
+    }
+    implementation('net.essentialsx:EssentialsXSpawn:2.20.1') {
+        exclude group: 'org.spigotmc', module: 'spigot-api'
+    }
 }
 
 processResources {

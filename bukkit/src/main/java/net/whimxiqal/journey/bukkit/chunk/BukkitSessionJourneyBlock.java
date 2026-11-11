@@ -58,6 +58,12 @@ public record BukkitSessionJourneyBlock(Cell cell,
   }
 
   @Override
+  public boolean isPortal() {
+    Material material = data.getMaterial();
+    return material == Material.NETHER_PORTAL || material == Material.END_PORTAL;
+  }
+
+  @Override
   public boolean isWater() {
     return data.getMaterial() == Material.WATER;
   }

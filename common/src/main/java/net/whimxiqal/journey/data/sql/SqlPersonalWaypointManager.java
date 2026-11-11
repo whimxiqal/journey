@@ -60,6 +60,12 @@ public class SqlPersonalWaypointManager
   }
 
   @Override
+  public void add(@NotNull UUID playerUuid, @NotNull Cell cell, @NotNull String nameId, @NotNull String displayName)
+      throws IllegalArgumentException, DataAccessException {
+    super.addWaypoint(playerUuid, cell, nameId, displayName);
+  }
+
+  @Override
   public void remove(@NotNull UUID playerUuid, @NotNull Cell cell)
       throws DataAccessException {
     super.removeWaypoint(playerUuid, cell);
@@ -115,7 +121,11 @@ public class SqlPersonalWaypointManager
           "name_id"));
 
       statement.setBytes(1, UUIDUtil.uuidToBytes(playerUuid));
-      statement.setString(2, name.toLowerCase());
+      String nameId = resolveNameId(playerUuid, name);
+      if (nameId == null) {
+        throw new RuntimeException("Checking is-public on non-existent waypoint: " + playerUuid + ", " + name);
+      }
+      statement.setString(2, nameId);
 
       ResultSet resultSet = statement.executeQuery();
       if (resultSet.next()) {

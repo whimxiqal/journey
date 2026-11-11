@@ -40,6 +40,14 @@ public interface JourneyBlock {
 
   boolean isNetherPortal();
 
+  /**
+   * Whether this block is a teleportation portal used for cross-world travel.
+   * Defaults to {@link #isNetherPortal()} but platforms may include other portal types.
+   */
+  default boolean isPortal() {
+    return isNetherPortal();
+  }
+
   boolean isWater();
 
   boolean isPressurePlate();

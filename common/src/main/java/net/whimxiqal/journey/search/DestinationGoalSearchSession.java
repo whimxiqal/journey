@@ -23,7 +23,9 @@
 
 package net.whimxiqal.journey.search;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.Set;
 import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.JourneyAgent;
@@ -59,17 +61,21 @@ public class DestinationGoalSearchSession extends GraphGoalSearchSession<Destina
   }
 
   @Override
+  protected void registerAdditionalSearchDomains(Set<Integer> domains) {
+    super.registerAdditionalSearchDomains(domains);
+    domains.add(destination.domain());
+  }
+
+  @Override
   protected void initSearchExtra() {
     if (origin.domain() == destination.domain()) {
       stateInfo.searchGraph.addPathTrialOriginToDestination(modes(), persistentOrigin && persistentDestination);
     }
 
-    for (Integer domain : stateInfo.allDomains) {
-      // Path trials from tunnel -> destination
-      for (Tunnel pathTrialOriginTunnel : stateInfo.tunnelsByDestinationDomain.get(domain)) {
-        if (domain.equals(destination.domain())) {
-          stateInfo.searchGraph.addPathTrialTunnelToDestination(pathTrialOriginTunnel, modes(), persistentDestination);
-        }
+    List<Tunnel> arrivalTunnels = stateInfo.tunnelsByDestinationDomain.get(destination.domain());
+    if (arrivalTunnels != null) {
+      for (Tunnel arrivalTunnel : arrivalTunnels) {
+        stateInfo.searchGraph.addPathTrialTunnelToDestination(arrivalTunnel, modes(), persistentDestination);
       }
     }
   }

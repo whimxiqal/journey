@@ -26,7 +26,12 @@ package net.whimxiqal.journey.data;
 import net.whimxiqal.journey.Cell;
 import org.jetbrains.annotations.NotNull;
 
-public record Waypoint(String name, Cell location, boolean publicity) implements Comparable<Waypoint> {
+public record Waypoint(String nameId, String name, Cell location, boolean publicity) implements Comparable<Waypoint> {
+
+  public Waypoint(String name, Cell location, boolean publicity) {
+    this(name, name, location, publicity);
+  }
+
   @Override
   public int compareTo(@NotNull Waypoint o) {
     return String.CASE_INSENSITIVE_ORDER.compare(name, o.name);

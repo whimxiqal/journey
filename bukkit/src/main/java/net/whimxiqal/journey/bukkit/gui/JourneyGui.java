@@ -25,7 +25,6 @@ package net.whimxiqal.journey.bukkit.gui;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
-import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.guis.BaseGui;
 import dev.triumphteam.gui.guis.Gui;
@@ -58,6 +57,8 @@ import net.whimxiqal.journey.search.SearchSession;
 import net.whimxiqal.journey.search.flag.Flag;
 import net.whimxiqal.journey.search.flag.FlagSet;
 import net.whimxiqal.journey.search.flag.Flags;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -93,7 +94,7 @@ public class JourneyGui {
   }
 
   private boolean setStaticButton(BaseGui gui, ConfigStaticButton button, Component defaultName, GuiAction<InventoryClickEvent> clickEvent) {
-    ItemBuilder builder = toItemBuilder(button.itemType(), defaultName);
+    PaperItemBuilder builder = toItemBuilder(button.itemType(), defaultName);
     if (builder == null) {
       return false;
     }
@@ -102,7 +103,7 @@ public class JourneyGui {
     return true;
   }
 
-  private ItemBuilder toItemBuilder(ConfigItemType itemType, Component defaultName) {
+  private PaperItemBuilder toItemBuilder(ConfigItemType itemType, Component defaultName) {
     Material material = Registry.MATERIAL.get(NamespacedKey.minecraft(itemType.itemType()));
     if (material == null) {
       Journey.logger().error("Illegal material type in config: " + itemType.itemType());
@@ -124,14 +125,16 @@ public class JourneyGui {
       stack.setItemMeta(meta);
     }
     for (Map.Entry<String, Integer> entry : itemType.enchantments().entrySet()) {
-      Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(entry.getKey()));
+      Enchantment enchantment = RegistryAccess.registryAccess()
+          .getRegistry(RegistryKey.ENCHANTMENT)
+          .get(NamespacedKey.minecraft(entry.getKey()));
       if (enchantment == null) {
         Journey.logger().error("Illegal enchantment type in config: " + entry.getKey());
         continue;
       }
       stack.addUnsafeEnchantment(enchantment, entry.getValue());
     }
-    ItemBuilder builder = ItemBuilder.from(stack);
+    PaperItemBuilder builder = PaperItemBuilder.from(stack);
     if (itemType.name() != null) {
       builder.name(MessageManager.miniMessage().deserialize(itemType.name()));
     } else if (defaultName != null) {
@@ -141,7 +144,7 @@ public class JourneyGui {
     return builder;
   }
 
-  private ItemBuilder getMatchedItemType(String name, Setting<List<ConfigItemsRule>> ruleSetting) {
+  private PaperItemBuilder getMatchedItemType(String name, Setting<List<ConfigItemsRule>> ruleSetting) {
     List<ConfigItemType> items = null;
     for (ConfigItemsRule rule : ruleSetting.getValue()) {
       if (rule.ruleMatcher().test(name)) {
@@ -205,7 +208,7 @@ public class JourneyGui {
 
     // set fillers
     for (ConfigFillPhase fillPhase : Settings.GUI_FILL.getValue()) {
-      ItemBuilder builder = toItemBuilder(fillPhase.item(), Component.empty());
+      PaperItemBuilder builder = toItemBuilder(fillPhase.item(), Component.empty());
       if (builder == null) {
         continue;
       }
@@ -246,7 +249,7 @@ public class JourneyGui {
           .toList();
       FlagSet preferences = Journey.get().searchManager().getFlagPreferences(player.uuid(), false);
       for (Flag<?> flag : allFlags) {
-        ItemBuilder builder = getMatchedItemType(flag.name(), Settings.GUI_CONTENT_FLAGS_RULE_LIST);
+        PaperItemBuilder builder = getMatchedItemType(flag.name(), Settings.GUI_CONTENT_FLAGS_RULE_LIST);
         builder.name(Formatter.accent(flag.name()));
         if (preferences.contains(flag)) {
           builder.lore(Component.text(preferences.printValueFor(flag)));

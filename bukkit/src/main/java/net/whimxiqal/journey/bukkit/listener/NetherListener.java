@@ -23,6 +23,7 @@
 
 package net.whimxiqal.journey.bukkit.listener;
 
+import net.whimxiqal.journey.Cell;
 import net.whimxiqal.journey.Journey;
 import net.whimxiqal.journey.bukkit.util.BukkitUtil;
 import org.bukkit.event.EventHandler;
@@ -30,6 +31,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 public class NetherListener implements Listener {
 
@@ -53,6 +55,20 @@ public class NetherListener implements Listener {
   @EventHandler(priority = EventPriority.LOW)
   public void onPlayerPortal(PlayerPortalEvent e) {
     Journey.get().netherManager().lookForPortal(BukkitUtil.toCell(e.getFrom()), () -> BukkitUtil.toCell(e.getPlayer().getLocation()));
+  }
+
+  /**
+   * Record cross-world teleports that do not fire portal events (e.g. Multiverse or custom portal plugins).
+   */
+  @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+  public void onPlayerTeleport(PlayerTeleportEvent e) {
+    if (e.getFrom().getWorld().equals(e.getTo().getWorld())) {
+      return;
+    }
+    Cell from = BukkitUtil.toCell(e.getFrom());
+    Cell to = BukkitUtil.toCell(e.getTo());
+    Journey.get().netherManager().lookForPortal(from, () -> to);
+    Journey.get().netherManager().recordTeleportLink(from, to);
   }
 
 }

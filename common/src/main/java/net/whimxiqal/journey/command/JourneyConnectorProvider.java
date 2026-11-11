@@ -25,6 +25,7 @@ package net.whimxiqal.journey.command;
 
 import java.util.Collections;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import net.kyori.adventure.text.Component;
 import net.whimxiqal.journey.InternalJourneyPlayer;
 import net.whimxiqal.journey.Journey;
@@ -70,7 +71,10 @@ public class JourneyConnectorProvider {
                 .build())
             .addParameter(Parameter.builder("server-waypoint")
                 .options(ctx -> Journey.get().cachedDataProvider().publicWaypointCache()
-                    .getAll().stream().map(Waypoint::name)
+                    .getAll().stream()
+                    .flatMap(waypoint -> waypoint.nameId().equalsIgnoreCase(waypoint.name())
+                        ? Stream.of(waypoint.name())
+                        : Stream.of(waypoint.name(), waypoint.nameId()))
                     .collect(Collectors.toList()))
                 .build())
             .addParameter(Parameter.builder("scope")

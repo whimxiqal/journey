@@ -87,6 +87,10 @@ public abstract class SearchGraph extends WeightedGraph<Tunnel, DestinationPathT
                               Tunnel originNode,
                               Tunnel destinationNode,
                               Collection<Mode> modes, boolean saveOnComplete) {
+    if (origin.domain() != destination.domain()) {
+      // Walking between worlds is impossible; only tunnels may connect domains.
+      return;
+    }
     // First, try to access a cached path
     Set<ModeType> modeTypes = modes.stream().map(Mode::type).collect(Collectors.toSet());
     boolean added = false;

@@ -187,7 +187,10 @@ public final class SearchManager {
             }
           }
           case STOPPED_CANCELED -> Messages.COMMAND_SEARCH_CANCELED.sendTo(audience, Formatter.ERROR);
-          case STOPPED_FAILED -> Messages.COMMAND_SEARCH_FAILED.sendTo(audience, Formatter.WARN);
+          case STOPPED_FAILED -> {
+            Journey.logger().info(session + " failed after " + session.executionTime() + "ms");
+            Messages.COMMAND_SEARCH_FAILED.sendTo(audience, Formatter.WARN);
+          }
           case STOPPED_ERROR -> Messages.COMMAND_SEARCH_ERROR.sendTo(audience, Formatter.ERROR);
           default -> throw new RuntimeException();  // programmer error, should never finish the search with this state
         }

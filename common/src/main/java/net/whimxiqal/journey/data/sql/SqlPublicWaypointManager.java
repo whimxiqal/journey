@@ -54,6 +54,12 @@ public class SqlPublicWaypointManager
   }
 
   @Override
+  public void add(@NotNull Cell cell, @NotNull String nameId, @NotNull String displayName)
+      throws IllegalArgumentException, DataAccessException {
+    addWaypoint(null, cell, nameId, displayName);
+  }
+
+  @Override
   public void remove(@NotNull Cell cell) throws DataAccessException {
     removeWaypoint(null, cell);
   }

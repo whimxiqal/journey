@@ -13,7 +13,8 @@ import net.whimxiqal.journey.search.SearchStep;
 public class NavigationSession implements NavigationProgress {
 
   private static final int DISTANCE_REQUIRED_TO_COMPLETE_SQUARED = 4;
-  private static final int NAVIGATION_LOOKAHEAD = 64;
+  /** How many upcoming steps to scan when the player jumps ahead along the path. */
+  private static final int NAVIGATION_LOOKAHEAD = 512;
   private final JourneyAgent agent;
   private final List<? extends SearchStep> steps;
   private final NavigatorOptionValues optionValues;
@@ -103,7 +104,7 @@ public class NavigationSession implements NavigationProgress {
       // we haven't made any progress this step, so let's try the more calculation-intensive
       // block-by-block search to see if the player has walked into a future location
       for (int i = currentStepIndex; i < Math.min(steps.size(), currentStepIndex + NAVIGATION_LOOKAHEAD); i++) {
-        SearchStep step = steps.get(currentStepIndex);
+        SearchStep step = steps.get(i);
         if (!location.equals(step.location())) {
           continue;
         }
